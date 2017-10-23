@@ -1,0 +1,32 @@
+machine:
+  java:
+    version: oraclejdk8
+  post:
+    # apply the JCE unlimited strength policy to allow the PSK 256 bit key length
+    # solution from http://qiita.com/yoskhdia/items/f4702a3abc4467de69b0
+    - curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
+    - unzip -o /tmp/jce_policy.zip -d /tmp
+    - sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
+    - sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
+
+dependencies:
+  override:
+    - mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
+
+test:
+  override:
+    - mvn surefire:test
+
+  post:
+    # run the checkstyle report
+    - mvn checkstyle:checkstyle
+
+    # gather the junit reports, see https://circleci.com/docs/test-metadata/#gradle-junit-results
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
+    - find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+
+    - mkdir -p $CIRCLE_TEST_REPORTS/checkstyle/
+    - find . -type f -regex ".*/target/checkstyle-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/checkstyle/ \;
+
+    # publish the coverage report to codecov.io
+    - bash <(curl -s https://codecov.io/bash)

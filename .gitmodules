@@ -1,0 +1,3 @@
+[submodule "crypto-conditions/test-data"]
+	path = crypto-conditions/test-data
+	url = https://github.com/rfcs/crypto-conditions.git
