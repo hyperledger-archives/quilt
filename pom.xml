@@ -81,7 +81,7 @@
 
     <!-- org.jacoco:jacoco-maven-plugin -->
     <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
-    
+
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
     <checkstyle.output.file>${project.build.directory}/checkstyle-reports/checkstyle-result.xml</checkstyle.output.file>
@@ -89,7 +89,7 @@
     <checkstyle.configuration.failsOnError>true</checkstyle.configuration.failsOnError>
     <checkstyle.configuration.failOnViolation>true</checkstyle.configuration.failOnViolation>
     <checkstyle.configuration.linkXRef>false</checkstyle.configuration.linkXRef>
-
+ 
   </properties>
 
   <modules>
