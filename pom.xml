@@ -89,7 +89,7 @@
     <checkstyle.configuration.failsOnError>true</checkstyle.configuration.failsOnError>
     <checkstyle.configuration.failOnViolation>true</checkstyle.configuration.failOnViolation>
     <checkstyle.configuration.linkXRef>false</checkstyle.configuration.linkXRef>
- 
+  
   </properties>
 
   <modules>
