@@ -1,11 +1,4 @@
-# Java Crypto-Conditions [![join the chat on gitter][gitter-image]][gitter-url] [![circle-ci][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url]
-
-[gitter-image]: https://badges.gitter.im/interledger/java-crypto-conditions.svg
-[gitter-url]: https://gitter.im/interledger/java-crypto-conditions
-[circle-image]: https://circleci.com/gh/interledger/java-crypto-conditions.svg?style=shield
-[circle-url]: https://circleci.com/gh/interledger/java-crypto-conditions
-[codecov-image]: https://codecov.io/gh/interledger/java-crypto-conditions/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/interledger/java-crypto-conditions
+# Crypto-Conditions [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/crypto-conditions.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Acrypto-conditions)
 
 Java implementation of Crypto-Conditions (See [RFC](https://datatracker.ietf.org/doc/draft-thomas-crypto-conditions/)).
 
@@ -31,8 +24,8 @@ To install Maven, follow the instructions at [https://maven.apache.org/install.h
 ### Get the code
 
 ``` sh
-git clone https://github.com/interledger/java-crypto-conditions
-cd java-crypto-conditions
+git clone https://github.com/hyperledger/quilt
+cd quilt/crypto-conditions
 ```
 
 ### Build the Project
@@ -44,7 +37,6 @@ $ mvn clean install
 
 #### Checkstyle
 The project uses checkstyle to keep code style consistent. All Checkstyle checks are run by default during the build, but if you would like to run checkstyle checks, use the following command:
-
 
 ```bash
 $ mvn checkstyle:checkstyle
@@ -115,14 +107,13 @@ URI uriEncodedCondition = CryptoConditionUri.toUri(condition);
 
 Any contribution is very much appreciated! 
 
-[![gitter][gitter-image]][gitter-url]
+[![join the chat][rocketchat-image]][rocketchat-url]
 
 ## TODO
 
-  - More Unit tests (see #62)
   - Replace current ASN.1 DER Input/Outputstream code with Codec framework (see java-ilp-core).
   - Validate condition against a global max cost
 
 ## License
 
-This code is released under the Apache 2.0 License. Please see [LICENSE](LICENSE) for the full text.
+This code is released under the Apache 2.0 License. Please see [LICENSE](./../LICENSE) for the full text.

@@ -1,19 +1,11 @@
-# Interledger Core (Java) [![join the chat on gitter][gitter-image]][gitter-url] [![circle-ci][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url]
-
-[gitter-url]: https://gitter.im/interledger/java
-[gitter-image]: https://badges.gitter.im/interledger/java.svg
-[circle-image]: https://circleci.com/gh/interledger/java-ilp-core.svg?style=shield
-[circle-url]: https://circleci.com/gh/interledger/java-ilp-core
-[codecov-image]: https://codecov.io/gh/interledger/java-ilp-core/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/interledger/java-ilp-core
-
+# Interledger Core  [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-core.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-core)
 
 Base library for Interledger projects providing service interfaces, event descriptions, exceptions and data models.
 
 For more information about Interledger specifications that underpin this library, please reference [https://github.com/interledger/rfcs](https://github.com/interledger/rfcs).
 
 ## Usage
-For more detail about how to use this library, consult the [wiki](https://github.com/interledger/java-ilp-core/wiki)
+For more detail about how to use this library, consult the [wiki](https://github.com/hyperledger/quilt/wiki)
 
 The library offers interfaces for all core objects and default builders that produce immutable instances of these objects.
 
@@ -135,24 +127,25 @@ We welcome any and all submissions, whether it's a typo, bug fix, or new feature
 ### Requirements
 This project uses Gradle to manage dependencies and other aspects of the build.  To install Gradle, follow the instructions at [https://gradle.org](https://gradle.org/).
 
-### Get the Code
+### Get the code
 
-```bash
-$ git clone https://github.com/interledger/java-ilp-core.git
+``` sh
+git clone https://github.com/hyperledger/quilt
+cd quilt/ilp-core
 ```
 
 ### Build the Project
-To build the project, execute the following command from the top-level folder that you cloned the above two projects to.  For example:
+To build the project, execute the following command:
 
 ```bash
-$ gradle build test
+$ mvn clean install
 ```
 
 #### Checkstyle
-The project uses checkstyle to keep code style consistent. To run the style checks:
+The project uses checkstyle to keep code style consistent. All Checkstyle checks are run by default during the build, but if you would like to run checkstyle checks, use the following command:
 
 ```bash
-$ gradle build check
+$ mvn checkstyle:checkstyle
 ```
 
 ### Contributing
