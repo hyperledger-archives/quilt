@@ -124,6 +124,7 @@ public class NamedInformationUri {
 
     /**
      * Returns the name of the hash function.
+     * @return String
      */
     public String getName() {
       return name;
@@ -131,6 +132,7 @@ public class NamedInformationUri {
 
     /**
      * Returns the OID for the hash function.
+     * @return String
      */
     public String getOid() {
       return oid;

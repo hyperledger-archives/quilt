@@ -31,6 +31,7 @@ public enum CryptoConditionType {
 
   /**
    * Returns the ASN.1 enumeration number for this type.
+   * @return int
    */
   public int getTypeCode() {
     return this.typeCode;
@@ -120,6 +121,7 @@ public enum CryptoConditionType {
    * Convert a set of rsa into a comma separated list.
    *
    * @param types set of rsa to encode
+   * @return String
    */
   public static String getEnumOfTypesAsString(EnumSet<CryptoConditionType> types) {
 
