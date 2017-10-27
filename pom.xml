@@ -79,11 +79,9 @@
     <!-- org.apache.maven.plugins:maven-javadoc-plugin -->
     <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
 
-
-    <!-- org.jacoco:jacoc-maven-plugin -->
-    <jacoco.version>0.7.9</jacoco.version>
-    <jacoco.ut.execution.data.file>${project.build.directory}/coverage-reports/jacoco-ut.exec</jacoco.ut.execution.data.file>
-
+    <!-- org.jacoco:jacoco-maven-plugin -->
+    <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
+    
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
     <checkstyle.output.file>${project.build.directory}/checkstyle-reports/checkstyle-result.xml</checkstyle.output.file>
@@ -188,11 +186,11 @@
           <version>2.17</version>
         </plugin>
 
-        <!-- org.jacoco:jacoc-maven-plugin -->
+        <!-- org.jacoco:jacoco-maven-plugin -->
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.7.9</version>
+          <version>${jacoco-maven-plugin.version}</version>
         </plugin>
 
         <!-- org.apache.maven.plugins:maven-surefire-plugin -->
@@ -292,7 +290,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <argLine>${argLine}</argLine>
+          <argLine>@{argLine}</argLine>
         </configuration>
       </plugin>
 
