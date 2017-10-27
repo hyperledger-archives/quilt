@@ -36,18 +36,15 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: mvn dependency:go-offline install -DskipTests
+      - run:
+          name: Maven Install
+          command:  mvn dependency:go-offline install
 
       - save_cache:
           paths:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
-      # run tests!
-      - run: mvn surefire:test
-
-      # run the checkstyle report
-      - run: mvn checkstyle:checkstyle
 
       # save tests
       - run:

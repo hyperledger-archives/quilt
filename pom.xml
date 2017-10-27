@@ -76,13 +76,8 @@
     <project.resources.sourceEncoding>UTF-8</project.resources.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <!-- org.apache.maven.plugins:maven-javadoc-plugin -->
-    <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
-
-
     <!-- org.jacoco:jacoc-maven-plugin -->
-    <jacoco.version>0.7.9</jacoco.version>
-    <jacoco.ut.execution.data.file>${project.build.directory}/coverage-reports/jacoco-ut.exec</jacoco.ut.execution.data.file>
+    <jacoco.propertyName>sureFireArgLine</jacoco.propertyName>
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
@@ -161,6 +156,11 @@
   </dependencyManagement>
 
   <build>
+
+    <!-- All plugin versions and default config is defined
+          in the pluginManagement section.
+     -->
+
     <pluginManagement>
       <plugins>
 
@@ -168,37 +168,89 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.6.2</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+          </configuration>
         </plugin>
 
         <!-- org.apache.maven.plugins:maven-source-plugin -->
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
           <version>2.2.1</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
 
         <!-- org.apache.maven.plugins:maven-javadoc-plugin -->
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>2.10.4</version>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
 
         <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>2.17</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.interledger</groupId>
+              <artifactId>dev-ops</artifactId>
+              <version>0.1.0-SNAPSHOT</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <phase>process-sources</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
 
         <!-- org.jacoco:jacoc-maven-plugin -->
         <plugin>
           <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
           <version>0.7.9</version>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <executions>
+            <execution>
+              <goals>
+                <goal>prepare-agent</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>report</id>
+              <phase>test</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
 
         <!-- org.apache.maven.plugins:maven-surefire-plugin -->
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.20</version>
+          <configuration>
+            <argLine>@{sureFireArgLine}</argLine>
+          </configuration>
         </plugin>
 
         <!-- org.sonatype.plugins:nexus-staging-maven-plugin -->
@@ -206,106 +258,58 @@
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
           <version>1.6.8</version>
+          <extensions>true</extensions>
+          <configuration>
+            <id>ossrh-snapshots-interledger</id>
+            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          </configuration>
         </plugin>
 
       </plugins>
     </pluginManagement>
+
+
+    <!-- All plugins in the plugins section will be run for all sub-modules
+      unless <inherited>false</inherited> is specified. -->
 
     <plugins>
 
       <!-- org.apache.maven.plugins:maven-compiler-plugin -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${maven.compiler.source}</source>
-          <target>${maven.compiler.target}</target>
-        </configuration>
       </plugin>
 
       <!-- org.apache.maven.plugins:maven-source-plugin -->
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- org.apache.maven.plugins:maven-javadoc-plugin -->
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.interledger</groupId>
-            <artifactId>dev-ops</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
-      <!-- org.jacoco:jacoc-maven-plugin -->
+      <!-- org.jacoco:jacoco-maven-plugin -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>report</id>
-            <phase>test</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- org.apache.maven.plugins:maven-surefire-plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>${argLine}</argLine>
-        </configuration>
       </plugin>
 
       <!-- org.sonatype.plugins:nexus-staging-maven-plugin -->
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <id>ossrh-snapshots-interledger</id>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
-        </configuration>
       </plugin>
 
     </plugins>
@@ -319,6 +323,14 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
       </plugin>
 
       <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
