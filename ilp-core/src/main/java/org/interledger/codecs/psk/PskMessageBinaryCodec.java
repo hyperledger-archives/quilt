@@ -215,6 +215,27 @@ public class PskMessageBinaryCodec implements PskMessageCodec {
     final String value = line.substring(split + 1)
         .trim();
 
+    /**
+     * Validate the {@link PskMessage} header does not contain line feed characters ('\n' and '\r'),
+     * as described in the instructions found in Data Format section of IL-RFC-16.  The presence of
+     * line feed characters in headers can lead to vulnerabilities from header injection attacks
+     * {@link "https://en.wikipedia.org/wiki/HTTP_header_injection"}
+     */
+    if (value.contains("\n")) {
+      throw new CodecException(
+          String.format(
+              "The value of the PskMessage header '%s' contains a line feed character. " +
+                  "This is not allowed.", name));
+    }
+    if (value.contains("\r")) {
+      throw new CodecException(
+          String.format(
+              "The value of the PskMessage header '%s' contains a carriage return character. " +
+                  " This is not allowed.", name));
+    }
+
+
+
     return new Header(name, value);
   }
 
@@ -222,6 +243,26 @@ public class PskMessageBinaryCodec implements PskMessageCodec {
     if (header == null) {
       return;
     }
+
+    /**
+     * Validate the {@link PskMessage} header does not contain line feed characters ('\n' and '\r'),
+     * as described in the instructions found in Data Format section of IL-RFC-16.  The presence of
+     * line feed characters in headers can lead to vulnerabilities from header injection attacks
+     * {@link "https://en.wikipedia.org/wiki/HTTP_header_injection"}
+     */
+    if (header.getValue().contains("\n")) {
+      throw new CodecException(
+          String.format(
+              "The value of the PskMessage header '%s' contains a line feed character. " +
+                  "This is not allowed.", header.getName()));
+    }
+    if (header.getValue().contains("\r")) {
+      throw new CodecException(
+          String.format(
+              "The value of the PskMessage header '%s' contains a carriage return character. " +
+                  " This is not allowed.", header.getName()));
+    }
+
     writer.write(header.getName());
     writer.write(':');
     writer.write(header.getValue());
