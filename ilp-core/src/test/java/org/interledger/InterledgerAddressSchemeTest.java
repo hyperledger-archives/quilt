@@ -17,7 +17,7 @@ import java.util.Arrays;
 public class InterledgerAddressSchemeTest {
 
   private static final String EXPECTED_ERROR_MESSAGE =
-      "Invalid characters in address: ['%s']. Reference Interledger RFC-15 for proper format.";
+      "Invalid characters in address: ['%s']. Reference Interledger ILP-RFC-15 for proper format.";
   private final String scheme;
 
   public InterledgerAddressSchemeTest(final String scheme) {
