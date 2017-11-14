@@ -1,8 +1,6 @@
 package org.interledger.codecs;
 
 import org.interledger.InterledgerPacket;
-import org.interledger.InterledgerPacket.Handler;
-import org.interledger.InterledgerPacket.VoidHandler;
 import org.interledger.codecs.packettypes.InterledgerPacketType;
 
 import java.io.ByteArrayInputStream;
@@ -40,7 +38,6 @@ public class CodecContext {
     this.packetCodecs = new ConcurrentHashMap<>();
     this.codecs = new ConcurrentHashMap<>();
   }
-
 
   /**
    * Register a converter associated to the supplied {@code type}.
@@ -126,13 +123,13 @@ public class CodecContext {
   }
 
   /**
-   * Helper method that accepts a {@link byte[]} and a type hint, and then decodes the input to the
+   * Helper method that accepts a byte array and a type hint, and then decodes the input to the
    * appropriate response payload.
    *
    * <p>NOTE: This methods wraps IOExceptions in RuntimeExceptions.
    *
    * @param type An instance of {@link Class} that indicates the type that should be decoded.
-   * @param data An instance of {@link byte[]} that contains bytes in a certain encoding.
+   * @param data An instance of byte array that contains bytes in a certain encoding.
    * @param <T>  The type of object to return, based upon the supplied type of {@code type}.
    *
    * @return An instance of {@link T}.
@@ -240,8 +237,8 @@ public class CodecContext {
   }
 
   /**
-   * Writes an instance of {@code instance} to an in-memory stream and returns the result as a
-   * {@link byte[]}.
+   * Writes an instance of {@code instance} to an in-memory stream and returns the result as a byte
+   * array.
    *
    * <p>NOTE: This methods wraps any IOExceptions in a RuntimeException.
    *
@@ -265,7 +262,7 @@ public class CodecContext {
 
   /**
    * Writes a generic instance of {@code Object} to an in-memory stream and returns the result as a
-   * {@link byte[]}.
+   * byte array.
    *
    * <p>NOTE: This methods wraps any IOExceptions in a RuntimeException.
    *
