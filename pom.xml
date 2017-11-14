@@ -81,12 +81,10 @@
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
-    <checkstyle.output.file>${project.build.directory}/checkstyle-reports/checkstyle-result.xml</checkstyle.output.file>
-    <checkstyle.configuration.consoleOutput>true</checkstyle.configuration.consoleOutput>
-    <checkstyle.configuration.failsOnError>true</checkstyle.configuration.failsOnError>
-    <checkstyle.configuration.failOnViolation>true</checkstyle.configuration.failOnViolation>
-    <checkstyle.configuration.linkXRef>false</checkstyle.configuration.linkXRef>
-
+    <checkstyle.output.file>
+      ${project.build.directory}/checkstyle-reports/checkstyle-result.xml
+    </checkstyle.output.file>
+    <checkstyle.violationSeverity>warning</checkstyle.violationSeverity>
   </properties>
 
   <modules>
@@ -205,8 +203,17 @@
         <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
+          <!-- Lock down plugin version for build reproducibility -->
           <version>2.17</version>
+          <inherited>true</inherited>
           <dependencies>
+            <!-- Update Checkstyle version used -->
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>8.4</version>
+            </dependency>
+            <!-- Multimodal config -->
             <dependency>
               <groupId>org.interledger</groupId>
               <artifactId>dev-ops</artifactId>

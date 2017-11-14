@@ -2,6 +2,7 @@ package org.interledger;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -33,6 +34,7 @@ public interface InterledgerAddress {
    * Constructor to allow quick construction from a String representation of an ILP address.
    *
    * @param value String representation of an Interledger Address
+   *
    * @return an {@link InterledgerAddress} instance.
    */
   static InterledgerAddress of(final String value) {
@@ -203,6 +205,72 @@ public interface InterledgerAddress {
   }
 
   /**
+   * <p>Return this address's parent prefix.</p>
+   *
+   * <p>If this address is a destination address, then this method returns a new {@link
+   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to and
+   * including last period. If this address is instead a prefix, then this instance returns a new
+   * {@link InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to and
+   * including second-to-last period, unless this address is a root prefix, in which case, {@link
+   * Optional#empty()} is returned.</p>
+   *
+   * <p>For example, calling this method on an address 'g.example.alice' would yield a new address
+   * containing 'g.example.'. Likewise, calling this method on an address that is already a prefix,
+   * like 'g.example.' would yield 'g.'. Finally, calling this method on a root prefix, like "self."
+   * would yield {@link Optional#empty()}.</p>
+   *
+   * @return An optionally present parent-prefix.
+   */
+  default Optional<InterledgerAddress> getParentPrefix() {
+    // If this address is not a prefix, then just return the prefix. Otherwise, look deeper.
+    if (this.isLedgerPrefix()) {
+      // If the prefix is a root prefix, return Optional#empty. Otherwise, return the parent prefix.
+      if (isRootPrefix()) {
+        return Optional.empty();
+      } else {
+        // Call getParentPrefix with the account portion, which will forward to #getPrefix.
+        return InterledgerAddress.of(
+            this.getValue().substring(0, this.getValue().lastIndexOf("."))
+        ).getParentPrefix();
+      }
+    } else {
+      return Optional.of(this.getPrefix());
+    }
+  }
+
+  /**
+   * <p>Determines if this ILP Address has a parent-prefix.</p>
+   *
+   * <p>If this address is a destination address, then it has a parent prefix. However, if the
+   * address is a prefix, then it only has a parent if it is _not_ a Root Prefix.</p>
+   *
+   * @return {@code true} if this address is a destination address. Otherwise (if this address is a
+   *     prefix address), then return {@code false} if this address is a Root prefix; otherwise,
+   *     return {@code true}.
+   */
+  default boolean hasParentPrefix() {
+    // All ILP addresse have a parent prefix, except for Root prefixes.
+    return isRootPrefix() == false;
+  }
+
+  String ROOT_REGEX = "^(g|private|example|peer|self|test[1-3])[.]$";
+  Pattern ROOT_PATTERN = Pattern.compile(ROOT_REGEX);
+
+  /**
+   * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of: "g.",
+   * "private.", "example.", "peer.", "self.", "test1.", "test2.", or "test3.". Any other kind of
+   * valid ILP address (e.g. "g.1") is not a root prefix.</p>
+   *
+   * @return {@code true} if this address is a root prefix; {@code false} otherwise.
+   */
+  default boolean isRootPrefix() {
+    // Alternate implementation (Note: A prefix is a root prefix if it has only a single period)
+    // final int numPeriods = getValue().length() - getValue().replaceAll("[.!?]+", "").length();
+    // return numPeriods == 1;
+    return ROOT_PATTERN.matcher(this.getValue()).matches();
+  }
+
+  /**
    * <p>Compares the specified object with this <tt>InterledgerAddress</tt> for equality. The
    * <tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a String value,
    * so implementations should take care to forward equality decisions to the {@link
@@ -252,6 +320,7 @@ public interface InterledgerAddress {
     /**
      * Builder method to actually construct an instance of {@link InterledgerAddress} of the data in
      * this builder.
+     *
      * @return An {@link InterledgerAddress} instance
      */
     public InterledgerAddress build() {
@@ -263,6 +332,7 @@ public interface InterledgerAddress {
      *
      * @param value A {@link String} representing this builder's "value", which is the string
      *              version of an Interledger Address.
+     *
      * @return This {@link Builder} instance.
      */
     public Builder value(final String value) {
@@ -296,7 +366,7 @@ public interface InterledgerAddress {
           throw new IllegalArgumentException(
               String.format(
                   "Invalid characters in address: ['%s']. "
-                      + "Reference Interledger RFC-15 for proper format.",
+                      + "Reference Interledger ILP-RFC-15 for proper format.",
                   builder.value)
           );
         }
@@ -317,8 +387,7 @@ public interface InterledgerAddress {
        */
       private boolean isValidInterledgerAddress(final String value) {
         Objects.requireNonNull(value);
-        return PATTERN.matcher(value)
-            .matches();
+        return PATTERN.matcher(value).matches();
       }
 
       /**

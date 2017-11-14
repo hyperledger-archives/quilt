@@ -75,7 +75,8 @@ public class PskNonceHeader extends PskMessage.Header {
 
   /**
    * Convenience method to retrieve the nonce value.
-   * @return The none in {@link byte[]} format.
+   *
+   * @return The nonce as a byte array.
    */
   public byte[] getNonce() {
     return Arrays.copyOf(nonce, nonce.length);
