@@ -12,7 +12,7 @@ import org.junit.Test;
 public class InterledgerAddressBuilderTest {
 
   private static final String EXPECTED_ERROR_MESSAGE =
-      "Invalid characters in address: ['%s']. Reference Interledger RFC-15 for proper format.";
+      "Invalid characters in address: ['%s']. Reference Interledger ILP-RFC-15 for proper format.";
 
   private static final String TEST1_US_USD_BOB = "test1.us.usd.bob";
   private static final String TEST1_US_USD = "test1.us.usd.";
