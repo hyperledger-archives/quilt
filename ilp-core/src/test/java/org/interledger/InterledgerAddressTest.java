@@ -245,61 +245,94 @@ public class InterledgerAddressTest {
   }
 
   /**
-   * Assert that a non-ledger prefix fails the {@link InterledgerAddress#requireLedgerPrefix(InterledgerAddress)}
-   * check.
+   * Assert that {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)} fails with a
+   * <tt>null</tt> address prefix.
    */
-  @Test(expected = IllegalArgumentException.class)
-  public void testRequireLedgerPrefixNotLedgerPrefix() {
+  @Test(expected = NullPointerException.class)
+  public void testRequireLedgerPrefixWithNullPrefix() {
     try {
-      InterledgerAddress.requireLedgerPrefix(InterledgerAddress.of("example.bar"));
-      fail("Should have thrown an IllegalArgumentException!");
-    } catch (IllegalArgumentException e) {
+      InterledgerAddress.requireAddressPrefix(null);
+      fail("Should have thrown an NullPointerException!");
+    } catch (NullPointerException e) {
       assertThat(e.getMessage(),
-          is("InterledgerAddress 'example.bar' must be a Ledger Prefix ending with a dot (.)"));
+          is("addressPrefix must not be null!"));
       throw e;
     }
   }
 
   /**
-   * Assert that a ledger prefix passes the {@link InterledgerAddress#requireLedgerPrefix(InterledgerAddress)}
-   * check.
-   */
-  @Test
-  public void testRequireLedgerPrefixIsLedgerPrefix() {
-    final InterledgerAddress controlPrefix = InterledgerAddress.of("example.bar.");
-    final InterledgerAddress checkedLedgerPrefix = InterledgerAddress
-        .requireLedgerPrefix(controlPrefix);
-
-    assertThat(checkedLedgerPrefix, is(controlPrefix));
-  }
-
-  /**
-   * Assert that a non-ledger prefix passes the {@link InterledgerAddress#requireNotLedgerPrefix(InterledgerAddress)}
-   * check.
-   */
-  @Test
-  public void testRequireNotLedgerPrefixNotLedgerPrefix() {
-    final InterledgerAddress controlPrefix = InterledgerAddress.of("example.bar");
-    final InterledgerAddress checkedLedgerPrefix = InterledgerAddress
-        .requireNotLedgerPrefix(controlPrefix);
-
-    assertThat(checkedLedgerPrefix, is(controlPrefix));
-  }
-
-  /**
-   * Assert that a ledger prefix fails the {@link InterledgerAddress#requireNotLedgerPrefix(InterledgerAddress)}
+   * Assert that a non-address prefix fails the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
    * check.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void testRequireNotLedgerPrefixIsLedgerPrefix() {
+  public void testRequireAddressPrefixNotAddressPrefix() {
     try {
-      InterledgerAddress.requireNotLedgerPrefix(InterledgerAddress.of("example.bar."));
+      InterledgerAddress.requireAddressPrefix(InterledgerAddress.of("example.bar"));
+      fail("Should have thrown an IllegalArgumentException!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(),
+          is("InterledgerAddress 'example.bar' must be an Address Prefix ending with a dot (.)"));
+      throw e;
+    }
+  }
+
+  /**
+   * Assert that a address prefix passes the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
+   * check.
+   */
+  @Test
+  public void testRequireAddressPrefixIsAddressPrefix() {
+    final InterledgerAddress controlPrefix = InterledgerAddress.of("example.bar.");
+    final InterledgerAddress checkedAddressPrefix = InterledgerAddress
+        .requireAddressPrefix(controlPrefix);
+
+    assertThat(checkedAddressPrefix, is(controlPrefix));
+  }
+
+  /**
+   * Assert that {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)} fails with a
+   * <tt>null</tt> address prefix.
+   */
+  @Test(expected = NullPointerException.class)
+  public void testRequireNotAddressPrefixWithNullPrefix() {
+    try {
+      InterledgerAddress.requireNotAddressPrefix(null);
+      fail("Should have thrown an NullPointerException!");
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(),
+          is("addressPrefix must not be null!"));
+      throw e;
+    }
+  }
+
+  /**
+   * Assert that a address prefix fails the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
+   * check.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testRequireNotAddressPrefixIsAddressPrefix() {
+    try {
+      InterledgerAddress.requireNotAddressPrefix(InterledgerAddress.of("example.bar."));
       fail("Should have thrown an IllegalArgumentException!");
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage(), is(
-          "InterledgerAddress 'example.bar.' must NOT be a Ledger Prefix ending with a dot (.)")
+          "InterledgerAddress 'example.bar.' must NOT be an Address Prefix ending with a dot (.)")
       );
       throw e;
     }
   }
+
+  /**
+   * Assert that a non-address prefix passes the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
+   * check.
+   */
+  @Test
+  public void testRequireNotAddressPrefixWhenNotAddressPrefix() {
+    final InterledgerAddress controlPrefix = InterledgerAddress.of("example.bar");
+    final InterledgerAddress checkedAddressPrefix = InterledgerAddress
+        .requireNotAddressPrefix(controlPrefix);
+
+    assertThat(checkedAddressPrefix, is(controlPrefix));
+  }
+
 }
