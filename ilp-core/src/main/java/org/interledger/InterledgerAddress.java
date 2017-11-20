@@ -44,62 +44,68 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Checks that the specified {@code ledgerPrefix} is a ledger-prefix.
+   * Checks and requires that the specified {@code addressPrefix} is an address prefix per {@link
+   * InterledgerAddress#isLedgerPrefix()}.
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
    * constructors, as demonstrated below:</p> <blockquote>
    * <pre>
    * public Foo(InterledgerAddress bar) {
-   *     this.ledgerPrefix = InterledgerAddress.requireLedgerPrefix(bar);
+   *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar);
    * }
    * </pre>
    * </blockquote>
    *
-   * @param ledgerPrefix A {@link InterledgerAddress} to check.
+   * @param addressPrefix A {@link InterledgerAddress} to check.
    *
    * @return {@code ledgerPrefix} if its value ends with a dot (.).
    *
    * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
    */
-  static InterledgerAddress requireLedgerPrefix(final InterledgerAddress ledgerPrefix) {
-    if (!ledgerPrefix.isLedgerPrefix()) {
+  static InterledgerAddress requireAddressPrefix(final InterledgerAddress addressPrefix) {
+    Objects.requireNonNull(addressPrefix, "addressPrefix must not be null!");
+    if (!addressPrefix.isLedgerPrefix()) {
       throw new IllegalArgumentException(
-          String.format("InterledgerAddress '%s' must be a Ledger Prefix ending with a dot (.)",
-              ledgerPrefix
+          String.format("InterledgerAddress '%s' must be an Address Prefix ending with a dot (.)",
+              addressPrefix
           )
       );
     } else {
-      return ledgerPrefix;
+      return addressPrefix;
     }
   }
 
   /**
-   * Checks that the specified {@code ledgerPrefix} is not a ledger-prefix.
+   * Checks and requires that the specified {@code addressPrefix} is not an address prefix per
+   * {@link InterledgerAddress#isLedgerPrefix()}.
+   *
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
    * constructors, as demonstrated below:</p> <blockquote>
    * <pre>
    * public Foo(InterledgerAddress bar) {
-   *     this.nonLedgerPrefix = InterledgerAddress.requireNotLedgerPrefix(bar);
+   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar);
    * }
    * </pre>
    * </blockquote>
    *
-   * @param ledgerPrefix A {@link InterledgerAddress} to check.
+   * @param addressPrefix A {@link InterledgerAddress} to check.
    *
-   * @return {@code ledgerPrefix} if its value ends with a dot (.).
+   * @return {@code addressPrefix} if its value ends with a dot (.).
    *
    * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
    */
-  static InterledgerAddress requireNotLedgerPrefix(final InterledgerAddress ledgerPrefix) {
-    if (ledgerPrefix.isLedgerPrefix()) {
+  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress addressPrefix) {
+    Objects.requireNonNull(addressPrefix, "addressPrefix must not be null!");
+    if (addressPrefix.isLedgerPrefix()) {
       throw new IllegalArgumentException(
-          String.format("InterledgerAddress '%s' must NOT be a Ledger Prefix ending with a dot (.)",
-              ledgerPrefix
-          )
+          String
+              .format("InterledgerAddress '%s' must NOT be an Address Prefix ending with a dot (.)",
+                  addressPrefix
+              )
       );
     } else {
-      return ledgerPrefix;
+      return addressPrefix;
     }
   }
 
