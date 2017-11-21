@@ -202,6 +202,7 @@ public interface InterledgerProtocolError extends InterledgerPacket {
      */
     ErrorFamily getErrorFamily();
 
+
     /**
      * Helper method to construct an instance of {@link ErrorCode}.
      * @param code The definitive identifier of the error.
