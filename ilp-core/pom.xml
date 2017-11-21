@@ -55,6 +55,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.javamoney</groupId>
+            <artifactId>moneta</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

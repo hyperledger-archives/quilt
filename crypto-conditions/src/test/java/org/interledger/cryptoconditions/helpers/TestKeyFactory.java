@@ -1,11 +1,11 @@
 package org.interledger.cryptoconditions.helpers;
 
+import org.interledger.cryptoconditions.CryptoConditionReader;
+import org.interledger.cryptoconditions.utils.UnsignedBigInteger;
+
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
-
-import org.interledger.cryptoconditions.CryptoConditionReader;
-import org.interledger.cryptoconditions.utils.UnsignedBigInteger;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;

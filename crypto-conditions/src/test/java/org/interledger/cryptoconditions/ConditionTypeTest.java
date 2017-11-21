@@ -15,12 +15,18 @@ public class ConditionTypeTest {
 
   @Test
   public void test_fromString_case_insensitive() {
-    assertEquals(CryptoConditionType.PREFIX_SHA256, CryptoConditionType.fromString("PREFIX-SHA-256"));
-    assertEquals(CryptoConditionType.PREFIX_SHA256, CryptoConditionType.fromString("prefix-SHA-256"));
-    assertEquals(CryptoConditionType.PREFIX_SHA256, CryptoConditionType.fromString("prefix-sha-256"));
-    assertEquals(CryptoConditionType.ED25519_SHA256, CryptoConditionType.fromString("ED25519-SHA-256"));
-    assertEquals(CryptoConditionType.ED25519_SHA256, CryptoConditionType.fromString("ed25519-sha-256"));
-    assertEquals(CryptoConditionType.ED25519_SHA256, CryptoConditionType.fromString("ED25519-sha-256"));
+    assertEquals(CryptoConditionType.PREFIX_SHA256,
+        CryptoConditionType.fromString("PREFIX-SHA-256"));
+    assertEquals(CryptoConditionType.PREFIX_SHA256,
+        CryptoConditionType.fromString("prefix-SHA-256"));
+    assertEquals(CryptoConditionType.PREFIX_SHA256,
+        CryptoConditionType.fromString("prefix-sha-256"));
+    assertEquals(CryptoConditionType.ED25519_SHA256,
+        CryptoConditionType.fromString("ED25519-SHA-256"));
+    assertEquals(CryptoConditionType.ED25519_SHA256,
+        CryptoConditionType.fromString("ed25519-sha-256"));
+    assertEquals(CryptoConditionType.ED25519_SHA256,
+        CryptoConditionType.fromString("ED25519-sha-256"));
   }
 
   @Test

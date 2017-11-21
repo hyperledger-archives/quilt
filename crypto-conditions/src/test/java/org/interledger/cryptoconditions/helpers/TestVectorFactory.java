@@ -1,7 +1,5 @@
 package org.interledger.cryptoconditions.helpers;
 
-import net.i2p.crypto.eddsa.EdDSAPublicKey;
-
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.CryptoConditionType;
 import org.interledger.cryptoconditions.Ed25519Sha256Condition;
@@ -9,12 +7,13 @@ import org.interledger.cryptoconditions.Ed25519Sha256Fulfillment;
 import org.interledger.cryptoconditions.Fulfillment;
 import org.interledger.cryptoconditions.PrefixSha256Condition;
 import org.interledger.cryptoconditions.PrefixSha256Fulfillment;
-import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 import org.interledger.cryptoconditions.RsaSha256Condition;
 import org.interledger.cryptoconditions.RsaSha256Fulfillment;
 import org.interledger.cryptoconditions.ThresholdSha256Condition;
 import org.interledger.cryptoconditions.ThresholdSha256Fulfillment;
+
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
 
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;

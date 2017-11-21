@@ -1,12 +1,13 @@
 package org.interledger.cryptoconditions;
 
-import net.i2p.crypto.eddsa.EdDSAPublicKey;
-import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
-import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 import org.interledger.cryptoconditions.der.DerEncodingException;
 import org.interledger.cryptoconditions.der.DerInputStream;
 import org.interledger.cryptoconditions.der.DerTag;
 import org.interledger.cryptoconditions.utils.UnsignedBigInteger;
+
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
+import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -34,9 +35,7 @@ public class CryptoConditionReader {
    * Reads a DER encoded condition from the buffer.
    *
    * @param buffer contains the raw DER encoded condition.
-   *
    * @return The condition read from the buffer.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Condition readCondition(byte[] buffer) throws DerEncodingException {
@@ -49,9 +48,7 @@ public class CryptoConditionReader {
    * @param buffer contains the raw DER encoded condition.
    * @param offset the position within the buffer to begin reading the condition.
    * @param length the number of bytes to read.
-   *
    * @return The condition read from the buffer.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Condition readCondition(byte[] buffer, int offset, int length)
@@ -77,9 +74,7 @@ public class CryptoConditionReader {
    * Reads a DER encoded condition from the input stream.
    *
    * @param in The input stream containing the DER encoded condition.
-   *
    * @return The condition read from the stream.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -93,9 +88,7 @@ public class CryptoConditionReader {
    *
    * @param in        The input stream containing the DER encoded condition.
    * @param bytesRead will be updated with the number of bytes read from the stream.
-   *
    * @return The condition read from the stream.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -139,9 +132,7 @@ public class CryptoConditionReader {
    * Reads a DER encoded fulfillment from the buffer.
    *
    * @param buffer The buffer holding the DER encoded fulfillment
-   *
    * @return The fulfillment read from the buffer.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Fulfillment readFulfillment(byte[] buffer) throws DerEncodingException {
@@ -154,9 +145,7 @@ public class CryptoConditionReader {
    * @param buffer The buffer holding the DER encoded fulfillment
    * @param offset the position within the buffer to begin reading the fulfilment.
    * @param length the number of bytes to read.
-   *
    * @return The fulfillment read from the buffer.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Fulfillment readFulfillment(byte[] buffer, int offset, int length)
@@ -182,9 +171,7 @@ public class CryptoConditionReader {
    * Reads a DER encoded fulfillment from the input stream.
    *
    * @param in The input stream containing the DER encoded fulfillment.
-   *
    * @return The fulfillment read from the stream.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -198,9 +185,7 @@ public class CryptoConditionReader {
    *
    * @param in        The input stream containing the DER encoded fulfillment.
    * @param bytesRead will be updated with the number of bytes read from the stream.
-   *
    * @return The fulfillment read from the stream.
-   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */

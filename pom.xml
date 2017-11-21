@@ -77,7 +77,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- org.jacoco:jacoc-maven-plugin -->
-    <jacoco.propertyName>sureFireArgLine</jacoco.propertyName>
+    <jacoco.propertyName>argLine</jacoco.propertyName>
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
@@ -148,6 +148,12 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>2.7.22</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.javamoney</groupId>
+        <artifactId>moneta</artifactId>
+        <version>1.1</version>
       </dependency>
 
     </dependencies>
@@ -256,7 +262,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.20</version>
           <configuration>
-            <argLine>@{sureFireArgLine}</argLine>
+            <argLine>@{argLine}</argLine>
           </configuration>
         </plugin>
 

@@ -30,7 +30,6 @@ public interface InterledgerPacket {
      * type, apply some business logic, and optionally return a value in response.
      *
      * @param packet An instance of {@link InterledgerPacket}.
-     *
      * @return An instance of type {@link R}, in response to the supplied input.
      */
     R execute(InterledgerPacket packet);
@@ -39,7 +38,7 @@ public interface InterledgerPacket {
      * A handler for allowing callers to specify logic based upon an unknown result type. This class
      * can be used in the following manner:
      *
-     * <pre>
+     * <p><pre>
      * <code>
      *
      * final InterledgerPacket decodedPacket = context.read(asn1OerPaymentBytes);
@@ -52,7 +51,7 @@ public interface InterledgerPacket {
      *
      * // Do something with 'stringValue'
      * </code>
-     * </pre>
+     * </pre></p>
      *
      * @param <R> the type of the result of the handler.
      */
@@ -62,7 +61,6 @@ public interface InterledgerPacket {
        * Handle an instance of {@link InterledgerPayment}.
        *
        * @param interledgerPayment An instance of {@link InterledgerPayment}.
-       *
        * @return An instance of type {@link R}, in response to the supplied input.
        */
       protected abstract R handle(final InterledgerPayment interledgerPayment);
@@ -71,7 +69,6 @@ public interface InterledgerPacket {
        * Handle an instance of {@link QuoteLiquidityRequest}.
        *
        * @param quoteLiquidityRequest An instance of {@link QuoteLiquidityRequest}.
-       *
        * @return An instance of type {@link R}, in response to the supplied input.
        */
       protected abstract R handle(final QuoteLiquidityRequest quoteLiquidityRequest);
@@ -80,7 +77,6 @@ public interface InterledgerPacket {
        * Handle an instance of {@link QuoteLiquidityResponse}.
        *
        * @param quoteLiquidityResponse An instance of {@link QuoteLiquidityResponse}.
-       *
        * @return An instance of type {@link R}, in response to the supplied input.
        */
       protected abstract R handle(final QuoteLiquidityResponse quoteLiquidityResponse);
@@ -92,7 +88,6 @@ public interface InterledgerPacket {
        * type, apply some business logic, and optionally return a value in response.
        *
        * @param packet An instance of {@link InterledgerPacket}.
-       *
        * @return An instance of type {@link R}, in response to the supplied input.
        */
       @Override
@@ -123,19 +118,19 @@ public interface InterledgerPacket {
         @Override
         protected R handle(InterledgerPayment interledgerPayment) {
           throw new InterledgerRuntimeException(
-            "Not yet implemented. Override this method to provide a useful implementation!");
+              "Not yet implemented. Override this method to provide a useful implementation!");
         }
 
         @Override
         protected R handle(QuoteLiquidityRequest quoteLiquidityRequest) {
           throw new InterledgerRuntimeException(
-            "Not yet implemented. Override this method to provide a useful implementation!");
+              "Not yet implemented. Override this method to provide a useful implementation!");
         }
 
         @Override
         protected R handle(QuoteLiquidityResponse quoteLiquidityResponse) {
           throw new InterledgerRuntimeException(
-            "Not yet implemented. Override this method to provide a useful implementation!");
+              "Not yet implemented. Override this method to provide a useful implementation!");
         }
       }
     }
@@ -161,7 +156,7 @@ public interface InterledgerPacket {
      * upon an unknown result type extending {@link InterledgerPacket}. This class can be used in
      * the following manner:
      *
-     * <pre>
+     * <p><pre>
      * <code>
      * final InterledgerPacket decodedPacket = context.read(asn1OerPaymentBytes);
      * new AbstractVoidHandler() {
@@ -170,7 +165,7 @@ public interface InterledgerPacket {
      *   }
      * }.execute(decodedPacket); // be sure to call .execute!
      * </code>
-     * </pre>
+     * </pre></p>
      */
     abstract class AbstractVoidHandler implements VoidHandler {
 
@@ -231,19 +226,19 @@ public interface InterledgerPacket {
         @Override
         protected void handle(InterledgerPayment interledgerPayment) {
           throw new InterledgerRuntimeException(
-            "Not yet implemented. Override this method to provide a useful implementation!");
+              "Not yet implemented. Override this method to provide a useful implementation!");
         }
 
         @Override
         protected void handle(QuoteLiquidityRequest quoteLiquidityRequest) {
           throw new InterledgerRuntimeException(
-            "Not yet implemented. Override this method to provide a useful implementation!");
+              "Not yet implemented. Override this method to provide a useful implementation!");
         }
 
         @Override
         protected void handle(QuoteLiquidityResponse quoteLiquidityResponse) {
           throw new InterledgerRuntimeException(
-            "Not yet implemented. Override this method to provide a useful implementation!");
+              "Not yet implemented. Override this method to provide a useful implementation!");
         }
       }
     }

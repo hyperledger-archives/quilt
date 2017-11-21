@@ -3,11 +3,10 @@ package org.interledger.cryptoconditions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import com.google.common.collect.ImmutableMap;
-
 import org.interledger.cryptoconditions.CryptoConditionUri.QueryParams;
 import org.interledger.cryptoconditions.NamedInformationUri.HashFunction;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.util.Map;

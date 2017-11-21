@@ -38,6 +38,9 @@ public class CryptoConditionReaderWriterTest {
   private static Ed25519Sha256Fulfillment ed25519Fulfillment;
   private static ThresholdSha256Fulfillment thresholdFulfillment;
 
+  /**
+   * Setup the test.
+   */
   @BeforeClass
   public static void setup() throws Exception {
     Provider bc = new BouncyCastleProvider();
@@ -59,7 +62,6 @@ public class CryptoConditionReaderWriterTest {
     Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
     rsaSigner.initSign(rsaKeyPair.getPrivate());
     rsaSigner.update(message);
-    byte[] rsaSignature = rsaSigner.sign();
 
     net.i2p.crypto.eddsa.KeyPairGenerator edDsaKpg = new net.i2p.crypto.eddsa.KeyPairGenerator();
     KeyPair edDsaKeyPair = edDsaKpg.generateKeyPair();
@@ -67,7 +69,6 @@ public class CryptoConditionReaderWriterTest {
     edDsaSigner.initSign(edDsaKeyPair.getPrivate());
     edDsaSigner.update(prefix);
     edDsaSigner.update(message);
-    byte[] edDsaSignature = edDsaSigner.sign();
 
     preimageCondition = new PreimageSha256Condition(preimage);
     rsaCondition = new RsaSha256Condition((RSAPublicKey) rsaKeyPair.getPublic());
@@ -79,6 +80,8 @@ public class CryptoConditionReaderWriterTest {
         Lists.newArrayList(preimageCondition, rsaCondition, prefixSha256Condition)
     );
 
+    byte[] rsaSignature = rsaSigner.sign();
+    byte[] edDsaSignature = edDsaSigner.sign();
     preimageFulfillment = new PreimageSha256Fulfillment(preimage);
     rsaFulfillment = new RsaSha256Fulfillment((RSAPublicKey) rsaKeyPair.getPublic(), rsaSignature);
     ed25519Fulfillment =

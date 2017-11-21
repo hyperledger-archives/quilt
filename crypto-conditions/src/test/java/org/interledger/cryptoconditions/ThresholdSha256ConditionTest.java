@@ -4,13 +4,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.interledger.cryptoconditions.CryptoConditionType.THRESHOLD_SHA256;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.BaseEncoding;
-
-import org.hamcrest.CoreMatchers;
-
 import org.interledger.cryptoconditions.der.DerEncodingException;
 
+import com.google.common.collect.Lists;
+import com.google.common.io.BaseEncoding;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 /**

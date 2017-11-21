@@ -7,7 +7,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.Test;
 
 /**
- * Unit tests for {@link InterledgerAddress.Builder}.
+ * Unit tests for {@link ImmutableInterledgerAddress.Builder}.
  */
 public class InterledgerAddressBuilderTest {
 
@@ -32,12 +32,13 @@ public class InterledgerAddressBuilderTest {
           + "012345678912312349393";
   private static final String TOO_LONG = JUST_RIGHT + "67890123456789012345678901234567890123456";
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = IllegalStateException.class)
   public void test_constructor_wit_uninitialized_build() throws Exception {
     try {
       InterledgerAddress.builder().build();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("value must not be null!"));
+    } catch (IllegalStateException e) {
+      //Removed message check. This exception is raised by the Immutable generated code.
+      //assertThat(e.getMessage(), is("value must not be null!"));
       throw e;
     }
   }
@@ -49,7 +50,7 @@ public class InterledgerAddressBuilderTest {
           .value(null)
           .build();
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("value must not be null!"));
+      assertThat(e.getMessage(), is("value"));
       throw e;
     }
   }

@@ -213,7 +213,8 @@ public interface InterledgerProtocolError extends InterledgerPacket {
                   // the packet on, because doing so would likely mean it will come back to us.
                   throw new IllegalArgumentException(String.format(
                       "TriggeredByAddress \"%s\" was found in the ForwardedByAddresses list, which "
-                          + "indicates an Interledger packet loop!", triggeredByAddress));
+                          + "indicates an Interledger packet loop!",
+                      triggeredByAddress.getValue()));
             }
           );
 

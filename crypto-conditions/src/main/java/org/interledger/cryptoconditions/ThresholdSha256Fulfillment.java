@@ -92,19 +92,19 @@ public class ThresholdSha256Fulfillment extends FulfillmentBase<ThresholdSha256C
   }
 
   /**
+   * <p>Verify the THRESHOLD-SHA-256.</p>
+   *
    * <p>A THRESHOLD-SHA-256 fulfillment is valid iff:</p>
-   *
-   * <p>1. All (F).subfulfillments are valid.</p>
-   *
-   * <p>2. The derived condition (D) (found in {@code condition}) is equal to the given condition
-   * (C).</p>
-   *
+   * <ol>
+   * <li>1. All (F).subfulfillments are valid.</li>
+   * <li>2. The derived condition (D) (found in {@code condition}) is equal to the given condition
+   * (C).</li>
+   * </ol>
    * <p>For more general details about Fulfillment validation, see the Javadoc in {@link
    * Fulfillment#verify(Condition, byte[])}.</p>
    *
    * @param condition A {@link Condition} that this fulfillment should verify.
    * @param message   A byte array that is part of verifying the supplied condition.
-   *
    * @return {@code true} if the condition validates this fulfillment; {@code false} otherwise.
    */
   @Override

@@ -3,17 +3,14 @@ package org.interledger.cryptoconditions;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.io.BaseEncoding;
+import org.interledger.cryptoconditions.helpers.RsaTestVectorJson;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.io.BaseEncoding;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import org.interledger.cryptoconditions.helpers.RsaTestVectorJson;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -182,26 +179,13 @@ public class RsaSha256SignatureTest extends AbstractCryptoConditionTest {
     return (RSAPrivateKey) this.keyFactory.generatePrivate(spec);
   }
 
-  private class FixedRandom extends SecureRandom {
-
-    byte[] vals;
-
-    FixedRandom(byte[] vals) {
-      this.vals = vals;
-    }
-
-    public void nextBytes(byte[] bytes) {
-      System.arraycopy(vals, 0, bytes, 0, vals.length);
-    }
-  }
-
   private static class RsaTestVectorPair {
 
     private final Signature signature;
     private final RsaTestVectorJson rsaTestVectorJson;
 
     private RsaTestVectorPair(final Signature signature,
-        final RsaTestVectorJson rsaTestVectorJson) {
+                              final RsaTestVectorJson rsaTestVectorJson) {
       this.signature = Objects.requireNonNull(signature);
       this.rsaTestVectorJson = Objects.requireNonNull(rsaTestVectorJson);
     }
@@ -212,6 +196,19 @@ public class RsaSha256SignatureTest extends AbstractCryptoConditionTest {
 
     public RsaTestVectorJson getRsaTestVectorJson() {
       return rsaTestVectorJson;
+    }
+  }
+
+  private class FixedRandom extends SecureRandom {
+
+    byte[] vals;
+
+    FixedRandom(byte[] vals) {
+      this.vals = vals;
+    }
+
+    public void nextBytes(byte[] bytes) {
+      System.arraycopy(vals, 0, bytes, 0, vals.length);
     }
   }
 }

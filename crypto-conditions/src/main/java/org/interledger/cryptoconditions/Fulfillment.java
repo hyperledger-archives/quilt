@@ -23,7 +23,7 @@ public interface Fulfillment<C extends Condition> {
 
   /**
    * <p>Validation of a fulfillment (F) against a condition (C) and a message (M), in the majority
-   * of cases, follows these steps:</p>
+   * of cases, follows the steps below.</p>
    *
    * <p>1.  The implementation must derive a condition from the fulfillment and ensure that the
    * derived condition (D) matches the given condition (C).</p>
