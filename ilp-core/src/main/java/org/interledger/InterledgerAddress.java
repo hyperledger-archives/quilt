@@ -340,7 +340,7 @@ public interface InterledgerAddress {
 
   @Value.Check
   default void check() {
-    if(!InterledgerAddress.isValid(getValue())) {
+    if (!InterledgerAddress.isValid(getValue())) {
       throw new IllegalArgumentException(String.format("Invalid characters in address: ['%s']. "
           + "Reference Interledger ILP-RFC-15 for proper format.", getValue()));
     }

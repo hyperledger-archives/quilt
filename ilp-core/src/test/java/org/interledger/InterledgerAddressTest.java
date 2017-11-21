@@ -239,9 +239,12 @@ public class InterledgerAddressTest {
 
   @Test
   public void testToString() throws Exception {
-    assertThat(InterledgerAddress.of("g.foo.bob").toString(), is("InterledgerAddress{value=g.foo.bob}"));
-    assertThat(InterledgerAddress.of("g.foo.bob.").toString(), is("InterledgerAddress{value=g.foo.bob.}"));
-    assertThat(InterledgerAddress.of("g.").toString(), is("InterledgerAddress{value=g.}"));
+    assertThat(InterledgerAddress.of("g.foo.bob").toString(),
+        is("InterledgerAddress{value=g.foo.bob}"));
+    assertThat(InterledgerAddress.of("g.foo.bob.").toString(),
+        is("InterledgerAddress{value=g.foo.bob.}"));
+    assertThat(InterledgerAddress.of("g.").toString(),
+        is("InterledgerAddress{value=g.}"));
   }
 
   /**
