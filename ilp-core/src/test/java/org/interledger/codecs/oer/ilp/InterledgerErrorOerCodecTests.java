@@ -8,6 +8,7 @@ import org.interledger.InterledgerPacket;
 import org.interledger.codecs.Codec;
 import org.interledger.codecs.CodecContext;
 import org.interledger.codecs.CodecContextFactory;
+import org.interledger.ilp.ImmutableInterledgerProtocolError;
 import org.interledger.ilp.InterledgerProtocolError;
 import org.interledger.ilp.InterledgerProtocolError.ErrorCode;
 
@@ -76,7 +77,7 @@ public class InterledgerErrorOerCodecTests {
         .forEach(byteArrayOutputStream3::write);
 
     return Arrays.asList(new Object[][]{
-        {new InterledgerProtocolError.Builder()
+        {ImmutableInterledgerProtocolError.builder()
             .errorCode(ErrorCode.T00_INTERNAL_ERROR)
             .triggeredByAddress(FOO)
             .forwardedByAddresses(ImmutableList.of(BAR, BAZ))
@@ -86,7 +87,7 @@ public class InterledgerErrorOerCodecTests {
         },
 
         {
-            new InterledgerProtocolError.Builder()
+            ImmutableInterledgerProtocolError.builder()
                 .errorCode(ErrorCode.T01_LEDGER_UNREACHABLE)
                 .triggeredByAddress(BAR)
                 .forwardedByAddresses(ImmutableList.of(FOO, BAZ))
@@ -96,7 +97,7 @@ public class InterledgerErrorOerCodecTests {
         },
 
         {
-            new InterledgerProtocolError.Builder()
+            ImmutableInterledgerProtocolError.builder()
                 .errorCode(ErrorCode.T02_LEDGER_BUSY)
                 .triggeredByAddress(BAZ)
                 .forwardedByAddresses(ImmutableList.of(FOO, BAR))
