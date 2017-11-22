@@ -10,6 +10,7 @@ import org.interledger.InterledgerPacket;
 import org.interledger.codecs.Codec;
 import org.interledger.codecs.CodecContext;
 import org.interledger.codecs.CodecContextFactory;
+import org.interledger.ilp.ImmutableInterledgerPayment;
 import org.interledger.ilp.InterledgerPayment;
 import org.interledger.psk.PskEncryptionType;
 import org.interledger.psk.PskMessage;
@@ -76,16 +77,13 @@ public class InterledgerPaymentWithPskCodecTests {
     final byte[] pskMessageBytes = CodecContextFactory.interledger().write(pskMessage);
 
     return Arrays.asList(new Object[][]{
-        {InterledgerPayment.builder()
-            .destinationAccount(InterledgerAddress.of("test1.foo"))
+        {ImmutableInterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test1.foo"))
             .destinationAmount(BigInteger.valueOf(100L)).data(pskMessageBytes).build(), pskMessage},
 
-        {InterledgerPayment.builder()
-            .destinationAccount(InterledgerAddress.of("test2.bar"))
+        {ImmutableInterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test2.bar"))
             .destinationAmount(BigInteger.valueOf(1L)).data(pskMessageBytes).build(), pskMessage},
 
-        {InterledgerPayment.builder()
-            .destinationAccount(InterledgerAddress.of("test3.bar"))
+        {ImmutableInterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test3.bar"))
             .destinationAmount(BigInteger.ZERO).data(pskMessageBytes).build(), pskMessage},
 
     });

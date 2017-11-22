@@ -8,6 +8,7 @@ import org.interledger.codecs.CodecContext;
 import org.interledger.codecs.CodecContextFactory;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
+import org.interledger.ilp.ImmutableInterledgerPayment;
 import org.interledger.ilp.InterledgerPayment;
 
 import org.junit.Test;
@@ -43,17 +44,16 @@ public class InterledgerPaymentRequestTest {
   public static Collection<Object[]> data() throws IOException {
 
     InterledgerPayment payment1 =
-        InterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test1.foo"))
+        ImmutableInterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test1.foo"))
             .destinationAmount(BigInteger.valueOf(100L)).data("test data".getBytes()).build();
 
     Condition condition1 = new PreimageSha256Condition(32, new byte[32]);
 
     InterledgerPaymentRequest ipr1 =
-        InterledgerPaymentRequest.builder()
-            .interledgerPayment(payment1).condition(condition1).build();
+        InterledgerPaymentRequest.builder().interledgerPayment(payment1).condition(condition1).build();
 
     InterledgerPayment payment2 =
-        InterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test2.bar"))
+        ImmutableInterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test2.bar"))
             .destinationAmount(BigInteger.ZERO).data("other data".getBytes()).build();
 
     Condition condition2 = new PreimageSha256Condition(32,
@@ -62,8 +62,7 @@ public class InterledgerPaymentRequestTest {
             1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2});
 
     InterledgerPaymentRequest ipr2 =
-        InterledgerPaymentRequest.builder()
-            .interledgerPayment(payment2).condition(condition2).build();
+        InterledgerPaymentRequest.builder().interledgerPayment(payment2).condition(condition2).build();
 
     return Arrays
         .asList(new Object[][]{{ipr1, payment1, condition1}, {ipr2, payment2, condition2},});
