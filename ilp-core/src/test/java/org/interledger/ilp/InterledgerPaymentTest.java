@@ -38,34 +38,34 @@ public class InterledgerPaymentTest {
   @Test
   public void testBuildWithNullValues() throws Exception {
     try {
-      ImmutableInterledgerPayment.builder().build();
+      InterledgerPayment.builder().build();
       fail();
     } catch (IllegalStateException e) {
-      assert(e.getMessage().startsWith("Cannot build InterledgerPayment, "
+      assert (e.getMessage().startsWith("Cannot build InterledgerPayment, "
           + "some of required attributes are not set"));
     }
 
     try {
-      ImmutableInterledgerPayment.builder().destinationAccount(mock(InterledgerAddress.class))
+      InterledgerPayment.builder().destinationAccount(mock(InterledgerAddress.class))
           .build();
       fail();
     } catch (IllegalStateException e) {
-      assert(e.getMessage().startsWith("Cannot build InterledgerPayment, "
+      assert (e.getMessage().startsWith("Cannot build InterledgerPayment, "
           + "some of required attributes are not set"));
     }
 
     try {
-      ImmutableInterledgerPayment.builder().destinationAccount(mock(InterledgerAddress.class))
+      InterledgerPayment.builder().destinationAccount(mock(InterledgerAddress.class))
           .destinationAmount(BigInteger.valueOf(100L))
           .build();
       fail();
     } catch (IllegalStateException e) {
-      assert(e.getMessage().startsWith("Cannot build InterledgerPayment, "
+      assert (e.getMessage().startsWith("Cannot build InterledgerPayment, "
           + "some of required attributes are not set"));
     }
 
     final InterledgerPayment interledgerPayment =
-        ImmutableInterledgerPayment.builder().destinationAccount(mock(InterledgerAddress.class))
+        InterledgerPayment.builder().destinationAccount(mock(InterledgerAddress.class))
             .destinationAmount(BigInteger.valueOf(100L))
             .data(new byte[]{}).build();
     assertThat(interledgerPayment, is(not(nullValue())));
@@ -77,12 +77,12 @@ public class InterledgerPaymentTest {
     byte[] data = new byte[]{127};
 
     final InterledgerPayment interledgerPayment1 =
-        ImmutableInterledgerPayment.builder().destinationAccount(destinationAccount)
+        InterledgerPayment.builder().destinationAccount(destinationAccount)
             .destinationAmount(BigInteger.valueOf(100L))
             .data(data).build();
 
     final InterledgerPayment interledgerPayment2 =
-        ImmutableInterledgerPayment.builder().destinationAccount(destinationAccount)
+        InterledgerPayment.builder().destinationAccount(destinationAccount)
             .destinationAmount(BigInteger.valueOf(100L))
             .data(data).build();
 
@@ -90,7 +90,7 @@ public class InterledgerPaymentTest {
     assertTrue(interledgerPayment2.equals(interledgerPayment1));
     assertTrue(interledgerPayment1.hashCode() == interledgerPayment2.hashCode());
 
-    final InterledgerPayment interledgerPaymentOther = ImmutableInterledgerPayment.builder()
+    final InterledgerPayment interledgerPaymentOther = InterledgerPayment.builder()
         .destinationAccount(destinationAccount).destinationAmount(BigInteger.valueOf(10L))
         .data(data).build();
 

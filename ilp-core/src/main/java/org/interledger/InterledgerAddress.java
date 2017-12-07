@@ -1,5 +1,7 @@
 package org.interledger;
 
+import org.interledger.annotations.Immutable;
+
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -30,7 +32,6 @@ import java.util.regex.Pattern;
  *
  * @see "https://github.com/interledger/rfcs/tree/master/0015-ilp-addresses"
  */
-@Value.Immutable
 public interface InterledgerAddress {
 
   String REGEX = "(?=^.{1,1023}$)"
@@ -46,9 +47,7 @@ public interface InterledgerAddress {
    * @return an {@link InterledgerAddress} instance.
    */
   static InterledgerAddress of(final String value) {
-    return builder()
-        .value(value)
-        .build();
+    return new InterledgerAddressBuilder().value(value).build();
   }
 
   /**
@@ -137,10 +136,10 @@ public interface InterledgerAddress {
   /**
    * Get the default builder.
    *
-   * @return a {@link ImmutableInterledgerAddress.Builder} instance.
+   * @return a {@link InterledgerAddressBuilder} instance.
    */
-  static ImmutableInterledgerAddress.Builder builder() {
-    return ImmutableInterledgerAddress.builder();
+  static InterledgerAddressBuilder builder() {
+    return new InterledgerAddressBuilder();
   }
 
   /**
@@ -301,48 +300,67 @@ public interface InterledgerAddress {
     return ROOT_PATTERN.matcher(this.getValue()).matches();
   }
 
-  /**
-   * <p>Compares the specified object with this <tt>InterledgerAddress</tt> for equality. The
-   * <tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a String value,
-   * so implementations should take care to forward equality decisions to the {@link
-   * String#equals(Object)} method on the object returned of {@link #getValue()}.</p>
-   *
-   * @param obj object to be compared for equality with this collection
-   *
-   * @return <tt>true</tt> if the specified object is equal to this collection
-   *
-   * @see Object#equals(Object)
-   * @see Set#equals(Object)
-   * @see List#equals(Object)
-   */
-  @Override
-  boolean equals(Object obj);
+  @Immutable
+  public abstract class AbstractInterledgerAddress implements InterledgerAddress {
 
-  /**
-   * <p> Returns the hash code value for this <tt>InterledgerAddress</tt>. The
-   * <tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a String value,
-   * so implementations should take care to forward hashcode decisions to the {@link
-   * String#equals(Object)} method on the object returned of {@link #getValue()}.</p>
-   *
-   * @return the hash code value for this InterledgerAddress.
-   *
-   * @see Object#hashCode()
-   * @see Object#equals(Object)
-   */
-  @Override
-  int hashCode();
+    /**
+     * <p>Compares the specified object with this <tt>InterledgerAddress</tt> for equality.</p>
+     *
+     * <p>The <tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a
+     * String value, so implementations should take care to forward equality decisions to the {@link
+     * String#equals(Object)} method on the object returned by {@link #getValue()}.</p>
+     *
+     * @param obj object to be compared for equality with this collection
+     *
+     * @return <tt>true</tt> if the specified object is equal to this {@link InterledgerAddress}.
+     *
+     * @see Object#equals(Object)
+     * @see Set#equals(Object)
+     * @see List#equals(Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
 
-  /**
-   * Precondition enforcer that ensures the value is a valid Interledger Address.
-   *
-   * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses/0015-ilp-addresses.md"
-   */
+      InterledgerAddress foo = (InterledgerAddress) obj;
 
-  @Value.Check
-  default void check() {
-    if (!InterledgerAddress.isValid(getValue())) {
-      throw new IllegalArgumentException(String.format("Invalid characters in address: ['%s']. "
-          + "Reference Interledger ILP-RFC-15 for proper format.", getValue()));
+      return getValue().equals(foo.getValue());
+    }
+
+    /**
+     * <p>Returns the hash code value for this <tt>InterledgerAddress</tt>.</p>
+     *
+     * <p>The<tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a
+     * String value, so implementations should take care to forward hashcode decisions to the {@link
+     * String#equals(Object)} method on the object returned by {@link #getValue()}.</p>
+     *
+     * @return the hash code value for this {@link InterledgerAddress}.
+     *
+     * @see Object#hashCode()
+     * @see Object#equals(Object)
+     */
+    @Override
+    public int hashCode() {
+      return this.getValue().hashCode();
+    }
+
+    /**
+     * Precondition enforcer that ensures the value is a valid Interledger Address.
+     *
+     * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses/0015-ilp-addresses.md"
+     */
+    @Value.Check
+    void check() {
+      if (!InterledgerAddress.isValid(getValue())) {
+        throw new IllegalArgumentException(String.format("Invalid characters in address: ['%s']. "
+            + "Reference Interledger ILP-RFC-15 for proper format.", getValue()));
+      }
     }
   }
+
 }

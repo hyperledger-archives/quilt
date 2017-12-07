@@ -91,6 +91,7 @@
     <module>dev-ops</module>
     <module>crypto-conditions</module>
     <module>ilp-core</module>
+    <module>ilp-annotations</module>
   </modules>
 
   <dependencyManagement>
@@ -100,6 +101,12 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>crypto-conditions</artifactId>
         <version>0.4.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>ilp-annotations</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
