@@ -7,16 +7,15 @@ import static org.interledger.ilp.InterledgerProtocolError.ErrorCode.ErrorFamily
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacket;
 import org.interledger.InterledgerRuntimeException;
+import org.interledger.annotations.Immutable;
 
 import org.immutables.value.Value;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * <p>Interledger errors may be generated at any point during an Interledger payment.</p>
@@ -30,16 +29,15 @@ import java.util.stream.Collectors;
  * @see "https://github.com/interledger/rfcs/blob/master/0003-interledger-protocol/0003-interledger
  *     -protocol.md#ilp-error-format"
  */
-@Value.Immutable
 public interface InterledgerProtocolError extends InterledgerPacket {
 
   /**
    * Get the default builder.
    *
-   * @return a {@link ImmutableInterledgerProtocolError.Builder} instance.
+   * @return a {@link InterledgerProtocolErrorBuilder} instance.
    */
-  static ImmutableInterledgerProtocolError.Builder builder() {
-    return ImmutableInterledgerProtocolError.builder();
+  static InterledgerProtocolErrorBuilder builder() {
+    return new InterledgerProtocolErrorBuilder();
   }
 
   /**
@@ -94,33 +92,96 @@ public interface InterledgerProtocolError extends InterledgerPacket {
       final InterledgerProtocolError interledgerProtocolError,
       final InterledgerAddress forwardedByAddress
   ) {
-    return ImmutableInterledgerProtocolError.builder().from(interledgerProtocolError)
+    return new InterledgerProtocolErrorBuilder().from(interledgerProtocolError)
         .addForwardedByAddresses(forwardedByAddress)
         .build();
   }
 
-  /**
-   * Pre check verification that there is not a packet loop.
-   */
-  @Value.Check
-  default void check() {
+  @Immutable
+  abstract class AbstractInterledgerProtocolError implements InterledgerProtocolError {
 
-    // Disallow the triggeredBy from being included in the forwardedBy. The rationale is that
-    // the triggering node should not accidentally add itself to the forwarding addresses.
-    // Likewise, if that ever happens with an incoming error, then we should throw an exception.
-    this.getForwardedByAddresses().stream()
-        .filter(interledgerAddress -> interledgerAddress.equals(this.getTriggeredByAddress()))
-        .findFirst()
-        .ifPresent(interledgerAddress -> {
-          // Throw an exception here because if this occurs, it indicates a packet loop, and
-          // we don't want to simply remove the address from the ForwardedBy list and send
-          // the packet on, because doing so would likely mean it will come back to us.
-          throw new IllegalArgumentException(String.format(
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass()) {
+        return false;
+      }
+
+      InterledgerProtocolError impl = (InterledgerProtocolError) object;
+
+      if (!getErrorCode().equals(impl.getErrorCode())) {
+        return false;
+      }
+      if (!getTriggeredByAddress().equals(impl.getTriggeredByAddress())) {
+        return false;
+      }
+      if (!getForwardedByAddresses().equals(impl.getForwardedByAddresses())) {
+        return false;
+      }
+      if (!getTriggeredAt().equals(impl.getTriggeredAt())) {
+        return false;
+      }
+
+      if (getData().isPresent() && impl.getData().isPresent()) {
+        return Arrays.equals(getData().get(), impl.getData().get());
+      } else {
+        return getData().equals(impl.getData());
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      int result = getErrorCode().hashCode();
+      result = 31 * result + getTriggeredByAddress().hashCode();
+      result = 31 * result + getForwardedByAddresses().hashCode();
+      result = 31 * result + getTriggeredAt().hashCode();
+      result = 31 * result + (getData().isPresent()
+          ? Arrays.hashCode(getData().get()) : getData().hashCode());
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "InterledgerProtocolError{"
+          + "errorCode="
+          + getErrorCode()
+          + ", triggeredByAddress="
+          + getTriggeredByAddress()
+          + ", forwardedByAddresses="
+          + getForwardedByAddresses()
+          + ", triggeredAt="
+          + getTriggeredAt()
+          + ", data="
+          + getData()
+          + '}';
+    }
+
+    /**
+     * Pre check verification that there is not a packet loop.
+     */
+    @Value.Check
+    void check() {
+
+      // Disallow the triggeredBy from being included in the forwardedBy. The rationale is that
+      // the triggering node should not accidentally add itself to the forwarding addresses.
+      // Likewise, if that ever happens with an incoming error, then we should throw an exception.
+      this.getForwardedByAddresses().stream()
+          .filter(interledgerAddress -> interledgerAddress.equals(this.getTriggeredByAddress()))
+          .findFirst()
+          .ifPresent(interledgerAddress -> {
+            // Throw an exception here because if this occurs, it indicates a packet loop, and
+            // we don't want to simply remove the address from the ForwardedBy list and send
+            // the packet on, because doing so would likely mean it will come back to us.
+            throw new IllegalArgumentException(String.format(
                 "TriggeredByAddress \"%s\" was found in the ForwardedByAddresses list, which "
                     + "indicates an Interledger packet loop!",
                 this.getTriggeredByAddress().getValue()));
-        });
+          });
+    }
   }
+
 
   /**
    * Inspired by HTTP Status Codes, ILP error codes are categorized based upon the intended behavior
@@ -437,7 +498,7 @@ public interface InterledgerProtocolError extends InterledgerPacket {
      * Error.
      */
     ErrorCode R99_APPLICATION_ERROR = ErrorCode.of("R99", "APPLICATION ERROR");
-  }
 
+  }
 
 }

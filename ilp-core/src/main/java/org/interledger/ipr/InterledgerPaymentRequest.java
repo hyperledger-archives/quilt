@@ -1,11 +1,10 @@
 package org.interledger.ipr;
 
+import org.interledger.annotations.Immutable;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.ilp.InterledgerPayment;
 
-import org.immutables.value.Value;
-
-import java.util.Objects;
+import org.immutables.value.internal.$processor$.meta.$ValueMirrors;
 
 /**
  * An Interledger Payment Request as defined in ILP RFC 11.
@@ -13,16 +12,15 @@ import java.util.Objects;
  * @see "https://github.com/interledger/rfcs/blob/master/0011-interledger-payment-request/0011
  * -interledger-payment-request.md"
  */
-@Value.Immutable
 public interface InterledgerPaymentRequest {
 
   /**
    * Get the default builder.
    *
-   * @return a {@link ImmutableInterledgerPaymentRequest.Builder} instance.
+   * @return a {@link InterledgerPaymentRequestBuilder} instance.
    */
-  static ImmutableInterledgerPaymentRequest.Builder builder() {
-    return ImmutableInterledgerPaymentRequest.builder();
+  static InterledgerPaymentRequestBuilder builder() {
+    return new InterledgerPaymentRequestBuilder();
   }
 
   /**
@@ -47,6 +45,11 @@ public interface InterledgerPaymentRequest {
    * @return a Condition
    */
   Condition getCondition();
+
+  @Immutable
+  abstract class AbstractInterledgerPaymentRequest implements InterledgerPaymentRequest {
+
+  }
 
 }
 

@@ -2,12 +2,10 @@ package org.interledger.ilp;
 
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacket;
-
-import org.immutables.value.Value;
+import org.interledger.annotations.Immutable;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * <p>Interledger Payments moves assets of one party to another that consists of one or more ledger
@@ -42,16 +40,15 @@ import java.util.Objects;
  * releases the fulfillment for the transfer, which can be used to execute all prepared transfers
  * that were established prior to the receiver accepting the payment.</p>
  */
-@Value.Immutable
 public interface InterledgerPayment extends InterledgerPacket {
 
   /**
    * Get the default builder.
    *
-   * @return a {@link ImmutableInterledgerPayment.Builder} instance.
+   * @return a {@link InterledgerPaymentBuilder} instance.
    */
-  static ImmutableInterledgerPayment.Builder builder() {
-    return ImmutableInterledgerPayment.builder();
+  static InterledgerPaymentBuilder builder() {
+    return new InterledgerPaymentBuilder();
   }
 
   /**
@@ -77,5 +74,42 @@ public interface InterledgerPayment extends InterledgerPacket {
    * @return A byte array.
    */
   byte[] getData();
+
+  @Immutable
+  abstract class AbstractInterledgerPayment implements InterledgerPayment {
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false;
+      }
+
+      InterledgerPayment impl = (InterledgerPayment) obj;
+
+      return getDestinationAccount().equals(impl.getDestinationAccount())
+          && getDestinationAmount().equals(impl.getDestinationAmount())
+          && Arrays.equals(getData(), impl.getData());
+    }
+
+    @Override
+    public int hashCode() {
+      int result = getDestinationAccount().hashCode();
+      result = 31 * result + getDestinationAmount().hashCode();
+      result = 31 * result + Arrays.hashCode(getData());
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "InterledgerPayment{"
+          + "destinationAccount=" + getDestinationAccount()
+          + ", destinationAmount=" + getDestinationAmount()
+          + ", data=" + Arrays.toString(getData())
+          + '}';
+    }
+  }
 
 }
