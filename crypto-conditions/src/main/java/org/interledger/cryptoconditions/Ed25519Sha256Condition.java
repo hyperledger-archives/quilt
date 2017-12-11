@@ -1,8 +1,9 @@
 package org.interledger.cryptoconditions;
 
-import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import org.interledger.cryptoconditions.der.DerOutputStream;
 import org.interledger.cryptoconditions.der.DerTag;
+
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

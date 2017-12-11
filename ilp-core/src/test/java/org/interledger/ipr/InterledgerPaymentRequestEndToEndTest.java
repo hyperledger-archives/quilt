@@ -79,7 +79,7 @@ public class InterledgerPaymentRequestEndToEndTest {
     // Build IPR
     InterledgerPaymentRequest ipr =
         InterledgerPaymentRequest.builder()
-            .payment(payment)
+            .interledgerPayment(payment)
             .condition(condition)
             .build();
 

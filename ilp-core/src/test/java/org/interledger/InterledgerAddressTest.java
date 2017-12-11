@@ -239,9 +239,12 @@ public class InterledgerAddressTest {
 
   @Test
   public void testToString() throws Exception {
-    assertThat(InterledgerAddress.of("g.foo.bob").toString(), is("g.foo.bob"));
-    assertThat(InterledgerAddress.of("g.foo.bob.").toString(), is("g.foo.bob."));
-    assertThat(InterledgerAddress.of("g.").toString(), is("g."));
+    assertThat(InterledgerAddress.of("g.foo.bob").toString(),
+        is("InterledgerAddress{value=g.foo.bob}"));
+    assertThat(InterledgerAddress.of("g.foo.bob.").toString(),
+        is("InterledgerAddress{value=g.foo.bob.}"));
+    assertThat(InterledgerAddress.of("g.").toString(),
+        is("InterledgerAddress{value=g.}"));
   }
 
   /**
@@ -261,7 +264,8 @@ public class InterledgerAddressTest {
   }
 
   /**
-   * Assert that a non-address prefix fails the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
+   * Assert that a non-address prefix fails the
+   * {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
    * check.
    */
   @Test(expected = IllegalArgumentException.class)
@@ -277,7 +281,8 @@ public class InterledgerAddressTest {
   }
 
   /**
-   * Assert that a address prefix passes the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
+   * Assert that a address prefix passes the
+   * {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
    * check.
    */
   @Test
@@ -306,7 +311,8 @@ public class InterledgerAddressTest {
   }
 
   /**
-   * Assert that a address prefix fails the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
+   * Assert that a address prefix fails the
+   * {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
    * check.
    */
   @Test(expected = IllegalArgumentException.class)
@@ -323,7 +329,8 @@ public class InterledgerAddressTest {
   }
 
   /**
-   * Assert that a non-address prefix passes the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
+   * Assert that a non-address prefix passes the
+   * {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
    * check.
    */
   @Test

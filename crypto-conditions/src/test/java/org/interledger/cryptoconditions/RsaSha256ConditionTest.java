@@ -3,10 +3,9 @@ package org.interledger.cryptoconditions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import com.google.common.io.BaseEncoding;
-
 import org.interledger.cryptoconditions.helpers.TestKeyFactory;
 
+import com.google.common.io.BaseEncoding;
 import org.junit.Test;
 
 import java.net.URI;

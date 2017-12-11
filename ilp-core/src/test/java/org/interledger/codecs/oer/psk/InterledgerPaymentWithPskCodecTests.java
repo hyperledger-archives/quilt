@@ -76,13 +76,16 @@ public class InterledgerPaymentWithPskCodecTests {
     final byte[] pskMessageBytes = CodecContextFactory.interledger().write(pskMessage);
 
     return Arrays.asList(new Object[][]{
-        {new InterledgerPayment.Builder().destinationAccount(InterledgerAddress.of("test1.foo"))
+        {InterledgerPayment.builder()
+            .destinationAccount(InterledgerAddress.of("test1.foo"))
             .destinationAmount(BigInteger.valueOf(100L)).data(pskMessageBytes).build(), pskMessage},
 
-        {new InterledgerPayment.Builder().destinationAccount(InterledgerAddress.of("test2.bar"))
+        {InterledgerPayment.builder()
+            .destinationAccount(InterledgerAddress.of("test2.bar"))
             .destinationAmount(BigInteger.valueOf(1L)).data(pskMessageBytes).build(), pskMessage},
 
-        {new InterledgerPayment.Builder().destinationAccount(InterledgerAddress.of("test3.bar"))
+        {InterledgerPayment.builder()
+            .destinationAccount(InterledgerAddress.of("test3.bar"))
             .destinationAmount(BigInteger.ZERO).data(pskMessageBytes).build(), pskMessage},
 
     });

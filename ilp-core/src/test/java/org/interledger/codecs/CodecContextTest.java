@@ -2,7 +2,6 @@ package org.interledger.codecs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacket;
 import org.interledger.InterledgerPacket.Handler;
@@ -21,11 +20,34 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Unit tests for {@link CodecContext}.
  */
 public class CodecContextTest {
+
+  /**
+   * Convenience method to validate that the passed in {@link InterledgerPacket} is a {@link
+   * QuoteLiquidityRequest} with the appropriate values.
+   *
+   * @param packet  The {@link InterledgerPacket} to validate
+   * @param address The expected destination {@link InterledgerAddress} in String format.
+   * @param minutes The expected number of minutes for the destinationHoldDuration of the request.
+   */
+  private static void validateQuoteLiquidityRequest(final InterledgerPacket packet,
+                                                    final String address,
+                                                    final int minutes) {
+
+    assertThat("The read packet is an instance of QuoteLiquidityRequest",
+        packet instanceof QuoteLiquidityRequest);
+
+    QuoteLiquidityRequest decoded = (QuoteLiquidityRequest) packet;
+    assertThat("The decoded packet has the same InterledgerAddress",
+        decoded.getDestinationAccount().getValue().equals(address));
+    assertThat("The decoded packet has the same Duration",
+        decoded.getDestinationHoldDuration().equals(Duration.ofMinutes(minutes)));
+  }
 
   /**
    * Test that the {@link CodecContext} properly registers class-based {@link Codec} instances and
@@ -115,7 +137,7 @@ public class CodecContextTest {
      * Create an encoded {@link QuoteLiquidityRequest} in bytes format.
      */
     byte[] bytes = createEncodedTestInstance("g.foo", 3);
-    
+
     try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
       /**
        * Attempt to read a packet from the {@link java.io.InputStream} with while specifying the
@@ -166,10 +188,9 @@ public class CodecContextTest {
     }
   }
 
-
   /**
-   * Test the {@link CodecContext} properly decodes an {@link InterledgerPacket} from a {@link
-   * byte[]} when provided with the class of the packet.
+   * Test the {@link CodecContext} properly decodes an {@link InterledgerPacket} from a byte array
+   * when provided with the class of the packet.
    */
   @Test
   public void testDecodingAnInterledgerPacketWithBytes() {
@@ -220,7 +241,7 @@ public class CodecContextTest {
         }
       });
 
-      assertThat("The callback to the VoidHandler was made", callbackMade.get() );
+      assertThat("The callback to the VoidHandler was made", callbackMade.get());
 
     } catch (CodecException e) {
       assertThat("n CodecException was not thrown", false);
@@ -260,7 +281,7 @@ public class CodecContextTest {
 
       });
 
-      assertThat("The callback to the Handler was made", callbackMade.get() );
+      assertThat("The callback to the Handler was made", callbackMade.get());
 
     } catch (CodecException e) {
       assertThat("A CodecException was not thrown", false);
@@ -344,41 +365,19 @@ public class CodecContextTest {
   }
 
   /**
-   * Convenience method to validate that the passed in {@link InterledgerPacket} is a {@link
-   * QuoteLiquidityRequest} with the appropriate values.
-   *
-   * @param packet The {@link InterledgerPacket} to validate
-   * @param address The expected destination {@link InterledgerAddress} in String format.
-   * @param minutes The expected number of minutes for the destinationHoldDuration of the request.
-   */
-  private static void validateQuoteLiquidityRequest(final InterledgerPacket packet,
-      final String address,
-      final int minutes) {
-
-    assertThat("The read packet is an instance of QuoteLiquidityRequest",
-        packet instanceof QuoteLiquidityRequest);
-
-    QuoteLiquidityRequest decoded = (QuoteLiquidityRequest) packet;
-    assertThat("The decoded packet has the same InterledgerAddress",
-        decoded.getDestinationAccount().getValue().equals(address));
-    assertThat("The decoded packet has the same Duration",
-        decoded.getDestinationHoldDuration().equals(Duration.ofMinutes(minutes)));
-  }
-
-  /**
    * Convenience method to generate an encoded instance of {@link QuoteLiquidityRequest} for use
    * in test cases.
    *
    * @param address The destination {@link InterledgerAddress} in String format.
    * @param minutes The number of minutes for the destinationHoldDuration of the request.
-   * @return A {@link byte[]} containing the bytes of the encoded {@link QuoteLiquidityRequest}
+   * @return A byte array containing the bytes of the encoded {@link QuoteLiquidityRequest}
    */
   private byte[] createEncodedTestInstance(final String address, final int minutes) {
 
     CodecContext context = CodecContextFactory.interledger();
 
     /* Create a liquidity request */
-    QuoteLiquidityRequest quoteLiquidityRequest = createTestInstance(address,minutes);
+    QuoteLiquidityRequest quoteLiquidityRequest = createTestInstance(address, minutes);
 
     /* Convert the request to bytes */
     return context.write(quoteLiquidityRequest);

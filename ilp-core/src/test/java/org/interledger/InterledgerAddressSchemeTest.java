@@ -11,7 +11,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.Arrays;
 
 /**
- * Unit tests for {@link InterledgerAddress.Builder} schemes.
+ * Unit tests for {@link ImmutableInterledgerAddress.Builder} schemes.
  */
 @RunWith(Parameterized.class)
 public class InterledgerAddressSchemeTest {

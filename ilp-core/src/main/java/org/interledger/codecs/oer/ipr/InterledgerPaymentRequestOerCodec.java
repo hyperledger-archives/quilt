@@ -38,7 +38,7 @@ public class InterledgerPaymentRequestOerCodec implements InterledgerPaymentRequ
         = context.read(PreimageSha256Condition.class, inputStream);
 
     return InterledgerPaymentRequest.builder()
-        .payment(packet)
+        .interledgerPayment(packet)
         .condition(condition)
         .build();
   }

@@ -59,8 +59,7 @@ public class Ed25519Sha256Fulfillment extends FulfillmentBase<Ed25519Sha256Condi
   /**
    * Returns a copy of the signature linked to this fulfillment.
    *
-   * @return A {@link byte[]} containing the signature for this fulfillment.
-   *
+   * @return A byte array containing the signature for this fulfillment.
    * @deprecated Java 8 does not have the concept of an immutable byte array, so this method allows
    *     external callers to accidentally or intentionally mute the prefix. As such, this method may
    *     be removed in a future version. Prefer {@link #getSignatureBase64Url()} instead.

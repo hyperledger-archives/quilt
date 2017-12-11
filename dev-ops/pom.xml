@@ -10,7 +10,7 @@
     <name>Hyperledger Quilt Dev-Ops Tools</name>
 
     <properties>
-        <kotlin.version>1.1.51</kotlin.version>
+        <kotlin.version>1.1.60</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.resources.sourceEncoding>UTF-8</project.resources.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

@@ -7,14 +7,15 @@ import static org.interledger.ilp.InterledgerProtocolError.ErrorCode.ErrorFamily
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacket;
 import org.interledger.InterledgerRuntimeException;
+import org.interledger.annotations.Immutable;
+
+import org.immutables.value.Value;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * <p>Interledger errors may be generated at any point during an Interledger payment.</p>
@@ -29,6 +30,15 @@ import java.util.stream.Collectors;
  *     -protocol.md#ilp-error-format"
  */
 public interface InterledgerProtocolError extends InterledgerPacket {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link InterledgerProtocolErrorBuilder} instance.
+   */
+  static InterledgerProtocolErrorBuilder builder() {
+    return new InterledgerProtocolErrorBuilder();
+  }
 
   /**
    * The Interledger Error Code for this error.
@@ -56,9 +66,7 @@ public interface InterledgerProtocolError extends InterledgerPacket {
    *
    * @return {@link Instant}.
    */
-  default Instant getTriggeredAt() {
-    return Instant.now();
-  }
+  Instant getTriggeredAt();
 
   /**
    * Optional error data, provided for debugging purposes.
@@ -66,15 +74,6 @@ public interface InterledgerProtocolError extends InterledgerPacket {
    * @return The optional error data.
    */
   Optional<byte[]> getData();
-
-  /**
-   * Get the default builder.
-   *
-   * @return a {@link Builder} instance.
-   */
-  static Builder builder() {
-    return new Builder();
-  }
 
   /**
    * <p>Constructs an {@link InterledgerProtocolError} that wraps an existing error and adds a new
@@ -93,223 +92,80 @@ public interface InterledgerProtocolError extends InterledgerPacket {
       final InterledgerProtocolError interledgerProtocolError,
       final InterledgerAddress forwardedByAddress
   ) {
-    return new Builder(interledgerProtocolError).addForwardedByAddress(forwardedByAddress)
+    return new InterledgerProtocolErrorBuilder().from(interledgerProtocolError)
+        .addForwardedByAddresses(forwardedByAddress)
         .build();
   }
 
-  /**
-   * <p>A builder for immutable instances of {@link InterledgerProtocolError}.</p>
-   *
-   * <p>NOTE: This builder class is not thread-safe and generally should not be stored in a field or
-   * collection, but instead used immediately to create instances of {@link
-   * InterledgerProtocolError}.</p>
-   */
-  class Builder {
+  @Immutable
+  abstract class AbstractInterledgerProtocolError implements InterledgerProtocolError {
 
-    private ErrorCode errorCode;
-    private InterledgerAddress triggeredByAddress;
-    private List<InterledgerAddress> forwardedByAddresses;
-    private Instant triggeredAt;
-    private Optional<byte[]> data;
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass()) {
+        return false;
+      }
 
-    /**
-     * No-args Constructor.
-     */
-    public Builder() {
-      this.forwardedByAddresses = new LinkedList<>();
-      data = Optional.empty();
+      InterledgerProtocolError impl = (InterledgerProtocolError) object;
+
+      if (!getErrorCode().equals(impl.getErrorCode())) {
+        return false;
+      }
+      if (!getTriggeredByAddress().equals(impl.getTriggeredByAddress())) {
+        return false;
+      }
+      if (!getForwardedByAddresses().equals(impl.getForwardedByAddresses())) {
+        return false;
+      }
+      if (!getTriggeredAt().equals(impl.getTriggeredAt())) {
+        return false;
+      }
+
+      if (getData().isPresent() && impl.getData().isPresent()) {
+        return Arrays.equals(getData().get(), impl.getData().get());
+      } else {
+        return getData().equals(impl.getData());
+      }
     }
 
-    public Builder(final InterledgerProtocolError interledgerProtocolError) {
-      Objects.requireNonNull(interledgerProtocolError);
-
-      this.errorCode = interledgerProtocolError.getErrorCode();
-      this.triggeredByAddress = interledgerProtocolError.getTriggeredByAddress();
-      // Defensive copy here, just in case the list is taken from an existing
-      // InterledgerProtocolError.
-      this.forwardedByAddresses = interledgerProtocolError.getForwardedByAddresses().stream()
-          .collect(
-              Collectors.toList());
-      this.triggeredAt = interledgerProtocolError.getTriggeredAt();
-      this.data = interledgerProtocolError.getData();
-    }
-
-    /**
-     * Builder method to actually construct an instance of {@link InterledgerProtocolError} of the
-     * data in this builder.
-     *
-     * @return a new instance of {@link InterledgerProtocolError} built using the data in this
-     *         builder.
-     */
-    public InterledgerProtocolError build() {
-      return new Impl(this);
-    }
-
-    public Builder errorCode(final ErrorCode errorCode) {
-      this.errorCode = Objects.requireNonNull(errorCode, "errorCode must not be null!");
-      return this;
-    }
-
-    public Builder triggeredByAddress(final InterledgerAddress triggeredByAddress) {
-      this.triggeredByAddress = Objects
-          .requireNonNull(triggeredByAddress, "triggeredByAddress must not be null!");
-      return this;
-    }
-
-    public Builder forwardedByAddresses(final List<InterledgerAddress> forwardedByAddresses) {
-      this.forwardedByAddresses = Objects
-          .requireNonNull(forwardedByAddresses, "forwardedByAddresses must not be null!");
-      return this;
-    }
-
-    public Builder addForwardedByAddress(final InterledgerAddress forwardedByAddress) {
-      this.forwardedByAddresses
-          .add(Objects
-              .requireNonNull(forwardedByAddress, "forwardedByAddress must not be null!"));
-      return this;
-    }
-
-
-    public Builder triggeredAt(final Instant triggeredAt) {
-      this.triggeredAt = Objects.requireNonNull(triggeredAt, "triggeredAt must not be null!");
-      return this;
-    }
-
-    public Builder data(final byte[] data) {
-      Objects.requireNonNull(data, "data must not be null!");
-      this.data = Optional.of(data);
-      return this;
+    @Override
+    public int hashCode() {
+      int result = getErrorCode().hashCode();
+      result = 31 * result + getTriggeredByAddress().hashCode();
+      result = 31 * result + getForwardedByAddresses().hashCode();
+      result = 31 * result + getTriggeredAt().hashCode();
+      result = 31 * result + (getData().isPresent()
+          ? Arrays.hashCode(getData().get()) : getData().hashCode());
+      return result;
     }
 
     /**
-     * A private, immutable implementation of {@link InterledgerProtocolError}. To construct an
-     * instance of this class, use an instance of {@link Builder}.
+     * Pre check verification that there is not a packet loop.
      */
-    private static final class Impl implements InterledgerProtocolError {
+    @Value.Check
+    void check() {
 
-      private final ErrorCode errorCode;
-      private final InterledgerAddress triggeredByAddress;
-      private final List<InterledgerAddress> forwardedByAddresses;
-      private final Instant triggeredAt;
-      private final Optional<byte[]> data;
-
-      private Impl(final Builder builder) {
-        Objects.requireNonNull(builder);
-
-        this.errorCode = Objects
-            .requireNonNull(builder.errorCode, "errorCode must not be null!");
-        this.triggeredByAddress = Objects
-            .requireNonNull(builder.triggeredByAddress, "triggeredByAddress must not be null!");
-
-        // Disallow the triggeredBy from being included in the forwardedBy. The rationale is that
-        // the triggering node should not accidentally add itself to the forwarding addresses.
-        // Likewise, if that ever happens with an incoming error, then we should throw an exception.
-        builder.forwardedByAddresses.stream()
-            .filter(interledgerAddress -> interledgerAddress.equals(builder.triggeredByAddress))
-            .findFirst()
-            .ifPresent(interledgerAddress -> {
-                  // Throw an exception here because if this occurs, it indicates a packet loop, and
-                  // we don't want to simply remove the address from the ForwardedBy list and send
-                  // the packet on, because doing so would likely mean it will come back to us.
-                  throw new IllegalArgumentException(String.format(
-                      "TriggeredByAddress \"%s\" was found in the ForwardedByAddresses list, which "
-                          + "indicates an Interledger packet loop!", triggeredByAddress));
-            }
-          );
-
-        // Defensively copy the list of addresses so that mutating the builder doesn't affect this.
-        this.forwardedByAddresses = Objects.requireNonNull(
-            builder.forwardedByAddresses.stream().collect(Collectors.toList()),
-            "forwardedByAddresses must not be null!"
-        );
-
-        this.triggeredAt = Optional.ofNullable(builder.triggeredAt).orElse(Instant.now());
-        this.data = Objects.requireNonNull(builder.data, "data must not be null!");
-      }
-
-      @Override
-      public ErrorCode getErrorCode() {
-        return errorCode;
-      }
-
-      @Override
-      public InterledgerAddress getTriggeredByAddress() {
-        return triggeredByAddress;
-      }
-
-      @Override
-      public List<InterledgerAddress> getForwardedByAddresses() {
-        return forwardedByAddresses;
-      }
-
-      @Override
-      public Instant getTriggeredAt() {
-        return triggeredAt;
-      }
-
-      @Override
-      public Optional<byte[]> getData() {
-        return data;
-      }
-
-      @Override
-      public boolean equals(Object object) {
-        if (this == object) {
-          return true;
-        }
-        if (object == null || getClass() != object.getClass()) {
-          return false;
-        }
-
-        Impl impl = (Impl) object;
-
-        if (!errorCode.equals(impl.errorCode)) {
-          return false;
-        }
-        if (!triggeredByAddress.equals(impl.triggeredByAddress)) {
-          return false;
-        }
-        if (!forwardedByAddresses.equals(impl.forwardedByAddresses)) {
-          return false;
-        }
-        if (!triggeredAt.equals(impl.triggeredAt)) {
-          return false;
-        }
-
-        if (data.isPresent() && impl.getData().isPresent()) {
-          return Arrays.equals(data.get(), impl.getData().get());
-        } else {
-          return data.equals(impl.getData());
-        }
-      }
-
-      @Override
-      public int hashCode() {
-        int result = errorCode.hashCode();
-        result = 31 * result + triggeredByAddress.hashCode();
-        result = 31 * result + forwardedByAddresses.hashCode();
-        result = 31 * result + triggeredAt.hashCode();
-        result = 31 * result + (data.isPresent() ? data.get().hashCode() : data.hashCode());
-        return result;
-      }
-
-      @Override
-      public String toString() {
-        return "Impl{"
-            + "errorCode="
-            + errorCode
-            + ", triggeredByAddress="
-            + triggeredByAddress
-            + ", forwardedByAddresses="
-            + forwardedByAddresses
-            + ", triggeredAt="
-            + triggeredAt
-            + ", data="
-            + data
-            + '}';
-      }
+      // Disallow the triggeredBy from being included in the forwardedBy. The rationale is that
+      // the triggering node should not accidentally add itself to the forwarding addresses.
+      // Likewise, if that ever happens with an incoming error, then we should throw an exception.
+      this.getForwardedByAddresses().stream()
+          .filter(interledgerAddress -> interledgerAddress.equals(this.getTriggeredByAddress()))
+          .findFirst()
+          .ifPresent(interledgerAddress -> {
+            // Throw an exception here because if this occurs, it indicates a packet loop, and
+            // we don't want to simply remove the address from the ForwardedBy list and send
+            // the packet on, because doing so would likely mean it will come back to us.
+            throw new IllegalArgumentException(String.format(
+                "TriggeredByAddress \"%s\" was found in the ForwardedByAddresses list, which "
+                    + "indicates an Interledger packet loop!",
+                this.getTriggeredByAddress().getValue()));
+          });
     }
   }
+
 
   /**
    * Inspired by HTTP Status Codes, ILP error codes are categorized based upon the intended behavior
@@ -345,7 +201,6 @@ public interface InterledgerProtocolError extends InterledgerPacket {
      * @return A {@link ErrorFamily}.
      */
     ErrorFamily getErrorFamily();
-
 
     /**
      * Helper method to construct an instance of {@link ErrorCode}.
@@ -626,7 +481,7 @@ public interface InterledgerProtocolError extends InterledgerPacket {
      * Error.
      */
     ErrorCode R99_APPLICATION_ERROR = ErrorCode.of("R99", "APPLICATION ERROR");
-  }
 
+  }
 
 }

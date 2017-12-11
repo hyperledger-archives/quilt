@@ -46,16 +46,16 @@ public class InterledgerPaymentOerCodecTests {
       byteArrayOutputStream.write(i);
     }
 
-    return Arrays.asList(new Object[][]{{new InterledgerPayment.Builder()
+    return Arrays.asList(new Object[][]{{InterledgerPayment.builder()
         .destinationAccount(InterledgerAddress.builder().value("test3.foo").build())
         .destinationAmount(BigInteger.valueOf(100L)).data(new byte[]{}).build()},
 
-        {new InterledgerPayment.Builder()
+        {InterledgerPayment.builder()
             .destinationAccount(InterledgerAddress.builder().value("test1.bar").build())
             .destinationAmount(BigInteger.valueOf(50L))
             .data(new byte[]{1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
-        {new InterledgerPayment.Builder()
+        {InterledgerPayment.builder()
             .destinationAccount(InterledgerAddress.builder().value("test1.bar").build())
             .destinationAmount(BigInteger.valueOf(50L))
             .data(byteArrayOutputStream.toByteArray()).build()},

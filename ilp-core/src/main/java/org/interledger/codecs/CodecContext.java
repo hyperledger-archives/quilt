@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -293,17 +294,23 @@ public class CodecContext {
 
     if (codecs.containsKey(type)) {
       return (Codec<T>) codecs.get(type);
-    } else if (codecs.containsKey(type.getSuperclass())) {
-      return (Codec<T>) codecs.get(type.getSuperclass());
     } else {
-      // Check for interfaces...
-      return Arrays.stream(type.getInterfaces())
-          .filter(codecs::containsKey)
-          .map(interfaceClass -> (Codec<T>) codecs.get(interfaceClass))
-          .findFirst()
-          .orElseThrow(() -> new CodecException(
-              String.format("No codec registered for %s or its super classes!",
-                  type.getName())));
+      // Check any interfaces...
+      return Optional.ofNullable(
+          Arrays.stream(type.getInterfaces())
+              // Only use codecs that are found...
+              .filter(codecs::containsKey)
+              // If found, map to the first codec...
+              .map(interfaceClass -> (Codec<T>) codecs.get(interfaceClass))
+              .findFirst()
+              // Otherwise, recurse with the super-class
+              .orElseGet(() -> {
+                // There were not interfaces, so check the super-classes.
+                return (Codec<T>) lookup(type.getSuperclass());
+              })
+      ).orElseThrow(() -> new CodecException(
+          String.format("No codec registered for %s or its super classes!",
+              type.getName())));
     }
   }
 
