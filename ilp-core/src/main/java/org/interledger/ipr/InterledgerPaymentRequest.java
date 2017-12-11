@@ -4,8 +4,6 @@ import org.interledger.annotations.Immutable;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.ilp.InterledgerPayment;
 
-import org.immutables.value.internal.$processor$.meta.$ValueMirrors;
-
 /**
  * An Interledger Payment Request as defined in ILP RFC 11.
  *

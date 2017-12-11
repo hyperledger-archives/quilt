@@ -142,22 +142,6 @@ public interface InterledgerProtocolError extends InterledgerPacket {
       return result;
     }
 
-    @Override
-    public String toString() {
-      return "InterledgerProtocolError{"
-          + "errorCode="
-          + getErrorCode()
-          + ", triggeredByAddress="
-          + getTriggeredByAddress()
-          + ", forwardedByAddresses="
-          + getForwardedByAddresses()
-          + ", triggeredAt="
-          + getTriggeredAt()
-          + ", data="
-          + getData()
-          + '}';
-    }
-
     /**
      * Pre check verification that there is not a packet loop.
      */
@@ -217,7 +201,6 @@ public interface InterledgerProtocolError extends InterledgerPacket {
      * @return A {@link ErrorFamily}.
      */
     ErrorFamily getErrorFamily();
-
 
     /**
      * Helper method to construct an instance of {@link ErrorCode}.

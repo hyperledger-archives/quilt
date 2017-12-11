@@ -21,12 +21,6 @@
     <inceptionYear>2016</inceptionYear>
     <packaging>jar</packaging>
 
-    <properties>
-        <!-- TODO: Remove this property once CryptoConditions checkstyle is fixed per #5 -->
-        <checkstyle.skip>true</checkstyle.skip>
-        <maven.javadoc.skip>true</maven.javadoc.skip>
-    </properties>
-
     <dependencies>
 
         <dependency>
