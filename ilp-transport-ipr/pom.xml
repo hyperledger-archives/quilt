@@ -11,6 +11,8 @@
 
     <artifactId>ilp-transport-ipr</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+
+    <name>Interledger Transport - IPR</name>
     <dependencies>
         <dependency>
             <groupId>org.interledger</groupId>
@@ -27,6 +29,13 @@
         <dependency>
             <groupId>org.interledger</groupId>
             <artifactId>codec-framework</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.interledger</groupId>
+            <artifactId>ilp-transport-psk</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

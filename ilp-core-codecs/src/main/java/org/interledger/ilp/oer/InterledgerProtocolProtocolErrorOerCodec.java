@@ -2,7 +2,6 @@ package org.interledger.ilp.oer;
 
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacketType;
-import org.interledger.SequenceOfInterledgerAddresses;
 import org.interledger.ilp.InterledgerProtocolError;
 import org.interledger.ilp.InterledgerProtocolError.ErrorCode;
 import org.interledger.ilp.InterledgerProtocolErrorCodec;
@@ -12,6 +11,7 @@ import org.hyperledger.quilt.codecs.framework.CodecContext;
 import org.hyperledger.quilt.codecs.oer.OerGeneralizedTimeCodec;
 import org.hyperledger.quilt.codecs.oer.OerIA5StringCodec;
 import org.hyperledger.quilt.codecs.oer.OerOctetStringCodec;
+import org.hyperledger.quilt.codecs.oer.OerSequenceOfCodec;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +46,10 @@ import java.util.Objects;
  */
 public class InterledgerProtocolProtocolErrorOerCodec implements InterledgerProtocolErrorCodec {
 
+  private final Codec<List<InterledgerAddress>> sequenceOfInterledgerAddressCodec
+      = new OerSequenceOfCodec<>(InterledgerAddress.class);
+
+
   @Override
   public InterledgerProtocolError read(final CodecContext context, final InputStream inputStream)
       throws IOException {
@@ -72,8 +76,7 @@ public class InterledgerProtocolProtocolErrorOerCodec implements InterledgerProt
 
     // 6. Read the forwardedBy,which is a SEQUENCE OF InterledgerAddress
     final List<InterledgerAddress> addressList =
-        context.read(SequenceOfInterledgerAddresses.class,
-            inputStream);
+        sequenceOfInterledgerAddressCodec.read(context, inputStream);
 
     // 7. Read the triggeredAt, which is a Timestamp
     final Instant triggeredAt =
@@ -120,8 +123,8 @@ public class InterledgerProtocolProtocolErrorOerCodec implements InterledgerProt
     context.write(instance.getTriggeredByAddress(), outputStream);
 
     // 6. Write the forwardedBy addresses, which is a SEQUENCE OF InterledgerAddress
-    context.write((SequenceOfInterledgerAddresses)
-        instance.getForwardedByAddresses(), outputStream);
+    sequenceOfInterledgerAddressCodec.write(
+        context, instance.getForwardedByAddresses(), outputStream);
 
     // 7. Write the triggeredAt, which is a Timestamp
     context.write(

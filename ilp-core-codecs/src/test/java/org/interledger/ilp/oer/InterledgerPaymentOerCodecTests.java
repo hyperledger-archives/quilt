@@ -10,7 +10,6 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.hyperledger.quilt.codecs.framework.Codec;
 import org.hyperledger.quilt.codecs.framework.CodecContext;
-import org.hyperledger.quilt.codecs.framework.CodecContextFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -95,7 +94,7 @@ public class InterledgerPaymentOerCodecTests {
   }
 
   private ByteArrayInputStream constructAsn1OerPaymentBytes() throws IOException {
-    final CodecContext context = CodecContextFactory.oer();
+    final CodecContext context = InterledgerCodecContextFactory.oer();
 
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     context.write(packet, outputStream);

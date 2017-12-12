@@ -10,6 +10,7 @@ import org.interledger.ilp.InterledgerPayment;
 import org.interledger.mocks.DeterministicSecureRandomProvider;
 
 import com.google.common.io.BaseEncoding;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigInteger;

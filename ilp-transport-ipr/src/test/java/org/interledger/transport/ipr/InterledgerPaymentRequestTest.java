@@ -6,6 +6,7 @@ import org.interledger.codecs.InterledgerCodecContextFactory;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.ilp.InterledgerPayment;
+import org.interledger.transport.ipr.codecs.IprOerCodecContextDecorator;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -71,7 +72,9 @@ public class InterledgerPaymentRequestTest {
   @Test
   public void testWriteRead() throws Exception {
 
-    final InterledgerCodecContext context = InterledgerCodecContextFactory.oer();
+    final InterledgerCodecContext context = IprOerCodecContextDecorator.registerIprOerCodecs(
+                InterledgerCodecContextFactory.oer()
+            );
 
     // Write the payment to ASN.1...
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

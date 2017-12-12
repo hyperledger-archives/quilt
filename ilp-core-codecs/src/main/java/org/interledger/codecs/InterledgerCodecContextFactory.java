@@ -2,7 +2,6 @@ package org.interledger.codecs;
 
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacketType;
-import org.interledger.SequenceOfInterledgerAddresses;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.Fulfillment;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
@@ -15,7 +14,6 @@ import org.interledger.ilp.oer.InterledgerAddressOerCodec;
 import org.interledger.ilp.oer.InterledgerPacketTypeOerCodec;
 import org.interledger.ilp.oer.InterledgerPaymentOerCodec;
 import org.interledger.ilp.oer.InterledgerProtocolProtocolErrorOerCodec;
-import org.interledger.ilp.oer.SequenceOfInterledgerAddressesOerCodec;
 import org.interledger.ilqp.QuoteByDestinationAmountRequest;
 import org.interledger.ilqp.QuoteByDestinationAmountResponse;
 import org.interledger.ilqp.QuoteBySourceAmountRequest;
@@ -69,8 +67,6 @@ public class InterledgerCodecContextFactory {
 
       // ILP
       .register(InterledgerAddress.class, new InterledgerAddressOerCodec())
-      .register(SequenceOfInterledgerAddresses.class,
-          new SequenceOfInterledgerAddressesOerCodec())
       .register(InterledgerPacketType.class, new InterledgerPacketTypeOerCodec())
       .register(InterledgerPayment.class, new InterledgerPaymentOerCodec())
       .register(InterledgerProtocolError.class, new InterledgerProtocolProtocolErrorOerCodec())

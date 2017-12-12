@@ -202,7 +202,10 @@ public class CodecContext {
               // Otherwise, recurse with the super-class
               .orElseGet(() -> {
                 // There were not interfaces, so check the super-classes.
-                return (Codec<T>) lookup(type.getSuperclass());
+                if (type.getSuperclass() != null) {
+                  return (Codec<T>) lookup(type.getSuperclass());
+                }
+                return null;
               })
       ).orElseThrow(() -> new CodecException(
           String.format("No codec registered for %s or its super classes!",

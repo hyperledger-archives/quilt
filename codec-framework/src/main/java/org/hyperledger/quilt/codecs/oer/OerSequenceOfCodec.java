@@ -19,12 +19,12 @@ import java.util.stream.IntStream;
  * occurrences (not to the number of octets), and is encoded as an integer type with a lower bound
  * of zero and no upper bound.</p>
  */
-public abstract class OerSequenceOfCodec<T> implements Codec<List<T>> {
+public class OerSequenceOfCodec<T> implements Codec<List<T>> {
 
-  private final Codec<T> elementCodec;
+  private final Class<T> type;
 
-  public OerSequenceOfCodec(Codec<T> elementCodec) {
-    this.elementCodec = elementCodec;
+  public OerSequenceOfCodec(Class<T> type) {
+    this.type = type;
   }
 
   @Override
@@ -39,7 +39,7 @@ public abstract class OerSequenceOfCodec<T> implements Codec<List<T>> {
     final List<T> elements = IntStream.range(0, numAddresses)
         .mapToObj(index -> {
           try {
-            return elementCodec.read(context, inputStream);
+            return context.read(type, inputStream);
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
@@ -59,7 +59,7 @@ public abstract class OerSequenceOfCodec<T> implements Codec<List<T>> {
     // Write the addresses...
     instance.forEach(element -> {
       try {
-        elementCodec.write(context, element, outputStream);
+        context.write(type, element, outputStream);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

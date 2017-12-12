@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.interledger.InterledgerRuntimeException;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Base64;

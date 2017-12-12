@@ -9,9 +9,11 @@ import org.interledger.codecs.InterledgerCodecContextFactory;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.Fulfillment;
 import org.interledger.ilp.InterledgerPayment;
+import org.interledger.transport.ipr.codecs.IprOerCodecContextDecorator;
 import org.interledger.transport.psk.PskContext;
 import org.interledger.transport.psk.PskEncryptionType;
 import org.interledger.transport.psk.PskMessage;
+import org.interledger.transport.psk.codecs.PskCodecContextDecorator;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,8 +45,11 @@ public class InterledgerPaymentRequestEndToEndTest {
     byte[] data = new byte[]{0x01, 0x02, 0x03};
 
     // Load codecs
-    InterledgerCodecContext receiverCodecContextBuildingIpr
-        = InterledgerCodecContextFactory.oer();
+    InterledgerCodecContext receiverCodecContextBuildingIpr = PskCodecContextDecorator
+        .registerPskCodecs(IprOerCodecContextDecorator
+            .registerIprOerCodecs(
+            InterledgerCodecContextFactory.oer()
+        ));
 
     // Seed PSK context
     PskContext receiverContextBuildingIpr = PskContext.seed(SECRET);
@@ -93,7 +98,11 @@ public class InterledgerPaymentRequestEndToEndTest {
     /* Step 2 - Parse IPR at Sender. */
 
     // Load codecs
-    InterledgerCodecContext senderCodecContext = InterledgerCodecContextFactory.oer();
+    InterledgerCodecContext senderCodecContext = PskCodecContextDecorator
+        .registerPskCodecs(IprOerCodecContextDecorator
+            .registerIprOerCodecs(
+                InterledgerCodecContextFactory.oer()
+            ));
 
     // Decode IPR
     InterledgerPaymentRequest decodedIpr =
@@ -138,7 +147,11 @@ public class InterledgerPaymentRequestEndToEndTest {
     /* Step 3 - Parse Payment at receiver. */
 
     // Load codecs
-    InterledgerCodecContext receiverCodecContext = InterledgerCodecContextFactory.oer();
+    InterledgerCodecContext receiverCodecContext = PskCodecContextDecorator
+        .registerPskCodecs(IprOerCodecContextDecorator
+            .registerIprOerCodecs(
+                InterledgerCodecContextFactory.oer()
+            ));
 
     // Decode Payment, Condition and PSK Message
     InterledgerPayment decodedPayment =

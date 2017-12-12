@@ -6,6 +6,7 @@ import org.interledger.codecs.InterledgerCodecContext;
 import org.interledger.codecs.InterledgerCodecContextFactory;
 import org.interledger.ilp.InterledgerPayment;
 import org.interledger.transport.psk.PskMessage.Header;
+import org.interledger.transport.psk.codecs.PskCodecContextDecorator;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -69,7 +70,8 @@ public class InterledgerPaymentWithPskCodecTests {
         .addPrivateHeader(privateHeader2).addPublicHeader(publicHeader1)
         .addPublicHeader(publicHeader2).data(applicationData).build();
 
-    final byte[] pskMessageBytes = InterledgerCodecContextFactory.oer().write(pskMessage);
+    final byte[] pskMessageBytes = PskCodecContextDecorator.registerPskCodecs(
+        InterledgerCodecContextFactory.oer()).write(pskMessage);
 
     return Arrays.asList(new Object[][]{
         {InterledgerPayment.builder()
@@ -89,7 +91,8 @@ public class InterledgerPaymentWithPskCodecTests {
 
   @Test
   public void testWriteRead() throws Exception {
-    final InterledgerCodecContext context = InterledgerCodecContextFactory.oer();
+    final InterledgerCodecContext context = PskCodecContextDecorator.registerPskCodecs(
+        InterledgerCodecContextFactory.oer());
 
     // Write the payment to ASN.1...
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

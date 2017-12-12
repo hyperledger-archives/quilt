@@ -90,12 +90,12 @@
   <modules>
     <module>dev-ops</module>
     <module>crypto-conditions</module>
+    <module>codec-framework</module>
     <module>ilp-core</module>
     <module>ilp-annotations</module>
-      <module>codec-framework</module>
     <module>ilp-core-codecs</module>
     <module>ilp-transport-psk</module>
-      <module>ilp-transport-ipr</module>
+    <module>ilp-transport-ipr</module>
   </modules>
 
   <dependencyManagement>

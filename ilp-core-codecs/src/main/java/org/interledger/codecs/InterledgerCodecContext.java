@@ -147,10 +147,6 @@ public class InterledgerCodecContext extends CodecContext {
     Objects.requireNonNull(data);
 
     try (ByteArrayInputStream bais = new ByteArrayInputStream(data)) {
-      if (InterledgerPacket.class.isAssignableFrom(type)) {
-        //noinspection ResultOfMethodCallIgnored
-        bais.read(); // swallow type field
-      }
       return read(type, bais);
     } catch (IOException e) {
       throw new CodecException("Unable to decode " + type.getCanonicalName(), e);

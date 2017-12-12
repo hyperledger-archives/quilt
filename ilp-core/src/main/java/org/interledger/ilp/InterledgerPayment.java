@@ -64,6 +64,8 @@ public interface InterledgerPayment extends InterledgerPacket {
    * the units is determined by the destination ledger's smallest indivisible unit.
    *
    * @return An instance of {@link BigInteger}.
+   *
+   * @deprecated The destination amount is no longer carried in the ILP packet.
    */
   BigInteger getDestinationAmount();
 
