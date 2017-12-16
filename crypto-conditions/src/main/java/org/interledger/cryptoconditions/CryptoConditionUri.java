@@ -43,6 +43,8 @@ public class CryptoConditionUri {
    * @param uri The crypto-condition formatted as a URI.
    *
    * @return The equivalent crypto-condition.
+   * 
+   * @throws URISyntaxException URISyntaxException
    */
   public static Condition parse(final URI uri) throws URISyntaxException {
     Objects.requireNonNull(uri);

@@ -22,6 +22,7 @@ public class CryptoConditionWriter {
    *
    * @param condition A {@link Condition} to encode.
    * @return A byte array containing the ASN.1 DER encoding of the supplied {@code condition}.
+   * @throws DerEncodingException DER Object encoding error
    */
   public static byte[] writeCondition(final Condition condition) throws DerEncodingException {
     Objects.requireNonNull(condition);
@@ -48,6 +49,7 @@ public class CryptoConditionWriter {
    *
    * @param fulfillment A {@link Fulfillment} to encode.
    * @return A byte array containing the ASN.1 DER encoding of the supplied {@code fulfillment}.
+   * @throws DerEncodingException DER Object encoding error
    */
   public static byte[] writeFulfillment(final Fulfillment fulfillment) throws DerEncodingException {
     Objects.requireNonNull(fulfillment);
@@ -75,6 +77,7 @@ public class CryptoConditionWriter {
    *
    * @param condition A {@link PreimageSha256Condition} to encode.
    * @return A byte array containing the ASN.1 DER encoding of the supplied {@code condition}.
+   * @throws DerEncodingException DER Object encoding error
    */
   private static byte[] writeSingleCondition(final SimpleCondition condition)
       throws DerEncodingException {
@@ -105,6 +108,7 @@ public class CryptoConditionWriter {
    *
    * @param condition A {@link PreimageSha256Condition} to encode.
    * @return A byte array containing the ASN.1 DER encoding of the supplied {@code condition}.
+   * @throws DerEncodingException DER Object encoding error
    */
   private static byte[] writeCompoundCondition(final CompoundCondition condition)
       throws DerEncodingException {

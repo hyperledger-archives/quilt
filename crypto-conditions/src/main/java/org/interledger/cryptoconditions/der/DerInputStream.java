@@ -21,6 +21,8 @@ public class DerInputStream extends FilterInputStream {
    * @param limit The maximum allowable object length.
    * @param bytesRead Will be updated with the number of bytes read from the stream.
    * @return A DER object read from the stream.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public DerObject readTaggedConstructedObject(int expectedTagNumber, int limit,
       AtomicInteger bytesRead) throws IOException, DerEncodingException {
@@ -42,6 +44,8 @@ public class DerInputStream extends FilterInputStream {
    * @param limit The maximum allowable object length.
    * @param bytesRead Will be updated with the number of bytes read from the stream.
    * @return A DER object read from the stream.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public DerObject readTaggedObject(int expectedTagNumber, int limit, AtomicInteger bytesRead)
       throws IOException, DerEncodingException {
@@ -62,6 +66,8 @@ public class DerInputStream extends FilterInputStream {
    * @param limit The maximum allowable object length.
    * @param bytesRead Will be updated with the number of bytes read from the stream.
    * @return A DER object read from the stream.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public DerObject readObject(int limit, AtomicInteger bytesRead)
       throws IOException, DerEncodingException {
@@ -91,6 +97,8 @@ public class DerInputStream extends FilterInputStream {
    * @param bytesRead Will be updated with the number of bytes read from the stream.
    * @param flags A set of expected DER tags.
    * @return The tag read from the stream.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public int readTag(int expectedTag, AtomicInteger bytesRead, DerTag... flags)
       throws DerEncodingException, IOException {
@@ -109,6 +117,8 @@ public class DerInputStream extends FilterInputStream {
    * @param bytesRead Will be updated with the number of bytes read from the stream.
    * @param expectedFlags A set of DER tags that are expected.
    * @return A DER tag read from the stream.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public int readTag(AtomicInteger bytesRead, DerTag... expectedFlags)
       throws DerEncodingException, IOException {
@@ -136,6 +146,8 @@ public class DerInputStream extends FilterInputStream {
    * 
    * @param bytesRead Will be updated with the number of bytes read.
    * @return The value of the length indicator.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public int readLength(AtomicInteger bytesRead) throws DerEncodingException, IOException {
 
@@ -173,6 +185,8 @@ public class DerInputStream extends FilterInputStream {
    * @param length The number of bytes to read.
    * @param bytesRead Will be updated with the number of bytes read.
    * @return The raw value read from the stream.
+   * @throws IOException IOException
+   * @throws DerEncodingException DER Object encoding error
    */
   public byte[] readValue(int length, AtomicInteger bytesRead)
       throws IOException, DerEncodingException {
