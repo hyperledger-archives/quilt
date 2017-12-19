@@ -63,11 +63,12 @@ public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
   }
 
   /**
-   * Helper method to construct an instance of {@link KeyPair} containing keys for testing purposes.
+   * Helper method to construct an instance of {@link KeyPair} containing keys for testing
+   * purposes.
    *
    * @return An instance of {@link KeyPair}.
    */
-  protected KeyPair constructEd25519KeyPair() throws InvalidKeySpecException {
+  protected KeyPair constructEd25519KeyPair() {
     final EdDSANamedCurveSpec edParams = EdDSANamedCurveTable
         .getByName(CryptoConditionReader.ED_25519);
     assert (edParams != null);
