@@ -1,31 +1,35 @@
 package org.interledger.quilt.jackson.cryptoconditions;
 
+import org.interledger.cryptoconditions.Condition;
+import org.interledger.cryptoconditions.CryptoConditionReader;
+import org.interledger.cryptoconditions.Fulfillment;
+import org.interledger.quilt.jackson.cryptoconditions.CryptoConditionsModule;
+import org.interledger.quilt.jackson.cryptoconditions.Encoding;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.RSAPublicKeySpec;
-import java.util.Objects;
-import java.util.Optional;
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec;
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
-import org.interledger.cryptoconditions.Condition;
-import org.interledger.cryptoconditions.CryptoConditionReader;
-import org.interledger.cryptoconditions.Fulfillment;
-import org.interledger.quilt.jackson.cryptoconditions.CryptoConditionsModule.Encoding;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.Security;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Validates the functionality of {@link CryptoConditionsModule}.
@@ -45,6 +49,14 @@ public class AbstractCryptoConditionsModuleTest {
           + "c0nSlVvNsT24Z9VSzTAd3kEJ7vdjdPt4kSDKPOF2Bsw6OQ7L/+gJ4YZeQJAGos485j6cSBJiY1/t57gp3ZoeRK"
           + "ZzfoJ78DlB6yyHtdDAe9b/Ui+RV6utuFnglWCdYCo5OjhQVHRUQqCo/LnKQJAJxVqukEm0kqB86Uoy/sn9WiG+"
           + "ECp9uhuF6RLlP6TGVhLjiL93h5aLjvYqluo2FhBlOshkKz4MrhH8To9JKefTQ==";
+
+  /**
+   * Need to add BouncyCastle so we have a provider that supports SHA256withRSA/PSS signatures
+   */
+  static {
+    Provider bc = new BouncyCastleProvider();
+    Security.addProvider(bc);
+  }
 
   protected ObjectMapper objectMapper;
   protected Encoding encodingToUse;

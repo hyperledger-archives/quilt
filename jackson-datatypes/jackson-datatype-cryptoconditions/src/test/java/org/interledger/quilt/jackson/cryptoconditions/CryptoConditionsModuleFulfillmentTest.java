@@ -3,36 +3,34 @@ package org.interledger.quilt.jackson.cryptoconditions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.google.common.collect.Lists;
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.MessageDigest;
-import java.security.Provider;
-import java.security.Security;
-import java.security.Signature;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
-import net.i2p.crypto.eddsa.EdDSAEngine;
-import net.i2p.crypto.eddsa.EdDSAPublicKey;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.interledger.cryptoconditions.Ed25519Sha256Fulfillment;
 import org.interledger.cryptoconditions.Fulfillment;
 import org.interledger.cryptoconditions.PrefixSha256Fulfillment;
 import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 import org.interledger.cryptoconditions.RsaSha256Fulfillment;
 import org.interledger.cryptoconditions.ThresholdSha256Fulfillment;
-import org.interledger.quilt.jackson.cryptoconditions.CryptoConditionsModule.Encoding;
+
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.common.collect.Lists;
+import net.i2p.crypto.eddsa.EdDSAEngine;
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.Signature;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Validates the functionality of {@link CryptoConditionsModule}.
@@ -140,14 +138,6 @@ public class CryptoConditionsModuleFulfillmentTest extends AbstractCryptoConditi
       + "9dZx72N3wJIcsjwnCnDiWY5v-J0Z8QWswtPwyzXykoDhOGtvZMTvIuHh8g0M6M_7Ikm9miE3gQlzaWduYXR1cmWhXY"
       + "AnSSdtIHlvdXIgZGVuc2l0eS4gSSBtZWFuLCB5b3VyIGRlc3RpbnkugQEUoi-gLYAreW91IGJ1aWx0IGEgdGltZSBt"
       + "YWNoaW5lIG91dCBvZiBhIERlTG9yZWFuP6EA";
-
-  /**
-   * Need to add BouncyCastle so we have a provider that supports SHA256withRSA/PSS signatures
-   */
-  static {
-    Provider bc = new BouncyCastleProvider();
-    Security.addProvider(bc);
-  }
 
   private static final Fulfillment FULFILLMENT = constructFulfillment();
   private static final PreimageSha256Fulfillment PREIMAGE_FULFILLMENT = constructPreimageFulfillment();

@@ -3,10 +3,26 @@ package org.interledger.quilt.jackson.cryptoconditions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import org.interledger.cryptoconditions.Condition;
+import org.interledger.cryptoconditions.Ed25519Sha256Condition;
+import org.interledger.cryptoconditions.PrefixSha256Condition;
+import org.interledger.cryptoconditions.PreimageSha256Condition;
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
+import org.interledger.cryptoconditions.RsaSha256Condition;
+import org.interledger.cryptoconditions.ThresholdSha256Condition;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.collect.Lists;
+import net.i2p.crypto.eddsa.EdDSAEngine;
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
@@ -21,21 +37,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import net.i2p.crypto.eddsa.EdDSAEngine;
-import net.i2p.crypto.eddsa.EdDSAPublicKey;
-import org.interledger.cryptoconditions.Condition;
-import org.interledger.cryptoconditions.Ed25519Sha256Condition;
-import org.interledger.cryptoconditions.PrefixSha256Condition;
-import org.interledger.cryptoconditions.PreimageSha256Condition;
-import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
-import org.interledger.cryptoconditions.RsaSha256Condition;
-import org.interledger.cryptoconditions.ThresholdSha256Condition;
-import org.interledger.quilt.jackson.cryptoconditions.CryptoConditionsModule.Encoding;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Validates the functionality of {@link CryptoConditionsModule}.
