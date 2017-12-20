@@ -25,7 +25,7 @@ public class InterledgerModule extends SimpleModule {
     super(NAME, VERSION_UTIL.version());
     this.cryptoConditionEncoding = Objects.requireNonNull(cryptoConditionEncoding);
   }
-
+ 
   @Override
   public void setupModule(SetupContext context) {
     context.addSerializers(new InterledgerSerializers(cryptoConditionEncoding));
