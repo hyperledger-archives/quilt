@@ -17,11 +17,12 @@ public class CryptoConditionsModule extends SimpleModule {
   private static final String NAME = "CryptoConditionsModule";
 
   /**
-   * Default Constructor. Specifies an encoding of {@link Encoding#BASE64_WITHOUT_PADDING} by
-   * default.
+   * Default Constructor. Specifies an encoding of {@link Encoding#BASE64} by default, since this is
+   * the most compatible with various language libraries (e.g., openssl requires padding to work
+   * properly).
    */
   public CryptoConditionsModule() {
-    this(Encoding.BASE64_WITHOUT_PADDING);
+    this(Encoding.BASE64);
   }
 
   /**
