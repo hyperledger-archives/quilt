@@ -53,11 +53,6 @@
         <artifactId>jackson-datatype-cryptoconditions</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.interledger</groupId>
-        <artifactId>ilp-core</artifactId>
-        <version>0.9.2-SNAPSHOT</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 

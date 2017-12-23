@@ -1,15 +1,22 @@
 package org.interledger.quilt.jackson.cryptoconditions;
 
-import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.CryptoConditionReader;
+import org.interledger.cryptoconditions.Ed25519Sha256Condition;
+import org.interledger.cryptoconditions.Ed25519Sha256Fulfillment;
 import org.interledger.cryptoconditions.Fulfillment;
-import org.interledger.quilt.jackson.cryptoconditions.CryptoConditionsModule;
-import org.interledger.quilt.jackson.cryptoconditions.Encoding;
+import org.interledger.cryptoconditions.PrefixSha256Condition;
+import org.interledger.cryptoconditions.PrefixSha256Fulfillment;
+import org.interledger.cryptoconditions.PreimageSha256Condition;
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
+import org.interledger.cryptoconditions.RsaSha256Condition;
+import org.interledger.cryptoconditions.RsaSha256Fulfillment;
+import org.interledger.cryptoconditions.ThresholdSha256Condition;
+import org.interledger.cryptoconditions.ThresholdSha256Fulfillment;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
+import net.i2p.crypto.eddsa.EdDSAEngine;
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec;
@@ -17,24 +24,27 @@ import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec;
 import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.Before;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
+import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Validates the functionality of {@link CryptoConditionsModule}.
  */
-public class AbstractCryptoConditionsModuleTest {
+public abstract class AbstractCryptoConditionsModuleTest {
 
   public static final BigInteger PUBLIC_EXPONENT = BigInteger.valueOf(65537);
 
@@ -80,7 +90,6 @@ public class AbstractCryptoConditionsModuleTest {
   //////////////////
 
   protected static KeyPair constructRsaKeyPair() {
-
     try {
       final PrivateKey privKey = buildRsaPrivKey();
 
@@ -142,56 +151,130 @@ public class AbstractCryptoConditionsModuleTest {
     return new KeyPair(pubKey, privKey);
   }
 
-  protected static class CryptoConditionsContainer {
+  protected static PreimageSha256Condition constructPreimageCondition() {
+    final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
+    return new PreimageSha256Fulfillment(preimage).getCondition();
+  }
 
-    @JsonProperty("condition")
-    private final Optional<Condition> condition;
+  protected static PrefixSha256Condition constructPrefixCondition() {
+    final byte[] prefix = "I'm your density. I mean, your destiny.".getBytes();
+    return new PrefixSha256Condition(prefix, 20, constructPreimageCondition());
+  }
 
-    @JsonProperty("fulfillment")
-    private final Optional<Fulfillment> fulfillment;
+  protected static RsaSha256Condition constructRsaCondition() {
+    try {
+      final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+      final RSAPrivateKey privateKey = buildRsaPrivKey();
+      final RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(
+          privateKey.getModulus(), PUBLIC_EXPONENT
+      );
+      final PublicKey myPublicKey = keyFactory.generatePublic(publicKeySpec);
 
-    @JsonCreator
-    public CryptoConditionsContainer(
-        @JsonProperty("condition") final Optional<Condition> condition,
-        @JsonProperty("fulfillment") final Optional<Fulfillment> fulfillment
-    ) {
-      this.condition = Objects.requireNonNull(condition);
-      this.fulfillment = Objects.requireNonNull(fulfillment);
-    }
-
-    public Optional<Condition> getCondition() {
-      return condition;
-    }
-
-    public Optional<Fulfillment> getFulfillment() {
-      return fulfillment;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-      CryptoConditionsContainer that = (CryptoConditionsContainer) o;
-      return Objects.equals(getCondition(), that.getCondition()) &&
-          Objects.equals(getFulfillment(), that.getFulfillment());
-    }
-
-    @Override
-    public int hashCode() {
-
-      return Objects.hash(getCondition(), getFulfillment());
-    }
-
-    @Override
-    public String toString() {
-      return "CryptoConditionsContainer{" +
-          "condition=" + condition +
-          ", fulfillment=" + fulfillment +
-          '}';
+      return new RsaSha256Condition((RSAPublicKey) myPublicKey);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
+
+  protected static Ed25519Sha256Condition constructEd25519Condition() {
+    try {
+      final MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
+
+      KeyPair edDsaKeyPair = constructEd25519KeyPair();
+      Signature edDsaSigner = new EdDSAEngine(sha512Digest);
+      edDsaSigner.initSign(edDsaKeyPair.getPrivate());
+
+      final byte[] prefix = "Oh, honey, he's teasing you. Nobody has two television sets."
+          .getBytes();
+      edDsaSigner.update(prefix);
+
+      final byte[] message = "Marty! You've got to come back with me!".getBytes();
+      edDsaSigner.update(message);
+
+      return new Ed25519Sha256Condition((EdDSAPublicKey) edDsaKeyPair.getPublic());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected static ThresholdSha256Condition constructThresholdCondition() {
+    return new ThresholdSha256Condition(
+        2,
+        Lists.newArrayList(
+            constructPreimageCondition(), constructRsaCondition(), constructPrefixCondition()
+        )
+    );
+  }
+
+  protected static Fulfillment constructFulfillment() {
+    return constructPreimageFulfillment();
+  }
+
+  protected static PreimageSha256Fulfillment constructPreimageFulfillment() {
+    final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
+    return new PreimageSha256Fulfillment(preimage);
+  }
+
+  protected static PrefixSha256Fulfillment constructPrefixFulfillment() {
+    final byte[] prefix = "I'm your density. I mean, your destiny.".getBytes();
+    return new PrefixSha256Fulfillment(prefix, 20, constructPreimageFulfillment());
+  }
+
+  protected static RsaSha256Fulfillment constructRsaFulfillment() {
+    try {
+
+      final KeyPair rsaKeyPair = constructRsaKeyPair();
+      Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
+      rsaSigner.initSign(rsaKeyPair.getPrivate());
+
+      final byte[] message = "Marty, your acting like you haven't seen me in a week.".getBytes();
+      rsaSigner.update(message);
+
+      return new RsaSha256Fulfillment(
+          (RSAPublicKey) rsaKeyPair.getPublic(),
+          "signature".getBytes()
+      );
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected static Ed25519Sha256Fulfillment constructEd25519Fulfillment() {
+    try {
+      final MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
+
+      KeyPair edDsaKeyPair = constructEd25519KeyPair();
+      Signature edDsaSigner = new EdDSAEngine(sha512Digest);
+      edDsaSigner.initSign(edDsaKeyPair.getPrivate());
+
+      final byte[] prefix = "Oh, honey, he's teasing you. Nobody has two television sets."
+          .getBytes();
+      edDsaSigner.update(prefix);
+
+      final byte[] message = "Marty! You've got to come back with me!".getBytes();
+      edDsaSigner.update(message);
+
+      final byte[] signature = "5VZDAMNgrHKQhuLMgG6CioSHfx645dl02HPgZSJJAVVfuIIVkKM7rMYeOXAc-bRr0lv18FlbviRlUUFDjnoQCw"
+          .getBytes();
+      return new Ed25519Sha256Fulfillment((EdDSAPublicKey) edDsaKeyPair.getPublic(), signature);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected static ThresholdSha256Fulfillment constructThresholdFulfillment() {
+    return new ThresholdSha256Fulfillment(
+        Lists.newArrayList(),
+        Lists.newArrayList(
+            constructPreimageFulfillment(), constructRsaFulfillment(), constructPrefixFulfillment()
+        )
+    );
+  }
+
+  @Before
+  public void setup() {
+    this.objectMapper = new ObjectMapper()
+        .registerModule(new CryptoConditionsModule(encodingToUse));
+  }
+
 }

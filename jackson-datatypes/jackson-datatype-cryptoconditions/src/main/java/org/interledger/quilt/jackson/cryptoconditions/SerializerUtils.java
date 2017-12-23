@@ -20,6 +20,8 @@ public class SerializerUtils {
    * @param encoder   A {@link Base64.Encoder} to encode with.
    * @param condition A {@link Condition} to encode into Base64 using the supplied encoder.
    *
+   * @return The base64-encoded version of {@code condition}.
+   *
    * @throws RuntimeException if a {@link DerEncodingException} is encountered.
    */
   public static String encodeBase64(final Base64.Encoder encoder, final Condition condition) {
@@ -39,6 +41,8 @@ public class SerializerUtils {
    *
    * @param encoder     A {@link Base64.Encoder} to encode with.
    * @param fulfillment A {@link Fulfillment} to encode into Base64 using the supplied encoder.
+   *
+   * @return The base64-encoded version of {@code fulfillment}.
    *
    * @throws RuntimeException if a {@link DerEncodingException} is encountered.
    */
