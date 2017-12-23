@@ -22,6 +22,13 @@ public class ConditionSerializer extends StdScalarSerializer<Condition> {
   private final Encoding encoding;
 
   /**
+   * No-args Constructor.
+   */
+  public ConditionSerializer() {
+    this(Encoding.BASE64);
+  }
+
+  /**
    * Required-args Constructor.
    *
    * @param encoding The {@link Encoding} to use for serialization and deserialization of conditions
