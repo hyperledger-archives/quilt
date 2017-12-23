@@ -83,4 +83,23 @@ public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
             + "fingerprint=aJ5kk1zn2qrQQO5QhYZXoGigv0Y5rSafiV3BUM1F9hM, cost=131072}"
     ));
   }
+
+  /**
+   * Helper method to construct an instance of {@link KeyPair} containing keys for testing purposes.
+   *
+   * @return An instance of {@link KeyPair}.
+   */
+  protected KeyPair constructEd25519KeyPair() throws InvalidKeySpecException {
+    final EdDSANamedCurveSpec edParams = EdDSANamedCurveTable
+        .getByName(CryptoConditionReader.ED_25519);
+    assert (edParams != null);
+
+    final EdDSAPublicKeySpec pubKeySpec = new EdDSAPublicKeySpec(TEST_PUBKEY, edParams);
+    final PublicKey pubKey = new EdDSAPublicKey(pubKeySpec);
+
+    final EdDSAPrivateKeySpec privateKeySpec = new EdDSAPrivateKeySpec(TEST_PRIVKEY, edParams);
+    final PrivateKey privKey = new EdDSAPrivateKey(privateKeySpec);
+
+    return new KeyPair(pubKey, privKey);
+  }
 }
