@@ -58,4 +58,49 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
     this.runConcurrent(1, runnableTest);
     this.runConcurrent(runnableTest);
   }
+
+  /**
+   * Tests the cost of a {@link ThresholdSha256Condition}. This test
+   * validates the enhancement for Github issue #10 where algorithm is
+   * reminded.
+   *
+   * <p>For example, if a threshold crypto-condition contains 5
+   * sub-conditions with costs of 64, 84, 82, 64 and 84, and has a
+   * threshold of 3, the cost is equal to the sum of the largest three
+   * sub-condition costs (82 + 84 + 84 = 250) plus 1024 times the
+   * number of sub-conditions (1024 * 5 = 5120): 5370.</p>
+   *
+   * @see "https://github.com/hyperledger/quilt/issues/10"
+   * @see "https://github.com/interledger/java-crypto-conditions/issues/78"
+   */
+  @Test
+  public void testCost() {
+    final ThresholdSha256Condition thresholdSha256Condition = new ThresholdSha256Condition(
+        3, Lists.newArrayList(
+            new PreimageSha256Condition(new byte[64]),
+            new PreimageSha256Condition(new byte[84]),
+            new PreimageSha256Condition(new byte[82]),
+            new PreimageSha256Condition(new byte[64]),
+            new PreimageSha256Condition(new byte[84])
+        )
+    );
+
+    assertThat(thresholdSha256Condition.getCost(), is(5370l));
+  }
+
+  /**
+   * Tests failure in the cost computation of a {@link ThresholdSha256Condition}.
+   * This validates failure upon sub-conditions underflow (i.e. the number of
+   * sub-conditions is lower than the condition threshold).
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testCost_subconditionsUnderflow() {
+    new ThresholdSha256Condition(
+        3, Lists.newArrayList(
+            new PreimageSha256Condition(new byte[64]),
+            new PreimageSha256Condition(new byte[84])
+        )
+    );
+  }
+
 }
