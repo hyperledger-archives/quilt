@@ -16,7 +16,7 @@ For ED25519 the library depends on [net.i2p.crypto.eddsa](https://github.com/str
 ## Get it!
 
 ### Maven
-This library is contained in the Java package `org.interledger`, and can be included in your project 
+This library is contained in the Java package `org.interledger.cryptoconditions`, and can be included in your project 
 by first adding a Snapshot Repository, like this:
 
 ```
