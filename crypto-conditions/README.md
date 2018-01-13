@@ -13,7 +13,57 @@ For RSA any provider that supports **SHA256withRSA/PSS** signatures can be used.
 
 For ED25519 the library depends on [net.i2p.crypto.eddsa](https://github.com/str4d/ed25519-java). As there are no standard interfaces in the `java.security` namespace for EdDSA keys the library is included as a dependancy. Future versions will hopefully remove this dependency.
 
- 
+## Get it!
+
+### Maven
+This library is contained in the Java package `org.interledger.cryptoconditions`, and can be included in your project 
+by first adding a Snapshot Repository, like this:
+
+```
+<repositories>
+    ...
+    <repository>
+        <id>sonatype</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
+    ...
+</repositories>
+```
+
+Next, add the following Maven dependency:
+
+```
+<dependencies>
+  ...
+  <dependency>
+    <groupId>org.interledger</groupId>
+    <artifactId>crypto-conditions</artifactId>
+    <version>0.4.0-SNAPSHOT</version>
+  </dependency>
+  ...
+</dependencies>
+```
+### Gradle
+To import this library into a project that uses gradle, first add the Snapshot Repository to your `gradle.properties` file, like this:
+
+```
+repositories {
+    mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+```
+Next, import this library as a dependency, like this:
+
+```
+dependencies {
+    ...
+    compile group: 'org.interledger', name: 'crypto-conditions', version: '0.4.0-SNAPSHOT'
+    ...
+}
+```
+
 ## Usage
 
 ### Requirements
@@ -76,7 +126,6 @@ if(fulfillment.verify(condition, new byte[0])) {
 }
 ```
 
-
 #### Encoding Example:
 ```java
 //Read a condition from a stream (InputStream in)
@@ -108,11 +157,6 @@ URI uriEncodedCondition = CryptoConditionUri.toUri(condition);
 Any contribution is very much appreciated! 
 
 [![join the chat][rocketchat-image]][rocketchat-url]
-
-## TODO
-
-  - Replace current ASN.1 DER Input/Outputstream code with Codec framework (see java-ilp-core).
-  - Validate condition against a global max cost
 
 ## License
 
