@@ -60,9 +60,7 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
   }
 
   /**
-   * Tests the cost of a {@link ThresholdSha256Condition}. This test
-   * validates the enhancement for Github issue #10 where algorithm is
-   * reminded.
+   * <p>Tests the cost computation of a {@link ThresholdSha256Condition}.</p>
    *
    * <p>For example, if a threshold crypto-condition contains 5
    * sub-conditions with costs of 64, 84, 82, 64 and 84, and has a
