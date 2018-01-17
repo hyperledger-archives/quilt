@@ -1,7 +1,6 @@
 package org.interledger;
 
-import org.interledger.ilp.packets.InterledgerErrorPacketType;
-import org.interledger.ilp.packets.PaymentPacketType;
+import org.interledger.ilp.packets.*;
 import org.interledger.ilqp.packets.QuoteByDestinationAmountRequestPacketType;
 import org.interledger.ilqp.packets.QuoteByDestinationAmountResponsePacketType;
 import org.interledger.ilqp.packets.QuoteBySourceAmountRequestPacketType;
@@ -25,7 +24,9 @@ public interface InterledgerPacketType {
   int ILQP_QUOTE_BY_DESTINATION_AMOUNT_REQUEST_TYPE = 6;
   int ILQP_QUOTE_BY_DESTINATION_AMOUNT_RESPONSE_TYPE = 7;
   int INTERLEDGER_PROTOCOL_ERROR = 8;
-
+  int FULFILLMENT_TYPE = 9;
+  int FORWARDED_PAYMENT_TYPE = 10;
+  int REJECTION_TYPE = 11;
   /**
    * A helper method that will translate an integer into an instance of {@link
    * InterledgerPacketType}. Note that this method only handled standard Interledger packets types.
@@ -55,6 +56,12 @@ public interface InterledgerPacketType {
         return new QuoteByDestinationAmountResponsePacketType();
       case INTERLEDGER_PROTOCOL_ERROR:
         return new InterledgerErrorPacketType();
+      case FULFILLMENT_TYPE:
+        return new ForwardedPaymentPacketType();
+      case FORWARDED_PAYMENT_TYPE:
+        return new FulfillmentPacketType();
+      case REJECTION_TYPE:
+        return new RejectionPacketType();
       default:
         throw new InvalidPacketTypeException(
           String.format("%s is an unsupported Packet Type!", type));
