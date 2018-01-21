@@ -82,7 +82,7 @@ public class ConditionTypeTest {
   @Test
   public void test_getEnumOfTypesFromBitString_All() {
     EnumSet<CryptoConditionType> set =
-        CryptoConditionType.getEnumOfTypesFromBitString(new byte[] {0x03, (byte) 0xF8});
+        CryptoConditionType.getEnumOfTypesFromBitString(new byte[]{0x03, (byte) 0xF8});
 
     assertNotNull(set);
     assertEquals(EnumSet.allOf(CryptoConditionType.class), set);
@@ -91,7 +91,7 @@ public class ConditionTypeTest {
   @Test
   public void test_getEnumOfTypesFromBitString_Msb() {
     EnumSet<CryptoConditionType> set =
-        CryptoConditionType.getEnumOfTypesFromBitString(new byte[] {0x03, (byte) 0x08});
+        CryptoConditionType.getEnumOfTypesFromBitString(new byte[]{0x03, (byte) 0x08});
 
     assertNotNull(set);
     assertEquals(1, set.size());
@@ -101,7 +101,7 @@ public class ConditionTypeTest {
   @Test
   public void test_getEnumOfTypesFromBitString_Lsb() {
     EnumSet<CryptoConditionType> set =
-        CryptoConditionType.getEnumOfTypesFromBitString(new byte[] {0x07, (byte) 0x80});
+        CryptoConditionType.getEnumOfTypesFromBitString(new byte[]{0x07, (byte) 0x80});
 
     assertNotNull(set);
     assertEquals(1, set.size());

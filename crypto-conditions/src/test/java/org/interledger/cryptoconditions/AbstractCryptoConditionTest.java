@@ -22,54 +22,22 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractCryptoConditionTest {
 
-  protected final Logger logger = Logger.getLogger(this.getClass().getName());
-  
   private static final int DEFAULT_NUM_THREADS = 20;
-
-  protected static final String AUTHOR = "Doc Brown";
-  protected static final String MESSAGE_PREIMAGE = "Roads? Where we're going, we don't need roads.";
-
-  /**
-   * Concurrently runs one or more instances of {@link Runnable} in a multithreaded fashion,
-   * relying upon the default number of threads for concurrency.
-   */
-  protected void runConcurrent(final Runnable... runnableTest) throws InterruptedException {
-    this.runConcurrent(DEFAULT_NUM_THREADS, runnableTest);
-  }
-
-  /**
-   * Concurrently runs one or more instances of {@link Runnable} in a multithreaded fashion,
-   * relying upon {@code numThreads} for concurrency.
-   */
-  protected void runConcurrent(final int numThreads, final Runnable... runnableTest)
-      throws InterruptedException {
-    final Builder<Runnable> builder = ImmutableList.builder();
-
-    // For each runnableTest, add it numThreads times to the bulider.
-    for (final Runnable runnable : runnableTest) {
-      for (int i = 0; i < numThreads; i++) {
-        builder.add(runnable);
-      }
-    }
-
-    logger.info(String.format("About to run %s threads...", numThreads));
-    // Actually runs the Runnables above using multiple threads.
-    assertConcurrent("Test did not complete before the harness timed-out. Please consider "
-        + "increasing the timeout value for this test.", builder.build(), 15);
-    logger.info(String.format("Ran %s threads!", numThreads));
-  }
-
   private static final Logger STATIC_LOGGER = Logger
       .getLogger(AbstractCryptoConditionTest.class.getName());
+
+  protected final Logger logger = Logger.getLogger(this.getClass().getName());
 
   /**
    * A new assertion method to expose concurrency bugs.
    *
    * @see "https://github.com/junit-team/junit4/wiki/multithreaded-code-and-concurrency"
    */
-  public static void assertConcurrent(final String message,
+  public static void assertConcurrent(
+      final String message,
       final List<? extends Runnable> runnables,
-      final int maxTimeoutSeconds) throws InterruptedException {
+      final int maxTimeoutSeconds
+  ) throws InterruptedException {
     final int numThreads = runnables.size();
     final List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<Throwable>());
     final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
@@ -114,4 +82,33 @@ public abstract class AbstractCryptoConditionTest {
     );
   }
 
+  /**
+   * Concurrently runs one or more instances from {@link Runnable} in a multithreaded fashion,
+   * relying upon the default number from threads for concurrency.
+   */
+  protected void runConcurrent(final Runnable... runnableTest) throws InterruptedException {
+    this.runConcurrent(DEFAULT_NUM_THREADS, runnableTest);
+  }
+
+  /**
+   * Concurrently runs one or more instances from {@link Runnable} in a multithreaded fashion,
+   * relying upon {@code numThreads} for concurrency.
+   */
+  protected void runConcurrent(final int numThreads, final Runnable... runnableTest)
+      throws InterruptedException {
+    final Builder<Runnable> builder = ImmutableList.builder();
+
+    // For each runnableTest, add it numThreads times to the bulider.
+    for (final Runnable runnable : runnableTest) {
+      for (int i = 0; i < numThreads; i++) {
+        builder.add(runnable);
+      }
+    }
+
+    logger.info(String.format("About to run %s threads...", numThreads));
+    // Actually runs the Runnables above using multiple threads.
+    assertConcurrent("Test did not complete before the harness timed-out. Please consider "
+        + "increasing the timeout value for this test.", builder.build(), 15);
+    logger.info(String.format("Ran %s threads!", numThreads));
+  }
 }

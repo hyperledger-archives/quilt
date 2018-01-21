@@ -43,8 +43,8 @@ public interface Fulfillment<C extends Condition> {
    *
    * <p>A more detailed validation algorithm for each crypto-condition type is provided in the
    * Javadoc of each {@link #verify(Condition, byte[])} method. In each case the notation F.x or C.y
-   * implies the decoded value of the field named x of the fulfillment and the decoded value of the
-   * field named y of the Condition, respectively.</p>
+   * implies the decoded value of the field named x from the fulfillment and the decoded value of
+   * the field named y from the Condition, respectively.</p>
    *
    * @param condition A {@link Condition} that this fulfillment should verify.
    * @param message   An optionally-empty byte array that, if present, is part of validating the
@@ -56,5 +56,4 @@ public interface Fulfillment<C extends Condition> {
    * @see "https://tools.ietf.org/html/draft-thomas-crypto-conditions-03#section-5"
    */
   boolean verify(C condition, byte[] message);
-
 }

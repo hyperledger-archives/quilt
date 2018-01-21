@@ -38,11 +38,11 @@ Conditions can be derived from a fullfillment or directly from the underlying ha
 
 ```java
 //Create a fulfillment from a pre-image of 32-bytes (short form)
-Fulfillment fulfillment = Fulfillment.of(preimage);
+Fulfillment fulfillment = Fulfillment.of(encodedPreimage);
 
 //Create a fulfillment from a pre-image of 32-bytes (long form)
 Fulfillment fulfillment = Fulfillment.builder()
-  .preimage(preimage)
+  .encodedPreimage(encodedPreimage)
   .build();
 
 //Get Condition from Fulfillment
