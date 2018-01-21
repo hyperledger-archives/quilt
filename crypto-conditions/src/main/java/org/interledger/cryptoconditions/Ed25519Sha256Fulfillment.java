@@ -1,9 +1,8 @@
 package org.interledger.cryptoconditions;
 
-import static org.interledger.cryptoconditions.CryptoConditionType.ED25519_SHA256;
-
 import net.i2p.crypto.eddsa.EdDSAEngine;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import org.immutables.value.Value;
 
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -20,13 +19,7 @@ import java.util.Objects;
  *
  * @see "https://datatracker.ietf.org/doc/draft-thomas-crypto-conditions/"
  */
-public class Ed25519Sha256Fulfillment extends FulfillmentBase<Ed25519Sha256Condition>
-    implements Fulfillment<Ed25519Sha256Condition> {
-
-  private final EdDSAPublicKey publicKey;
-  private final byte[] signature;
-  private final String signatureBase64Url;
-  private final Ed25519Sha256Condition condition;
+public interface Ed25519Sha256Fulfillment extends Fulfillment<Ed25519Sha256Condition> {
 
   /**
    * Constructs an instance of the fulfillment.
@@ -34,17 +27,24 @@ public class Ed25519Sha256Fulfillment extends FulfillmentBase<Ed25519Sha256Condi
    * @param publicKey An {@link EdDSAPublicKey} associated with this fulfillment and its
    *                  corresponding condition.
    * @param signature A byte array containing the signature associated with this fulfillment.
+   *
+   * @return A newly created, immutable instance of {@link Ed25519Sha256Fulfillment}.
    */
-  public Ed25519Sha256Fulfillment(final EdDSAPublicKey publicKey, final byte[] signature) {
-    super(ED25519_SHA256);
-
+  static Ed25519Sha256Fulfillment from(final EdDSAPublicKey publicKey, final byte[] signature) {
     Objects.requireNonNull(publicKey, "EdDSAPublicKey must not be null!");
     Objects.requireNonNull(signature, "Signature must not be null!");
 
-    this.publicKey = publicKey;
-    this.signature = Arrays.copyOf(signature, signature.length);
-    this.signatureBase64Url = Base64.getUrlEncoder().encodeToString(signature);
-    this.condition = new Ed25519Sha256Condition(publicKey);
+    final byte[] immutableSignature = Arrays.copyOf(signature, signature.length);
+    final String signatureBase64Url = Base64.getUrlEncoder().encodeToString(signature);
+    final Ed25519Sha256Condition condition = Ed25519Sha256Condition.from(publicKey);
+
+    return ImmutableEd25519Sha256Fulfillment.builder()
+        .type(CryptoConditionType.ED25519_SHA256)
+        .publicKey(publicKey)
+        .signature(immutableSignature)
+        .signatureBase64Url(signatureBase64Url)
+        .condition(condition)
+        .build();
   }
 
   /**
@@ -52,99 +52,73 @@ public class Ed25519Sha256Fulfillment extends FulfillmentBase<Ed25519Sha256Condi
    *
    * @return The {@link EdDSAPublicKey} for this fulfillment.
    */
-  public EdDSAPublicKey getPublicKey() {
-    return publicKey;
-  }
+  EdDSAPublicKey getPublicKey();
 
   /**
-   * Returns a copy of the signature linked to this fulfillment.
+   * Returns a copy from the signature linked to this fulfillment.
    *
    * @return A byte array containing the signature for this fulfillment.
-   * @deprecated Java 8 does not have the concept of an immutable byte array, so this method allows
-   *     external callers to accidentally or intentionally mute the prefix. As such, this method may
-   *     be removed in a future version. Prefer {@link #getSignatureBase64Url()} instead.
+   *
+   * @deprecated Java 8 does not have the concept from an immutable byte array, so this method
+   *     allows external callers to accidentally or intentionally mute the prefix. As such, this
+   *     method may be removed in a future version. Prefer {@link #getSignatureBase64Url()}
+   *     instead.
    */
   @Deprecated
-  public byte[] getSignature() {
-    return this.signature;
-  }
+  byte[] getSignature();
 
   /**
-   * Returns a copy of the signature linked to this fulfillment.
+   * Returns a copy from the signature linked to this fulfillment.
    *
    * @return A {@link String} containing the Base64Url-encoded signature for this fulfillment.
    */
-  public String getSignatureBase64Url() {
-    return this.signatureBase64Url;
-  }
+  String getSignatureBase64Url();
 
-  @Override
-  public Ed25519Sha256Condition getCondition() {
-    return this.condition;
-  }
+  /**
+   * An abstract implementation of {@link Ed25519Sha256Fulfillment} for use by the
+   * <tt>immutables</tt> library.
+   *
+   * @see "https://immutables.github.org"
+   */
+  @Value.Immutable
+  abstract class AbstractEd25519Sha256Fulfillment implements Ed25519Sha256Fulfillment {
 
-  @Override
-  public boolean verify(final Ed25519Sha256Condition condition, final byte[] message) {
-    Objects.requireNonNull(condition,
-        "Can't verify a Ed25519Sha256Fulfillment against an null condition.");
-    Objects.requireNonNull(message, "Message must not be null!");
+    @Override
+    public boolean verify(final Ed25519Sha256Condition condition, final byte[] message) {
+      Objects.requireNonNull(condition,
+          "Can't verify a Ed25519Sha256Fulfillment against an null condition.");
+      Objects.requireNonNull(message, "Message must not be null!");
 
-    if (!getCondition().equals(condition)) {
-      return false;
+      if (!getCondition().equals(condition)) {
+        return false;
+      }
+
+      try {
+        final byte[] signatureBytes = Base64.getUrlDecoder().decode(getSignatureBase64Url());
+        // MessageDigest isn't particularly expensive to construct (see MessageDigest source).
+        final MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");
+        final Signature edDsaSigner = new EdDSAEngine(messageDigest);
+        edDsaSigner.initVerify(getPublicKey());
+        edDsaSigner.update(message);
+        return edDsaSigner.verify(signatureBytes);
+      } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
+        throw new RuntimeException(e);
+      }
     }
 
-    try {
-      // MessageDigest isn't particularly expensive to construct (see MessageDigest source).
-      final MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");
-      final Signature edDsaSigner = new EdDSAEngine(messageDigest);
-      edDsaSigner.initVerify(publicKey);
-      edDsaSigner.update(message);
-      return edDsaSigner.verify(signature);
-    } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
-      throw new RuntimeException(e);
+    /**
+     * Prints the immutable value {@code Ed25519Sha256Fulfillment} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "Ed25519Sha256Fulfillment{"
+          + "publicKey=" + getPublicKey()
+          + ", signature=" + getSignatureBase64Url()
+          + ", type=" + getType()
+          + ", condition=" + getCondition()
+          + "}";
     }
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) {
-      return true;
-    }
-    if (object == null || getClass() != object.getClass()) {
-      return false;
-    }
-    if (!super.equals(object)) {
-      return false;
-    }
-
-    Ed25519Sha256Fulfillment that = (Ed25519Sha256Fulfillment) object;
-
-    if (!publicKey.equals(that.publicKey)) {
-      return false;
-    }
-    if (!Arrays.equals(signature, that.signature)) {
-      return false;
-    }
-    return condition.equals(that.condition);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + publicKey.hashCode();
-    result = 31 * result + Arrays.hashCode(signature);
-    result = 31 * result + condition.hashCode();
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("Ed25519Sha256Fulfillment{");
-    sb.append("\npublicKey=").append(publicKey);
-    sb.append(", \n\tsignature=").append(signatureBase64Url);
-    sb.append(", \n\tcondition=").append(condition);
-    sb.append(", \n\ttype=").append(getType());
-    sb.append("\n}");
-    return sb.toString();
   }
 }
