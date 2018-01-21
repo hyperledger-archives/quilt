@@ -3,6 +3,8 @@ package org.interledger.cryptoconditions;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import org.interledger.cryptoconditions.helpers.TestKeyFactory;
+
 import com.google.common.collect.Lists;
 import net.i2p.crypto.eddsa.EdDSAEngine;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
@@ -49,47 +51,41 @@ public class CryptoConditionReaderWriterTest {
     final byte[] preimage = "Hello World!".getBytes(Charset.defaultCharset());
     final byte[] prefix = "Ying ".getBytes(Charset.defaultCharset());
     final byte[] message = "Yang".getBytes(Charset.defaultCharset());
-    //final byte[] prefixedMessage = "Ying Yang".getBytes(Charset.defaultCharset());
 
-    final MessageDigest sha256Digest = MessageDigest.getInstance("SHA-256");
     final MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
 
-    //final byte[] fingerprint = sha256Digest.digest(preimage);
-
+    final KeyPair rsaKeyPair = TestKeyFactory.generateRandomRsaKeyPair();
     final KeyPairGenerator rsaKpg = KeyPairGenerator.getInstance("RSA");
     rsaKpg.initialize(new RSAKeyGenParameterSpec(2048, new BigInteger("65537")));
-    KeyPair rsaKeyPair = rsaKpg.generateKeyPair();
-    Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
+    final Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
     rsaSigner.initSign(rsaKeyPair.getPrivate());
     rsaSigner.update(message);
 
-    net.i2p.crypto.eddsa.KeyPairGenerator edDsaKpg = new net.i2p.crypto.eddsa.KeyPairGenerator();
-    KeyPair edDsaKeyPair = edDsaKpg.generateKeyPair();
+    final KeyPair edDsaKeyPair = TestKeyFactory.generateRandomEd25519KeyPair();
     Signature edDsaSigner = new EdDSAEngine(sha512Digest);
     edDsaSigner.initSign(edDsaKeyPair.getPrivate());
     edDsaSigner.update(prefix);
     edDsaSigner.update(message);
 
-    preimageCondition = new PreimageSha256Condition(preimage);
-    rsaCondition = new RsaSha256Condition((RSAPublicKey) rsaKeyPair.getPublic());
-    ed25519Condition = new Ed25519Sha256Condition((EdDSAPublicKey) edDsaKeyPair.getPublic());
-    prefixSha256Condition
-        = new PrefixSha256Condition(prefix, 1000, ed25519Condition);
-    thresholdCondition = new ThresholdSha256Condition(
+    preimageCondition = PreimageSha256Fulfillment.from(preimage).getCondition();
+    rsaCondition = RsaSha256Condition.from((RSAPublicKey) rsaKeyPair.getPublic());
+    ed25519Condition = Ed25519Sha256Condition.from((EdDSAPublicKey) edDsaKeyPair.getPublic());
+    prefixSha256Condition = PrefixSha256Condition.from(prefix, 1000, ed25519Condition);
+    thresholdCondition = ThresholdSha256Condition.from(
         2,
         Lists.newArrayList(preimageCondition, rsaCondition, prefixSha256Condition)
     );
 
     byte[] rsaSignature = rsaSigner.sign();
     byte[] edDsaSignature = edDsaSigner.sign();
-    preimageFulfillment = new PreimageSha256Fulfillment(preimage);
-    rsaFulfillment = new RsaSha256Fulfillment((RSAPublicKey) rsaKeyPair.getPublic(), rsaSignature);
+    preimageFulfillment = PreimageSha256Fulfillment.from(preimage);
+    rsaFulfillment = RsaSha256Fulfillment.from((RSAPublicKey) rsaKeyPair.getPublic(), rsaSignature);
     ed25519Fulfillment =
-        new Ed25519Sha256Fulfillment((EdDSAPublicKey) edDsaKeyPair.getPublic(), edDsaSignature);
+        Ed25519Sha256Fulfillment.from((EdDSAPublicKey) edDsaKeyPair.getPublic(), edDsaSignature);
     prefixSha256Fulfillment =
-        new PrefixSha256Fulfillment(prefix, 1000, ed25519Fulfillment);
+        PrefixSha256Fulfillment.from(prefix, 1000, ed25519Fulfillment);
     thresholdFulfillment =
-        new ThresholdSha256Fulfillment(
+        ThresholdSha256Fulfillment.from(
             Lists.newArrayList(rsaCondition),
             Lists.newArrayList(preimageFulfillment, prefixSha256Fulfillment)
         );

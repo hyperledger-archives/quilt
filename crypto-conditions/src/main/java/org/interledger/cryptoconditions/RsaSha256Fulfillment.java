@@ -1,6 +1,6 @@
 package org.interledger.cryptoconditions;
 
-import static org.interledger.cryptoconditions.CryptoConditionType.RSA_SHA256;
+import org.immutables.value.Value;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -18,33 +18,34 @@ import java.util.Objects;
  *
  * @see "https://datatracker.ietf.org/doc/draft-thomas-crypto-conditions/"
  */
-public class RsaSha256Fulfillment extends FulfillmentBase<RsaSha256Condition>
-    implements Fulfillment<RsaSha256Condition> {
+public interface RsaSha256Fulfillment extends Fulfillment<RsaSha256Condition> {
 
-  public static final BigInteger PUBLIC_EXPONENT = BigInteger.valueOf(65537);
-  public static final String SHA_256_WITH_RSA_PSS = "SHA256withRSA/PSS";
-
-  private final RSAPublicKey publicKey;
-  private final byte[] signature;
-  private final String signatureBase64Url;
-  private final RsaSha256Condition condition;
+  BigInteger PUBLIC_EXPONENT = BigInteger.valueOf(65537);
 
   /**
-   * Constructs an instance of the fulfillment.
+   * Constructs an instance of {@link RsaSha256Fulfillment}.
    *
    * @param publicKey An {@link RSAPublicKey} to be used with this fulfillment.
    * @param signature A byte array that contains a binary representation of the signature associated
    *                  with this fulfillment.
+   *
+   * @return A newly created, immutable instance of {@link RsaSha256Fulfillment}.
    */
-  public RsaSha256Fulfillment(final RSAPublicKey publicKey, final byte[] signature) {
-    super(RSA_SHA256);
+  static RsaSha256Fulfillment from(final RSAPublicKey publicKey, final byte[] signature) {
     Objects.requireNonNull(publicKey, "PublicKey must not be null!");
     Objects.requireNonNull(signature, "Signature must not be null!");
 
-    this.publicKey = publicKey;
-    this.signature = Arrays.copyOf(signature, signature.length);
-    this.signatureBase64Url = Base64.getUrlEncoder().encodeToString(signature);
-    this.condition = new RsaSha256Condition(publicKey);
+    final byte[] immutableSignature = Arrays.copyOf(signature, signature.length);
+    final String signatureBase64Url = Base64.getUrlEncoder().encodeToString(signature);
+    final RsaSha256Condition condition = RsaSha256Condition.from(publicKey);
+
+    return ImmutableRsaSha256Fulfillment.builder()
+        .type(CryptoConditionType.RSA_SHA256)
+        .publicKey(publicKey)
+        .signature(immutableSignature)
+        .signatureBase64Url(signatureBase64Url)
+        .condition(condition)
+        .build();
   }
 
   /**
@@ -52,97 +53,73 @@ public class RsaSha256Fulfillment extends FulfillmentBase<RsaSha256Condition>
    *
    * @return The {@link RSAPublicKey} for this fulfillment.
    */
-  public RSAPublicKey getPublicKey() {
-    return publicKey;
-  }
+  RSAPublicKey getPublicKey();
 
   /**
-   * Returns a copy of the signature used in this fulfillment.
+   * Returns a copy from the signature used in this fulfillment.
    *
    * @return A byte array containing the signature for this fulfillment.
-   * @deprecated Java 8 does not have the concept of an immutable byte array, so this method allows
-   *     external callers to accidentally or intentionally mute the prefix. As such, this method may
-   *     be removed in a future version. Prefer {@link #getSignatureBase64Url()} instead.
+   *
+   * @deprecated Java 8 does not have the concept from an immutable byte array, so this method
+   *     allows external callers to accidentally or intentionally mute the prefix. As such, this
+   *     method may be removed in a future version. Prefer {@link #getSignatureBase64Url()}
+   *     instead.
    */
   @Deprecated
-  public byte[] getSignature() {
-    return this.signature;
-  }
+  byte[] getSignature();
 
   /**
    * Returns the signature used in this fulfillment.
    *
    * @return A {@link String} containing the Base64Url-encoded signature for this fulfillment.
    */
-  public String getSignatureBase64Url() {
-    return this.signatureBase64Url;
-  }
+  String getSignatureBase64Url();
 
-  @Override
-  public RsaSha256Condition getCondition() {
-    return this.condition;
-  }
+  /**
+   * An abstract implementation of {@link RsaSha256Fulfillment} for use by the <tt>immutables</tt>
+   * library.
+   *
+   * @see "https://immutables.github.org"
+   */
+  @Value.Immutable
+  abstract class AbstractRsaSha256Fulfillment implements RsaSha256Fulfillment {
 
-  @Override
-  public boolean verify(final RsaSha256Condition condition, final byte[] message) {
-    Objects.requireNonNull(condition,
-        "Can't verify a RsaSha256Fulfillment against an null condition.");
-    Objects.requireNonNull(message, "Message must not be null!");
+    private static final String SHA_256_WITH_RSA_PSS = "SHA256withRSA/PSS";
 
-    if (!getCondition().equals(condition)) {
-      return false;
+    @Override
+    public boolean verify(final RsaSha256Condition condition, final byte[] message) {
+      Objects.requireNonNull(condition,
+          "Can't verify a RsaSha256Fulfillment against an null condition.");
+      Objects.requireNonNull(message, "Message must not be null!");
+
+      if (!getCondition().equals(condition)) {
+        return false;
+      }
+
+      try {
+        final byte[] signatureBytes = Base64.getUrlDecoder().decode(getSignatureBase64Url());
+        final Signature rsaSigner = Signature.getInstance(SHA_256_WITH_RSA_PSS);
+        rsaSigner.initVerify(getPublicKey());
+        rsaSigner.update(message);
+        return rsaSigner.verify(signatureBytes);
+      } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
+        throw new RuntimeException(e);
+      }
     }
 
-    try {
-      Signature rsaSigner = Signature.getInstance(SHA_256_WITH_RSA_PSS);
-      rsaSigner.initVerify(publicKey);
-      rsaSigner.update(message);
-      return rsaSigner.verify(signature);
-    } catch (InvalidKeyException | NoSuchAlgorithmException | SignatureException e) {
-      throw new RuntimeException(e);
+    /**
+     * Prints the immutable value {@code RsaSha256Fulfillment} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "RsaSha256Fulfillment{"
+          + "publicKey=" + getPublicKey()
+          + ", signature=" + getSignatureBase64Url()
+          + ", type=" + getType()
+          + ", condition=" + getCondition()
+          + "}";
     }
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) {
-      return true;
-    }
-    if (object == null || getClass() != object.getClass()) {
-      return false;
-    }
-    if (!super.equals(object)) {
-      return false;
-    }
-
-    RsaSha256Fulfillment that = (RsaSha256Fulfillment) object;
-
-    if (!publicKey.equals(that.publicKey)) {
-      return false;
-    }
-    if (!Arrays.equals(signature, that.signature)) {
-      return false;
-    }
-    return condition.equals(that.condition);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + publicKey.hashCode();
-    result = 31 * result + Arrays.hashCode(signature);
-    result = 31 * result + condition.hashCode();
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("RsaSha256Fulfillment{");
-    sb.append("\n\tpublicKey=").append(publicKey);
-    sb.append(", \n\tsignature=").append(signatureBase64Url);
-    sb.append(", \n\tcondition=").append(condition);
-    sb.append(", \n\ttype=").append(getType());
-    sb.append("\n}");
-    return sb.toString();
   }
 }

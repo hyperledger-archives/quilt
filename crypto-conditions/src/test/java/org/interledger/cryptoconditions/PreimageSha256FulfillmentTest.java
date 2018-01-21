@@ -1,7 +1,11 @@
 package org.interledger.cryptoconditions;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -12,49 +16,57 @@ import java.util.Base64;
  */
 public class PreimageSha256FulfillmentTest {
 
+  private static final String PREIMAGE = "when this baby hits 88 miles per hour";
+  private static final String PREIMAGE2 = "Nobody calls me chicken!";
+  private static final String ENCODED_PREIMAGE
+      = "d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg==";
+  private static final String ENCODED_FINGERPRINT = "iL1xV1F0IvtokoaU1n2eVOvcwhy4me4vroUKg8vFnOE";
+  private static final byte[] FINGERPRINT_BYTES = Base64.getUrlDecoder()
+      .decode(ENCODED_FINGERPRINT);
+
+  private static final PreimageSha256Condition TEST_CONDITION
+      = PreimageSha256Condition.fromCostAndFingerprint(
+      37,
+      FINGERPRINT_BYTES
+  );
+
   @Test(expected = NullPointerException.class)
-  public void testNullConstructor() throws Exception {
-    new PreimageSha256Fulfillment(null);
+  public final void testNullPreimage() {
+    PreimageSha256Fulfillment.from(null);
   }
 
   @Test
-  public void testGettersAndSetters() throws Exception {
-    final PreimageSha256Fulfillment actual = new PreimageSha256Fulfillment(
-        "Hello World".getBytes());
-    assertThat(Base64.getUrlDecoder().decode(actual.getPreimage()),
-        is("Hello World".getBytes()));
+  public final void testGetCondition() {
+    final PreimageSha256Fulfillment fulfillment
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+    assertEquals("Wrong condition", TEST_CONDITION, fulfillment.getCondition());
+  }
+
+  @Test
+  public final void testValidate() {
+    final PreimageSha256Fulfillment actual
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+    assertTrue("Invalid condition", actual.verify(TEST_CONDITION, new byte[]{}));
+  }
+
+  @Test
+  public void testGettersAndSetters() {
+    final PreimageSha256Fulfillment actual
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+    assertThat(actual.getEncodedPreimage(), is(ENCODED_PREIMAGE));
     assertThat(actual.getType(), is(CryptoConditionType.PREIMAGE_SHA256));
+    assertThat(actual.getCondition(), is(not(nullValue())));
   }
 
   @Test
-  public void equalsHashcode() throws Exception {
-    final PreimageSha256Fulfillment fulfillment1 = new PreimageSha256Fulfillment(
-        "Hello World".getBytes());
-    final PreimageSha256Fulfillment fulfillment2 = new PreimageSha256Fulfillment(
-        "Hello World".getBytes());
-    final PreimageSha256Fulfillment fulfillment3 = new PreimageSha256Fulfillment(
-        "Hello Earth".getBytes());
+  public void equalsHashcode() {
+    final PreimageSha256Fulfillment fulfillment1
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+    final PreimageSha256Fulfillment fulfillment2
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+    final PreimageSha256Fulfillment fulfillment3
+        = PreimageSha256Fulfillment.from(PREIMAGE2.getBytes());
 
-    this.equalityHashcodeAssertionHelper(fulfillment1, fulfillment2, fulfillment3);
-
-    // Condition is currently lazily-initialized, so we want to ensure equality and hashcode work
-    // properly at all times.
-    fulfillment1.getCondition();
-    this.equalityHashcodeAssertionHelper(fulfillment1, fulfillment2, fulfillment3);
-
-    // Condition is currently lazily-initialized, so we want to ensure equality and hashcode work
-    // properly at all times.
-    fulfillment2.getCondition();
-    this.equalityHashcodeAssertionHelper(fulfillment1, fulfillment2, fulfillment3);
-
-    // Condition is currently lazily-initialized, so we want to ensure equality and hashcode work
-    // properly at all times.
-    fulfillment3.getCondition();
-    this.equalityHashcodeAssertionHelper(fulfillment1, fulfillment2, fulfillment3);
-  }
-
-  private void equalityHashcodeAssertionHelper(final Fulfillment fulfillment1,
-      final Fulfillment fulfillment2, final Fulfillment fulfillment3) {
     assertThat(fulfillment1.equals(fulfillment1), is(true));
     assertThat(fulfillment2.equals(fulfillment2), is(true));
     assertThat(fulfillment3.equals(fulfillment3), is(true));
@@ -70,5 +82,20 @@ public class PreimageSha256FulfillmentTest {
 
     assertThat(fulfillment1.hashCode(), is(fulfillment2.hashCode()));
     assertThat(fulfillment1.hashCode() == fulfillment3.hashCode(), is(false));
+  }
+
+  @Test
+  public void testToString() {
+    final PreimageSha256Fulfillment fulfillment
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+
+    assertThat(fulfillment.toString(),
+        is("PreimageSha256Fulfillment{"
+            + "encodedPreimage=d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg==, "
+            + "type=PREIMAGE-SHA-256, "
+            + "condition=PreimageSha256Condition{type=PREIMAGE-SHA-256, "
+            + "fingerprint=iL1xV1F0IvtokoaU1n2eVOvcwhy4me4vroUKg8vFnOE,"
+            + " cost=37"
+            + "}}"));
   }
 }

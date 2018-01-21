@@ -25,7 +25,7 @@ public class FulfillmentOerCodec implements FulfillmentCodec {
     Objects.requireNonNull(inputStream);
     final byte[] value = context.read(OerUint256.class, inputStream)
         .getValue();
-    return new PreimageSha256Fulfillment(value);
+    return PreimageSha256Fulfillment.from(value);
   }
 
   @Override
@@ -38,7 +38,7 @@ public class FulfillmentOerCodec implements FulfillmentCodec {
     //TODO Review after https://github.com/interledger/java-crypto-conditions/issues/75 is closed
     if (instance instanceof PreimageSha256Fulfillment) {
       PreimageSha256Fulfillment fulfillment = (PreimageSha256Fulfillment) instance;
-      byte[] preimage = Base64.getUrlDecoder().decode(fulfillment.getPreimage());
+      byte[] preimage = Base64.getUrlDecoder().decode(fulfillment.getEncodedPreimage());
       context.write(OerUint256.class, new OerUint256(preimage), outputStream);
     } else {
       throw new IllegalArgumentException("Only PreimageSha256Fulfillment instances can be encoded");

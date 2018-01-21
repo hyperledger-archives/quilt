@@ -1,7 +1,5 @@
 package org.interledger.cryptoconditions;
 
-import static org.interledger.cryptoconditions.CryptoConditionType.THRESHOLD_SHA256;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,15 +12,22 @@ import java.util.stream.Collectors;
  *
  * @see "https://datatracker.ietf.org/doc/draft-thomas-crypto-conditions/"
  */
-public class ThresholdSha256Fulfillment extends FulfillmentBase<ThresholdSha256Condition>
-    implements Fulfillment<ThresholdSha256Condition> {
-
-  private final List<Condition> subconditions;
-  private final List<Fulfillment> subfulfillments;
-  private final ThresholdSha256Condition condition;
+public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256Condition> {
 
   /**
-   * Required-args Constructor. In order to create a threshold fulfillment,
+   * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}.</p>
+   *
+   * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
+   * performing any validation, business logic, or object construction. For more scenarios, this
+   * will provide adequate immutability for any operations performed  by this method. However,
+   * during the brief period of time that this method is operating, callers should not consider this
+   * method to be thread-safe. This is because another thread could mutate the subconditions list
+   * (e.g., by adding or removing a condition), which may cause unpredictable behavior. Thus, if
+   * thread-safety is required when calling this method, be sure to guard against any concurrency
+   * issues in your system, perhaps by passing-in an immutable copy of subconditions before calling
+   * this method. Finally, for purposes of this method, shallow-copies are adequate because all
+   * instance of {@link Condition} are immutable, and thus thread-safe, so one this method finishes
+   * operation, the returned object will be fully immutable.</p>
    *
    * @param subconditions   An ordered {@link List} of unfulfilled sub-conditions that correspond to
    *                        the threshold condition being fulfilled. For example, if a given
@@ -33,39 +38,39 @@ public class ThresholdSha256Fulfillment extends FulfillmentBase<ThresholdSha256C
    *                        list of conditions derived from the subfulfillments, and the combined
    *                        list, sorted, is used as the value when deriving the fingerprint of this
    *                        threshold fulfillment.
-   * @param subfulfillments An ordered {@link List} of fulfillments.  The number of elements in this
-   *                        list is equal to the threshold of this fulfillment (i.e., per the
+   * @param subfulfillments An ordered {@link List} of sub-fulfillments.  The number of elements in
+   *                        this list is equal to the threshold of this fulfillment (i.e., per the
    *                        crypto-condtions specification, implementations must use the length of
    *                        this list as the threshold value when deriving the fingerprint of this
    *                        crypto-condition).
+   *
+   * @return A newly created, immutable instance of {@link ThresholdSha256Fulfillment}.
    */
-  public ThresholdSha256Fulfillment(
+  static ThresholdSha256Fulfillment from(
       final List<Condition> subconditions, final List<Fulfillment> subfulfillments
   ) {
-    super(THRESHOLD_SHA256);
-    // Create a new Collections that are unmodifiable so that neither the backing collections
-    // nor the actual Collections can be mutated. This works so long as fulfillments are immutable,
-    // which they are.
-    this.subconditions = Collections.unmodifiableList(new ArrayList<>(subconditions));
-    this.subfulfillments = Collections.unmodifiableList(new ArrayList<>(subfulfillments));
-    this.condition = this.constructCondition();
-  }
+    Objects.requireNonNull(subconditions, "subconditions must not be null!");
+    Objects.requireNonNull(subfulfillments, "subfulfillments must not be null!");
 
-  private ThresholdSha256Condition constructCondition() {
-    final List<Condition> allConditions = new ArrayList<>();
-
-    // Add all subconditions...
-    allConditions.addAll(this.subconditions);
-
-    // Add all derived subconditions...
-    allConditions.addAll(
-        this.subfulfillments.stream().map(Fulfillment::getCondition).collect(Collectors.toList())
+    // Create new, immutable lists so that callers accessing these from the newly constructed
+    // fulfillment will not be able to modify them.
+    final List<Condition> immutableSubconditions = Collections.unmodifiableList(
+        subconditions.stream().collect(Collectors.toList())
+    );
+    final List<Fulfillment> immutableFulfillments = Collections.unmodifiableList(
+        subfulfillments.stream().collect(Collectors.toList())
     );
 
-    // Per the crypto-condtions specification, implementations must use the length of the
-    // fulfillments list as the threshold value when deriving the fingerprint of this
-    // crypto-condition.
-    return new ThresholdSha256Condition(this.subfulfillments.size(), allConditions);
+    // Preemptively derive the condition from this fulfillment for immutability.
+    final ThresholdSha256Condition condition = AbstractThresholdSha256Fulfillment
+        .constructCondition(immutableSubconditions, immutableFulfillments);
+
+    return ImmutableThresholdSha256Fulfillment.builder()
+        .type(CryptoConditionType.THRESHOLD_SHA256)
+        .subconditions(immutableSubconditions)
+        .subfulfillments(immutableFulfillments)
+        .condition(condition)
+        .build();
   }
 
   /**
@@ -73,100 +78,97 @@ public class ThresholdSha256Fulfillment extends FulfillmentBase<ThresholdSha256C
    *
    * @return An unordered {@link List} of zero or more sub-conditions.
    */
-  public final List<Condition> getSubconditions() {
-    return this.subconditions;
-  }
+  List<Condition> getSubconditions();
 
   /**
    * Accessor for the subfulfillments of this fulfillment.
    *
    * @return An unordered {@link List} of zero or more sub-fulfillments.
    */
-  public final List<Fulfillment> getSubfulfillments() {
-    return this.subfulfillments;
-  }
-
-  @Override
-  public ThresholdSha256Condition getCondition() {
-    return this.condition;
-  }
+  List<Fulfillment> getSubfulfillments();
 
   /**
-   * <p>Verify the THRESHOLD-SHA-256.</p>
-   *
-   * <p>A THRESHOLD-SHA-256 fulfillment is valid iff:</p>
-   * <ol>
-   * <li>1. All (F).subfulfillments are valid.</li>
-   * <li>2. The derived condition (D) (found in {@code condition}) is equal to the given condition
-   * (C).</li>
-   * </ol>
-   * <p>For more general details about Fulfillment validation, see the Javadoc in {@link
-   * Fulfillment#verify(Condition, byte[])}.</p>
-   *
-   * @param condition A {@link Condition} that this fulfillment should verify.
-   * @param message   A byte array that is part of verifying the supplied condition.
-   * @return {@code true} if the condition validates this fulfillment; {@code false} otherwise.
+   * An abstract implementation of {@link ThresholdSha256Fulfillment} to provide default
+   * implementations to the generated immutable implementation.
    */
-  @Override
-  public boolean verify(final ThresholdSha256Condition condition, final byte[] message) {
-    Objects.requireNonNull(condition,
-        "Can't verify a ThresholdSha256Fulfillment against an null condition.");
-    Objects.requireNonNull(message, "Message must not be null!");
+  @org.immutables.value.Value.Immutable
+  abstract class AbstractThresholdSha256Fulfillment implements ThresholdSha256Fulfillment {
 
-    if (!getCondition().equals(condition)) {
-      return false;
+    /**
+     * Preemptively construct the derived condition for this Threshold fulfillment.
+     *
+     * @param subconditions   An ordered {@link List} of unfulfilled sub-conditions as supplied by
+     *                        {@link ThresholdSha256Fulfillment#from(List, List)}.
+     * @param subfulfillments An ordered {@link List} of sub-fulfillments as supplied by {@link
+     *                        ThresholdSha256Fulfillment#from(List, List)}.
+     *
+     * @return The {@link ThresholdSha256Condition} that corresponds to this fulfillment.
+     */
+    static ThresholdSha256Condition constructCondition(
+        final List<Condition> subconditions, final List<Fulfillment> subfulfillments
+    ) {
+      Objects.requireNonNull(subconditions);
+      Objects.requireNonNull(subfulfillments);
+
+      // TODO: See https://github.com/hyperledger/quilt/issues/78
+      //final Set<Condition> allConditions = new HashSet<>();
+      final List<Condition> allConditions = new ArrayList<>();
+
+      // Add all subconditions...
+      allConditions.addAll(subconditions);
+
+      // Add all derived subconditions...
+      allConditions.addAll(
+          subfulfillments.stream().map(Fulfillment::getCondition).collect(Collectors.toList())
+      );
+
+      // Per the crypto-condtions specification, implementations must use the length of the
+      // fulfillments list as the threshold value when deriving the fingerprint of this
+      // crypto-condition.
+      return ThresholdSha256Condition.from(
+          subfulfillments.size(),
+          allConditions.stream().collect(Collectors.toList())
+      );
     }
 
-    for (int i = 0; i < subfulfillments.size(); i++) {
-      Condition subcondition = subfulfillments.get(i).getCondition();
-      if (!subfulfillments.get(i).verify(subcondition, message)) {
+    /**
+     * <p>Verify the {@link ThresholdSha256Condition}.</p>
+     *
+     * <p>A THRESHOLD-SHA-256 fulfillment is valid iff:</p>
+     *
+     * <ol><li>All (F).subfulfillments are valid.</li> <li>The derived condition (D) (found in
+     * {@link #getCondition()}) is equal to the given condition (C) (found in {@code
+     * condition}).</li></ol>
+     *
+     * <p>For more general details about Fulfillment validation, see the Javadoc in {@link
+     * Fulfillment#verify(Condition, byte[])}.</p>
+     *
+     * @param condition A {@link Condition} that this fulfillment should verify.
+     * @param message   A byte array that is part of verifying the supplied condition.
+     *
+     * @return {@code true} if the condition validates this fulfillment; {@code false} otherwise.
+     */
+    @Override
+    public boolean verify(final ThresholdSha256Condition condition, final byte[] message) {
+      Objects.requireNonNull(condition,
+          "Can't verify a ThresholdSha256Fulfillment against an null condition.");
+      Objects.requireNonNull(message, "Message must not be null!");
+
+      if (!getCondition().equals(condition)) {
         return false;
       }
-    }
 
-    return true;
-  }
+      final List<Fulfillment> subfulfillments = this.getSubfulfillments();
+      for (int i = 0; i < subfulfillments.size(); i++) {
 
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+        final Fulfillment subfulfillment = subfulfillments.get(i);
+        final Condition subcondition = subfulfillment.getCondition();
+        if (!subfulfillment.verify(subcondition, message)) {
+          return false;
+        }
+      }
+
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
-      return false;
-    }
-    if (!super.equals(object)) {
-      return false;
-    }
-
-    ThresholdSha256Fulfillment that = (ThresholdSha256Fulfillment) object;
-
-    if (!subconditions.equals(that.subconditions)) {
-      return false;
-    }
-    if (!subfulfillments.equals(that.subfulfillments)) {
-      return false;
-    }
-    return condition.equals(that.condition);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + subconditions.hashCode();
-    result = 31 * result + subfulfillments.hashCode();
-    result = 31 * result + condition.hashCode();
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("ThresholdSha256Fulfillment{");
-    sb.append("\nsubconditions=").append(subconditions);
-    sb.append(", \n\tsubfulfillments=").append(subfulfillments);
-    sb.append(", \n\tcondition=").append(condition);
-    sb.append(", \n\ttype=").append(getType());
-    sb.append("\n}");
-    return sb.toString();
   }
 }
