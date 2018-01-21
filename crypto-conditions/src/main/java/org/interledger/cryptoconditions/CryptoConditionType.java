@@ -30,33 +30,10 @@ public enum CryptoConditionType {
   }
 
   /**
-   * Returns the ASN.1 enumeration number for this type.
-   */
-  public int getTypeCode() {
-    return this.typeCode;
-  }
-
-  @Override
-  public String toString() {
-    return this.name;
-  }
-
-  public int getMask() {
-    return this.bitMask;
-  }
-
-  public int getByteIndex() {
-    return this.byteIndex;
-  }
-
-  public boolean isBitSet(byte[] bitString) {
-    return bitString.length - 2 >= byteIndex && ((bitString[byteIndex + 1] & bitMask) == bitMask);
-  }
-
-  /**
    * Determines the condition type based on the given type code.
    *
-   * @param typeCode A numeric representation of the condition type. *
+   * @param typeCode A numeric representation of the condition type.
+   *
    * @return The matching condition type, if one can be found.
    */
   public static CryptoConditionType valueOf(int typeCode) {
@@ -70,10 +47,13 @@ public enum CryptoConditionType {
   }
 
   /**
-   * TODO This will break if the possible rsa exceeds 8. Only works for our current known set.
-   * Convert a set of rsa into a byte that can be used to encode a BIT STRING.
+   * <p>Convert a set of rsa into a byte that can be used to encode a BIT STRING.</p>
+   *
+   * <p>NOTE: Per @adrianhopebailie, this implementation will break if the possible RSA exceeds 8.
+   * Only works for our current known set.</p>
    *
    * @param types set of rsa to encode as a BIT STRING.
+   *
    * @return byte array where first byte indicates the number of unused bits in last byte and
    *     remaining bytes encode the bit string
    */
@@ -112,7 +92,7 @@ public enum CryptoConditionType {
       data[0] = (byte) (7 - lastUsedBit);
       return data;
     } else {
-      return new byte[] {(byte) 0x00};
+      return new byte[]{(byte) 0x00};
     }
   }
 
@@ -120,6 +100,8 @@ public enum CryptoConditionType {
    * Convert a set of rsa into a comma separated list.
    *
    * @param types set of rsa to encode
+   *
+   * @return A {@link String } containing a comma-separated list of all the enums in {@code types}.
    */
   public static String getEnumOfTypesAsString(EnumSet<CryptoConditionType> types) {
 
@@ -138,6 +120,7 @@ public enum CryptoConditionType {
    * Returns the Condition type identified by its name, in a *case-insensitive* manner.
    *
    * @param typeName The name of the condition type, e.g. 'rsa-sha-256'
+   *
    * @return The condition type with matching name, if any.
    */
   public static CryptoConditionType fromString(String typeName) {
@@ -154,6 +137,7 @@ public enum CryptoConditionType {
    * Convert a comma separated list of rsa into a set of rsa.
    *
    * @param subtypes a comma separated list of type names.
+   *
    * @return A set of condition rsa based on the list.
    */
   public static EnumSet<CryptoConditionType> getEnumOfTypesFromString(String subtypes) {
@@ -174,7 +158,8 @@ public enum CryptoConditionType {
   /**
    * Get the set of rsa represented by a raw bit string.
    *
-   * @param bitStringData a raw BIT STRING including the padding bit count in the first byte
+   * @param bitStringData a raw BIT STRING including the padding bit count in the first byte.
+   *
    * @return A set of condition rsa based on the bit string.
    */
   public static EnumSet<CryptoConditionType> getEnumOfTypesFromBitString(byte[] bitStringData) {
@@ -208,5 +193,38 @@ public enum CryptoConditionType {
     }
 
     return subtypes;
+  }
+
+  /**
+   * Returns the ASN.1 enumeration number for this type.
+   *
+   * @return An int representing the typeCode for this condition-type.
+   */
+  public int getTypeCode() {
+    return this.typeCode;
+  }
+
+  @Override
+  public String toString() {
+    return this.name;
+  }
+
+  public int getMask() {
+    return this.bitMask;
+  }
+
+  public int getByteIndex() {
+    return this.byteIndex;
+  }
+
+  /**
+   * Indicates if this condition-type is bit-set.
+   *
+   * @param bitString a raw BIT STRING including the padding bit count in the first byte.
+   *
+   * @return {@code true} if the bit is set; {@code false} if the bit is not set.
+   */
+  private boolean isBitSet(byte[] bitString) {
+    return bitString.length - 2 >= byteIndex && ((bitString[byteIndex + 1] & bitMask) == bitMask);
   }
 }

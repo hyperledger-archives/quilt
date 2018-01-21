@@ -18,7 +18,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,13 +39,13 @@ public class InterledgerPaymentRequestTest {
    * The data for this test...
    */
   @Parameters
-  public static Collection<Object[]> data() throws IOException {
+  public static Collection<Object[]> data() {
 
     InterledgerPayment payment1 =
         InterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test1.foo"))
             .destinationAmount(BigInteger.valueOf(100L)).data("test data".getBytes()).build();
 
-    Condition condition1 = new PreimageSha256Condition(32, new byte[32]);
+    Condition condition1 = PreimageSha256Condition.fromCostAndFingerprint(32, new byte[32]);
 
     InterledgerPaymentRequest ipr1 =
         InterledgerPaymentRequest.builder()
@@ -56,7 +55,7 @@ public class InterledgerPaymentRequestTest {
         InterledgerPayment.builder().destinationAccount(InterledgerAddress.of("test2.bar"))
             .destinationAmount(BigInteger.ZERO).data("other data".getBytes()).build();
 
-    Condition condition2 = new PreimageSha256Condition(32,
+    Condition condition2 = PreimageSha256Condition.fromCostAndFingerprint(32,
         new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
             1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
             1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2});

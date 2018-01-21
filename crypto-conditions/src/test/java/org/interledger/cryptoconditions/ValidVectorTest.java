@@ -6,6 +6,11 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.interledger.cryptoconditions.Ed25519Sha256Condition.AbstractEd25519Sha256Condition;
+import org.interledger.cryptoconditions.PrefixSha256Condition.AbstractPrefixSha256Condition;
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment.AbstractPreimageSha256Fulfillment;
+import org.interledger.cryptoconditions.RsaSha256Condition.AbstractRsaSha256Condition;
+import org.interledger.cryptoconditions.ThresholdSha256Condition.AbstractThresholdSha256Condition;
 import org.interledger.cryptoconditions.der.DerEncodingException;
 import org.interledger.cryptoconditions.helpers.TestKeyFactory;
 import org.interledger.cryptoconditions.helpers.TestVector;
@@ -157,8 +162,8 @@ public class ValidVectorTest {
 
   /**
    * This test parses the fulfillment binary as a control fulfillment. It then loads a condition
-   * from the test vector by its URI, and calls {@link Fulfillment#verify(Condition,
-   * byte[])}, asserting that it returns true.
+   * from the test vector by its URI, and calls {@link Fulfillment#verify(Condition, byte[])},
+   * asserting that it returns true.
    */
   @Test
   public void testParseFulfillmentFromBinaryAndVerify() throws Exception {
@@ -188,11 +193,10 @@ public class ValidVectorTest {
   }
 
   /**
-   * This test parses fulfillment binary from the test vector, and then validates that
-   * this value matches the fingerprint from an actual Condition generated from the testVector
-   * JSON. This is a slightly different test from the one that parses the binary fulfillment and
-   * condition data and asserts that the fingerprints are the same
-   * (i.e., {@link #testParseBinaryConditionAgainstBinaryFulfillment}).
+   * This test parses fulfillment binary from the test vector, and then validates that this value
+   * matches the fingerprint from an actual Condition generated from the testVector JSON. This is a
+   * slightly different test from the one that parses the binary fulfillment and condition data and
+   * asserts that the fingerprints are the same (i.e., {@link #testParseBinaryConditionAgainstBinaryFulfillment}).
    */
   @Test
   public void testParseFulfillmentFromBinaryAndValidateFingerprintContents() {
@@ -207,15 +211,15 @@ public class ValidVectorTest {
     final byte[] unhashedFingerprintContents;
     switch (actualTestCondition.getType()) {
       case PREIMAGE_SHA256: {
-        unhashedFingerprintContents = ((PreimageSha256Condition) actualTestCondition)
-            .constructFingerprintContents(
-                BaseEncoding.base64Url().decode(testVector.getJson().getPreimage())
-            );
+        unhashedFingerprintContents = AbstractPreimageSha256Fulfillment.constructFingerprint(
+            BaseEncoding.base64Url().decode(testVector.getJson().getPreimage()
+            )
+        );
         break;
       }
       case PREFIX_SHA256: {
         unhashedFingerprintContents =
-            ((PrefixSha256Condition) actualTestCondition).constructFingerprintContents(
+            ((AbstractPrefixSha256Condition) actualTestCondition).constructFingerprintContents(
                 BaseEncoding.base64Url().decode(testVector.getJson().getPrefix()),
                 testVector.getJson().getMaxMessageLength(),
                 TestVectorFactory
@@ -228,14 +232,16 @@ public class ValidVectorTest {
         final EdDSAPublicKey publicKey = TestKeyFactory
             .constructEdDsaPublicKey(testVector.getJson().getPublicKey());
         unhashedFingerprintContents =
-            ((Ed25519Sha256Condition) actualTestCondition).constructFingerprintContents(publicKey);
+            ((AbstractEd25519Sha256Condition) actualTestCondition)
+                .constructFingerprintContents(publicKey);
         break;
       }
       case RSA_SHA256: {
         final RSAPublicKey publicKey = TestKeyFactory
             .constructRsaPublicKey(testVector.getJson().getModulus());
         unhashedFingerprintContents
-            = ((RsaSha256Condition) actualTestCondition).constructFingerprintContents(publicKey);
+            = ((AbstractRsaSha256Condition) actualTestCondition)
+            .constructFingerprintContents(publicKey);
         break;
       }
       case THRESHOLD_SHA256: {
@@ -246,7 +252,7 @@ public class ValidVectorTest {
           subconditions
               .add(TestVectorFactory.getConditionFromTestVectorJson(jsonSubfulfillments[i]));
         }
-        unhashedFingerprintContents = ((ThresholdSha256Condition) actualTestCondition)
+        unhashedFingerprintContents = ((AbstractThresholdSha256Condition) actualTestCondition)
             .constructFingerprintContents(threshold, subconditions);
         break;
       }
@@ -277,9 +283,9 @@ public class ValidVectorTest {
   }
 
   /**
-   * This test creates a fulfillment from individual values found in the json test vector file,
-   * then converts the fulfillment to a condition, and then asserts that the binary fulfillment in
-   * JSON test vector matches what is generated by the Java code.
+   * This test creates a fulfillment from individual values found in the json test vector file, then
+   * converts the fulfillment to a condition, and then asserts that the binary fulfillment in JSON
+   * test vector matches what is generated by the Java code.
    */
   @Test
   public void testParseJsonFulfillment() throws Exception {
@@ -315,7 +321,7 @@ public class ValidVectorTest {
         PreimageSha256Fulfillment preimageFulfillment = (PreimageSha256Fulfillment) fulfillment;
         assertEquals(testVector.getName() + " [compare preimage]",
             testVector.getJson().getPreimage(),
-            preimageFulfillment.getPreimage());
+            preimageFulfillment.getEncodedPreimage());
         break;
 
       case PREFIX_SHA256:

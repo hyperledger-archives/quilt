@@ -15,8 +15,10 @@ public class DerOutputStream extends FilterOutputStream {
 
   /**
    * Writes a DER encoded length indicator to the stream.
-   * 
+   *
    * @param length The length value to writeFulfillment to the stream.
+   *
+   * @throws IOException if any kind of problem occurs while writing bytes.
    */
   public void writeLength(int length) throws IOException {
     if (length > 127) {
@@ -39,9 +41,11 @@ public class DerOutputStream extends FilterOutputStream {
 
   /**
    * Writes an encoded DER value to the stream.
-   * 
-   * @param tag The DER tag that should accompany the value.
+   *
+   * @param tag   The DER tag that should accompany the value.
    * @param bytes The value to writeFulfillment to the stream.
+   *
+   * @throws IOException if any kind of problem occurs while writing bytes.
    */
   public void writeEncoded(int tag, byte[] bytes) throws IOException {
     write(tag);
@@ -51,9 +55,11 @@ public class DerOutputStream extends FilterOutputStream {
 
   /**
    * Writes the value as a DER tagged object.
-   * 
+   *
    * @param tagNumber The tag number for the object.
-   * @param object The value to writeFulfillment to the stream.
+   * @param object    The value to writeFulfillment to the stream.
+   *
+   * @throws IOException if any kind of problem occurs while writing bytes.
    */
   public void writeTaggedObject(int tagNumber, byte[] object) throws IOException {
     writeEncoded(DerTag.TAGGED.getTag() + tagNumber, object);
@@ -61,9 +67,11 @@ public class DerOutputStream extends FilterOutputStream {
 
   /**
    * Writes the value as a DER tagged, constructed object.
-   * 
+   *
    * @param tagNumber The tag number for the object.
-   * @param object The value to writeFulfillment to the stream.
+   * @param object    The value to writeFulfillment to the stream.
+   *
+   * @throws IOException if any kind of problem occurs while writing bytes.
    */
   public void writeTaggedConstructedObject(int tagNumber, byte[] object) throws IOException {
     writeEncoded(DerTag.TAGGED.getTag() + DerTag.CONSTRUCTED.getTag() + tagNumber, object);
