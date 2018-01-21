@@ -38,8 +38,7 @@ import java.util.stream.Collectors;
  * <p>One way to formally interpret a threshold condition is as a booleanthreshold gate. A tree of
  * threshold conditions forms a boolean threshold circuit.</p>
  */
-public interface ThresholdSha256Condition extends CompoundSha256Condition,
-    Comparable<ThresholdSha256Condition> {
+public interface ThresholdSha256Condition extends CompoundSha256Condition {
 
   /**
    * <p>Constructs an instance of {@link ThresholdSha256Condition}.</p>
