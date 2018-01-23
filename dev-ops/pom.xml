@@ -10,6 +10,8 @@
     <name>Hyperledger Quilt Dev-Ops Tools</name>
 
     <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <kotlin.version>1.1.60</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.resources.sourceEncoding>UTF-8</project.resources.sourceEncoding>
@@ -27,6 +29,15 @@
     <build>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <plugins>
+            <!-- org.apache.maven.plugins:maven-compiler-plugin -->
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.2</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>

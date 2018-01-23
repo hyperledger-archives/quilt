@@ -301,7 +301,7 @@ public interface InterledgerAddress {
   }
 
   @Immutable
-  public abstract class AbstractInterledgerAddress implements InterledgerAddress {
+  abstract class AbstractInterledgerAddress implements InterledgerAddress {
 
     /**
      * <p>Compares the specified object with this <tt>InterledgerAddress</tt> for equality.</p>

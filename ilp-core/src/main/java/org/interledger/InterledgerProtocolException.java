@@ -1,6 +1,7 @@
 package org.interledger;
 
-import org.interledger.ilp.InterledgerProtocolError;
+import org.interledger.ilp.InterledgerErrorCode;
+import org.interledger.ilp.InterledgerRejectPacket;
 
 import java.util.Objects;
 
@@ -11,22 +12,22 @@ public class InterledgerProtocolException extends InterledgerRuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  private final InterledgerProtocolError interledgerProtocolError;
+  private final InterledgerRejectPacket interledgerRejectPacket;
 
   /**
    * Required-args constructor.
    *
-   * @param interledgerProtocolError An instance of {@link InterledgerProtocolError} that is the
+   * @param interledgerRejectPacket An instance of {@link InterledgerRejectPacket} that is the
    *                                 underlying error encapsulated by this exception.
    */
-  public InterledgerProtocolException(final InterledgerProtocolError interledgerProtocolError) {
-    super("Interledger protocol error.");
-    this.interledgerProtocolError =
-      Objects
-        .requireNonNull(interledgerProtocolError, "interledgerProtocolError must not be null");
+  public InterledgerProtocolException(final InterledgerRejectPacket interledgerRejectPacket) {
+    super("Interledger Rejection.");
+    this.interledgerRejectPacket =
+        Objects
+            .requireNonNull(interledgerRejectPacket, "interledgerRejectPacket must not be null");
   }
 
-  public InterledgerProtocolError getInterledgerProtocolError() {
-    return interledgerProtocolError;
+  public InterledgerRejectPacket getInterledgerRejectPacket() {
+    return interledgerRejectPacket;
   }
 }
