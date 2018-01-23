@@ -1,11 +1,6 @@
 package org.interledger.ilqp;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Liquidity curves describe the relationship between input and output amount for a given path
@@ -30,13 +25,13 @@ import java.util.TreeSet;
  */
 public interface LiquidityCurve {
 
-  public Collection<LiquidityPoint> getLiquidityPoints();
+  public List<LiquidityPoint> getLiquidityPoints();
 
   /**
    * A builder for instances of {@link LiquidityCurve}.
    */
   class Builder {
-    private Set<LiquidityPoint> points = new HashSet<>();
+    private List<LiquidityPoint> points = new ArrayList<>();
 
     /**
      * Sets a liquidity curve into this builder, clearing any liquidity points already set.
@@ -80,20 +75,20 @@ public interface LiquidityCurve {
      * Concrete implementation of {@link LiquidityCurve}.
      */
     private static class Impl implements LiquidityCurve {
-      private final SortedSet<LiquidityPoint> curve;
+      private final List<LiquidityPoint> curve;
 
       private Impl(Builder builder) {
         Objects.requireNonNull(builder);
 
         Objects.requireNonNull(builder.points, "liquiditypoints must not be null!");
 
-        this.curve = new TreeSet<>();
+        this.curve = new ArrayList<>();
 
         this.curve.addAll(builder.points);
       }
 
       @Override
-      public Collection<LiquidityPoint> getLiquidityPoints() {
+      public List<LiquidityPoint> getLiquidityPoints() {
         return this.curve;
       }
 
