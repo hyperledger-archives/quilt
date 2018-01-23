@@ -22,14 +22,14 @@ public final class PreimageSha256Condition extends Sha256Condition implements Si
    * should instead create a new {@link PreimageSha256Fulfillment} and call {@link
    * PreimageSha256Fulfillment#getCondition()}.</p>
    *
-   * @param preimage An instance of byte array containing preimage data.
+   * @param data An instance of byte array containing fingerprint data.
    */
-  PreimageSha256Condition(final byte[] preimage) {
+  PreimageSha256Condition(final byte[] data) {
     super(
         CryptoConditionType.PREIMAGE_SHA256,
-        calculateCost(preimage),
+        calculateCost(data),
         hashFingerprintContents(
-            constructFingerprintContents(preimage)
+            constructFingerprintContents(data)
         )
     );
   }
@@ -54,21 +54,21 @@ public final class PreimageSha256Condition extends Sha256Condition implements Si
    *
    * <p>Note: This method is package-private as (opposed to private) for testing purposes.</p>
    *
-   * @param preimage An instance of byte array containing preimage data.
+   * @param data An instance of byte array containing data.
    */
-  static final byte[] constructFingerprintContents(final byte[] preimage) {
-    return Objects.requireNonNull(preimage);
+  static final byte[] constructFingerprintContents(final byte[] data) {
+    return Objects.requireNonNull(data);
   }
 
   /**
-   * Calculates the cost of this condition, which is simply the length of the preimage.
+   * Calculates the cost of this condition, which is simply the length of the fingerprint
    *
-   * @param preimage The preimage associated with this condition.
+   * @param  fingerprint The preimage associated with this condition.
    *
    * @return The cost of a condition based on the preimage.
    */
-  private static final long calculateCost(byte[] preimage) {
-    return preimage.length;
+  private static final long calculateCost(byte[] fingerprint) {
+    return fingerprint.length;
   }
 
 }
