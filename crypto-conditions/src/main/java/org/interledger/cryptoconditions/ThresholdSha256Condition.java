@@ -148,6 +148,13 @@ public final class ThresholdSha256Condition extends CompoundSha256Condition
   ) {
     Objects.requireNonNull(subconditions);
 
+    // Ensure a sufficient number of sub-conditions
+    if (subconditions.size() < threshold) {
+      throw new IllegalArgumentException(
+          "The number of valid sub-fulfillments must be equal or greater than the threshold"
+      );
+    }
+
     // Sort by cost
     subconditions.sort((Condition c1, Condition c2) -> (int) (c2.getCost() - c1.getCost()));
 
