@@ -11,7 +11,7 @@
 
     <name>Interledger Core Codecs</name>
     <description>Codecs for the Interledger Core classes.</description>
-    <artifactId>ilp-core-codecContext</artifactId>
+    <artifactId>ilp-core-codecs</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <dependencies>
         <dependency>

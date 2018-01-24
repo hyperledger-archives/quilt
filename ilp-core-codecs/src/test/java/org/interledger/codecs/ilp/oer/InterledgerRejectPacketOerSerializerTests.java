@@ -1,4 +1,4 @@
-package org.interledger.codecs.oer;
+package org.interledger.codecs.ilp.oer;
 
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacket;
@@ -68,6 +68,7 @@ public class InterledgerRejectPacketOerSerializerTests {
         {InterledgerRejectPacket.builder()
             .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
             .triggeredBy(FOO)
+            .message("Internal Error")
             .data(byteArrayOutputStream1.toByteArray())
             .build()
         },
@@ -76,6 +77,7 @@ public class InterledgerRejectPacketOerSerializerTests {
             InterledgerRejectPacket.builder()
                 .code(InterledgerErrorCode.T01_LEDGER_UNREACHABLE)
                 .triggeredBy(BAR)
+                .message("Ledger Unreachable")
                 .data(byteArrayOutputStream2.toByteArray())
                 .build()
         },
@@ -84,6 +86,7 @@ public class InterledgerRejectPacketOerSerializerTests {
             InterledgerRejectPacket.builder()
                 .code(InterledgerErrorCode.T02_LEDGER_BUSY)
                 .triggeredBy(BAZ)
+                .message("Ledger Busy")
                 .data(byteArrayOutputStream3.toByteArray())
                 .build()
         },

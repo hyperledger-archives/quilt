@@ -1,13 +1,15 @@
 package org.interledger.codecs.asn;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /**
- * An ASN.1 UTF-8 String represented internally as {@link String}.
+ * An ASN.1 IA5String represented internally as {@link String}.
  */
-public class AsnUTF8String extends AsnUTF8StringBasedObject<String> {
+public class AsnPrintableString extends AsnPrintableStringBasedObject<String> {
 
-  public AsnUTF8String(AsnSizeConstraint sizeConstraint) {
+  public AsnPrintableString(AsnSizeConstraint sizeConstraint) {
     super(sizeConstraint);
   }
 
@@ -23,7 +25,7 @@ public class AsnUTF8String extends AsnUTF8StringBasedObject<String> {
 
   @Override
   public String toString() {
-    return "AsnUTF8String{"
+    return "PrintableString{"
         + "value='" + getValue() + '\''
         + '}';
   }

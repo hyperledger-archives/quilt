@@ -15,16 +15,6 @@ public abstract class AsnSequence<T> extends AsnObject<T> {
     this.sequence = Arrays.asList(elements);
   }
 
-  /**
-   * Called each time a value is assigned to one of the internal ASN.1 objects.
-   *
-   * Implementations may use this to adjust the internal sequence based on values that are read in.
-   * @param index
-   */
-  protected void onSetValue(int index) {
-    //No op by default
-  }
-
   @Override
   public final T getValue() {
     return decode();
@@ -55,7 +45,6 @@ public abstract class AsnSequence<T> extends AsnObject<T> {
 
   public final <U extends AsnObject<V>, V> AsnSequence<T> setValueAt(int index, V value) {
     ((U) getElementAt(index)).setValue(value);
-    onSetValue(index);
     return this;
   }
 

@@ -1,8 +1,10 @@
-package org.interledger.codecs.oer;
+package org.interledger.codecs.ilp.oer;
 
-import org.interledger.codecs.asn.AsnGeneralizedTime;
+import static java.lang.String.format;
+
+import org.interledger.codecs.InterledgerCodecContextFactory;
 import org.interledger.codecs.framework.CodecContext;
-import org.interledger.codecs.framework.CodecContextFactory;
+import org.interledger.codecs.ilp.asn.AsnTimestamp;
 
 import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
@@ -14,6 +16,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -22,7 +25,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Parameterized tests for encoding and decoding {@link AsnGeneralizedTime} instances.
+ * Parameterized tests for encoding and decoding {@link AsnTimestamp} instances.
  */
 @RunWith(Parameterized.class)
 public class InstantOerSerializerTest {
@@ -56,23 +59,23 @@ public class InstantOerSerializerTest {
          * representation]
          */
         {
-            "20170630010203.000Z",
+            "20170630010203000",
             Instant.from(ZonedDateTime.of(2017, 6, 30, 1, 2, 3, 0, ZoneId.of("Z")))
         },
         {
-            "20170630010203.100Z",
+            "20170630010203100",
             Instant.from(
                 ZonedDateTime.of(2017, 6, 30, 1, 2, 3, (int) TimeUnit.MILLISECONDS.toNanos(100),
                     ZoneId.of("Z")))
         },
         {
-            "20170630010203.100Z",
+            "20170630010203100",
             Instant.from(
                 ZonedDateTime.of(2017, 6, 30, 3, 2, 3, (int) TimeUnit.MILLISECONDS.toNanos(100),
                     ZoneId.of("+02:00")))
         },
         {
-            "20170630010203.100Z",
+            "20170630010203100",
             Instant.from(ZonedDateTime
                 .of(2017, 6, 29, 23, 2, 3, (int) TimeUnit.MILLISECONDS.toNanos(100),
                     ZoneId.of("-02:00")))}
@@ -88,18 +91,7 @@ public class InstantOerSerializerTest {
    * the wire.
    */
   public static byte[] encodeString(String value) {
-    String length = Integer.toHexString(value.length()).toUpperCase();
-
-    /* pad the length out to an even number of characters */
-    if (length.length() % 2 != 0) {
-      length = "0" + length;
-    }
-
-    /* encode the string value into a hexadecimal string representation */
-    String encoded = BaseEncoding.base16().encode(value.getBytes());
-
-    /* prepend the length of the string and the value and return its byte representation */
-    return BaseEncoding.base16().decode(length + encoded);
+    return value.getBytes(StandardCharsets.US_ASCII);
   }
 
   /**
@@ -107,7 +99,7 @@ public class InstantOerSerializerTest {
    */
   @Before
   public void setUp() throws Exception {
-    codecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
+    codecContext = InterledgerCodecContextFactory.oer();
   }
 
   @Test

@@ -1,4 +1,4 @@
-package org.interledger.codecs.oer;
+package org.interledger.codecs.ilp.oer;
 
 import org.interledger.InterledgerAddress;
 import org.interledger.codecs.InterledgerCodecContextFactory;

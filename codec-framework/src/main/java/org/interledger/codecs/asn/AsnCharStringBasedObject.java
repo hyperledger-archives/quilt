@@ -7,6 +7,7 @@ import org.interledger.codecs.framework.CodecException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * ASN.1 object that extends an Octet String.
@@ -14,6 +15,8 @@ import java.util.Objects;
 public abstract class AsnCharStringBasedObject<T> extends AsnPrimitive<T> {
 
   private String charString;
+  private Predicate<String> validator;
+
 
   private final Charset characterSet;
 
@@ -44,12 +47,26 @@ public abstract class AsnCharStringBasedObject<T> extends AsnPrimitive<T> {
   public final void setCharString(String charString) {
     Objects.requireNonNull(charString);
     validateSize(charString);
+    validate(charString);
     this.charString = charString;
+  }
+
+  protected final void setValidator(Predicate<String> validator) {
+    this.validator = validator;
   }
 
   protected abstract T decode();
 
   protected abstract void encode(T value);
+
+  private String validate(String value) {
+    if (validator != null) {
+      if (!validator.test(value)) {
+        throw new CodecException(format("Invalid format: %s", value));
+      }
+    }
+    return value;
+  }
 
   private void validateSize(String charString) {
     if(getSizeConstraint().isUnconstrained()) {

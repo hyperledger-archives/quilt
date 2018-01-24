@@ -9,9 +9,13 @@ import org.interledger.codecs.ilp.asn.AsnFulfillment;
 import org.interledger.codecs.ilp.asn.AsnInterledgerAddress;
 import org.interledger.codecs.ilp.asn.AsnInterledgerErrorCode;
 import org.interledger.codecs.ilp.asn.AsnInterledgerFulfillPacket;
+import org.interledger.codecs.ilp.asn.AsnInterledgerFulfillPacketData;
 import org.interledger.codecs.ilp.asn.AsnInterledgerPacket;
 import org.interledger.codecs.ilp.asn.AsnInterledgerPreparePacket;
+import org.interledger.codecs.ilp.asn.AsnInterledgerPreparePacketData;
 import org.interledger.codecs.ilp.asn.AsnInterledgerRejectPacket;
+import org.interledger.codecs.ilp.asn.AsnInterledgerRejectPacketData;
+import org.interledger.codecs.ilp.asn.AsnTimestamp;
 import org.interledger.codecs.oer.AsnCharStringOerSerializer;
 import org.interledger.codecs.oer.AsnOctetStringOerSerializer;
 import org.interledger.codecs.oer.AsnSequenceOerSerializer;
@@ -21,6 +25,8 @@ import org.interledger.ilp.InterledgerErrorCode;
 import org.interledger.ilp.InterledgerFulfillPacket;
 import org.interledger.ilp.InterledgerPreparePacket;
 import org.interledger.ilp.InterledgerRejectPacket;
+
+import java.time.Instant;
 
 /**
  * A factory class for constructing a CodecContext that can read and write Interledger objects using
@@ -37,6 +43,8 @@ public class InterledgerCodecContextFactory {
   public static CodecContext oer() {
 
     return CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
+        .register(Instant.class, AsnTimestamp::new,
+            new AsnCharStringOerSerializer())
         .register(Condition.class, AsnCondition::new,
             new AsnOctetStringOerSerializer())
         .register(Fulfillment.class, AsnFulfillment::new,

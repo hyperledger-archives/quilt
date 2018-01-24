@@ -198,8 +198,89 @@ public interface InterledgerErrorCode {
   }
 
   static InterledgerErrorCode valueOf(final String code) {
-    //TODO Implement this
-    throw new RuntimeException("Not implemented.");
+    Objects.requireNonNull(code);
+
+    if (code.equals(InterledgerErrorCode.F00_BAD_REQUEST.getCode())) {
+      return InterledgerErrorCode.F00_BAD_REQUEST;
+    }
+
+    if (code.equals(InterledgerErrorCode.F01_INVALID_PACKET.getCode())) {
+      return InterledgerErrorCode.F01_INVALID_PACKET;
+    }
+
+    if (code.equals(InterledgerErrorCode.F02_UNREACHABLE.getCode())) {
+      return InterledgerErrorCode.F02_UNREACHABLE;
+    }
+
+    if (code.equals(InterledgerErrorCode.F03_INVALID_AMOUNT.getCode())) {
+      return InterledgerErrorCode.F03_INVALID_AMOUNT;
+    }
+
+    if (code.equals(InterledgerErrorCode.F04_INSUFFICIENT_DST_AMOUNT.getCode())) {
+      return InterledgerErrorCode.F04_INSUFFICIENT_DST_AMOUNT;
+    }
+
+    if (code.equals(InterledgerErrorCode.F05_WRONG_CONDITION.getCode())) {
+      return InterledgerErrorCode.F05_WRONG_CONDITION;
+    }
+
+    if (code.equals(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT.getCode())) {
+      return InterledgerErrorCode.F06_UNEXPECTED_PAYMENT;
+    }
+
+    if (code.equals(InterledgerErrorCode.F07_CANNOT_RECEIVE.getCode())) {
+      return InterledgerErrorCode.F07_CANNOT_RECEIVE;
+    }
+
+    if (code.equals(InterledgerErrorCode.F99_APPLICATION_ERROR.getCode())) {
+      return InterledgerErrorCode.F99_APPLICATION_ERROR;
+    }
+
+    if (code.equals(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT.getCode())) {
+      return InterledgerErrorCode.R00_TRANSFER_TIMED_OUT;
+    }
+
+    if (code.equals(InterledgerErrorCode.R01_INSUFFICIENT_SOURCE_AMOUNT.getCode())) {
+      return InterledgerErrorCode.R01_INSUFFICIENT_SOURCE_AMOUNT;
+    }
+
+    if (code.equals(InterledgerErrorCode.R02_INSUFFICIENT_TIMEOUT.getCode())) {
+      return InterledgerErrorCode.R02_INSUFFICIENT_TIMEOUT;
+    }
+
+    if (code.equals(InterledgerErrorCode.R99_APPLICATION_ERROR.getCode())) {
+      return InterledgerErrorCode.R99_APPLICATION_ERROR;
+    }
+
+    if (code.equals(InterledgerErrorCode.T00_INTERNAL_ERROR.getCode())) {
+      return InterledgerErrorCode.T00_INTERNAL_ERROR;
+    }
+
+    if (code.equals(InterledgerErrorCode.T01_LEDGER_UNREACHABLE.getCode())) {
+      return InterledgerErrorCode.T01_LEDGER_UNREACHABLE;
+    }
+
+    if (code.equals(InterledgerErrorCode.T02_LEDGER_BUSY.getCode())) {
+      return InterledgerErrorCode.T02_LEDGER_BUSY;
+    }
+
+    if (code.equals(InterledgerErrorCode.T03_CONNECTOR_BUSY.getCode())) {
+      return InterledgerErrorCode.T03_CONNECTOR_BUSY;
+    }
+
+    if (code.equals(InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY.getCode())) {
+      return InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY;
+    }
+
+    if (code.equals(InterledgerErrorCode.T05_RATE_LIMITED.getCode())) {
+      return InterledgerErrorCode.T05_RATE_LIMITED;
+    }
+
+    if (code.equals(InterledgerErrorCode.T99_APPLICATION_ERROR.getCode())) {
+      return InterledgerErrorCode.T99_APPLICATION_ERROR;
+    }
+
+    throw new InterledgerRuntimeException("Unknown Error Code.");
   }
 
   /**

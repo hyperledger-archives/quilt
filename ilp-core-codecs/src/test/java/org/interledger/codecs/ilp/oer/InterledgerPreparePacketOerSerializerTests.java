@@ -1,9 +1,10 @@
-package org.interledger.codecs.oer;
+package org.interledger.codecs.ilp.oer;
 
 import org.interledger.InterledgerAddress;
 import org.interledger.InterledgerPacket;
 import org.interledger.codecs.InterledgerCodecContextFactory;
 import org.interledger.codecs.framework.CodecContext;
+import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.ilp.InterledgerPreparePacket;
 
 import org.hamcrest.CoreMatchers;
@@ -18,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -45,18 +47,29 @@ public class InterledgerPreparePacketOerSerializerTests {
       byteArrayOutputStream.write(i);
     }
 
-    return Arrays.asList(new Object[][] {{InterledgerPreparePacket.builder()
-        .destination(InterledgerAddress.builder().value("test3.foo").build())
-        .amount(BigInteger.valueOf(100L)).data(new byte[] {}).build()},
+    final byte[] condition = new byte[32];
+
+    return Arrays.asList(new Object[][] {
+
+        {InterledgerPreparePacket.builder()
+        .destination(InterledgerAddress.of("test3.foo"))
+        .amount(BigInteger.valueOf(100L))
+        .executionCondition(new PreimageSha256Condition(32, condition))
+        .expiresAt(Instant.now())
+        .data(new byte[] {}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar").build())
             .amount(BigInteger.valueOf(50L))
+            .executionCondition(new PreimageSha256Condition(32, condition))
+            .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar").build())
             .amount(BigInteger.valueOf(50L))
+            .executionCondition(new PreimageSha256Condition(32, condition))
+            .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},
 
     });

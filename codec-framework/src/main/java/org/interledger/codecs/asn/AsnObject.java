@@ -1,6 +1,8 @@
 package org.interledger.codecs.asn;
 
 
+import java.util.function.Consumer;
+
 /**
  * A base for wrappers that map an ASN.1 definition to a native type
  *
@@ -9,9 +11,7 @@ package org.interledger.codecs.asn;
 public abstract class AsnObject<T> {
 
   private T value;
-
-  public AsnObject() {
-  }
+  private Consumer<T> valueChangeListener;
 
   public T getValue() {
     return value;
@@ -19,6 +19,26 @@ public abstract class AsnObject<T> {
 
   public void setValue(T value) {
     this.value = value;
+
+    if (hasValueChangeListener()) {
+      valueChangeListener.accept(value);
+    }
+
+  }
+
+  public final boolean hasValueChangeListener() {
+    return valueChangeListener != null;
+  }
+
+  public final void setValueChangeListener(Consumer<T> listener) {
+    if (hasValueChangeListener()) {
+      throw new IllegalStateException("Can't overwrite an existing listener.");
+    }
+    this.valueChangeListener = listener;
+  }
+
+  public final void removeValueChangeListener() {
+    valueChangeListener = null;
   }
 
   @Override
@@ -30,7 +50,7 @@ public abstract class AsnObject<T> {
       return false;
     }
 
-    AsnGeneralizedTime other = (AsnGeneralizedTime) obj;
+    AsnObject other = (AsnObject) obj;
 
     return getValue().equals(other.getValue());
   }
