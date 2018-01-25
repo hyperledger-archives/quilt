@@ -144,17 +144,43 @@ public interface InterledgerProtocolError extends InterledgerPacket {
 
     @Override
     public String toString() {
+      final String sData;
+      if (!getData().isPresent()) {
+        sData = "";
+      } else {
+        String aux;
+        try {
+          aux = new String(getData().get());
+        } catch(Exception e) {
+          aux = "[binary data]";
+        }
+        sData = aux;
+      }
+      final List<InterledgerAddress> fordward_by_list = getForwardedByAddresses();
+      final String CSVForwardedByAddresses;
+      if (fordward_by_list.size()==0) {
+        CSVForwardedByAddresses = "";
+      } else {
+        final StringBuffer aux = new StringBuffer();
+        for (InterledgerAddress a : fordward_by_list) {
+          aux.append(a.getValue());
+          aux.append(',');
+        }
+        aux.deleteCharAt(aux.length()-1);
+        CSVForwardedByAddresses = new String(aux);
+      }
+
       return "InterledgerProtocolError{"
           + "errorCode="
           + getErrorCode()
           + ", triggeredByAddress="
-          + getTriggeredByAddress()
+          + getTriggeredByAddress().getValue()
           + ", forwardedByAddresses="
-          + getForwardedByAddresses()
+          + CSVForwardedByAddresses
           + ", triggeredAt="
           + getTriggeredAt()
           + ", data="
-          + getData()
+          + sData
           + '}';
     }
 
