@@ -119,7 +119,7 @@ PskMessage decryptedPskMessage = context.decryptMessage(encryptedPskMessage);
 ```
 
 For a full end-to-end test demonstrating all of these functions see:
-`org.interledger.ipr.InterledgerPaymentRequestEndToEndTest`
+`org.interledger.transport.ipr.InterledgerPaymentRequestEndToEndTest`
 
 ## Development
 We welcome any and all submissions, whether it's a typo, bug fix, or new feature.
