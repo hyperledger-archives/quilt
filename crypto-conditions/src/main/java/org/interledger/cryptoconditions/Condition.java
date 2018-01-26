@@ -1,5 +1,7 @@
 package org.interledger.cryptoconditions;
 
+import org.immutables.value.Value;
+
 /**
  * An implementation of a crypto-conditions Condition.
  *
@@ -51,4 +53,23 @@ public interface Condition extends Comparable<Condition> {
    */
   long getCost();
 
+  /**
+   * An abstract implementation of {@link Condition} that provides setup for generated
+   * <tt>Immutables</tt> implementations of this library.
+   *
+   * @see "http://immutables.github.io/"
+   */
+  abstract class AbstractCondition implements Condition {
+
+    @Value.Check
+    protected void check() {
+      if (this.getFingerprint().length != 32) {
+        throw new IllegalArgumentException("Fingerprint must be 32 bytes.");
+      }
+
+      if (this.getCost() < 0) {
+        throw new IllegalArgumentException("Cost must be positive!");
+      }
+    }
+  }
 }

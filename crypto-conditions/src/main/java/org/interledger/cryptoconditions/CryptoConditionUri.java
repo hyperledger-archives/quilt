@@ -30,19 +30,14 @@ public class CryptoConditionUri {
   public static final String CONDITION_REGEX_STRICT = "^" + SCHEME_PREFIX + "([A-Za-z0-9_-]?)/"
       + HASH_FUNCTION_NAME + ";([a-zA-Z0-9_-]{0,86})\\?(.+)$";
 
-  public static class QueryParams {
-
-    public static final String COST = "cost";
-    public static final String TYPE = "fpt";
-    public static final String SUBTYPES = "subtypes";
-  }
-
   /**
    * Parses a URI formatted crypto-condition.
    *
    * @param uri The crypto-condition formatted as a URI.
    *
    * @return The equivalent crypto-condition.
+   *
+   * @throws URISyntaxException if the URI syntax is invalid.
    */
   public static Condition parse(final URI uri) throws URISyntaxException {
     Objects.requireNonNull(uri);
@@ -99,15 +94,15 @@ public class CryptoConditionUri {
 
     switch (type) {
       case PREIMAGE_SHA256:
-        return new PreimageSha256Condition(cost, fingerprint);
+        return PreimageSha256Condition.fromCostAndFingerprint(cost, fingerprint);
       case PREFIX_SHA256:
-        return new PrefixSha256Condition(cost, fingerprint, subtypes);
+        return PrefixSha256Condition.fromCostAndFingerprint(cost, fingerprint, subtypes);
       case THRESHOLD_SHA256:
-        return new ThresholdSha256Condition(cost, fingerprint, subtypes);
+        return ThresholdSha256Condition.fromCostAndFingerprint(cost, fingerprint, subtypes);
       case RSA_SHA256:
-        return new RsaSha256Condition(cost, fingerprint);
+        return RsaSha256Condition.fromCostAndFingerprint(cost, fingerprint);
       case ED25519_SHA256:
-        return new Ed25519Sha256Condition(fingerprint);
+        return Ed25519Sha256Condition.fromCostAndFingerprint(fingerprint);
       default:
         throw new URISyntaxException(uri.toString(), "No or invalid type provided");
     }
@@ -141,7 +136,6 @@ public class CryptoConditionUri {
     return NamedInformationUri.getUri(HashFunction.SHA_256, condition.getFingerprint(), params);
   }
 
-
   private static URI writeCompoundCondition(final CompoundCondition condition) {
     Objects.requireNonNull(condition);
 
@@ -156,7 +150,6 @@ public class CryptoConditionUri {
 
     return NamedInformationUri.getUri(HashFunction.SHA_256, condition.getFingerprint(), params);
   }
-
 
   /**
    * Unpacks an URL encoded string of query parameters into a map of keys and values.
@@ -182,6 +175,13 @@ public class CryptoConditionUri {
       query_pairs.get(key).add(value);
     }
     return query_pairs;
+  }
+
+  public static class QueryParams {
+
+    public static final String COST = "cost";
+    public static final String TYPE = "fpt";
+    public static final String SUBTYPES = "subtypes";
   }
 }
 

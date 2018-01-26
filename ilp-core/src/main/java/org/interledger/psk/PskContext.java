@@ -17,6 +17,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
+
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -449,7 +450,9 @@ public interface PskContext {
       Objects.requireNonNull(payment);
       byte[] packet = CodecContextFactory.interledger()
           .write(InterledgerPayment.class, payment);
-      return new PreimageSha256Fulfillment(hmacSha256(fulfillmentHmacKey, packet));
+      return PreimageSha256Fulfillment.from(
+          hmacSha256(fulfillmentHmacKey, packet)
+      );
     }
 
     @Override

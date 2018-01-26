@@ -1,10 +1,8 @@
 package org.interledger.cryptoconditions;
 
 import java.io.UnsupportedEncodingException;
-
 import java.net.URI;
 import java.net.URLEncoder;
-
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
@@ -19,19 +17,14 @@ public class NamedInformationUri {
 
   public static final String SCHEME = "ni";
   public static final String SCHEME_PREFIX = SCHEME + "://";
-  public static final String REGEX_STRICT = "^" + SCHEME_PREFIX + "([A-Za-z0-9_-]?)/"
-      + getHashFunctionRegexGroup() + ";([a-zA-Z0-9_-]{0,86})\\?(.+)$";
-
-  // TODO Could implement a parse function but for now it's probably faster to just parse the
-  // condition directly NamedInformationUri.getUri(HashFunction.SHA_256, null);and not wrap that
-  // around an ni URI parser
 
   /**
    * Creates a URI for the hash function and values.
    *
-   * @param hashFunction The hash function used.
-   * @param hash The value of the hash.
-   * @param queryStringParams Additional values to include in the query string portion of the URI
+   * @param hashFunction      The hash function used.
+   * @param hash              The value from the hash.
+   * @param queryStringParams Additional values to include in the query string portion from the URI
+   *
    * @return A URI containing the hash function, the hashed value and any additional query
    *     parameters.
    */
@@ -123,14 +116,18 @@ public class NamedInformationUri {
     }
 
     /**
-     * Returns the name of the hash function.
+     * <p>Returns the name of the hash function.</p>
+     *
+     * @return A {@link String} containing the <tt>name</tt> of this hash function.
      */
     public String getName() {
       return name;
     }
 
     /**
-     * Returns the OID for the hash function.
+     * <p>Returns the OID for the hash function.</p>
+     *
+     * @return A {@link String} containing the <tt>oid</tt> of this hash function.
      */
     public String getOid() {
       return oid;

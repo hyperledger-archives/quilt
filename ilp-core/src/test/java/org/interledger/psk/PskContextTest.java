@@ -73,7 +73,6 @@ public class PskContextTest {
 
   @Test
   public final void testFromSeed() {
-
     DeterministicSecureRandomProvider.setAsDefault(TEST_TOKEN);
 
     assertContextIsValid(PskContext.seed(TEST_SECRET));
@@ -84,14 +83,11 @@ public class PskContextTest {
 
   @Test
   public final void testFromReceiverAddress() {
-
     assertContextIsValid(PskContext.fromReceiverAddress(TEST_SECRET, TEST_ADDRESS));
-
   }
 
   @Test
   public final void testDecryptMessage() {
-
     PskMessage encryptedMessage = PskMessage.builder()
         .addPublicHeader(PskEncryptionHeader.aesGcm(TEST_AUTHENTICATION_TAG))
         .addPublicHeader(PskNonceHeader.fromNonce(TEST_NONCE))
@@ -137,7 +133,6 @@ public class PskContextTest {
 
   @Test
   public final void testGenerateReceiverAddress() {
-
     PskContext context = PskContext.fromReceiverAddress(TEST_SECRET, TEST_ADDRESS);
     assertEquals("Incorrect address generated.",
         context.generateReceiverAddress(TEST_ADDRESS_PREFIX), TEST_ADDRESS);
@@ -145,7 +140,6 @@ public class PskContextTest {
 
   @Test
   public final void testGenerateFulfillment() {
-
     PskContext context = PskContext.fromReceiverAddress(TEST_SECRET, TEST_ADDRESS);
 
     InterledgerPayment payment = InterledgerPayment.builder()
@@ -157,12 +151,9 @@ public class PskContextTest {
     Fulfillment fulfillment = context.generateFulfillment(payment);
 
     assertEquals("Incorrect fulfillment.",
-            ((PreimageSha256Fulfillment) fulfillment).getPreimage(),
-            //TODO Fix crypto-conditions to use Bas64Url without padding
-            //Base64.getUrlEncoder().withoutPadding().encodeToString(TEST_PREIMAGE));
-            Base64.getUrlEncoder().encodeToString(TEST_PREIMAGE));
-
+        ((PreimageSha256Fulfillment) fulfillment).getEncodedPreimage(),
+        //TODO Fix crypto-conditions to use Bas64Url without padding
+        //Base64.getUrlEncoder().withoutPadding().encodeToString(TEST_PREIMAGE));
+        Base64.getUrlEncoder().encodeToString(TEST_PREIMAGE));
   }
-
-
 }

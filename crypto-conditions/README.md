@@ -96,30 +96,97 @@ $ mvn checkstyle:checkstyle
 
 #### PREIMAGE-SHA-256 Example:
 ```java
-byte[] preimage = "Hello World!".getBytes(Charset.defaultCharset());
-PreimageSha256Condition condition = new PreimageSha256Condition(preimage);
+  byte[] preimage = "My Secret Preimage".getBytes(Charset.defaultCharset());
 
-PreimageSha256Fulfillment fulfillment = new PreimageSha256Fulfillment(preimage);
-if(fulfillment.validate(condition)) {
+  PreimageSha256Fulfillment fulfillment = PreimageSha256Fulfillment.from(preimage);
+  PreimageSha256Condition condition = fulfillment.getCondition();
+
+  if (fulfillment.verify(condition, new byte[0])) {
     System.out.println("Fulfillment is valid!");
-}
+  }
 ```
 
-#### THRESHOLD-SHA-256, ED25519-SHA-256 and RSA-SHA-256 Example:
+#### PREFIX-SHA-256 Example:
 ```java
-//Generate RSA-SHA-256 condition
-KeyPairGenerator rsaKpg = KeyPairGenerator.getInstance("RSA");
-rsaKpg.initialize(new RSAKeyGenParameterSpec(2048, new BigInteger("65537")));
-KeyPair rsaKeyPair = rsaKpg.generateKeyPair();
+  // Create a sub-fulfillment...
+	final byte[] preimage = "My Secret Preimage".getBytes(Charset.defaultCharset());
+	PreimageSha256Fulfillment subfulfillment = PreimageSha256Fulfillment.from(preimage);
+  
+	// Narrow the subfulfillment with a prefix...
+	final String prefix = "order-1234";
+	final PrefixSha256Fulfillment fulfillment = PrefixSha256Fulfillment
+	    .from(prefix.getBytes(), 100, subfulfillment);
+	final PrefixSha256Condition condition = fulfillment.getCondition();
+  
+	// Verify the fulfillment
+	if (fulfillment.verify(condition, new byte[0])) {
+	  System.out.println("Fulfillment is valid!");
+	}
+```
 
-RsaSha256Condition condition = new RsaSha256Condition((RSAPublicKey) rsaKeyPair.getPublic());
+#### ED25519-SHA-256 Example
+```java
+  // An optional message to sign...should be "new byte[0]" if no message.
+  byte[] optionalMessageToSign = "message".getBytes();
+
+  //Generate ED25519-SHA-256 KeyPair and Signer
+  MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
+  net.i2p.crypto.eddsa.KeyPairGenerator edDsaKpg = new net.i2p.crypto.eddsa.KeyPairGenerator();
+  KeyPair edDsaKeyPair = edDsaKpg.generateKeyPair();
+  Signature edDsaSigner = new EdDSAEngine(sha512Digest);
+  
+  edDsaSigner.initSign(edDsaKeyPair.getPrivate());
+  edDsaSigner.update(optionalMessageToSign);
+  byte[] edDsaSignature = edDsaSigner.sign();
+  
+  //Generate ED25519-SHA-256 Fulfillment and Condition
+  Ed25519Sha256Fulfillment fulfillment = Ed25519Sha256Fulfillment.from(
+  (EdDSAPublicKey) edDsaKeyPair.getPublic(), edDsaSignature);
+  Ed25519Sha256Condition condition = fulfillment.getCondition();
+  
+  if (fulfillment.verify(condition, optionalMessageToSign)) {
+    System.out.println("Fulfillment is valid!");
+  }
+```
+
+#### RSA-SHA-256 Example
+```java
+  // An optional message to sign...should be "new byte[0]" if no message.
+  final byte[] optionalMessageToSign = "message".getBytes(); 
+  
+  //Generate RSA-SHA-256 KeyPair and Signer
+  final KeyPairGenerator rsaKpg = KeyPairGenerator.getInstance("RSA");
+  rsaKpg.initialize(new RSAKeyGenParameterSpec(2048, new BigInteger("65537")));
+  final KeyPair rsaKeyPair = rsaKpg.generateKeyPair();
+  final RSAPublicKey rsaPublicKey = (RSAPublicKey) rsaKeyPair.getPublic()
+  
+  final Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
+  rsaSigner.initSign(rsaKeyPair.getPrivate());
+  rsaSigner.update(optionalMessageToSign);
+  final byte[] rsaSignature = rsaSigner.sign();
+  
+  final RsaSha256Fulfillment fulfillment = RsaSha256Fulfillment.from(rsaPublicKey, rsaSignature);
+  final RsaSha256Condition condition = RsaSha256Condition.from(rsaPublicKey);
+  
+  if (fulfillment.verify(condition, optionalMessageToSign)) {
+    System.out.println("Fulfillment is valid!");
+  }
+```
+
+#### THRESHOLD-SHA-256 Example
+```java
+//Generate PreimageSha256Condition Number 1
+RsaSha256Condition rsaCondition = PreSha256Condition.from(rsaPublicKey);
+
+byte[] message = new byte[0];
+RsaSha256Condition rsaFulfillment = RsaSha256Condition.from(rsaPublicKey, message);
 
 //Generate ED25519-SHA-256 condition
 net.i2p.crypto.eddsa.KeyPairGenerator edDsaKpg = new net.i2p.crypto.eddsa.KeyPairGenerator();
 KeyPair edDsaKeyPair = edDsaKpg.generateKeyPair();
 Signature edDsaSigner = new EdDSAEngine(sha512Digest);
 
-PreimageSha256Fulfillment fulfillment = new PreimageSha256Fulfillment(preimage);
+PreimageSha256Fulfillment fulfillment = PreimageSha256Fulfillment.from(preimage);
 //Verify against empty message
 if(fulfillment.verify(condition, new byte[0])) {
     System.out.println("Fulfillment is valid!");

@@ -32,7 +32,7 @@ public class ConditionOerCodec implements ConditionCodec {
         .getValue();
 
     //Cost (equal to the length of the preimage) is always 32 bytes in universal mode ILP
-    return new PreimageSha256Condition(32, value);
+    return PreimageSha256Condition.fromCostAndFingerprint(32, value);
   }
 
   @Override

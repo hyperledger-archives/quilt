@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.interledger.codecs.CodecContext;
 import org.interledger.codecs.CodecContextFactory;
-
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 
@@ -33,9 +32,10 @@ public class ConditionOerCodecTests {
    */
   @Parameters
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{new PreimageSha256Condition(32, new byte[32])},
-        // TODO: Some more test values
-    });
+    return Arrays
+        .asList(new Object[][]{{PreimageSha256Condition.fromCostAndFingerprint(32, new byte[32])},
+            // TODO: Some more test values
+        });
   }
 
   @Test
