@@ -38,9 +38,8 @@ public class TestConditionFactory {
    * Helper to construct a {@link RsaSha256Condition}.
    */
   public static Ed25519Sha256Condition constructEd25519Sha256Condition(
-      final EdDSAPublicKey edDSAPublicKey
-  ) {
-    return Ed25519Sha256Condition.from(edDSAPublicKey);
+      final EdDSAPublicKey edDsaPublicKey) {
+    return Ed25519Sha256Condition.from(edDsaPublicKey);
   }
 
   /**

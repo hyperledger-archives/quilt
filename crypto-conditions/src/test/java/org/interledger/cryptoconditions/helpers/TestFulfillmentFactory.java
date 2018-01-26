@@ -1,6 +1,5 @@
 package org.interledger.cryptoconditions.helpers;
 
-
 import static org.interledger.cryptoconditions.helpers.TestKeyFactory.RSA_MODULUS;
 
 import org.interledger.cryptoconditions.Ed25519Sha256Fulfillment;
@@ -100,10 +99,10 @@ public class TestFulfillmentFactory {
    * signature signed by the corresponding private key.
    */
   public static Ed25519Sha256Fulfillment constructEd25519Sha256Fulfillment(
-      final EdDSAPublicKey edDSAPublicKey,
+      final EdDSAPublicKey edDsaPublicKey,
       final byte[] signature
   ) {
-    return Ed25519Sha256Fulfillment.from(edDSAPublicKey, signature);
+    return Ed25519Sha256Fulfillment.from(edDsaPublicKey, signature);
   }
 
   /**

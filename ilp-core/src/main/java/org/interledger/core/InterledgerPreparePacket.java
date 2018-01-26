@@ -1,7 +1,7 @@
 package org.interledger.core;
 
 import org.interledger.annotations.Immutable;
-import org.interledger.cryptoconditions.Condition;
+import org.interledger.cryptoconditions.PreimageSha256Condition;
 
 import java.math.BigInteger;
 import java.time.Instant;
@@ -55,7 +55,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
 
   Instant getExpiresAt();
 
-  Condition getExecutionCondition();
+  PreimageSha256Condition getExecutionCondition();
 
   /**
    * The Interledger address of the account where the receiver should ultimately receive the

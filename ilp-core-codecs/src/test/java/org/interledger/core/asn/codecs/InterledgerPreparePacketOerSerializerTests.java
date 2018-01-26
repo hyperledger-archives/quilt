@@ -54,21 +54,21 @@ public class InterledgerPreparePacketOerSerializerTests {
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.of("test3.foo"))
             .amount(BigInteger.valueOf(100L))
-            .executionCondition(new PreimageSha256Condition(32, condition))
+            .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
             .expiresAt(Instant.now())
             .data(new byte[] {}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(new PreimageSha256Condition(32, condition))
+            .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
             .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(new PreimageSha256Condition(32, condition))
+            .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
             .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},
 

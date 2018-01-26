@@ -1,12 +1,13 @@
 package org.interledger.core.asn.codecs;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.encoding.asn.framework.CodecContext;
 
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,9 +36,6 @@ public class ConditionOerSerializerTests {
         .asList(new Object[][]{{PreimageSha256Condition.fromCostAndFingerprint(32, new byte[32])},
             // TODO: Some more test values
         });
-    return Arrays.asList(new Object[][] {{new PreimageSha256Condition(32, new byte[32])},
-        // TODO: Some more test values
-    });
   }
 
   @Test
@@ -50,8 +48,8 @@ public class ConditionOerSerializerTests {
     final ByteArrayInputStream byteArrayInputStream =
         new ByteArrayInputStream(outputStream.toByteArray());
 
-    final Condition decodedCondition = (Condition) context.read(Condition.class,
-        byteArrayInputStream);
-    MatcherAssert.assertThat(decodedCondition, CoreMatchers.is(condition));
+    final PreimageSha256Condition decodedCondition
+        = context.read(PreimageSha256Condition.class, byteArrayInputStream);
+    assertThat(decodedCondition, is(condition));
   }
 }

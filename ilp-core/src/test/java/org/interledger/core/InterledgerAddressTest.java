@@ -8,10 +8,13 @@ import org.interledger.core.InterledgerAddress;
 
 import org.junit.Test;
 
+import java.net.URI;
+
 /**
  * JUnit tests to test {@link InterledgerAddress}.
  */
 public class InterledgerAddressTest {
+
 
   private static final boolean IS_LEDGER_PREFIX = true;
   private static final boolean IS_NOT_LEDGER_PREFIX = false;

@@ -7,25 +7,19 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 
 import java.util.Base64;
 
-public class AsnConditionCodec extends AsnOctetStringBasedObjectCodec<Condition> {
+public class AsnConditionCodec extends AsnOctetStringBasedObjectCodec<PreimageSha256Condition> {
 
   public AsnConditionCodec() {
     super(new AsnSizeConstraint(32));
   }
 
   @Override
-  public Condition decode() {
-    return new PreimageSha256Condition(32, getBytes());
+  public PreimageSha256Condition decode() {
+    return PreimageSha256Condition.fromCostAndFingerprint(32, getBytes());
   }
 
   @Override
-  public void encode(Condition value) {
-    //TODO Review after https://github.com/interledger/java-crypto-conditions/issues/75 is closed
-    if (value instanceof PreimageSha256Condition) {
-      String hashBase64Url = value.getFingerprintBase64Url();
-      setBytes(Base64.getUrlDecoder().decode(hashBase64Url));
-    } else {
-      throw new IllegalArgumentException("Only PreimageSha256Condition instances can be encoded");
-    }
+  public void encode(PreimageSha256Condition value) {
+    setBytes(Base64.getUrlDecoder().decode(value.getFingerprintBase64Url()));
   }
 }

@@ -17,6 +17,8 @@ import org.interledger.core.asn.codecs.AsnInterledgerRejectPacketCodec;
 import org.interledger.core.asn.codecs.AsnTimestampCodec;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.Fulfillment;
+import org.interledger.cryptoconditions.PreimageSha256Condition;
+import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 import org.interledger.encoding.asn.serializers.oer.AsnCharStringOerSerializer;
@@ -41,9 +43,9 @@ public class InterledgerCodecContextFactory {
 
     return CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
         .register(Instant.class, AsnTimestampCodec::new)
-        .register(Condition.class, AsnConditionCodec::new,
+        .register(PreimageSha256Condition.class, AsnConditionCodec::new,
             new AsnOctetStringOerSerializer())
-        .register(Fulfillment.class, AsnFulfillmentCodec::new,
+        .register(PreimageSha256Fulfillment.class, AsnFulfillmentCodec::new,
             new AsnOctetStringOerSerializer())
         .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new,
             new AsnCharStringOerSerializer())
