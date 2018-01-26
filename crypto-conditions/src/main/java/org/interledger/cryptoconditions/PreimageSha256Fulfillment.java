@@ -25,7 +25,7 @@ public class PreimageSha256Fulfillment extends FulfillmentBase<PreimageSha256Con
 
     Objects.requireNonNull(preimage);
     this.condition = new PreimageSha256Condition(preimage);
-    this.preimage = Base64.getUrlEncoder().encodeToString(preimage);
+    this.preimage = Base64.getEncoder().encodeToString(preimage);
   }
 
   @Override
