@@ -4,6 +4,10 @@ import org.interledger.annotations.Immutable;
 
 import java.util.Arrays;
 
+/**
+ * <p>REF: https://github.com/interledger/rfcs/blob/master/asn1/InterledgerProtocol.asn</p>
+ */
+
 public interface InterledgerRejectPacket extends InterledgerPacket {
 
   /**
@@ -75,6 +79,21 @@ public interface InterledgerRejectPacket extends InterledgerPacket {
 
     @Override
     public String toString() {
+      // TODO:(0) ERROR in RFC ASN? forwarededBy has dissapeared in https://github.com/interledger/rfcs/blob/master/asn1/InterledgerProtocol.asn
+      //     
+      // final List<InterledgerAddress> fordward_by_list = getForwardedBy();
+      // final String CSVForwardedBy;
+      // if (fordward_by_list.size()==0) {
+      //   CSVForwardedBy = "";
+      // } else {
+      //   final StringBuffer aux = new StringBuffer();
+      //   for (InterledgerAddress a : fordward_by_list) {
+      //     aux.append(a.getValue());
+      //     aux.append(',');
+      //   }
+      //   aux.deleteCharAt(aux.length()-1);
+      //   CSVForwardedBy = new String(aux);
+      // }
       return "InterledgerRejectPacket{"
           + "  code=" + getCode()
           + ",  triggeredBy=" + getTriggeredBy()
