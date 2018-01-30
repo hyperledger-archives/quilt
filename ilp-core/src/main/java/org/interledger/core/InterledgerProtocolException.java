@@ -27,4 +27,11 @@ public class InterledgerProtocolException extends InterledgerRuntimeException {
   public InterledgerRejectPacket getInterledgerRejectPacket() {
     return interledgerRejectPacket;
   }
+
+  // TODO:(0) FIX
+  @Override
+  public String toString(){
+      return interledgerRejectPacket.toString();
+  }
+
 }
