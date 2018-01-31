@@ -92,6 +92,7 @@
     <module>crypto-conditions</module>
     <module>ilp-core</module>
     <module>ilp-annotations</module>
+    <module>connector-examples</module>
   </modules>
 
   <dependencyManagement>
