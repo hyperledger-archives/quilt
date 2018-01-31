@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public interface InterledgerAddress {
 
   String REGEX = "(?=^.{1,1023}$)"
-      + "^(g|private|example|peer|self|test[1-3])[.]([a-zA-Z0-9_~-]+[.])*([a-zA-Z0-9_~-]+)?$";
+      + "^(g|private|example|peer|self|test([1-3])?)[.]([a-zA-Z0-9_~-]+[.])*([a-zA-Z0-9_~-]+)?$";
 
   Pattern PATTERN = Pattern.compile(REGEX);
 
