@@ -76,44 +76,6 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerPreparePacket implements InterledgerPreparePacket {
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-
-      InterledgerPreparePacket impl = (InterledgerPreparePacket) obj;
-
-      return getAmount().equals(impl.getAmount())
-          && getExpiresAt().equals(impl.getExpiresAt())
-          && getExecutionCondition().equals(impl.getExecutionCondition())
-          && getDestination().equals(impl.getDestination())
-          && Arrays.equals(getData(), impl.getData());
-    }
-
-    @Override
-    public int hashCode() {
-      int result = getAmount().hashCode();
-      result = 31 * result + getExpiresAt().hashCode();
-      result = 31 * result + getExecutionCondition().hashCode();
-      result = 31 * result + getDestination().hashCode();
-      result = 31 * result + Arrays.hashCode(getData());
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "InterledgerPreparePacket{"
-          + ", amount=" + getAmount().toString(10)
-          + ", expiresAt=" + getExpiresAt().toString()
-          + ", executionCondition=" + getExecutionCondition()
-          + ", destination=" + getDestination()
-          + ", data=" + Arrays.toString(getData())
-          + '}';
-    }
   }
 
 }

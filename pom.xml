@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
@@ -94,10 +96,10 @@
     <module>ilp-core</module>
     <module>ilp-annotations</module>
     <module>ilp-core-codecs</module>
-<!-- TODO Add new modules with PSK and IPR code
-    <module>core-transport-psk</module>
-    <module>core-transport-ipr</module>
--->
+    <!-- TODO Add new modules with PSK and IPR code
+        <module>core-transport-psk</module>
+        <module>core-transport-ipr</module>
+    -->
   </modules>
 
   <dependencyManagement>
