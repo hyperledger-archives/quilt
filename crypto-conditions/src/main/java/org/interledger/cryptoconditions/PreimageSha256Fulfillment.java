@@ -24,7 +24,7 @@ public interface PreimageSha256Fulfillment extends Fulfillment<PreimageSha256Con
    */
   static PreimageSha256Fulfillment from(final byte[] preimage) {
     Objects.requireNonNull(preimage);
-    final String encodedPreimage = Base64.getUrlEncoder().encodeToString(preimage);
+    final String encodedPreimage = Base64.getEncoder().encodeToString(preimage);
 
     final long cost = AbstractPreimageSha256Fulfillment.calculateCost(preimage);
     final byte[] fingerprint = HashUtils.hashFingerprintContents(

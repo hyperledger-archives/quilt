@@ -4,6 +4,10 @@ import org.interledger.annotations.Immutable;
 
 import java.util.Arrays;
 
+/**
+ * <p>REF: https://github.com/interledger/rfcs/blob/master/asn1/InterledgerProtocol.asn</p>
+ */
+
 public interface InterledgerRejectPacket extends InterledgerPacket {
 
   /**
