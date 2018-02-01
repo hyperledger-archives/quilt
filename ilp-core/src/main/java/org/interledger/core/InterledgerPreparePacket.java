@@ -3,7 +3,6 @@ package org.interledger.core;
 import org.interledger.annotations.Immutable;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 
-import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
 
@@ -51,7 +50,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
     return new InterledgerPreparePacketBuilder();
   }
 
-  BigInteger getAmount();
+  long getAmount();
 
   Instant getExpiresAt();
 
@@ -87,7 +86,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
 
       InterledgerPreparePacket impl = (InterledgerPreparePacket) obj;
 
-      return getAmount().equals(impl.getAmount())
+      return Long.compareUnsigned(getAmount(), impl.getAmount()) == 0
           && getExpiresAt().equals(impl.getExpiresAt())
           && getExecutionCondition().equals(impl.getExecutionCondition())
           && getDestination().equals(impl.getDestination())
@@ -96,7 +95,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
 
     @Override
     public int hashCode() {
-      int result = getAmount().hashCode();
+      int result = Long.hashCode(getAmount());
       result = 31 * result + getExpiresAt().hashCode();
       result = 31 * result + getExecutionCondition().hashCode();
       result = 31 * result + getDestination().hashCode();
@@ -107,7 +106,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
     @Override
     public String toString() {
       return "InterledgerPreparePacket{"
-          + ", amount=" + getAmount().toString(10)
+          + ", amount=" + Long.toUnsignedString(getAmount(), 10)
           + ", expiresAt=" + getExpiresAt().toString()
           + ", executionCondition=" + getExecutionCondition()
           + ", destination=" + getDestination()

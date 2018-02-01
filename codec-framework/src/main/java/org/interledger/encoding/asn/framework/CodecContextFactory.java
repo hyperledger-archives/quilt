@@ -40,8 +40,7 @@ public class CodecContextFactory {
     AsnObjectCodecRegistry mappings = new AsnObjectCodecRegistry()
         .register(byte[].class, () -> new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED))
         .register(Integer.class, AsnUint8Codec::new)
-        .register(Long.class, AsnUint32Codec::new)
-        .register(BigInteger.class, AsnUint64Codec::new)
+        .register(Long.class, AsnUint64Codec::new)
         .register(String.class, () -> new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED));
 
     AsnObjectSerializationContext serializers = new AsnObjectSerializationContext();

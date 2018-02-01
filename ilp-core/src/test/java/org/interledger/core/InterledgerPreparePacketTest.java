@@ -25,7 +25,7 @@ public class InterledgerPreparePacketTest {
   public void testBuild() throws Exception {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[]{127};
-    BigInteger amount = BigInteger.TEN;
+    long amount = 10;
     PreimageSha256Condition condition = PreimageSha256Condition.fromCostAndFingerprint(32,
         new byte[] {0,1,2,3,4,5,6,7,8,9,01,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2});
     Instant expiry = Instant.now().plusSeconds(30);
@@ -60,7 +60,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .amount(mock(BigInteger.class))
+          .amount(mock(Long.class))
           .executionCondition(mock(PreimageSha256Condition.class))
           .expiresAt(Instant.now())
           .build();
@@ -74,7 +74,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .amount(mock(BigInteger.class))
+          .amount(mock(Long.class))
           .executionCondition(mock(PreimageSha256Condition.class))
           .data(new byte[]{})
           .build();
@@ -88,7 +88,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .amount(mock(BigInteger.class))
+          .amount(mock(Long.class))
           .expiresAt(Instant.now())
           .data(new byte[]{})
           .build();
@@ -116,7 +116,7 @@ public class InterledgerPreparePacketTest {
     //No destination
     try {
       InterledgerPreparePacket.builder()
-          .amount(mock(BigInteger.class))
+          .amount(mock(Long.class))
           .executionCondition(mock(PreimageSha256Condition.class))
           .expiresAt(Instant.now())
           .data(new byte[]{})
@@ -130,7 +130,7 @@ public class InterledgerPreparePacketTest {
     final InterledgerPreparePacket interledgerPreparePacket =
         InterledgerPreparePacket.builder()
             .destination(mock(InterledgerAddress.class))
-            .amount(mock(BigInteger.class))
+            .amount(mock(Long.class))
             .executionCondition(mock(PreimageSha256Condition.class))
             .expiresAt(Instant.now())
             .data(new byte[]{})
@@ -142,7 +142,7 @@ public class InterledgerPreparePacketTest {
   public void testEqualsHashCode() throws Exception {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[]{127};
-    BigInteger amount = BigInteger.TEN;
+    long amount = 10;
     PreimageSha256Condition condition = PreimageSha256Condition.fromCostAndFingerprint(32,
         new byte[] {0,1,2,3,4,5,6,7,8,9,01,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2});
     Instant expiry = Instant.now().plusSeconds(30);
@@ -171,7 +171,7 @@ public class InterledgerPreparePacketTest {
 
     final InterledgerPreparePacket interledgerPreparePacket3 = InterledgerPreparePacket.builder()
         .destination(destination)
-        .amount(amount.add(BigInteger.ONE))
+        .amount(amount + 1)
         .executionCondition(condition)
         .expiresAt(expiry)
         .data(data)

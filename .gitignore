@@ -18,7 +18,7 @@ buildNumber.properties
 .gradle
 /build/
 
-# Ignore Gradle GUI config
+# Ignore Gradle GUI ildcp
 gradle-app.setting
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
@@ -94,7 +94,7 @@ hs_err_pid*
 # CMake
 cmake-build-debug/
 
-# Mongo Explorer plugin:
+# Mongo Explorer channels:
 .idea/**/mongoSettings.xml
 
 ## File-based project format:
@@ -105,16 +105,16 @@ cmake-build-debug/
 # IntelliJ
 out/
 
-# mpeltonen/sbt-idea plugin
+# mpeltonen/sbt-idea channels
 .idea_modules/
 
-# JIRA plugin
+# JIRA channels
 atlassian-ide-plugin.xml
 
-# Cursive Clojure plugin
+# Cursive Clojure channels
 .idea/replstate.xml
 
-# Crashlytics plugin (for Android Studio and IntelliJ)
+# Crashlytics channels (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
@@ -152,13 +152,13 @@ local.properties
 # PDT-specific (PHP Development Tools)
 .buildpath
 
-# sbteclipse plugin
+# sbteclipse channels
 .target
 
-# Tern plugin
+# Tern channels
 .tern-project
 
-# TeXlipse plugin
+# TeXlipse channels
 .texlipse
 
 # STS (Spring Tool Suite)
@@ -194,7 +194,7 @@ ehthumbs_vista.db
 # Dump file
 *.stackdump
 
-# Folder config file
+# Folder ildcp file
 Desktop.ini
 
 # Recycle Bin used on file shares
