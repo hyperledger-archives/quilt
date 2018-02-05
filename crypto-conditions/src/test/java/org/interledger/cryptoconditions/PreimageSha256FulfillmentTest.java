@@ -50,6 +50,13 @@ public class PreimageSha256FulfillmentTest {
   }
 
   @Test
+  public final void testValidateWithEmptyMessage() {
+    final PreimageSha256Fulfillment actual
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
+    assertTrue("Invalid condition", actual.verify(TEST_CONDITION));
+  }
+
+  @Test
   public void testGettersAndSetters() {
     final PreimageSha256Fulfillment actual
         = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());

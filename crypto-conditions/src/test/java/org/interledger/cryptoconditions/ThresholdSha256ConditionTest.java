@@ -90,6 +90,36 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
     assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
   }
 
+  /**
+   * Constructs a Threshold Fulfillment using two duplicate fulfillments, and asserts that only one
+   * is used in total.
+   */
+  @Test
+  public void testOneOfTwoThresholdCondition() {
+    // Construct Preimage Fulfillment/Condition #1
+    final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
+        "Roads? Where we're going, we don't need roads.".getBytes()
+    );
+    final PreimageSha256Condition subcondition1 = subfulfillment1.getCondition();
+
+    final PreimageSha256Fulfillment subfulfillment2 = PreimageSha256Fulfillment.from(
+        "Roads? Where we're going, we don't need roads.".getBytes()
+    );
+    final PreimageSha256Condition subcondition2 = subfulfillment2.getCondition();
+
+    // Adding two of the same condition is allowed...
+    final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
+        1, Lists.newArrayList(subcondition1, subcondition2)
+    );
+
+    assertThat(condition.getSubtypes().contains(CryptoConditionType.PREIMAGE_SHA256), is(true));
+    assertThat(condition.getSubtypes().size(), is(1));
+    assertThat(condition.getFingerprintBase64Url(),
+        is("iLaI2QGeH1orfViO1kQAguKb2uFioqG3rxI2ERa7eJE"));
+    assertThat(condition.getCost(), is(2094L));
+    assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testIncorrectThreshold() {
     // Construct Preimage Fulfillment/Condition #1

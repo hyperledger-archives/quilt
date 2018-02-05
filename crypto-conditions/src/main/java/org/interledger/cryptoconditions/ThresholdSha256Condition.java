@@ -19,6 +19,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>Implements a condition based on a number of subconditions and the SHA-256 function.</p>
@@ -44,22 +45,25 @@ public interface ThresholdSha256Condition extends CompoundSha256Condition {
    * <p>Constructs an instance of {@link ThresholdSha256Condition}.</p>
    *
    * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
-   * performing any validation, business logic, or object construction. For more scenarios, this
-   * will provide adequate immutability for any operations performed  by this method. However,
-   * during the brief period of time that this method is operating, callers should not consider this
-   * method to be thread-safe. This is because another thread could mutate the subconditions list
+   * performing any validation, business logic, or object construction. For most scenarios, this
+   * will provide adequate immutability for any operations performed by this method. However, during
+   * the brief period of time that this method is deep-copying, callers should not consider this
+   * method to be thread-safe. This is because another thread could mutate the sub-conditions list
    * (e.g., by adding or removing a condition), which may cause unpredictable behavior. Thus, if
    * thread-safety is required when calling this method, be sure to guard against any concurrency
-   * issues in your system, perhaps by passing-in an immutable copy of subconditions before calling
-   * this method. Finally, for purposes of this method, shallow-copies are adequate because all
-   * instance of {@link Condition} are immutable, and thus thread-safe, so one this method finishes
-   * operation, the returned object will be fully immutable.</p>
+   * issues in your system, perhaps by passing-in an immutable copy of {@code subconditions} into
+   * this method, or perhaps by wrapping it in an immutable variant such as via {@link
+   * Collections#unmodifiableList(List)}. Finally, this method assumes any instance of {@link
+   * Condition} is immutable (all supplied implementations of {@link Condition} and {@link
+   * Fulfillment} supplied by this library are immutable), making shallow-copied lists acceptable.
+   * If you supply alternate, mutable implementations of {@link Condition} to this method,
+   * unpredictable results might occur in high-concurrency scenarios.</p>
    *
    * @param threshold     Determines the threshold that is used to consider this condition
    *                      fulfilled. If the number of valid subfulfillments in a {@link
    *                      ThresholdSha256Fulfillment} is greater or equal to this number, this
    *                      threshold condition will be considered to be fulfilled.
-   * @param subconditions A set from subconditions that this condition is dependent on.
+   * @param subconditions A set from sub-conditions that this condition is dependent on.
    *
    * @return A newly created, immutable instance of {@link ThresholdSha256Condition}.
    */
@@ -70,7 +74,6 @@ public interface ThresholdSha256Condition extends CompoundSha256Condition {
     // subconditions list. See Javadoc for suggestions related to thread-safety and this method.
     final List<Condition> immutableSubconditions = subconditions.stream()
         .collect(Collectors.toList());
-
     if (threshold > immutableSubconditions.size()) {
       throw new IllegalArgumentException(
           "Threshold must be less than or equal to the number of subconditions!");

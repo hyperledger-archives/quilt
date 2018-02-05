@@ -63,6 +63,13 @@ public class PrefixSha256FulfillmentTest {
   }
 
   @Test
+  public final void testValidateDerivedConditionWithEmptyMessage() {
+    final PrefixSha256Fulfillment actual = TestFulfillmentFactory
+        .constructPrefixSha256Fulfillment(PREFIX);
+    assertTrue("Invalid condition", actual.verify(actual.getCondition()));
+  }
+
+  @Test
   public void testGettersAndSetters() {
     final PrefixSha256Fulfillment actual = TestFulfillmentFactory
         .constructPrefixSha256Fulfillment(PREFIX);

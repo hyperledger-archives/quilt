@@ -1,5 +1,7 @@
 package org.interledger.cryptoconditions;
 
+import org.immutables.value.Value;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,7 +17,12 @@ import java.util.stream.Collectors;
 public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256Condition> {
 
   /**
-   * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}.</p>
+   * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}. It should be noted that any
+   * fulfillments present in {@code subfulfillments} will be converted to a condition for
+   * fingerprinting purposes. Thus, in order to create a 1-of-2 fulfillment, for example, each list
+   * should contain only one entry (as opposed to supplying two conditions, and a single
+   * fulfillment). Because this behavior can be confusing to use properly, it is recommended that
+   * callers instead use concrete helper methods from {@link ThresholdFactory}.</p>
    *
    * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
    * performing any validation, business logic, or object construction. For more scenarios, this
@@ -47,13 +54,18 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
    * @return A newly created, immutable instance of {@link ThresholdSha256Fulfillment}.
    */
   static ThresholdSha256Fulfillment from(
+      // TODO: depending on the outcome of https://github.com/rfcs/crypto-conditions/issues/34,
+      // remove or add the threshold below.
+      //final int threshold,
       final List<Condition> subconditions, final List<Fulfillment> subfulfillments
   ) {
     Objects.requireNonNull(subconditions, "subconditions must not be null!");
     Objects.requireNonNull(subfulfillments, "subfulfillments must not be null!");
 
     // Create new, immutable lists so that callers accessing these from the newly constructed
-    // fulfillment will not be able to modify them.
+    // fulfillment will not be able to modify them. Also shallow-copy the inputs so that suppliers
+    // of the sub-condition and sub-fulfillment lists can't modify data stored in this class from
+    // the outside.
     final List<Condition> immutableSubconditions = Collections.unmodifiableList(
         subconditions.stream().collect(Collectors.toList())
     );
@@ -91,7 +103,7 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
    * An abstract implementation of {@link ThresholdSha256Fulfillment} to provide default
    * implementations to the generated immutable implementation.
    */
-  @org.immutables.value.Value.Immutable
+  @Value.Immutable
   abstract class AbstractThresholdSha256Fulfillment implements ThresholdSha256Fulfillment {
 
     /**
@@ -103,6 +115,8 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
      *                        ThresholdSha256Fulfillment#from(List, List)}.
      *
      * @return The {@link ThresholdSha256Condition} that corresponds to this fulfillment.
+     *
+     * @see ""
      */
     static ThresholdSha256Condition constructCondition(
         final List<Condition> subconditions, final List<Fulfillment> subfulfillments

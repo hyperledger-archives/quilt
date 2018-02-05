@@ -3,19 +3,25 @@ package org.interledger.cryptoconditions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.MESSAGE;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.constructEd25519Sha256Fulfillment;
 import static org.junit.Assert.assertTrue;
 
-import org.interledger.cryptoconditions.helpers.TestFulfillmentFactory;
 import org.interledger.cryptoconditions.helpers.TestKeyFactory;
 
+import net.i2p.crypto.eddsa.EdDSAEngine;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
 
 /**
  * Unit tests for {@link Ed25519Sha256Fulfillment}.
@@ -40,8 +46,8 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
   @Test
   public void testConstructionUsingMultipleThreads() throws Exception {
     final Runnable runnableTest = () -> {
-      final Ed25519Sha256Fulfillment ed25519Sha256Fulfillment = TestFulfillmentFactory
-          .constructEd25519Sha256Fulfillment(
+      final Ed25519Sha256Fulfillment ed25519Sha256Fulfillment =
+          constructEd25519Sha256Fulfillment(
               TestKeyFactory.generateRandomEd25519KeyPair()
           );
 
@@ -69,19 +75,39 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
   public final void testValidate() {
     final KeyPair ed25519KeyPair = TestKeyFactory.generateRandomEd25519KeyPair();
     final Ed25519Sha256Fulfillment actual
-        = TestFulfillmentFactory.constructEd25519Sha256Fulfillment(ed25519KeyPair);
+        = constructEd25519Sha256Fulfillment(ed25519KeyPair);
     assertTrue("Invalid condition", actual.verify(actual.getCondition(), MESSAGE.getBytes()));
+  }
+
+  @Test
+  public final void testValidateWithEmptyMessage() {
+    final KeyPair ed25519KeyPair = TestKeyFactory.generateRandomEd25519KeyPair();
+    final Ed25519Sha256Fulfillment actual;
+    try {
+      final MessageDigest sha512Digest = MessageDigest.getInstance("SHA-512");
+      final Signature edDsaSigner = new EdDSAEngine(sha512Digest);
+      edDsaSigner.initSign(ed25519KeyPair.getPrivate());
+      // Empty message...
+      byte[] edDsaSignature = edDsaSigner.sign();
+
+      actual = constructEd25519Sha256Fulfillment(
+          (EdDSAPublicKey) ed25519KeyPair.getPublic(), edDsaSignature
+      );
+    } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
+      throw new RuntimeException(e);
+    }
+    assertTrue("Invalid condition", actual.verify(actual.getCondition()));
   }
 
   @Test
   public void equalsHashcode() {
     final Ed25519Sha256Fulfillment fulfillment1
-        = TestFulfillmentFactory.constructEd25519Sha256Fulfillment(
+        = constructEd25519Sha256Fulfillment(
         TestKeyFactory.generateRandomEd25519KeyPair()
     );
     final Ed25519Sha256Fulfillment fulfillment2 = fulfillment1;
     final Ed25519Sha256Fulfillment fulfillment3
-        = TestFulfillmentFactory.constructEd25519Sha256Fulfillment(
+        = constructEd25519Sha256Fulfillment(
         TestKeyFactory.generateRandomEd25519KeyPair()
     );
 
@@ -104,8 +130,8 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
 
   @Test
   public void testToString() {
-    final Ed25519Sha256Fulfillment fulfillment = TestFulfillmentFactory
-        .constructEd25519Sha256Fulfillment(
+    final Ed25519Sha256Fulfillment fulfillment =
+        constructEd25519Sha256Fulfillment(
             TestKeyFactory.constructEd25519KeyPair()
         );
 
