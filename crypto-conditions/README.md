@@ -223,7 +223,7 @@ URI uriEncodedCondition = CryptoConditionUri.toUri(condition);
 
 Any contribution is very much appreciated! 
 
-[![join the chat][rocketchat-image]][rocketchat-url]
+[![Rocket.Chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/quilt)
 
 ## License
 
