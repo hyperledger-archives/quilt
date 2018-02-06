@@ -196,7 +196,8 @@ public class ValidVectorTest {
    * This test parses fulfillment binary from the test vector, and then validates that this value
    * matches the fingerprint from an actual Condition generated from the testVector JSON. This is a
    * slightly different test from the one that parses the binary fulfillment and condition data and
-   * asserts that the fingerprints are the same (i.e., {@link #testParseBinaryConditionAgainstBinaryFulfillment}).
+   * asserts that the fingerprints are the same (i.e.,
+   * {@link #testParseBinaryConditionAgainstBinaryFulfillment}).
    */
   @Test
   public void testParseFulfillmentFromBinaryAndValidateFingerprintContents() {

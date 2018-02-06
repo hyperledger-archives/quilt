@@ -112,7 +112,8 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
     assertThat(fulfillment.toString().contains("Ed25519Sha256Fulfillment"), is(true));
     assertThat(fulfillment.toString().endsWith(
         "signature=stnlHPRuMupW2hJzgaeTm06wVGz8d7QUQdIJPLJ9fczNimaNtg3e53BCgVsTT1hATPQEn64K8-"
-            + "BIOWyb5faNBA==, type=ED25519-SHA-256, condition=Ed25519Sha256Condition{type=ED25519-SHA-256, "
+            + "BIOWyb5faNBA==, type=ED25519-SHA-256, "
+            + "condition=Ed25519Sha256Condition{type=ED25519-SHA-256, "
             + "fingerprint=aJ5kk1zn2qrQQO5QhYZXoGigv0Y5rSafiV3BUM1F9hM, cost=131072}}"
     ), is(true));
   }
