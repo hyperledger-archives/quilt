@@ -22,7 +22,7 @@ public class DefaultInterledgerPeerProtocolService
   private final NodeConfiguration config;
 
   public DefaultInterledgerPeerProtocolService(ThreadPoolExecutor pool, NodeConfiguration config) {
-    super(pool);
+    super(pool, config);
     this.config = config;
   }
 
@@ -99,7 +99,13 @@ public class DefaultInterledgerPeerProtocolService
 
     return InterledgerFulfillPacket.builder()
         .fulfillment(PEER_PROTOCOL_FULFILLMENT)
-        .data(/* TODO ILDCP Encoder */ new byte[] {})
+        .data(
+            /* TODO ILDCP Encoder (ASN.1 and OER)
+              From JS implementation:
+                writer.writeVarOctetString(Buffer.from(response.clientAddress, 'ascii'))
+                writer.writeUInt8(response.assetScale)
+                writer.writeVarOctetString(Buffer.from(response.assetCode, 'utf8'))
+            */ new byte[] {})
         .build();
   }
 

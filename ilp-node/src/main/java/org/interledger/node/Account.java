@@ -3,9 +3,13 @@ package org.interledger.node;
 import org.interledger.annotations.Immutable;
 import org.interledger.annotations.Wrapped;
 import org.interledger.annotations.Wrapper;
+import org.interledger.core.InterledgerAddress;
 import org.interledger.node.channels.Channel;
 
+import org.w3c.dom.css.Counter;
+
 import javax.money.CurrencyUnit;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -23,6 +27,13 @@ public interface Account extends Comparable<Account> {
    * @return a UUID identifying the account
    */
   AccountId getAccountId();
+
+  /**
+   * The counterparty to this account
+   *
+   * @return the counterparty for this account.
+   */
+  Counterparty getCounterparty();
 
   /**
    * The currency unit of the asset underlying this account. (Despite the name of the returned
@@ -62,6 +73,14 @@ public interface Account extends Comparable<Account> {
    * @return The {@link Channel} for this account.
    */
   Channel getChannel();
+
+
+  /**
+   * Address segment to use when generating an address for this account
+   *
+   * @return the address segment to append to this nodes address when generating an address for this account
+   */
+  Optional<InterledgerAddress> getAddressSegment();
 
   @Immutable
   abstract class AbstractAccount implements Account {

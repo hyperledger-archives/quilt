@@ -1,7 +1,9 @@
 package org.interledger.node;
 
+import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.node.channels.Channel;
 import org.interledger.node.exceptions.InvalidFulfillmentException;
 import org.interledger.node.exceptions.RequestRejectedException;
@@ -11,6 +13,7 @@ import org.interledger.node.services.fx.ConversionResult;
 import org.interledger.node.services.routing.PaymentRouter;
 import org.interledger.node.services.routing.Route;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,8 +24,9 @@ public class DefaultInterledgerPaymentProtocolService
 
   final PaymentRouter router;
 
-  public DefaultInterledgerPaymentProtocolService(ThreadPoolExecutor pool, PaymentRouter router) {
-    super(pool);
+  public DefaultInterledgerPaymentProtocolService(
+      ThreadPoolExecutor pool, NodeConfiguration config, PaymentRouter router) {
+    super(pool, config);
     this.router = router;
   }
 
@@ -102,7 +106,19 @@ public class DefaultInterledgerPaymentProtocolService
     //TODO Check balances
 
     //Get the best route for this packet
-    Route route = router.getBestRoute(sourceAccount, incomingRequest);
+    Optional<Route> result = router.findBestNexHop(incomingRequest.getDestination(), sourceAccount);
+
+    //TODO Can't use ifElseThrow due to https://bugs.openjdk.java.net/browse/JDK-8047338
+    if(!result.isPresent()) {
+      throw new RequestRejectedException(InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.F02_UNREACHABLE)
+                .message("Unable to route message.")
+                .triggeredBy(getConfig().getAddress().get())
+                .data(new byte[] {})
+                .build());
+    }
+
+    Route route = result.get();
 
     //Get the right outgoing amount and expiry
     ConversionResult outgoingAmount = route.getRateConverter().convert(

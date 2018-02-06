@@ -8,7 +8,7 @@ import org.interledger.node.services.ildcp.IldcpService;
 import org.interledger.node.services.InterledgerPacketDispatcherService;
 import org.interledger.node.services.InterledgerPaymentProtocolService;
 import org.interledger.node.services.LoggingService;
-import org.interledger.node.services.routing.DefaultPaymentRouter;
+import org.interledger.node.services.routing.SimplePaymentRouter;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -24,18 +24,18 @@ public abstract class AbstractNode {
   private final IldcpService ildcpService;
   private final InterledgerPaymentProtocolService paymentProtocolService;
 
-  protected AbstractNode(ThreadPoolExecutor pool, LoggingService logger, NodeConfiguration config, AccountManager accounts, InterledgerPacketDispatcherService dispatcher, IldcpService ildcpService, InterledgerPaymentProtocolService paymentProtocolService) {
+  protected AbstractNode(
+      ThreadPoolExecutor pool, LoggingService logger, NodeConfiguration config,
+      AccountManager accounts,
+      InterledgerPacketDispatcherService dispatcher, IldcpService ildcpService, InterledgerPaymentProtocolService paymentProtocolService) {
     this.pool = pool;
     this.logger = logger;
     this.config = config;
     this.accounts = accounts;
 
-    this.ildcpService = new DefaultInterledgerPeerProtocolService(pool, config);
-    this.paymentProtocolService = new DefaultInterledgerPaymentProtocolService(pool, new DefaultPaymentRouter());
-    this.dispatcher = new InterledgerPacketDispatcherService(
-        ildcpService,
-        paymentProtocolService
-    );
+    this.ildcpService = ildcpService;
+    this.paymentProtocolService = paymentProtocolService;
+    this.dispatcher = dispatcher;
   }
 
   void start() {

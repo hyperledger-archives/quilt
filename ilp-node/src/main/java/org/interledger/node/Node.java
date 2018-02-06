@@ -6,7 +6,6 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 import org.interledger.node.channels.Channel;
 import org.interledger.node.channels.MockChannel;
@@ -15,8 +14,13 @@ import org.interledger.node.exceptions.RequestRejectedException;
 import org.interledger.node.services.InterledgerPacketDispatcherService;
 import org.interledger.node.services.InterledgerPaymentProtocolService;
 import org.interledger.node.services.LoggingService;
+import org.interledger.node.services.fx.OneToOneRateConverter;
 import org.interledger.node.services.ildcp.IldcpService;
-import org.interledger.node.services.routing.DefaultPaymentRouter;
+import org.interledger.node.services.routing.InMemoryRoutingTable;
+import org.interledger.node.services.routing.Route;
+import org.interledger.node.services.routing.RouteId;
+import org.interledger.node.services.routing.RoutingTable;
+import org.interledger.node.services.routing.SimplePaymentRouter;
 
 import org.javamoney.moneta.CurrencyUnitBuilder;
 
@@ -35,7 +39,7 @@ public class Node extends AbstractNode {
   static final IldcpService ildpService
       = new DefaultInterledgerPeerProtocolService(executor, config);
   static final InterledgerPaymentProtocolService ilpService
-      = new DefaultInterledgerPaymentProtocolService(executor, new DefaultPaymentRouter());
+      = new DefaultInterledgerPaymentProtocolService(executor, config, new SimplePaymentRouter(defaultRoutes()));
   static final InterledgerPacketDispatcherService dispatcher
       = new InterledgerPacketDispatcherService(ildpService, ilpService);
 
@@ -59,14 +63,18 @@ public class Node extends AbstractNode {
       MockChannel channel = (MockChannel) account.getChannel();
 
       try {
-        channel.mockIncomingRequest(InterledgerPreparePacket.builder()
-            .amount(10)
-            .destination(InterledgerAddress.of("test1.chloe"))
-            .executionCondition(PreimageSha256Fulfillment.from(new byte[32]).getCondition())
-            .expiresAt(Instant.now().plusSeconds(30))
-            .data(new byte[]{})
-            .build()
+        InterledgerFulfillPacket response = channel.mockIncomingRequest(
+            InterledgerPreparePacket.builder()
+              .amount(10)
+              .destination(InterledgerAddress.of("test1.chloe"))
+              .executionCondition(PreimageSha256Fulfillment.from(new byte[32]).getCondition())
+              .expiresAt(Instant.now().plusSeconds(30))
+              .data(new byte[]{})
+              .build()
         );
+
+        System.out.println("Got response: " + response.toString());
+
       } catch (RequestRejectedException e) {
         e.printStackTrace();
       }
@@ -79,6 +87,23 @@ public class Node extends AbstractNode {
 
   }
 
+  static RoutingTable<Route> defaultRoutes() {
+
+    InMemoryRoutingTable table = new InMemoryRoutingTable();
+
+    for (Account account : accounts) {
+      table.addRoute(Route.builder()
+          .routeId(RouteId.of(UUID.randomUUID()))
+          .sourceAccount(account)
+          .destinationAccount(account)
+          .rateConverter(new OneToOneRateConverter())
+          .targetPrefix(InterledgerAddress.of("test1."))
+          .build());
+    }
+
+    return table;
+  }
+
   static AccountManager defaultAccounts() {
     AccountManager accounts = new AccountManager();
 
@@ -87,6 +112,9 @@ public class Node extends AbstractNode {
     accounts.add(Account.builder()
         .accountId(id)
         .relationship(AccountRelationship.PEER)
+        .counterparty(Counterparty.builder()
+          .name("Chloe")
+          .build())
         .currencyScale(2)
         .currencyUnit(CurrencyUnitBuilder.of("XRP", "undefined").build())
         .channel(createMockChannel(id, executor))

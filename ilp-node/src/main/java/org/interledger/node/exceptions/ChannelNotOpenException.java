@@ -5,7 +5,7 @@ import org.interledger.node.channels.Channel;
 /**
  * Thrown if an operation is attempted on an un-connected account channels.
  */
-public class ChannelNotOpenException extends AccountPluginException {
+public class ChannelNotOpenException extends ChannelException {
 
   /**
    * Constructs a new runtime exception with {@code null} as its detail message.  The cause is not

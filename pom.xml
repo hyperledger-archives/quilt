@@ -95,9 +95,9 @@
     <module>ilp-core</module>
     <module>ilp-core-codecs</module>
     <module>ilp-node</module>
-    <module>ilp-transport-psk</module>
 <!-- TODO Add new modules with PSK and IPR code
-    <module>core-transport-ipr</module>
+    <module>ilp-transport-psk</module>
+    <module>ilp-transport-ipr</module>
 -->
   </modules>
 
@@ -138,6 +138,12 @@
         <groupId>org.interledger</groupId>
         <artifactId>ilp-node</artifactId>
         <version>0.1.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
+        <version>4.1</version>
       </dependency>
 
       <dependency>

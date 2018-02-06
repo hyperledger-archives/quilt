@@ -5,7 +5,7 @@ import org.interledger.node.channels.Channel;
 /**
  * A root exception for all exceptions relating to Ledger Plugins.
  */
-public class AccountPluginException extends RuntimeException {
+public class ChannelException extends RuntimeException {
 
   /**
    * The channels that threw this exception.
@@ -16,7 +16,7 @@ public class AccountPluginException extends RuntimeException {
    * Constructs a new runtime exception with {@code null} as its detail message.  The cause is not
    * initialized, and may subsequently be initialized by a call to {@link #initCause}.
    */
-  public AccountPluginException(Channel plugin) {
+  public ChannelException(Channel plugin) {
     this.plugin = plugin;
   }
 
@@ -27,7 +27,7 @@ public class AccountPluginException extends RuntimeException {
    * @param message the detail message. The detail message is saved for later retrieval by the
    *                {@link #getMessage()} method.
    */
-  public AccountPluginException(String message, Channel plugin) {
+  public ChannelException(String message, Channel plugin) {
     super(message);
     this.plugin = plugin;
   }
@@ -44,8 +44,8 @@ public class AccountPluginException extends RuntimeException {
    *                nonexistent or unknown.)
    * @since 1.4
    */
-  public AccountPluginException(String message, Throwable cause,
-                                Channel plugin) {
+  public ChannelException(String message, Throwable cause,
+                          Channel plugin) {
     super(message, cause);
     this.plugin = plugin;
   }
@@ -61,7 +61,7 @@ public class AccountPluginException extends RuntimeException {
    *              or unknown.)
    * @since 1.4
    */
-  public AccountPluginException(Throwable cause, Channel plugin) {
+  public ChannelException(Throwable cause, Channel plugin) {
     super(cause);
     this.plugin = plugin;
   }
@@ -77,8 +77,8 @@ public class AccountPluginException extends RuntimeException {
    * @param writableStackTrace whether or not the stack trace should be writable
    * @since 1.7
    */
-  public AccountPluginException(String message, Throwable cause, boolean enableSuppression,
-                                boolean writableStackTrace, Channel plugin) {
+  public ChannelException(String message, Throwable cause, boolean enableSuppression,
+                          boolean writableStackTrace, Channel plugin) {
     super(message, cause, enableSuppression, writableStackTrace);
     this.plugin = plugin;
   }

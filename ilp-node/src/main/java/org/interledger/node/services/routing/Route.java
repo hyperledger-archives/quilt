@@ -3,6 +3,7 @@ package org.interledger.node.services.routing;
 import org.interledger.annotations.Immutable;
 import org.interledger.annotations.Wrapped;
 import org.interledger.annotations.Wrapper;
+import org.interledger.core.InterledgerAddress;
 import org.interledger.node.Account;
 import org.interledger.node.services.fx.RateConverter;
 
@@ -24,6 +25,11 @@ public interface Route extends Comparable<Route>{
    * @return
    */
   RouteId getRouteId();
+
+  /**
+   * The target ILP address prefix of addresses that are routed to with this route.
+   */
+  InterledgerAddress getTargetPrefix();
 
   /**
    * Get the source account for the route.

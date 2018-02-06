@@ -1,5 +1,7 @@
 package org.interledger.node.services;
 
+import org.interledger.node.NodeConfiguration;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -8,9 +10,15 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractThreadedService {
 
   private final ThreadPoolExecutor pool;
+  private final NodeConfiguration config;
 
-  public AbstractThreadedService(ThreadPoolExecutor pool) {
+  public AbstractThreadedService(ThreadPoolExecutor pool, NodeConfiguration config) {
     this.pool = pool;
+    this.config = config;
+  }
+
+  protected NodeConfiguration getConfig() {
+    return config;
   }
 
   protected <T> Future<T> submit(Callable<T> callable) {
