@@ -105,6 +105,12 @@ cmake-build-debug/
 # IntelliJ
 out/
 
+# eclipse
+.project
+*/.checkstyle
+*/.classpath
+*/.project
+
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
