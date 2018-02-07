@@ -322,7 +322,7 @@ public class ValidVectorTest {
         PreimageSha256Fulfillment preimageFulfillment = (PreimageSha256Fulfillment) fulfillment;
         assertEquals(testVector.getName() + " [compare preimage]",
             testVector.getJson().getPreimage(),
-            preimageFulfillment.getPreimage());
+            preimageFulfillment.getEncodedPreimage());
         break;
 
       case PREFIX_SHA256:

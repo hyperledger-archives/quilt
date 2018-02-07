@@ -60,6 +60,13 @@ public abstract class AbstractCryptoConditionsModuleTest {
           + "ZzfoJ78DlB6yyHtdDAe9b/Ui+RV6utuFnglWCdYCo5OjhQVHRUQqCo/LnKQJAJxVqukEm0kqB86Uoy/sn9WiG+"
           + "ECp9uhuF6RLlP6TGVhLjiL93h5aLjvYqluo2FhBlOshkKz4MrhH8To9JKefTQ==";
 
+  private static final byte[] TEST_PUBKEY = BaseEncoding.base64()
+      .decode("Nq4bl8V3rmr7ApTpGDn6ex+TMnkbnyxdWGgZAl9KLx0=");
+
+  private static final byte[] TEST_PRIVKEY = BaseEncoding.base64()
+      .decode("A59Fwv0b/smwKKpDy66asxKeFME63RYiK0Rj6Aaf3To=");
+
+
   /**
    * Need to add BouncyCastle so we have a provider that supports SHA256withRSA/PSS signatures
    */
@@ -132,11 +139,6 @@ public abstract class AbstractCryptoConditionsModuleTest {
    * @return An instance of {@link KeyPair}.
    */
   protected static KeyPair constructEd25519KeyPair() {
-    final byte[] TEST_PUBKEY = BaseEncoding.base64()
-        .decode("Nq4bl8V3rmr7ApTpGDn6ex+TMnkbnyxdWGgZAl9KLx0=");
-
-    final byte[] TEST_PRIVKEY = BaseEncoding.base64()
-        .decode("A59Fwv0b/smwKKpDy66asxKeFME63RYiK0Rj6Aaf3To=");
 
     final EdDSANamedCurveSpec edParams = EdDSANamedCurveTable
         .getByName(CryptoConditionReader.ED_25519);
@@ -153,12 +155,12 @@ public abstract class AbstractCryptoConditionsModuleTest {
 
   protected static PreimageSha256Condition constructPreimageCondition() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return new PreimageSha256Fulfillment(preimage).getCondition();
+    return PreimageSha256Fulfillment.from(preimage).getCondition();
   }
 
   protected static PrefixSha256Condition constructPrefixCondition() {
     final byte[] prefix = "I'm your density. I mean, your destiny.".getBytes();
-    return new PrefixSha256Condition(prefix, 20, constructPreimageCondition());
+    return PrefixSha256Condition.from(prefix, 20, constructPreimageCondition());
   }
 
   protected static RsaSha256Condition constructRsaCondition() {
@@ -170,7 +172,7 @@ public abstract class AbstractCryptoConditionsModuleTest {
       );
       final PublicKey myPublicKey = keyFactory.generatePublic(publicKeySpec);
 
-      return new RsaSha256Condition((RSAPublicKey) myPublicKey);
+      return RsaSha256Condition.from((RSAPublicKey) myPublicKey);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -191,14 +193,14 @@ public abstract class AbstractCryptoConditionsModuleTest {
       final byte[] message = "Marty! You've got to come back with me!".getBytes();
       edDsaSigner.update(message);
 
-      return new Ed25519Sha256Condition((EdDSAPublicKey) edDsaKeyPair.getPublic());
+      return Ed25519Sha256Condition.from((EdDSAPublicKey) edDsaKeyPair.getPublic());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   protected static ThresholdSha256Condition constructThresholdCondition() {
-    return new ThresholdSha256Condition(
+    return ThresholdSha256Condition.from(
         2,
         Lists.newArrayList(
             constructPreimageCondition(), constructRsaCondition(), constructPrefixCondition()
@@ -212,12 +214,12 @@ public abstract class AbstractCryptoConditionsModuleTest {
 
   protected static PreimageSha256Fulfillment constructPreimageFulfillment() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return new PreimageSha256Fulfillment(preimage);
+    return PreimageSha256Fulfillment.from(preimage);
   }
 
   protected static PrefixSha256Fulfillment constructPrefixFulfillment() {
     final byte[] prefix = "I'm your density. I mean, your destiny.".getBytes();
-    return new PrefixSha256Fulfillment(prefix, 20, constructPreimageFulfillment());
+    return PrefixSha256Fulfillment.from(prefix, 20, constructPreimageFulfillment());
   }
 
   protected static RsaSha256Fulfillment constructRsaFulfillment() {
@@ -227,10 +229,10 @@ public abstract class AbstractCryptoConditionsModuleTest {
       Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
       rsaSigner.initSign(rsaKeyPair.getPrivate());
 
-      final byte[] message = "Marty, your acting like you haven't seen me in a week.".getBytes();
+      final byte[] message = "Marty, you're acting like you haven't seen me in a week.".getBytes();
       rsaSigner.update(message);
 
-      return new RsaSha256Fulfillment(
+      return RsaSha256Fulfillment.from(
           (RSAPublicKey) rsaKeyPair.getPublic(),
           "signature".getBytes()
       );
@@ -256,14 +258,14 @@ public abstract class AbstractCryptoConditionsModuleTest {
 
       final byte[] signature = "5VZDAMNgrHKQhuLMgG6CioSHfx645dl02HPgZSJJAVVfuIIVkKM7rMYeOXAc-bRr0lv18FlbviRlUUFDjnoQCw"
           .getBytes();
-      return new Ed25519Sha256Fulfillment((EdDSAPublicKey) edDsaKeyPair.getPublic(), signature);
+      return Ed25519Sha256Fulfillment.from((EdDSAPublicKey) edDsaKeyPair.getPublic(), signature);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   protected static ThresholdSha256Fulfillment constructThresholdFulfillment() {
-    return new ThresholdSha256Fulfillment(
+    return ThresholdSha256Fulfillment.from(
         Lists.newArrayList(),
         Lists.newArrayList(
             constructPreimageFulfillment(), constructRsaFulfillment(), constructPrefixFulfillment()

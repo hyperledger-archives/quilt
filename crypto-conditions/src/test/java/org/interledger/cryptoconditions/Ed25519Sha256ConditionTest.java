@@ -8,16 +8,30 @@ import org.interledger.cryptoconditions.helpers.TestConditionFactory;
 import org.interledger.cryptoconditions.helpers.TestKeyFactory;
 
 import com.google.common.io.BaseEncoding;
+import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
+import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec;
+import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 import org.junit.Test;
 
 import java.net.URI;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 /**
  * Unit tests for {@link Ed25519Sha256Condition}.
  */
 public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
+
+  private static final byte[] TEST_PUBKEY = BaseEncoding.base64()
+      .decode("Nq4bl8V3rmr7ApTpGDn6ex+TMnkbnyxdWGgZAl9KLx0=");
+
+  private static final byte[] TEST_PRIVKEY = BaseEncoding.base64()
+      .decode("A59Fwv0b/smwKKpDy66asxKeFME63RYiK0Rj6Aaf3To=");
 
   /**
    * Tests concurrently creating an instance of {@link Ed25519Sha256Condition}. This test
@@ -47,10 +61,7 @@ public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
           is("MCKAIDauG5fFd65q+wKU6Rg5+nsfkzJ5G58sXVhoGQJfSi8d"));
     };
 
-    // Run single-threaded...
     this.runConcurrent(1, runnableTest);
-
-    // Run multi-threaded...
     this.runConcurrent(runnableTest);
   }
 

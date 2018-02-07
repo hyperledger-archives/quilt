@@ -3,7 +3,7 @@ package org.interledger.quilt.jackson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import org.interledger.InterledgerAddress;
+import org.interledger.core.InterledgerAddress;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
@@ -64,9 +64,13 @@ public class InterledgerModuleTest {
 
   private static PreimageSha256Condition constructCondition() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return new PreimageSha256Fulfillment(preimage).getCondition();
+    return PreimageSha256Fulfillment.from(preimage).getCondition();
   }
 
+  /**
+   * Get test parameters.
+   * @return the parameters for the tests
+   */
   @Parameters
   public static Collection<Object[]> data() {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter
@@ -114,7 +118,7 @@ public class InterledgerModuleTest {
 
   private Condition constructTestCondition() {
     final byte[] preimage = "secret".getBytes();
-    return new PreimageSha256Fulfillment(preimage).getCondition();
+    return PreimageSha256Fulfillment.from(preimage).getCondition();
   }
 
 
@@ -144,15 +148,15 @@ public class InterledgerModuleTest {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object obj) {
+      if (this == obj) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (obj == null || getClass() != obj.getClass()) {
         return false;
       }
 
-      InterledgerContainer that = (InterledgerContainer) o;
+      InterledgerContainer that = (InterledgerContainer) obj;
 
       if (!interledgerAddress.equals(that.interledgerAddress)) {
         return false;
@@ -169,10 +173,10 @@ public class InterledgerModuleTest {
 
     @Override
     public String toString() {
-      return "InterledgerContainer{" +
-          "interledgerAddress=" + interledgerAddress +
-          ", condition=" + condition +
-          '}';
+      return "InterledgerContainer{"
+          + "interledgerAddress=" + interledgerAddress
+          + ", condition=" + condition
+          + '}';
     }
   }
 }
