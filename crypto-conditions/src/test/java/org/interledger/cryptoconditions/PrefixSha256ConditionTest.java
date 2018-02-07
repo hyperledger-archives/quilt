@@ -2,9 +2,14 @@ package org.interledger.cryptoconditions;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREFIX1;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREFIX2;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE1;
+
+import org.interledger.cryptoconditions.PrefixSha256Condition.AbstractPrefixSha256Condition;
+import org.interledger.cryptoconditions.helpers.TestConditionFactory;
 
 import com.google.common.io.BaseEncoding;
-
 import org.junit.Test;
 
 import java.net.URI;
@@ -25,26 +30,49 @@ public class PrefixSha256ConditionTest extends AbstractCryptoConditionTest {
   public void testConstructionUsingMultipleThreads() throws Exception {
     final Runnable runnableTest = () -> {
 
-      final PreimageSha256Condition preimageSha256Condition = new PreimageSha256Condition(
-          MESSAGE_PREIMAGE.getBytes());
-      final PrefixSha256Condition prefixSha256Condition = new PrefixSha256Condition(
-          AUTHOR.getBytes(), 16384,
-          preimageSha256Condition);
+      final PrefixSha256Condition prefixSha256Condition = TestConditionFactory
+          .constructPrefixSha256Condition(PREFIX1);
 
       assertThat(prefixSha256Condition.getType(), is(CryptoConditionType.PREFIX_SHA256));
-      assertThat(prefixSha256Condition.getCost(), is(17463L));
+      assertThat(prefixSha256Condition.getCost(), is(2081L));
       assertThat(CryptoConditionUri.toUri(prefixSha256Condition), is(URI.create(
-          "ni:///sha-256;hfHFYbd93301v75b1967nmZ4uLx8Pf_UYqCYYTfT_MI?cost=17463&fpt=prefix-sha-"
-              + "256&subtypes=preimage-sha-256")));
+          "ni:///sha-256;KrV_YYvQMc_mAKpg73Kngfld3lFoZdUQ8FEtQf4m13g?cost=2081&fpt=prefix-sha-256"
+              + "&subtypes=preimage-sha-256")));
 
       assertThat(BaseEncoding.base64().encode(prefixSha256Condition.getFingerprint()),
-          is("hfHFYbd93301v75b1967nmZ4uLx8Pf/UYqCYYTfT/MI="));
-      assertThat(BaseEncoding.base64().encode(prefixSha256Condition
-              .constructFingerprintContents(AUTHOR.getBytes(), 16384, preimageSha256Condition)),
-          is("MDiACURvYyBCcm93boECQACiJ6AlgCD7bwRU2vus7BD9ey+slXEu+MFjfxk1mUdo8dimwhuYfoEBLg=="));
+          is("KrV/YYvQMc/mAKpg73Kngfld3lFoZdUQ8FEtQf4m13g="));
+      assertThat(BaseEncoding.base64().encode(AbstractPrefixSha256Condition
+              .constructFingerprintContents(PREFIX1.getBytes(), 16384,
+                  TestConditionFactory.constructPreimageCondition(PREIMAGE1))),
+          is("MDqAC09yZGVyLTEyMzQ1gQJAAKInoCWAIPtvBFTa+6zsEP17L6yVcS74wWN/GTWZR2jx2KbCG5h+gQEu"));
     };
 
+    // Run single-threaded...
     this.runConcurrent(1, runnableTest);
+    // Run multi-threaded...
     this.runConcurrent(runnableTest);
+  }
+
+  @Test
+  public void equalsHashcodeTest() {
+    final PrefixSha256Condition prefixSha256Condition1 = TestConditionFactory
+        .constructPrefixSha256Condition(PREFIX1);
+    final PrefixSha256Condition prefixSha256Condition2 = TestConditionFactory
+        .constructPrefixSha256Condition(PREFIX2);
+
+    assertThat(prefixSha256Condition1.equals(prefixSha256Condition1), is(true));
+    assertThat(prefixSha256Condition2.equals(prefixSha256Condition2), is(true));
+    assertThat(prefixSha256Condition1.equals(prefixSha256Condition2), is(false));
+    assertThat(prefixSha256Condition2.equals(prefixSha256Condition1), is(false));
+  }
+
+  @Test
+  public void toStringTest() {
+    final PrefixSha256Condition prefixSha256Condition1 = TestConditionFactory
+        .constructPrefixSha256Condition(PREFIX1);
+    assertThat(prefixSha256Condition1.toString(), is(
+        "PrefixSha256Condition{subtypes=[PREIMAGE-SHA-256], type=PREFIX-SHA-256, "
+            + "fingerprint=KrV_YYvQMc_mAKpg73Kngfld3lFoZdUQ8FEtQf4m13g, cost=2081}"
+    ));
   }
 }
