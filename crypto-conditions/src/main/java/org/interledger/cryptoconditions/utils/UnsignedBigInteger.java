@@ -20,6 +20,10 @@ public class UnsignedBigInteger {
    */
   public static byte[] toUnsignedByteArray(BigInteger value) {
 
+    if (value.compareTo(BigInteger.ZERO) < 0) {
+      throw new IllegalArgumentException("Value must be >= 0.");
+    }
+
     byte[] signedValue = value.toByteArray();
     if (signedValue[0] == 0x00) {
       return Arrays.copyOfRange(signedValue, 1, signedValue.length);

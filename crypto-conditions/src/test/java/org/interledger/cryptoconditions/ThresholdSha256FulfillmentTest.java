@@ -157,7 +157,7 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
     );
     assertThat(fulfillmentWithFulfillment2.verify(oneOfTwoCondition, new byte[0]), is(true));
 
-    // Construct a Fulfillment with both fulfillments, and expect it to verify oneOfTwoCondition properly.
+    // Construct a Fulfillment with both fulfillments, it should verify oneOfTwoCondition properly.
     final ThresholdSha256Fulfillment fulfillmentWithBoth = ThresholdSha256Fulfillment.from(
         Lists.newArrayList(condition1, condition2),
         Lists.newArrayList(fulfillment1, fulfillment2)
@@ -208,7 +208,7 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
     );
     assertThat(fulfillmentWithFulfillment2.verify(twoOfTwoCondition, new byte[0]), is(false));
 
-    // Construct a Fulfillment with both fulfillments, and expect it to verify oneOfTwoCondition properly.
+    // Construct a Fulfillment with both fulfillments, it should verify oneOfTwoCondition properly.
     final ThresholdSha256Fulfillment fulfillmentWithBoth = ThresholdSha256Fulfillment.from(
         // See https://github.com/hyperledger/quilt/issues/78
         // Lists.newArrayList(condition1, condition2),
