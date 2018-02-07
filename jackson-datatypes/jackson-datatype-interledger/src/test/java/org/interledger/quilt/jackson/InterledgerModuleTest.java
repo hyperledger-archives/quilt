@@ -116,12 +116,6 @@ public class InterledgerModuleTest {
     assertThat(actualAddressContainer.getCondition(), is(condition));
   }
 
-  private Condition constructTestCondition() {
-    final byte[] preimage = "secret".getBytes();
-    return PreimageSha256Fulfillment.from(preimage).getCondition();
-  }
-
-
   private static class InterledgerContainer {
 
     @JsonProperty("ledger_prefix")
