@@ -8,16 +8,30 @@ import org.interledger.cryptoconditions.helpers.TestConditionFactory;
 import org.interledger.cryptoconditions.helpers.TestKeyFactory;
 
 import com.google.common.io.BaseEncoding;
+import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
+import net.i2p.crypto.eddsa.spec.EdDSAPrivateKeySpec;
+import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 import org.junit.Test;
 
 import java.net.URI;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 /**
  * Unit tests for {@link Ed25519Sha256Condition}.
  */
 public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
+
+  private static final byte[] TEST_PUBKEY = BaseEncoding.base64()
+      .decode("Nq4bl8V3rmr7ApTpGDn6ex+TMnkbnyxdWGgZAl9KLx0=");
+
+  private static final byte[] TEST_PRIVKEY = BaseEncoding.base64()
+      .decode("A59Fwv0b/smwKKpDy66asxKeFME63RYiK0Rj6Aaf3To=");
 
   /**
    * Tests concurrently creating an instance of {@link Ed25519Sha256Condition}. This test
@@ -47,10 +61,7 @@ public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
           is("MCKAIDauG5fFd65q+wKU6Rg5+nsfkzJ5G58sXVhoGQJfSi8d"));
     };
 
-    // Run single-threaded...
     this.runConcurrent(1, runnableTest);
-
-    // Run multi-threaded...
     this.runConcurrent(runnableTest);
   }
 
@@ -82,5 +93,24 @@ public class Ed25519Sha256ConditionTest extends AbstractCryptoConditionTest {
         "Ed25519Sha256Condition{type=ED25519-SHA-256, "
             + "fingerprint=aJ5kk1zn2qrQQO5QhYZXoGigv0Y5rSafiV3BUM1F9hM, cost=131072}"
     ));
+  }
+
+  /**
+   * Helper method to construct an instance of {@link KeyPair} containing keys for testing purposes.
+   *
+   * @return An instance of {@link KeyPair}.
+   */
+  protected KeyPair constructEd25519KeyPair() throws InvalidKeySpecException {
+    final EdDSANamedCurveSpec edParams = EdDSANamedCurveTable
+        .getByName(CryptoConditionReader.ED_25519);
+    assert (edParams != null);
+
+    final EdDSAPublicKeySpec pubKeySpec = new EdDSAPublicKeySpec(TEST_PUBKEY, edParams);
+    final PublicKey pubKey = new EdDSAPublicKey(pubKeySpec);
+
+    final EdDSAPrivateKeySpec privateKeySpec = new EdDSAPrivateKeySpec(TEST_PRIVKEY, edParams);
+    final PrivateKey privKey = new EdDSAPrivateKey(privateKeySpec);
+
+    return new KeyPair(pubKey, privKey);
   }
 }
