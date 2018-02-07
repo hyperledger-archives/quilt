@@ -35,7 +35,9 @@ public class CryptoConditionReader {
    * Reads a DER encoded condition from the buffer.
    *
    * @param buffer contains the raw DER encoded condition.
+   *
    * @return The condition read from the buffer.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Condition readCondition(byte[] buffer) throws DerEncodingException {
@@ -48,7 +50,9 @@ public class CryptoConditionReader {
    * @param buffer contains the raw DER encoded condition.
    * @param offset the position within the buffer to begin reading the condition.
    * @param length the number of bytes to read.
+   *
    * @return The condition read from the buffer.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Condition readCondition(byte[] buffer, int offset, int length)
@@ -74,7 +78,9 @@ public class CryptoConditionReader {
    * Reads a DER encoded condition from the input stream.
    *
    * @param in The input stream containing the DER encoded condition.
+   *
    * @return The condition read from the stream.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -88,7 +94,9 @@ public class CryptoConditionReader {
    *
    * @param in        The input stream containing the DER encoded condition.
    * @param bytesRead will be updated with the number of bytes read from the stream.
+   *
    * @return The condition read from the stream.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -114,15 +122,15 @@ public class CryptoConditionReader {
 
     switch (type) {
       case PREIMAGE_SHA256:
-        return new PreimageSha256Condition(cost, fingerprint);
+        return PreimageSha256Condition.fromCostAndFingerprint(cost, fingerprint);
       case PREFIX_SHA256:
-        return new PrefixSha256Condition(cost, fingerprint, subtypes);
+        return PrefixSha256Condition.fromCostAndFingerprint(cost, fingerprint, subtypes);
       case THRESHOLD_SHA256:
-        return new ThresholdSha256Condition(cost, fingerprint, subtypes);
+        return ThresholdSha256Condition.fromCostAndFingerprint(cost, fingerprint, subtypes);
       case RSA_SHA256:
-        return new RsaSha256Condition(cost, fingerprint);
+        return RsaSha256Condition.fromCostAndFingerprint(cost, fingerprint);
       case ED25519_SHA256:
-        return new Ed25519Sha256Condition(fingerprint);
+        return Ed25519Sha256Condition.fromCostAndFingerprint(fingerprint);
       default:
         throw new DerEncodingException("Unknown condition type: " + type);
     }
@@ -132,7 +140,9 @@ public class CryptoConditionReader {
    * Reads a DER encoded fulfillment from the buffer.
    *
    * @param buffer The buffer holding the DER encoded fulfillment
+   *
    * @return The fulfillment read from the buffer.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Fulfillment readFulfillment(byte[] buffer) throws DerEncodingException {
@@ -145,7 +155,9 @@ public class CryptoConditionReader {
    * @param buffer The buffer holding the DER encoded fulfillment
    * @param offset the position within the buffer to begin reading the fulfilment.
    * @param length the number of bytes to read.
+   *
    * @return The fulfillment read from the buffer.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    */
   public static Fulfillment readFulfillment(byte[] buffer, int offset, int length)
@@ -171,7 +183,9 @@ public class CryptoConditionReader {
    * Reads a DER encoded fulfillment from the input stream.
    *
    * @param in The input stream containing the DER encoded fulfillment.
+   *
    * @return The fulfillment read from the stream.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -185,7 +199,9 @@ public class CryptoConditionReader {
    *
    * @param in        The input stream containing the DER encoded fulfillment.
    * @param bytesRead will be updated with the number of bytes read from the stream.
+   *
    * @return The fulfillment read from the stream.
+   *
    * @throws DerEncodingException when DER encoding fails for any reason.
    * @throws IOException          if any I/O operation fails for any reason.
    */
@@ -209,7 +225,7 @@ public class CryptoConditionReader {
 
         bytesRead.addAndGet(innerBytesRead.get());
 
-        return new PreimageSha256Fulfillment(preimage);
+        return PreimageSha256Fulfillment.from(preimage);
 
       case PREFIX_SHA256:
 
@@ -226,7 +242,7 @@ public class CryptoConditionReader {
 
         bytesRead.addAndGet(innerBytesRead.get());
 
-        return new PrefixSha256Fulfillment(prefix, maxMessageLength, subfulfillment);
+        return PrefixSha256Fulfillment.from(prefix, maxMessageLength, subfulfillment);
 
       case THRESHOLD_SHA256:
 
@@ -263,7 +279,7 @@ public class CryptoConditionReader {
 
         bytesRead.addAndGet(innerBytesRead.get());
 
-        return new ThresholdSha256Fulfillment(subconditions, subfulfillments);
+        return ThresholdSha256Fulfillment.from(subconditions, subfulfillments);
 
       case RSA_SHA256:
 
@@ -285,7 +301,7 @@ public class CryptoConditionReader {
           final KeyFactory rsaKeyFactory = KeyFactory.getInstance("RSA");
           final PublicKey publicKey = rsaKeyFactory.generatePublic(rsaSpec);
 
-          return new RsaSha256Fulfillment((RSAPublicKey) publicKey, rsaSignature);
+          return RsaSha256Fulfillment.from((RSAPublicKey) publicKey, rsaSignature);
 
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
           throw new RuntimeException("Error creating RSA key.", e);
@@ -303,7 +319,7 @@ public class CryptoConditionReader {
             EdDSANamedCurveTable.getByName(ED_25519));
         EdDSAPublicKey ed25519PublicKey = new EdDSAPublicKey(ed25519spec);
 
-        return new Ed25519Sha256Fulfillment(ed25519PublicKey, ed25519Signature);
+        return Ed25519Sha256Fulfillment.from(ed25519PublicKey, ed25519Signature);
 
       default:
         throw new DerEncodingException("Unrecogized condition type: " + type);
