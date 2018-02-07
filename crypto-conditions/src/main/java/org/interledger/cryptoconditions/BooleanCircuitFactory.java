@@ -27,7 +27,7 @@ public class BooleanCircuitFactory {
    * @see "https://en.wikipedia.org/wiki/OR_gate"
    */
   public static ThresholdSha256Condition orConditionCircuit(
-      final Condition condition1, final Condition condition2
+      final Condition condition1, final Condition... conditions
   ) {
     Objects.requireNonNull(condition1, "condition1 must not be null!");
     Objects.requireNonNull(condition2, "condition2 must not be null!");
