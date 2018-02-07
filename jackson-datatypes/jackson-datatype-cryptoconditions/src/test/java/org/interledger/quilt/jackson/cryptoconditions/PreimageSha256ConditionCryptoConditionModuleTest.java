@@ -55,6 +55,10 @@ public class PreimageSha256ConditionCryptoConditionModuleTest extends
     super(encodingToUse, expectedEncodedValue);
   }
 
+  /**
+   * Get test parameters.
+   * @return the parameters for the tests
+   */
   @Parameters
   public static Collection<Object[]> data() {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter

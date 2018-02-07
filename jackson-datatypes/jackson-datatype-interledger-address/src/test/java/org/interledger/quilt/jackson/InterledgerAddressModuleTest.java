@@ -3,7 +3,7 @@ package org.interledger.quilt.jackson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import org.interledger.InterledgerAddress;
+import org.interledger.core.InterledgerAddress;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -69,14 +69,14 @@ public class InterledgerAddressModuleTest {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object obj) {
+      if (this == obj) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (obj == null || getClass() != obj.getClass()) {
         return false;
       }
-      InterledgerContainer that = (InterledgerContainer) o;
+      InterledgerContainer that = (InterledgerContainer) obj;
       return Objects.equals(getInterledgerAddress(), that.getInterledgerAddress());
     }
 
@@ -88,9 +88,9 @@ public class InterledgerAddressModuleTest {
 
     @Override
     public String toString() {
-      return "InterledgerContainer{" +
-          "interledgerAddress=" + interledgerAddress +
-          '}';
+      return "InterledgerContainer{"
+          + "interledgerAddress=" + interledgerAddress
+          + '}';
     }
   }
 }

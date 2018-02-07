@@ -1,6 +1,6 @@
 package org.interledger.quilt.jackson;
 
-import org.interledger.InterledgerAddress;
+import org.interledger.core.InterledgerAddress;
 import org.interledger.cryptoconditions.Condition;
 import org.interledger.cryptoconditions.Fulfillment;
 import org.interledger.quilt.jackson.cryptoconditions.ConditionSerializer;

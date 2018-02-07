@@ -1,6 +1,6 @@
 package org.interledger.quilt.jackson;
 
-import org.interledger.InterledgerAddress;
+import org.interledger.core.InterledgerAddress;
 
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
