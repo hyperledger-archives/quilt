@@ -304,52 +304,6 @@ public interface InterledgerAddress {
   abstract class AbstractInterledgerAddress implements InterledgerAddress {
 
     /**
-     * <p>Compares the specified object with this <tt>InterledgerAddress</tt> for equality.</p>
-     *
-     * <p>The <tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a
-     * String value, so implementations should take care to forward equality decisions to the {@link
-     * String#equals(Object)} method on the object returned by {@link #getValue()}.</p>
-     *
-     * @param obj object to be compared for equality with this collection
-     *
-     * @return <tt>true</tt> if the specified object is equal to this {@link InterledgerAddress}.
-     *
-     * @see Object#equals(Object)
-     * @see Set#equals(Object)
-     * @see List#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-
-      InterledgerAddress foo = (InterledgerAddress) obj;
-
-      return getValue().equals(foo.getValue());
-    }
-
-    /**
-     * <p>Returns the hash code value for this <tt>InterledgerAddress</tt>.</p>
-     *
-     * <p>The<tt>InterledgerAddress</tt> interface is essentially a type-safe wrapper around a
-     * String value, so implementations should take care to forward hashcode decisions to the {@link
-     * String#equals(Object)} method on the object returned by {@link #getValue()}.</p>
-     *
-     * @return the hash code value for this {@link InterledgerAddress}.
-     *
-     * @see Object#hashCode()
-     * @see Object#equals(Object)
-     */
-    @Override
-    public int hashCode() {
-      return this.getValue().hashCode();
-    }
-
-    /**
      * Precondition enforcer that ensures the value is a valid Interledger Address.
      *
      * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses/0015-ilp-addresses.md"

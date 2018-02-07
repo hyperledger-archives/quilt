@@ -29,35 +29,6 @@ public interface InterledgerFulfillPacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerFulfillPacket implements InterledgerFulfillPacket {
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-
-      InterledgerFulfillPacket impl = (InterledgerFulfillPacket) obj;
-
-      return getFulfillment().equals(impl.getFulfillment())
-          && Arrays.equals(getData(), impl.getData());
-    }
-
-    @Override
-    public int hashCode() {
-      int result = getFulfillment().hashCode();
-      result = 31 * result + Arrays.hashCode(getData());
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "InterledgerFulfillPacket{"
-          + "  fulfillment=" + getFulfillment().toString()
-          + ",  data=" + Arrays.toString(getData())
-          + '}';
-    }
   }
 
 }

@@ -47,40 +47,5 @@ public interface InterledgerRejectPacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerRejectPacket implements InterledgerRejectPacket {
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-
-      InterledgerRejectPacket impl = (InterledgerRejectPacket) obj;
-
-      return getCode().equals(impl.getCode())
-          && getTriggeredBy().equals(impl.getTriggeredBy())
-          && getMessage().equals(impl.getMessage())
-          && Arrays.equals(getData(), impl.getData());
-    }
-
-    @Override
-    public int hashCode() {
-      int result = getCode().hashCode();
-      result = 31 * result + getTriggeredBy().hashCode();
-      result = 31 * result + getMessage().hashCode();
-      result = 31 * result + Arrays.hashCode(getData());
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "InterledgerRejectPacket{"
-          + "  code=" + getCode()
-          + ",  triggeredBy=" + getTriggeredBy()
-          + ",  message=" + getMessage()
-          + ",  data=" + Arrays.toString(getData())
-          + '}';
-    }
   }
 }
