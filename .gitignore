@@ -105,12 +105,6 @@ cmake-build-debug/
 # IntelliJ
 out/
 
-# eclipse
-.project
-*/.checkstyle
-*/.classpath
-*/.project
-
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
@@ -177,6 +171,16 @@ local.properties
 .cache-main
 .scala_dependencies
 .worksheet
+
+# Project files
+**/.classpath
+**/.project
+
+# m2e-code-quality for Eclipse CS Checkstyle / PMD / FindBugs Plug-Ins
+**/.checkstyle
+**/.pmd
+**/.pmdruleset.xml
+**/.fbExcludeFilterFile
 
 ### Kotlin template
 # Compiled class file
