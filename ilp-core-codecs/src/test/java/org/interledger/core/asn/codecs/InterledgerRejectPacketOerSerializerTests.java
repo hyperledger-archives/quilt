@@ -30,9 +30,9 @@ import java.util.stream.IntStream;
 @RunWith(Parameterized.class)
 public class InterledgerRejectPacketOerSerializerTests {
 
-  private static final InterledgerAddress FOO = InterledgerAddress.of("test1.foo");
-  private static final InterledgerAddress BAR = InterledgerAddress.of("test1.bar");
-  private static final InterledgerAddress BAZ = InterledgerAddress.of("test1.baz");
+  private static final InterledgerAddress FOO = InterledgerAddress.of("test1.foo.foo");
+  private static final InterledgerAddress BAR = InterledgerAddress.of("test1.bar.bar");
+  private static final InterledgerAddress BAZ = InterledgerAddress.of("test1.baz.baz");
 
   // first data value (0) is default
   @Parameter

@@ -34,10 +34,13 @@ import java.util.regex.Pattern;
  */
 public interface InterledgerAddress {
 
-  String REGEX = "(?=^.{1,1023}$)"
-      + "^(g|private|example|peer|self|test[1-3])[.]([a-zA-Z0-9_~-]+[.])*([a-zA-Z0-9_~-]+)?$";
+  String ADDRPRFX_REGEX = "(?=^.{1,1023}$)"
+      + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])*$";
+  Pattern ADDRPRFX_PATTERN = Pattern.compile(ADDRPRFX_REGEX);
 
-  Pattern PATTERN = Pattern.compile(REGEX);
+  String DESTADDR_REGEX = "(?=^.{1,1023}$)"
+      + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])+[a-zA-Z0-9_~-]+$";
+  Pattern DESTADDR_PATTERN = Pattern.compile(DESTADDR_REGEX);
 
   /**
    * Constructor to allow quick construction from a String representation of an ILP address.
@@ -63,7 +66,7 @@ public interface InterledgerAddress {
    */
   static boolean isValid(final String value) {
     Objects.requireNonNull(value);
-    return PATTERN.matcher(value)
+    return (value.endsWith(".") ? ADDRPRFX_PATTERN : DESTADDR_PATTERN).matcher(value)
         .matches();
   }
 
@@ -258,10 +261,14 @@ public interface InterledgerAddress {
       if (isRootPrefix()) {
         return Optional.empty();
       } else {
-        // Call getParentPrefix with the account portion, which will forward to #getPrefix.
-        return InterledgerAddress.of(
-            this.getValue().substring(0, this.getValue().lastIndexOf("."))
-        ).getParentPrefix();
+        // Call getPrefix with the account portion's parent.
+        // This means jumping over any destination address (i.e. account portion) in order to
+        // traverse address prefixes without hitting destination address restrictions
+        final String parentDestAddr = this.getValue().substring(0,
+            this.getValue().lastIndexOf("."));
+        return Optional.of(InterledgerAddress.of(parentDestAddr.substring(0,
+            parentDestAddr.lastIndexOf(".") + 1)
+        ).getPrefix());
       }
     } else {
       return Optional.of(this.getPrefix());
