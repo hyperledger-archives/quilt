@@ -21,7 +21,8 @@ import java.util.Collection;
 public class InterledgerAddressOerSerializerTests {
 
   private static final String JUST_RIGHT =
-      "g.012345678901234567890123456789012345678901234567890123456789012345678901234567890123456"
+      "g.foo.0123"
+          + "45678901234567890123456789012345678901234567890123456789012345678901234567890123456"
           + "78901234567890123456789012345678901234567890123456789012345678901234567890123456789"
           + "01234567890123456789012345678901234567890123456789012345678901234567890123456789012"
           + "34567890123456789012345678901234567890123456789012345678901234567890123456789012345"
@@ -33,7 +34,7 @@ public class InterledgerAddressOerSerializerTests {
           + "12345678901234567890123456789012345678901234567890123456789012345678901234567890123"
           + "45678901234567890123456789012345678901234567890123456789012345678901234567890123456"
           + "78901234567890123456789012345678901234567890123456789012345678901234567890123456789"
-          + "012345678912312349393";
+          + "01234567891234567";
 
   // first data value (0) is default
   @Parameter
@@ -45,14 +46,14 @@ public class InterledgerAddressOerSerializerTests {
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {{InterledgerAddress.builder().value("test1.").build()},
-        {InterledgerAddress.builder().value("test3.foo").build()},
-        {InterledgerAddress.builder().value("test2.foo").build()},
-        {InterledgerAddress.builder().value("test1.foo").build()},
-        {InterledgerAddress.builder().value("test1.foo.bar.baz").build()},
+        {InterledgerAddress.builder().value("test3.foo.bar").build()},
+        {InterledgerAddress.builder().value("test2.foo.bar").build()},
+        {InterledgerAddress.builder().value("test1.foo.bar").build()},
+        {InterledgerAddress.builder().value("test1.foo.bar.baz.bazz").build()},
         {InterledgerAddress.builder().value("private.secret.account").build()},
-        {InterledgerAddress.builder().value("example.foo").build()},
-        {InterledgerAddress.builder().value("peer.foo").build()},
-        {InterledgerAddress.builder().value("self.foo").build()},
+        {InterledgerAddress.builder().value("example.foo.bar").build()},
+        {InterledgerAddress.builder().value("peer.foo.bar").build()},
+        {InterledgerAddress.builder().value("self.foo.bar").build()},
         {InterledgerAddress.builder().value(JUST_RIGHT).build()},});
   }
 

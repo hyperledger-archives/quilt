@@ -18,9 +18,9 @@ import java.util.List;
  */
 public class InterledgerRejectPacketTest {
 
-  private static final InterledgerAddress FOO = InterledgerAddress.of("test1.foo");
-  private static final InterledgerAddress BAR = InterledgerAddress.of("test1.bar");
-  private static final InterledgerAddress BAZ = InterledgerAddress.of("test1.baz");
+  private static final InterledgerAddress FOO = InterledgerAddress.of("test1.foo.foo");
+  private static final InterledgerAddress BAR = InterledgerAddress.of("test1.bar.bar");
+  private static final InterledgerAddress BAZ = InterledgerAddress.of("test1.baz.baz");
 
   @Test
   public void testBuild() throws Exception {

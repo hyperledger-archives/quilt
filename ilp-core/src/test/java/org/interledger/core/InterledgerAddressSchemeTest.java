@@ -64,8 +64,8 @@ public class InterledgerAddressSchemeTest {
   @Test
   public void test_scheme_with_only_address() throws Exception {
     final InterledgerAddress address =
-        InterledgerAddress.builder().value(this.scheme + ".foo").build();
-    assertThat(address.getValue(), is(this.scheme + ".foo"));
+        InterledgerAddress.builder().value(this.scheme + ".foo.bar").build();
+    assertThat(address.getValue(), is(this.scheme + ".foo.bar"));
     assertThat(address.isLedgerPrefix(), is(false));
   }
 
