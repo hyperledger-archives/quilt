@@ -10,6 +10,9 @@ public interface InterledgerRejectPacket extends InterledgerPacket {
    * Get the default builder.
    *
    * @return a {@link InterledgerRejectPacketBuilder} instance.
+   *
+   * @see <a href="https://interledger.org/rfcs/asn1/InterledgerProtocol.asn.html">
+   *   https://interledger.org/rfcs/asn1/InterledgerProtocol.asn.html</a>
    */
   static InterledgerRejectPacketBuilder builder() {
     return new InterledgerRejectPacketBuilder();
