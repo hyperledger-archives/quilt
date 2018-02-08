@@ -4,11 +4,10 @@ import org.interledger.core.InterledgerRuntimeException;
 import org.interledger.node.channels.Channel;
 import org.interledger.node.events.ChannelErrorEvent;
 import org.interledger.node.exceptions.InterledgerNodeConfigurationException;
-import org.interledger.node.services.ildcp.IldcpService;
 import org.interledger.node.services.InterledgerPacketDispatcherService;
 import org.interledger.node.services.InterledgerPaymentProtocolService;
 import org.interledger.node.services.LoggingService;
-import org.interledger.node.services.routing.SimplePaymentRouter;
+import org.interledger.node.services.ildcp.IldcpService;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -27,7 +26,8 @@ public abstract class AbstractNode {
   protected AbstractNode(
       ThreadPoolExecutor pool, LoggingService logger, NodeConfiguration config,
       AccountManager accounts,
-      InterledgerPacketDispatcherService dispatcher, IldcpService ildcpService, InterledgerPaymentProtocolService paymentProtocolService) {
+      InterledgerPacketDispatcherService dispatcher,
+      IldcpService ildcpService, InterledgerPaymentProtocolService paymentProtocolService) {
     this.pool = pool;
     this.logger = logger;
     this.config = config;

@@ -1,38 +1,22 @@
 package org.interledger.node.services.fx;
 
-import static java.time.temporal.ChronoUnit.SECONDS;
-
-import org.javamoney.moneta.Money;
 import org.javamoney.moneta.spi.DefaultNumberValue;
 
 import javax.money.CurrencyUnit;
 import javax.money.NumberValue;
 import javax.money.convert.ConversionContext;
 import javax.money.convert.ExchangeRate;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.TemporalAmount;
 import java.util.Arrays;
 import java.util.List;
 
-public class OneToOneRateConverter implements RateConverter {
+public class OneToOneExchangeRate implements ExchangeRate {
 
-  private final TemporalAmount expiryMargin;
+  private final CurrencyUnit baseCurrency;
+  private final CurrencyUnit currency;
 
-  public OneToOneRateConverter() {
-    this.expiryMargin = Duration.of(1, SECONDS);
-  }
-
-  public OneToOneRateConverter(TemporalAmount expiryMargin) {
-    this.expiryMargin = expiryMargin;
-  }
-
-  @Override
-  public ConversionResult convert(long sourceAmount, Instant sourceExpiry) {
-    return ConversionResult.builder()
-        .amount(sourceAmount)
-        .expiry(sourceExpiry.minus(expiryMargin))
-        .build();
+  public OneToOneExchangeRate(CurrencyUnit baseCurrency, CurrencyUnit currency) {
+    this.baseCurrency = baseCurrency;
+    this.currency = currency;
   }
 
   /**
@@ -52,7 +36,7 @@ public class OneToOneRateConverter implements RateConverter {
    */
   @Override
   public CurrencyUnit getBaseCurrency() {
-    return null;
+    return this.baseCurrency;
   }
 
   /**
@@ -62,7 +46,7 @@ public class OneToOneRateConverter implements RateConverter {
    */
   @Override
   public CurrencyUnit getCurrency() {
-    return null;
+    return this.currency;
   }
 
   /**
@@ -78,9 +62,7 @@ public class OneToOneRateConverter implements RateConverter {
   /**
    * Access the chain of exchange rates.
    *
-   * @return the chain of rates, in case of a derived rate, this may be
-   * several instances. For a direct exchange rate, this equals to
-   * <code>new ExchangeRate[]{this}</code>.
+   * @return the chain of rates.
    */
   @Override
   public List<ExchangeRate> getExchangeRateChain() {

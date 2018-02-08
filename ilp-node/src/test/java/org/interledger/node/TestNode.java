@@ -14,7 +14,7 @@ import org.interledger.node.exceptions.RequestRejectedException;
 import org.interledger.node.services.InterledgerPacketDispatcherService;
 import org.interledger.node.services.InterledgerPaymentProtocolService;
 import org.interledger.node.services.LoggingService;
-import org.interledger.node.services.fx.OneToOneRateConverter;
+import org.interledger.node.services.fx.OneToOneExchangeRate;
 import org.interledger.node.services.ildcp.IldcpService;
 import org.interledger.node.services.routing.InMemoryRoutingTable;
 import org.interledger.node.services.routing.Route;
@@ -24,14 +24,17 @@ import org.interledger.node.services.routing.SimplePaymentRouter;
 
 import org.javamoney.moneta.CurrencyUnitBuilder;
 
+import java.math.BigInteger;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.TemporalUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class Node extends AbstractNode {
+public class TestNode extends AbstractNode {
 
   static final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
   static final NodeConfiguration config = new Config();
@@ -43,7 +46,7 @@ public class Node extends AbstractNode {
   static final InterledgerPacketDispatcherService dispatcher
       = new InterledgerPacketDispatcherService(ildpService, ilpService);
 
-  public Node() {
+  public TestNode() {
     super(
         executor,
         new Logger(),
@@ -55,7 +58,7 @@ public class Node extends AbstractNode {
   }
 
   public static void main(String[] args) {
-    Node node = new Node();
+    TestNode node = new TestNode();
 
     node.start();
 
@@ -65,7 +68,7 @@ public class Node extends AbstractNode {
       try {
         InterledgerFulfillPacket response = channel.mockIncomingRequest(
             InterledgerPreparePacket.builder()
-              .amount(10)
+              .amount(BigInteger.TEN)
               .destination(InterledgerAddress.of("test1.chloe"))
               .executionCondition(PreimageSha256Fulfillment.from(new byte[32]).getCondition())
               .expiresAt(Instant.now().plusSeconds(30))
@@ -96,7 +99,10 @@ public class Node extends AbstractNode {
           .routeId(RouteId.of(UUID.randomUUID()))
           .sourceAccount(account)
           .destinationAccount(account)
-          .rateConverter(new OneToOneRateConverter())
+          .exchangeRate(new OneToOneExchangeRate(
+              account.getCurrencyUnit(),
+              account.getCurrencyUnit()))
+          .expiryMargin(Duration.ofSeconds(2))
           .targetPrefix(InterledgerAddress.of("test1."))
           .build());
     }

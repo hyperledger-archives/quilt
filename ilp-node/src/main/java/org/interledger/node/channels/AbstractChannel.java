@@ -172,7 +172,7 @@ public abstract class AbstractChannel<T extends ChannelConfig> implements Channe
   }
 
   protected T getConfig() {
-    return this.config;
+      return this.config;
   }
 
 }

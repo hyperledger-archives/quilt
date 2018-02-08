@@ -11,6 +11,7 @@ import org.interledger.node.services.AbstractThreadedService;
 import org.interledger.node.services.ildcp.IldcpResponse;
 import org.interledger.node.services.ildcp.IldcpService;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,7 +60,7 @@ public class DefaultInterledgerPeerProtocolService
       //Block on getting the response
       InterledgerFulfillPacket response = parent.getChannel().sendRequest(
           InterledgerPreparePacket.builder()
-              .amount(0)
+              .amount(BigInteger.ZERO)
               .destination(InterledgerAddress.of(ILDCP_DESTINATION))
               .executionCondition(PEER_PROTOCOL_CONDITION)
               .expiresAt(Instant.now().plusSeconds(30))

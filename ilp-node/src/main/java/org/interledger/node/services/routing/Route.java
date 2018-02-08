@@ -5,8 +5,9 @@ import org.interledger.annotations.Wrapped;
 import org.interledger.annotations.Wrapper;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.node.Account;
-import org.interledger.node.services.fx.RateConverter;
 
+import javax.money.convert.ExchangeRate;
+import java.time.Duration;
 import java.util.UUID;
 
 /**
@@ -47,11 +48,19 @@ public interface Route extends Comparable<Route>{
 
 
   /**
-   * Get the {@link RateConverter} for this route.
+   * Get the {@link ExchangeRate} for this route.
    *
-   * @return an {@link }
+   * @return an {@link ExchangeRate} to convert incoming amounts to outgoing amounts
    */
-  RateConverter getRateConverter();
+  ExchangeRate getExchangeRate();
+
+
+  /**
+   * Get the amount of time to subtract from the expiry when forwarding packets on this route
+   *
+   * @return a {@link Duration} to subtract from the incoming expiry
+   */
+  Duration getExpiryMargin();
 
   @Immutable
   abstract class AbstractRoute implements Route {

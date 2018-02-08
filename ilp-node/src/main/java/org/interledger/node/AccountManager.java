@@ -102,12 +102,6 @@ public class AccountManager implements Set<Account> {
    *
    * @param action The action to be performed for each element
    * @throws NullPointerException if the specified action is null
-   * @implSpec <p>The default implementation behaves as if:
-   * <pre>{@code
-   *     for (T t : this)
-   *         action.accept(t);
-   * }</pre>
-   * @since 1.8
    */
   @Override
   public void forEach(Consumer<? super Account> action) {
@@ -340,16 +334,6 @@ public class AccountManager implements Set<Account> {
    * characteristic values.
    *
    * @return a {@code Spliterator} over the elements in this set
-   * @implSpec The default implementation creates a
-   * <em><a href="Spliterator.html#binding">late-binding</a></em> spliterator
-   * from the set's {@code Iterator}.  The spliterator inherits the
-   * <em>fail-fast</em> properties of the set's iterator.
-   * <p>
-   * The created {@code Spliterator} additionally reports
-   * {@link Spliterator#SIZED}.
-   * @implNote The created {@code Spliterator} additionally reports
-   * {@link Spliterator#SUBSIZED}.
-   * @since 1.8
    */
   @Override
   public Spliterator<Account> spliterator() {
@@ -385,9 +369,6 @@ public class AccountManager implements Set<Account> {
    *
    * @return a possibly parallel {@code Stream} over the elements in this
    * collection
-   * @implSpec The default implementation creates a parallel {@code Stream} from the
-   * collection's {@code Spliterator}.
-   * @since 1.8
    */
   @Override
   public Stream<Account> parallelStream() {

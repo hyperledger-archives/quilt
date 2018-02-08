@@ -18,6 +18,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,21 +53,21 @@ public class InterledgerPreparePacketOerSerializerTests {
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.of("test3.foo"))
-            .amount(100)
+            .amount(BigInteger.valueOf(100L))
             .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
             .expiresAt(Instant.now())
             .data(new byte[] {}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar").build())
-            .amount(50)
+            .amount(BigInteger.valueOf(50L))
             .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
             .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar").build())
-            .amount(50)
+            .amount(BigInteger.valueOf(50L))
             .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
             .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},

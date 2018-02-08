@@ -41,7 +41,6 @@ public interface IldcpService
    *
    * @param parent the responding account
    * @param response the incoming response
-   * @return
    */
   void processIncomingConfigResponse(Account parent, InterledgerFulfillPacket response);
 

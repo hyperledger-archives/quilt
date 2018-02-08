@@ -3,8 +3,8 @@ package org.interledger.core;
 import org.interledger.annotations.Immutable;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 
+import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Arrays;
 
 /**
  * <p>Interledger Payments moves assets of one party to another that consists of one or more ledger
@@ -50,7 +50,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
     return new InterledgerPreparePacketBuilder();
   }
 
-  long getAmount();
+  BigInteger getAmount();
 
   Instant getExpiresAt();
 
@@ -75,44 +75,6 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerPreparePacket implements InterledgerPreparePacket {
 
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-
-      InterledgerPreparePacket impl = (InterledgerPreparePacket) obj;
-
-      return Long.compareUnsigned(getAmount(), impl.getAmount()) == 0
-          && getExpiresAt().equals(impl.getExpiresAt())
-          && getExecutionCondition().equals(impl.getExecutionCondition())
-          && getDestination().equals(impl.getDestination())
-          && Arrays.equals(getData(), impl.getData());
-    }
-
-    @Override
-    public int hashCode() {
-      int result = Long.hashCode(getAmount());
-      result = 31 * result + getExpiresAt().hashCode();
-      result = 31 * result + getExecutionCondition().hashCode();
-      result = 31 * result + getDestination().hashCode();
-      result = 31 * result + Arrays.hashCode(getData());
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "InterledgerPreparePacket{"
-          + ", amount=" + Long.toUnsignedString(getAmount(), 10)
-          + ", expiresAt=" + getExpiresAt().toString()
-          + ", executionCondition=" + getExecutionCondition()
-          + ", destination=" + getDestination()
-          + ", data=" + Arrays.toString(getData())
-          + '}';
-    }
   }
 
 }

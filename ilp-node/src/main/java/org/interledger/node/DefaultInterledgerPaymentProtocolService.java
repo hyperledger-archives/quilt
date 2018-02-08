@@ -9,10 +9,11 @@ import org.interledger.node.exceptions.InvalidFulfillmentException;
 import org.interledger.node.exceptions.RequestRejectedException;
 import org.interledger.node.services.AbstractThreadedService;
 import org.interledger.node.services.InterledgerPaymentProtocolService;
-import org.interledger.node.services.fx.ConversionResult;
 import org.interledger.node.services.routing.PaymentRouter;
 import org.interledger.node.services.routing.Route;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -121,17 +122,20 @@ public class DefaultInterledgerPaymentProtocolService
     Route route = result.get();
 
     //Get the right outgoing amount and expiry
-    ConversionResult outgoingAmount = route.getRateConverter().convert(
-        incomingRequest.getAmount(),
-        incomingRequest.getExpiresAt()
-    );
+    //TODO Check arithmetic here for loss of precision etc, possibly use Java Money framework
+    BigDecimal incomingAmount = new BigDecimal(incomingRequest.getAmount(),sourceAccount.getCurrencyScale());
+    BigDecimal rate = route.getExchangeRate().getFactor().numberValueExact(BigDecimal.class);
+    BigDecimal outgoingAmount = incomingAmount.multiply(rate).setScale(
+        route.getDestinationAccount().getCurrencyScale());
+
+    Instant outgoingExpiry = incomingRequest.getExpiresAt().minus(route.getExpiryMargin());
 
     return new OutgoingRequest(
         route.getDestinationAccount(),
         InterledgerPreparePacket.builder()
             .destination(incomingRequest.getDestination())
-            .amount(outgoingAmount.getAmount())
-            .expiresAt(outgoingAmount.getExpiry())
+            .amount(outgoingAmount.unscaledValue())
+            .expiresAt(outgoingExpiry)
             .executionCondition(incomingRequest.getExecutionCondition())
             .data(incomingRequest.getData())
             .build());
