@@ -17,14 +17,14 @@ public class TestConditionFactory {
    * Helper to construct a {@link PreimageSha256Condition}.
    */
   public static PreimageSha256Condition constructPreimageCondition(final String preimage) {
-    return TestFulfillmentFactory.constructPreimageFulfillment(preimage).getCondition();
+    return TestFulfillmentFactory.constructPreimageFulfillment(preimage).getDerivedCondition();
   }
 
   /**
    * Helper to construct a {@link PrefixSha256Condition}.
    */
   public static PrefixSha256Condition constructPrefixSha256Condition(final String prefix) {
-    return TestFulfillmentFactory.constructPrefixSha256Fulfillment(prefix).getCondition();
+    return TestFulfillmentFactory.constructPrefixSha256Fulfillment(prefix).getDerivedCondition();
   }
 
   /**
