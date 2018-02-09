@@ -19,7 +19,7 @@ public interface Fulfillment<C extends Condition> {
    *
    * @return A {@link Condition} that can be fulfilled by this fulfillment.
    */
-  C getCondition();
+  C getDerivedCondition();
 
   /**
    * <p>Validation of a fulfillment (F) against a condition (C) and a message (M), in the majority

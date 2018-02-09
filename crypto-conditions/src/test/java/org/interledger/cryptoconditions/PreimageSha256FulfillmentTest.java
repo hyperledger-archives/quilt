@@ -39,7 +39,7 @@ public class PreimageSha256FulfillmentTest {
   public final void testGetCondition() {
     final PreimageSha256Fulfillment fulfillment
         = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
-    assertEquals("Wrong condition", TEST_CONDITION, fulfillment.getCondition());
+    assertEquals("Wrong condition", TEST_CONDITION, fulfillment.getDerivedCondition());
   }
 
   @Test
@@ -55,7 +55,7 @@ public class PreimageSha256FulfillmentTest {
         = PreimageSha256Fulfillment.from(PREIMAGE.getBytes());
     assertThat(actual.getEncodedPreimage(), is(ENCODED_PREIMAGE));
     assertThat(actual.getType(), is(CryptoConditionType.PREIMAGE_SHA256));
-    assertThat(actual.getCondition(), is(not(nullValue())));
+    assertThat(actual.getDerivedCondition(), is(not(nullValue())));
   }
 
   @Test
@@ -93,7 +93,7 @@ public class PreimageSha256FulfillmentTest {
         is("PreimageSha256Fulfillment{"
             + "encodedPreimage=d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg==, "
             + "type=PREIMAGE-SHA-256, "
-            + "condition=PreimageSha256Condition{type=PREIMAGE-SHA-256, "
+            + "derivedCondition=PreimageSha256Condition{type=PREIMAGE-SHA-256, "
             + "fingerprint=iL1xV1F0IvtokoaU1n2eVOvcwhy4me4vroUKg8vFnOE,"
             + " cost=37"
             + "}}"));
