@@ -44,7 +44,7 @@ public interface RsaSha256Fulfillment extends Fulfillment<RsaSha256Condition> {
         .publicKey(publicKey)
         .signature(immutableSignature)
         .signatureBase64Url(signatureBase64Url)
-        .condition(condition)
+        .derivedCondition(condition)
         .build();
   }
 
@@ -92,7 +92,7 @@ public interface RsaSha256Fulfillment extends Fulfillment<RsaSha256Condition> {
           "Can't verify a RsaSha256Fulfillment against an null condition.");
       Objects.requireNonNull(message, "Message must not be null!");
 
-      if (!getCondition().equals(condition)) {
+      if (!getDerivedCondition().equals(condition)) {
         return false;
       }
 
@@ -118,7 +118,7 @@ public interface RsaSha256Fulfillment extends Fulfillment<RsaSha256Condition> {
           + "publicKey=" + getPublicKey()
           + ", signature=" + getSignatureBase64Url()
           + ", type=" + getType()
-          + ", condition=" + getCondition()
+          + ", condition=" + getDerivedCondition()
           + "}";
     }
   }

@@ -281,8 +281,8 @@ public class CryptoConditionWriter {
       throws DerEncodingException {
 
     // Preemptively load all condition/subconditions so that encoding works properly.
-    //fulfillment.getCondition();
-    //Arrays.stream(fulfillment.getSubfulfillments()).forEach(Fulfillment::getCondition);
+    //fulfillment.getDerivedCondition();
+    //Arrays.stream(fulfillment.getSubfulfillments()).forEach(Fulfillment::getDerivedCondition);
 
     try {
       // Build subfulfillment sequence

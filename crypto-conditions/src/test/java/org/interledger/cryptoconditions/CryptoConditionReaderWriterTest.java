@@ -67,7 +67,7 @@ public class CryptoConditionReaderWriterTest {
     edDsaSigner.update(prefix);
     edDsaSigner.update(message);
 
-    preimageCondition = PreimageSha256Fulfillment.from(preimage).getCondition();
+    preimageCondition = PreimageSha256Fulfillment.from(preimage).getDerivedCondition();
     rsaCondition = RsaSha256Condition.from((RSAPublicKey) rsaKeyPair.getPublic());
     ed25519Condition = Ed25519Sha256Condition.from((EdDSAPublicKey) edDsaKeyPair.getPublic());
     prefixSha256Condition = PrefixSha256Condition.from(prefix, 1000, ed25519Condition);
