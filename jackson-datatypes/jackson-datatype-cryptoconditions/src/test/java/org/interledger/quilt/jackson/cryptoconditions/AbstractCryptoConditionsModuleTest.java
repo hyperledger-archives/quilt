@@ -155,7 +155,7 @@ public abstract class AbstractCryptoConditionsModuleTest {
 
   protected static PreimageSha256Condition constructPreimageCondition() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return PreimageSha256Fulfillment.from(preimage).getCondition();
+    return PreimageSha256Fulfillment.from(preimage).getDerivedCondition();
   }
 
   protected static PrefixSha256Condition constructPrefixCondition() {

@@ -46,7 +46,7 @@ public class TestVectorFactory {
       case PREIMAGE_SHA256: {
         return PreimageSha256Fulfillment.from(
             Base64.getUrlDecoder().decode(testVectorJson.getPreimage())
-        ).getCondition();
+        ).getDerivedCondition();
       }
 
       case PREFIX_SHA256: {
