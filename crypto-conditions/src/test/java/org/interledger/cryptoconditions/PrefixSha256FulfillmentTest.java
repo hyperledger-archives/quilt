@@ -59,7 +59,7 @@ public class PrefixSha256FulfillmentTest {
   public final void testValidateDerivedCondition() {
     final PrefixSha256Fulfillment actual = TestFulfillmentFactory
         .constructPrefixSha256Fulfillment(PREFIX);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), new byte[]{}));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), new byte[]{}));
   }
 
   @Test
@@ -74,7 +74,7 @@ public class PrefixSha256FulfillmentTest {
         is("d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg=="));
     assertThat(actual.getPrefix(), is(Base64.getDecoder().decode(actual.getPrefixBase64Url())));
     assertThat(actual.getType(), is(CryptoConditionType.PREFIX_SHA256));
-    assertThat(actual.getCondition(), is(not(nullValue())));
+    assertThat(actual.getDerivedCondition(), is(not(nullValue())));
   }
 
   @Test
@@ -115,12 +115,12 @@ public class PrefixSha256FulfillmentTest {
             + "subfulfillment=PreimageSha256Fulfillment{"
             + "encodedPreimage=Um9hZHM_IFdoZXJlIHdlJ3JlIGdvaW5nLCB3ZSBkb24ndCBuZWVkIHJvYWRzLg==, "
             + "type=PREIMAGE-SHA-256, "
-            + "condition=PreimageSha256Condition{"
+            + "derivedCondition=PreimageSha256Condition{"
             + "type=PREIMAGE-SHA-256, "
             + "fingerprint=-28EVNr7rOwQ_XsvrJVxLvjBY38ZNZlHaPHYpsIbmH4, "
             + "cost=46}}, "
             + "type=PREFIX-SHA-256, "
-            + "condition=PrefixSha256Condition{"
+            + "derivedCondition=PrefixSha256Condition{"
             + "subtypes=[PREIMAGE-SHA-256], "
             + "type=PREFIX-SHA-256, "
             + "fingerprint=2ugoaAzCSomLbveq9nNmSJp5X-esBSjBw5IGFgvYF9w, "

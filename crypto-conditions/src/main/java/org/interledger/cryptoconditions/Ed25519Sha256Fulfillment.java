@@ -43,7 +43,7 @@ public interface Ed25519Sha256Fulfillment extends Fulfillment<Ed25519Sha256Condi
         .publicKey(publicKey)
         .signature(immutableSignature)
         .signatureBase64Url(signatureBase64Url)
-        .condition(condition)
+        .derivedCondition(condition)
         .build();
   }
 
@@ -89,7 +89,7 @@ public interface Ed25519Sha256Fulfillment extends Fulfillment<Ed25519Sha256Condi
           "Can't verify a Ed25519Sha256Fulfillment against an null condition.");
       Objects.requireNonNull(message, "Message must not be null!");
 
-      if (!getCondition().equals(condition)) {
+      if (!getDerivedCondition().equals(condition)) {
         return false;
       }
 
@@ -117,7 +117,7 @@ public interface Ed25519Sha256Fulfillment extends Fulfillment<Ed25519Sha256Condi
           + "publicKey=" + getPublicKey()
           + ", signature=" + getSignatureBase64Url()
           + ", type=" + getType()
-          + ", condition=" + getCondition()
+          + ", condition=" + getDerivedCondition()
           + "}";
     }
   }

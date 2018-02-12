@@ -72,7 +72,7 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
     final KeyPair rsaKeyPair = TestKeyFactory.generateRandomRsaKeyPair();
     final RsaSha256Fulfillment actual
         = TestFulfillmentFactory.constructRsaSha256Fulfillment(rsaKeyPair);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), MESSAGE.getBytes()));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), MESSAGE.getBytes()));
   }
 
   @Test
