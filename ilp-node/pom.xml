@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <parent>
+    <groupId>org.interledger</groupId>
+    <artifactId>quilt-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.interledger</groupId>
+  <artifactId>ilp-node</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <name>Interledger Node Framework</name>
+  <description>Framework for implementation of an Interledger node.</description>
+  <url>http://github.com/hyperledger/quilt/tree/master/ilp-node</url>
+  <inceptionYear>2018</inceptionYear>
+
+
+  <properties>
+    <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>ilp-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>ilp-core-codecs</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>ilp-annotations</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>crypto-conditions</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.javamoney</groupId>
+      <artifactId>moneta</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+  </dependencies>
+
+</project>

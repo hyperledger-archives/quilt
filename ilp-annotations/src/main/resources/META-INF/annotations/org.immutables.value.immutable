@@ -1,1 +1,2 @@
 org.interledger.annotations.Immutable
+org.interledger.annotations.Wrapped

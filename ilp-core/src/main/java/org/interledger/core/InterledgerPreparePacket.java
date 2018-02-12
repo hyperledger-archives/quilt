@@ -5,7 +5,6 @@ import org.interledger.cryptoconditions.PreimageSha256Condition;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Arrays;
 
 /**
  * <p>Interledger Payments moves assets of one party to another that consists of one or more ledger
