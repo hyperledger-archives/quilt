@@ -91,7 +91,7 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
             + "subfulfillments=[PreimageSha256Fulfillment{"
             + "encodedPreimage=Um9hZHM_IFdoZXJlIHdlJ3JlIGdvaW5nLCB3ZSBkb24ndCBuZWVkIHJvYWRzLg==, "
             + "type=PREIMAGE-SHA-256, "
-            + "condition=PreimageSha256Condition{"
+            + "derivedCondition=PreimageSha256Condition{"
             + "type=PREIMAGE-SHA-256, "
             + "fingerprint=-28EVNr7rOwQ_XsvrJVxLvjBY38ZNZlHaPHYpsIbmH4, "
             + "cost=46}}, "
@@ -100,15 +100,15 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
             + "subfulfillment=PreimageSha256Fulfillment{"
             + "encodedPreimage=Um9hZHM_IFdoZXJlIHdlJ3JlIGdvaW5nLCB3ZSBkb24ndCBuZWVkIHJvYWRzLg==,"
             + " type=PREIMAGE-SHA-256, "
-            + "condition=PreimageSha256Condition{"
+            + "derivedCondition=PreimageSha256Condition{"
             + "type=PREIMAGE-SHA-256, "
             + "fingerprint=-28EVNr7rOwQ_XsvrJVxLvjBY38ZNZlHaPHYpsIbmH4, "
             + "cost=46}}, "
             + "type=PREFIX-SHA-256, "
-            + "condition=PrefixSha256Condition{subtypes=[PREIMAGE-SHA-256], "
+            + "derivedCondition=PrefixSha256Condition{subtypes=[PREIMAGE-SHA-256], "
             + "type=PREFIX-SHA-256, fingerprint=KrV_YYvQMc_mAKpg73Kngfld3lFoZdUQ8FEtQf4m13g, "
             + "cost=2081}}], type=THRESHOLD-SHA-256, "
-            + "condition=ThresholdSha256Condition{subtypes=[PREIMAGE-SHA-256, "
+            + "derivedCondition=ThresholdSha256Condition{subtypes=[PREIMAGE-SHA-256, "
             + "PREFIX-SHA-256, RSA-SHA-256], type=THRESHOLD-SHA-256, "
             + "fingerprint=A5TzFI1QC1rIxsIIetjZNk0g2VCsWT22ylqFuZwPxVU, cost=70689}}"
     ));
@@ -120,13 +120,13 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
     final PreimageSha256Fulfillment fulfillment1 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition condition1 = fulfillment1.getCondition();
+    final PreimageSha256Condition condition1 = fulfillment1.getDerivedCondition();
 
     // Construct Preimage Fulfillment/Condition #2
     final PreimageSha256Fulfillment fulfillment2 = PreimageSha256Fulfillment.from(
         "Great Scott!".getBytes()
     );
-    final PreimageSha256Condition condition2 = fulfillment2.getCondition();
+    final PreimageSha256Condition condition2 = fulfillment2.getDerivedCondition();
 
     // Construct a One-of-Two Threshold Condition using both of the above sub-conditions. This means
     // that in order to fulfill this condition, a ThresholdFulfillment containing one or both of the
@@ -171,13 +171,13 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
     final PreimageSha256Fulfillment fulfillment1 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition condition1 = fulfillment1.getCondition();
+    final PreimageSha256Condition condition1 = fulfillment1.getDerivedCondition();
 
     // Construct Preimage Fulfillment/Condition #2
     final PreimageSha256Fulfillment fulfillment2 = PreimageSha256Fulfillment.from(
         "Great Scott!".getBytes()
     );
-    final PreimageSha256Condition condition2 = fulfillment2.getCondition();
+    final PreimageSha256Condition condition2 = fulfillment2.getDerivedCondition();
 
     // Construct a Two-of-Two Threshold Condition using both of the above sub-conditions. This means
     // that in order to fulfill this condition, a ThresholdFulfillment containing one or both of the
@@ -224,12 +224,12 @@ public class ThresholdSha256FulfillmentTest extends AbstractCryptoConditionTest 
     final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition1 = subfulfillment1.getCondition();
+    final PreimageSha256Condition subcondition1 = subfulfillment1.getDerivedCondition();
 
     final PreimageSha256Fulfillment subfulfillment2 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition2 = subfulfillment2.getCondition();
+    final PreimageSha256Condition subcondition2 = subfulfillment2.getDerivedCondition();
 
     // TODO: See https://github.com/hyperledger/quilt/issues/78
     // Adding two of the same conditions or fulfillments should add duplicates.

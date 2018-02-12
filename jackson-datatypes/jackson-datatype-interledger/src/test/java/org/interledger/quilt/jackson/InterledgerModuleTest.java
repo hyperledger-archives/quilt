@@ -64,7 +64,7 @@ public class InterledgerModuleTest {
 
   private static PreimageSha256Condition constructCondition() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return PreimageSha256Fulfillment.from(preimage).getCondition();
+    return PreimageSha256Fulfillment.from(preimage).getDerivedCondition();
   }
 
   /**

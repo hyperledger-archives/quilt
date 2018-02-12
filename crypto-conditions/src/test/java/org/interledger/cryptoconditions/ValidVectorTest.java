@@ -225,7 +225,7 @@ public class ValidVectorTest {
                 testVector.getJson().getMaxMessageLength(),
                 TestVectorFactory
                     .getFulfillmentFromTestVectorJson(testVector.getJson().getSubfulfillment())
-                    .getCondition()
+                    .getDerivedCondition()
             );
         break;
       }
@@ -277,7 +277,7 @@ public class ValidVectorTest {
     final Fulfillment testVectorFulfillment = CryptoConditionReader
         .readFulfillment(BaseEncoding.base16().decode(testVector.getFulfillment()));
 
-    final String derivedUri = CryptoConditionUri.toUri(testVectorFulfillment.getCondition())
+    final String derivedUri = CryptoConditionUri.toUri(testVectorFulfillment.getDerivedCondition())
         .toString();
 
     assertThat(testVector.getConditionUri(), is(derivedUri));
@@ -333,14 +333,14 @@ public class ValidVectorTest {
         assertEquals(testVector.getName() + " [compare max message length]",
             testVector.getJson().getMaxMessageLength(), prefixFulfillment.getMaxMessageLength());
         CryptoConditionAssert.assertSetOfTypesIsEqual(testVector.getName() + " [compare subtypes]",
-            testVector.getSubtypes(), prefixFulfillment.getCondition().getSubtypes());
+            testVector.getSubtypes(), prefixFulfillment.getDerivedCondition().getSubtypes());
         // TODO Should we test for equality of subfulfillments?
         break;
 
       case THRESHOLD_SHA256:
         ThresholdSha256Fulfillment thresholdFulfillment = (ThresholdSha256Fulfillment) fulfillment;
         CryptoConditionAssert.assertSetOfTypesIsEqual(testVector.getName() + " [compare subtypes]",
-            testVector.getSubtypes(), thresholdFulfillment.getCondition().getSubtypes());
+            testVector.getSubtypes(), thresholdFulfillment.getDerivedCondition().getSubtypes());
         // TODO Should we test for equality of subfulfillments and subconditions?
         break;
 

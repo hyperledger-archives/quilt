@@ -69,7 +69,7 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
         .type(CryptoConditionType.THRESHOLD_SHA256)
         .subconditions(immutableSubconditions)
         .subfulfillments(immutableFulfillments)
-        .condition(condition)
+        .derivedCondition(condition)
         .build();
   }
 
@@ -119,7 +119,9 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
 
       // Add all derived subconditions...
       allConditions.addAll(
-          subfulfillments.stream().map(Fulfillment::getCondition).collect(Collectors.toList())
+          subfulfillments.stream()
+                  .map(Fulfillment::getDerivedCondition)
+                  .collect(Collectors.toList())
       );
 
       // Per the crypto-condtions specification, implementations must use the length of the
@@ -137,7 +139,7 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
      * <p>A THRESHOLD-SHA-256 fulfillment is valid iff:</p>
      *
      * <ol><li>All (F).subfulfillments are valid.</li> <li>The derived condition (D) (found in
-     * {@link #getCondition()}) is equal to the given condition (C) (found in {@code
+     * {@link #getDerivedCondition()}) is equal to the given condition (C) (found in {@code
      * condition}).</li></ol>
      *
      * <p>For more general details about Fulfillment validation, see the Javadoc in {@link
@@ -154,7 +156,7 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
           "Can't verify a ThresholdSha256Fulfillment against an null condition.");
       Objects.requireNonNull(message, "Message must not be null!");
 
-      if (!getCondition().equals(condition)) {
+      if (!getDerivedCondition().equals(condition)) {
         return false;
       }
 
@@ -162,7 +164,7 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
       for (int i = 0; i < subfulfillments.size(); i++) {
 
         final Fulfillment subfulfillment = subfulfillments.get(i);
-        final Condition subcondition = subfulfillment.getCondition();
+        final Condition subcondition = subfulfillment.getDerivedCondition();
         if (!subfulfillment.verify(subcondition, message)) {
           return false;
         }

@@ -30,7 +30,7 @@ public interface PrefixSha256Fulfillment extends Fulfillment<PrefixSha256Conditi
     final byte[] prefixInternal = Arrays.copyOf(prefix, prefix.length);
     final String prefixBase64Url = Base64.getUrlEncoder().encodeToString(prefix);
     final PrefixSha256Condition condition = PrefixSha256Condition.from(
-        prefix, maxMessageLength, subfulfillment.getCondition()
+        prefix, maxMessageLength, subfulfillment.getDerivedCondition()
     );
 
     return ImmutablePrefixSha256Fulfillment.builder()
@@ -39,7 +39,7 @@ public interface PrefixSha256Fulfillment extends Fulfillment<PrefixSha256Conditi
         .prefixBase64Url(prefixBase64Url)
         .maxMessageLength(maxMessageLength)
         .subfulfillment(subfulfillment)
-        .condition(condition)
+        .derivedCondition(condition)
         .build();
   }
 
@@ -89,7 +89,7 @@ public interface PrefixSha256Fulfillment extends Fulfillment<PrefixSha256Conditi
                     getMaxMessageLength()));
       }
 
-      if (!getCondition().equals(condition)) {
+      if (!getDerivedCondition().equals(condition)) {
         return false;
       }
 
@@ -99,7 +99,7 @@ public interface PrefixSha256Fulfillment extends Fulfillment<PrefixSha256Conditi
       );
       System.arraycopy(message, 0, prefixedMessage, decodedPrefix.length, message.length);
 
-      final Condition subcondition = getSubfulfillment().getCondition();
+      final Condition subcondition = getSubfulfillment().getDerivedCondition();
       return getSubfulfillment().verify(subcondition, prefixedMessage);
     }
 
@@ -115,7 +115,7 @@ public interface PrefixSha256Fulfillment extends Fulfillment<PrefixSha256Conditi
           + ", maxMessageLength=" + getMaxMessageLength()
           + ", subfulfillment=" + getSubfulfillment()
           + ", type=" + getType()
-          + ", condition=" + getCondition()
+          + ", derivedCondition=" + getDerivedCondition()
           + "}";
     }
   }

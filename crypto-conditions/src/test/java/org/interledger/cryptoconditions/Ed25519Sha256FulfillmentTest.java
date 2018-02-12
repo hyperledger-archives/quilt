@@ -70,7 +70,7 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
     final KeyPair ed25519KeyPair = TestKeyFactory.generateRandomEd25519KeyPair();
     final Ed25519Sha256Fulfillment actual
         = TestFulfillmentFactory.constructEd25519Sha256Fulfillment(ed25519KeyPair);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), MESSAGE.getBytes()));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), MESSAGE.getBytes()));
   }
 
   @Test
