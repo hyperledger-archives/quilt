@@ -13,7 +13,7 @@ public interface InterledgerPeerProtocolService extends InterledgerRequestHandle
   PreimageSha256Fulfillment PEER_PROTOCOL_FULFILLMENT
                                   = PreimageSha256Fulfillment.from(PEER_PROTOCOL_FULFILLMENT_BYTES);
   PreimageSha256Condition PEER_PROTOCOL_CONDITION
-                                  = PEER_PROTOCOL_FULFILLMENT.getCondition();
+                                  = PEER_PROTOCOL_FULFILLMENT.getDerivedCondition();
 
   @Override
   default boolean canHandlePacket(Account sourceAccount, InterledgerPreparePacket incomingRequest) {

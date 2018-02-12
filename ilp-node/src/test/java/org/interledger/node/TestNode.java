@@ -70,7 +70,7 @@ public class TestNode extends AbstractNode {
             InterledgerPreparePacket.builder()
               .amount(BigInteger.TEN)
               .destination(InterledgerAddress.of("test1.chloe"))
-              .executionCondition(PreimageSha256Fulfillment.from(new byte[32]).getCondition())
+              .executionCondition(PreimageSha256Fulfillment.from(new byte[32]).getDerivedCondition())
               .expiresAt(Instant.now().plusSeconds(30))
               .data(new byte[]{})
               .build()
