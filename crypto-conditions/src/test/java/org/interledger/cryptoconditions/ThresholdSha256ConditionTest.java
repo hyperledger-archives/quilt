@@ -5,6 +5,8 @@ import static org.hamcrest.core.Is.is;
 import static org.interledger.cryptoconditions.CryptoConditionType.THRESHOLD_SHA256;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.MESSAGE;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.MESSAGE2;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE1;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE2;
 
 import org.interledger.cryptoconditions.ThresholdSha256Condition.AbstractThresholdSha256Condition;
 import org.interledger.cryptoconditions.der.DerEncodingException;
@@ -66,20 +68,12 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
    */
   @Test
   public void testDuplicateSubConditions() {
-    // Construct Preimage Fulfillment/Condition #1
-    final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
-        "Roads? Where we're going, we don't need roads.".getBytes()
-    );
-    final PreimageSha256Condition subcondition1 = subfulfillment1.getDerivedCondition();
-
-    final PreimageSha256Fulfillment subfulfillment2 = PreimageSha256Fulfillment.from(
-        "Roads? Where we're going, we don't need roads.".getBytes()
-    );
-    final PreimageSha256Condition subcondition2 = subfulfillment2.getDerivedCondition();
+    final PreimageSha256Condition subcondition1 = TestConditionFactory
+        .constructPreimageCondition(PREIMAGE1);
 
     // Adding two of the same condition is allowed...
     final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
-        1, Lists.newArrayList(subcondition1, subcondition2)
+        1, Lists.newArrayList(subcondition1, subcondition1)
     );
 
     assertThat(condition.getSubtypes().contains(CryptoConditionType.PREIMAGE_SHA256), is(true));
@@ -90,13 +84,34 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
     assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
   }
 
+  /**
+   * Constructs a Threshold Fulfillment using two duplicate fulfillments, and asserts that only one
+   * is used in total.
+   */
+  @Test
+  public void testOneOfTwoThresholdCondition() {
+    final PreimageSha256Condition subcondition1 = TestConditionFactory
+        .constructPreimageCondition(PREIMAGE1);
+    final PreimageSha256Condition subcondition2 = TestConditionFactory
+        .constructPreimageCondition(PREIMAGE2);
+
+    // Adding two of the same condition is allowed...
+    final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
+        1, Lists.newArrayList(subcondition1, subcondition2)
+    );
+
+    assertThat(condition.getSubtypes().contains(CryptoConditionType.PREIMAGE_SHA256), is(true));
+    assertThat(condition.getSubtypes().size(), is(1));
+    assertThat(condition.getFingerprintBase64Url(),
+        is("cFYYmVSDhC_rSX6DPWQUTwG7iuWpQODWJXffjL8ROXM"));
+    assertThat(condition.getCost(), is(2094L));
+    assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testIncorrectThreshold() {
-    // Construct Preimage Fulfillment/Condition #1
-    final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
-        "Roads? Where we're going, we don't need roads.".getBytes()
-    );
-    final PreimageSha256Condition subcondition = subfulfillment1.getDerivedCondition();
+    final PreimageSha256Condition subcondition = TestConditionFactory
+        .constructPreimageCondition(PREIMAGE1);
 
     try {
       ThresholdSha256Condition.from(10, Lists.newArrayList(subcondition));

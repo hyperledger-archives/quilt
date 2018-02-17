@@ -20,7 +20,7 @@ public interface PreimageSha256Fulfillment extends Fulfillment<PreimageSha256Con
    *
    * @param preimage The preimage associated with the fulfillment.
    *
-   * @return A newly created, immutable instance of {@link PreimageSha256Condition}.
+   * @return A newly created, immutable instance of {@link PreimageSha256Fulfillment}.
    */
   static PreimageSha256Fulfillment from(final byte[] preimage) {
     Objects.requireNonNull(preimage);

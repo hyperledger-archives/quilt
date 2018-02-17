@@ -42,8 +42,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * This class tests the Java implementation of crypto-conditions based on a set of pre-computed
- * and validated test vectors found in the crypto-conditions spec repository.
+ * This class tests the Java implementation of crypto-conditions based on a set of pre-computed and
+ * validated test vectors found in the crypto-conditions spec repository.
  *
  * <p>Specifically, this harness performs the following validations according to the source of the
  * test 'vectors' file in the crypto-conditions rfc project:</p>
@@ -305,7 +305,7 @@ public class ValidVectorTest {
   }
 
   @Test
-  public void testCost() throws URISyntaxException, DerEncodingException {
+  public void testCost() {
     final long actualCost = TestVectorFactory.getConditionFromTestVectorJson(testVector.getJson())
         .getCost();
 
@@ -365,7 +365,8 @@ public class ValidVectorTest {
         break;
 
       default:
-        throw new Exception("Unknown fulfillment type: " + fulfillment.getType());
+        throw new Exception(
+            "Unknown fulfillment type: " + fulfillment.getType());
     }
   }
 }

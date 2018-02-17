@@ -1,5 +1,7 @@
 package org.interledger.cryptoconditions;
 
+import org.immutables.value.Value;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,17 +19,31 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
   /**
    * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}.</p>
    *
-   * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
-   * performing any validation, business logic, or object construction. For more scenarios, this
-   * will provide adequate immutability for any operations performed  by this method. However,
-   * during the brief period of time that this method is operating, callers should not consider this
-   * method to be thread-safe. This is because another thread could mutate the subconditions list
-   * (e.g., by adding or removing a condition), which may cause unpredictable behavior. Thus, if
-   * thread-safety is required when calling this method, be sure to guard against any concurrency
-   * issues in your system, perhaps by passing-in an immutable copy of subconditions before calling
-   * this method. Finally, for purposes of this method, shallow-copies are adequate because all
-   * instance of {@link Condition} are immutable, and thus thread-safe, so one this method finishes
-   * operation, the returned object will be fully immutable.</p>
+   * <p>Per the spec, this method will imply the threshold based upon the number of sub-fulfillments
+   * present in {@code subfulfillments}. This logic can be confusing, especially when trying to
+   * construct threshold fulfillments that are only partially, yet validly, fulfilled.</p>
+   *
+   * <p>For example, if there exists a 1-of-2 {@link ThresholdSha256Condition} (i.e., Threshold =
+   * 1), then it might be tempting to assume that there exists several threshold fulfillments that
+   * could be verified by such a condition. The most obvious candidate is a 2-of-2 threshold
+   * fulfillment, which could be constructed using this method by supplying zero sub-conditions and
+   * two sub-fulfillments. However, in reality, such a sub-fulfillment (the 2-of-2) would not verify
+   * with a 1-of-2 threshold condition because a threshold fulfillment created with two
+   * sub-fulfillments <b>always</b> has a threshold of two.</p>
+   *
+   * <p>Because usage of this method always involves an inferred threshold, which might be
+   * unexpected, it is recommended that callers utilize helper methods from {@link ThresholdFactory}
+   * instead.</p>
+   *
+   * <p>Concurrency Note: This method will create a shallow-copy of both {@code subconditions} and
+   * {@code subfulfillments} before performing any operations, in order to guard against external
+   * list mutations. During the brief period of time that this method is shallow-copying, callers
+   * should not consider this method to be thread-safe. This is because another thread could mutate
+   * the lists (e.g., by adding or removing a sub-condition), which may cause unpredictable
+   * behavior. In addition, this method assumes the sub-condition and sub-fulfillment
+   * implementations are immutable, making shallow-copy operations sufficient to protect against
+   * external list mutation. However, if your environment uses mutable implementations of either
+   * {@link Condition} or {@link Fulfillment}, such shallow-copying may not be sufficient.</p>
    *
    * @param subconditions   An ordered {@link List} of unfulfilled sub-conditions that correspond to
    *                        the threshold condition being fulfilled. For example, if a given
@@ -53,7 +69,9 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
     Objects.requireNonNull(subfulfillments, "subfulfillments must not be null!");
 
     // Create new, immutable lists so that callers accessing these from the newly constructed
-    // fulfillment will not be able to modify them.
+    // fulfillment will not be able to modify them. Also shallow-copy the inputs so that suppliers
+    // of the sub-condition and sub-fulfillment lists can't modify data stored in this class from
+    // the outside.
     final List<Condition> immutableSubconditions = Collections.unmodifiableList(
         subconditions.stream().collect(Collectors.toList())
     );
@@ -91,7 +109,7 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
    * An abstract implementation of {@link ThresholdSha256Fulfillment} to provide default
    * implementations to the generated immutable implementation.
    */
-  @org.immutables.value.Value.Immutable
+  @Value.Immutable
   abstract class AbstractThresholdSha256Fulfillment implements ThresholdSha256Fulfillment {
 
     /**
@@ -110,8 +128,6 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
       Objects.requireNonNull(subconditions);
       Objects.requireNonNull(subfulfillments);
 
-      // TODO: See https://github.com/hyperledger/quilt/issues/78
-      //final Set<Condition> allConditions = new HashSet<>();
       final List<Condition> allConditions = new ArrayList<>();
 
       // Add all subconditions...
@@ -120,8 +136,8 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
       // Add all derived subconditions...
       allConditions.addAll(
           subfulfillments.stream()
-                  .map(Fulfillment::getDerivedCondition)
-                  .collect(Collectors.toList())
+              .map(Fulfillment::getDerivedCondition)
+              .collect(Collectors.toList())
       );
 
       // Per the crypto-condtions specification, implementations must use the length of the
