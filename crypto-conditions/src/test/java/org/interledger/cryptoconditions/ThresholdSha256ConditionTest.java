@@ -70,12 +70,12 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
     final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition1 = subfulfillment1.getCondition();
+    final PreimageSha256Condition subcondition1 = subfulfillment1.getDerivedCondition();
 
     final PreimageSha256Fulfillment subfulfillment2 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition2 = subfulfillment2.getCondition();
+    final PreimageSha256Condition subcondition2 = subfulfillment2.getDerivedCondition();
 
     // Adding two of the same condition is allowed...
     final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
@@ -100,12 +100,12 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
     final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition1 = subfulfillment1.getCondition();
+    final PreimageSha256Condition subcondition1 = subfulfillment1.getDerivedCondition();
 
     final PreimageSha256Fulfillment subfulfillment2 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition2 = subfulfillment2.getCondition();
+    final PreimageSha256Condition subcondition2 = subfulfillment2.getDerivedCondition();
 
     // Adding two of the same condition is allowed...
     final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
@@ -126,7 +126,7 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
     final PreimageSha256Fulfillment subfulfillment1 = PreimageSha256Fulfillment.from(
         "Roads? Where we're going, we don't need roads.".getBytes()
     );
-    final PreimageSha256Condition subcondition = subfulfillment1.getCondition();
+    final PreimageSha256Condition subcondition = subfulfillment1.getDerivedCondition();
 
     try {
       ThresholdSha256Condition.from(10, Lists.newArrayList(subcondition));

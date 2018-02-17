@@ -51,7 +51,7 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
 
       assertThat(rsaSha256Fulfillment.getType(), is(CryptoConditionType.RSA_SHA256));
       assertThat(
-          rsaSha256Fulfillment.verify(rsaSha256Fulfillment.getCondition(), MESSAGE.getBytes()),
+          rsaSha256Fulfillment.verify(rsaSha256Fulfillment.getDerivedCondition(), MESSAGE.getBytes()),
           is(true));
     };
 
@@ -77,7 +77,7 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
     final KeyPair rsaKeyPair = TestKeyFactory.generateRandomRsaKeyPair();
     final RsaSha256Fulfillment actual
         = constructRsaSha256Fulfillment(rsaKeyPair);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), MESSAGE.getBytes()));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), MESSAGE.getBytes()));
   }
 
   @Test
@@ -94,7 +94,7 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
     } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
       throw new RuntimeException(e);
     }
-    assertTrue("Invalid condition", actual.verify(actual.getCondition()));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition()));
   }
 
   @Test

@@ -32,10 +32,10 @@ public class TestKeyFactory {
 
   public static final String RSA_MODULUS =
       "4e-LJNb3awnIHtd1KqJi8ETwSodNQ4CdMc6mEvmbDJeotDdBU-Pu89ZmFo"
-          + "Q-DkHCkyZLcbYXPbHPDWzVWMWGV3Bvzwl_cExIPlnL_f1bPue8gNdAxeDwR_PoX8DXWBV3am8_I8XcXnlxOaaILjgz"
-          + "akpfs2E3Yg_zZj264yhHKAGGL3Ly-HsgK5yJrdfNWwoHb3xT41A59n7RfsgV5bQwXMYxlwaNXm5Xm6beX04-V99eTg"
-          + "cv8s5MZutFIzlzh1J1ljnwJXv1fb1cRD-1FYzOCj02rce6AfM6C7bbsr-YnWBxEvI0TZk-d-VjwdNh3t9X2pbvLPxo"
-          + "XwArY4JGpbMJuQ";
+          + "Q-DkHCkyZLcbYXPbHPDWzVWMWGV3Bvzwl_cExIPlnL_f1bPue8gNdAxeDwR_PoX8DXWBV3am8_I8Xc"
+          + "XnlxOaaILjgzakpfs2E3Yg_zZj264yhHKAGGL3Ly-HsgK5yJrdfNWwoHb3xT41A59n7RfsgV5bQwXM"
+          + "YxlwaNXm5Xm6beX04-V99eTgcv8s5MZutFIzlzh1J1ljnwJXv1fb1cRD-1FYzOCj02rce6AfM6C7bb"
+          + "sr-YnWBxEvI0TZk-d-VjwdNh3t9X2pbvLPxoXwArY4JGpbMJuQ";
 
   public static final byte[] TEST_ED25519_PUBKEY = BaseEncoding.base64()
       .decode("Nq4bl8V3rmr7ApTpGDn6ex+TMnkbnyxdWGgZAl9KLx0=");
@@ -122,7 +122,8 @@ public class TestKeyFactory {
    * @return A randomly generated {@link KeyPair}.
    */
   public static KeyPair generateRandomEd25519KeyPair() {
-    final net.i2p.crypto.eddsa.KeyPairGenerator edDsaKpg = new net.i2p.crypto.eddsa.KeyPairGenerator();
+    final net.i2p.crypto.eddsa.KeyPairGenerator edDsaKpg
+        = new net.i2p.crypto.eddsa.KeyPairGenerator();
     final KeyPair edDsaKeyPair = edDsaKpg.generateKeyPair();
     return edDsaKeyPair;
   }

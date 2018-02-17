@@ -42,7 +42,7 @@ public class PrefixSha256FulfillmentTest extends AbstractCryptoConditionTest {
       final PrefixSha256Fulfillment preimageSha256Fulfillment =
           constructPrefixSha256Fulfillment(UUID.randomUUID().toString());
       assertThat(preimageSha256Fulfillment.getType(), is(CryptoConditionType.PREFIX_SHA256));
-      assertThat(preimageSha256Fulfillment.verify(preimageSha256Fulfillment.getCondition()),
+      assertThat(preimageSha256Fulfillment.verify(preimageSha256Fulfillment.getDerivedCondition()),
           is(true));
     };
 
@@ -76,14 +76,14 @@ public class PrefixSha256FulfillmentTest extends AbstractCryptoConditionTest {
   public final void testValidateDerivedCondition() {
     final PrefixSha256Fulfillment actual = TestFulfillmentFactory
         .constructPrefixSha256Fulfillment(PREFIX);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), new byte[]{}));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), new byte[]{}));
   }
 
   @Test
   public final void testValidateDerivedConditionWithEmptyMessage() {
     final PrefixSha256Fulfillment actual = TestFulfillmentFactory
         .constructPrefixSha256Fulfillment(PREFIX);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition()));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition()));
   }
 
   @Test
@@ -98,7 +98,7 @@ public class PrefixSha256FulfillmentTest extends AbstractCryptoConditionTest {
         is("d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg=="));
     assertThat(actual.getPrefix(), is(Base64.getDecoder().decode(actual.getPrefixBase64Url())));
     assertThat(actual.getType(), is(CryptoConditionType.PREFIX_SHA256));
-    assertThat(actual.getCondition(), is(not(nullValue())));
+    assertThat(actual.getDerivedCondition(), is(not(nullValue())));
   }
 
   @Test
@@ -139,12 +139,12 @@ public class PrefixSha256FulfillmentTest extends AbstractCryptoConditionTest {
             + "subfulfillment=PreimageSha256Fulfillment{"
             + "encodedPreimage=Um9hZHM_IFdoZXJlIHdlJ3JlIGdvaW5nLCB3ZSBkb24ndCBuZWVkIHJvYWRzLg==, "
             + "type=PREIMAGE-SHA-256, "
-            + "condition=PreimageSha256Condition{"
+            + "derivedCondition=PreimageSha256Condition{"
             + "type=PREIMAGE-SHA-256, "
             + "fingerprint=" + ENCODED_FINGERPRINT + ", "
             + "cost=46}}, "
             + "type=PREFIX-SHA-256, "
-            + "condition=PrefixSha256Condition{"
+            + "derivedCondition=PrefixSha256Condition{"
             + "subtypes=[PREIMAGE-SHA-256], "
             + "type=PREFIX-SHA-256, "
             + "fingerprint=2ugoaAzCSomLbveq9nNmSJp5X-esBSjBw5IGFgvYF9w, "

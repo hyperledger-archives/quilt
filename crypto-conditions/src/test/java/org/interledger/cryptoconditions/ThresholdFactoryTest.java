@@ -319,7 +319,7 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
       // to the actual sub-conditions used in the main threshold fulfillment.
       final ThresholdSha256Fulfillment fulfillment = ThresholdFactory
           .oneOfTwoFulfillment(subfulfillment2,
-              PreimageSha256Fulfillment.from("foo".getBytes()).getCondition());
+              PreimageSha256Fulfillment.from("foo".getBytes()).getDerivedCondition());
       assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(false));
     }
     {
@@ -501,7 +501,7 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
       // to the actual sub-conditions used in the main threshold fulfillment.
       final ThresholdSha256Fulfillment fulfillment = ThresholdFactory
           .constructMOfNFulfillment(1, 2,
-              Lists.newArrayList(PreimageSha256Fulfillment.from("foo".getBytes()).getCondition()),
+              Lists.newArrayList(PreimageSha256Fulfillment.from("foo".getBytes()).getDerivedCondition()),
               Lists.newArrayList(subfulfillment2)
           );
       assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(false));

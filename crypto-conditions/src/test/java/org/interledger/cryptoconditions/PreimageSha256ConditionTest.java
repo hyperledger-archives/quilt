@@ -35,7 +35,7 @@ public class PreimageSha256ConditionTest extends AbstractCryptoConditionTest {
   public void testConstructionUsingMultipleThreads() throws Exception {
     final Runnable runnableTest = () -> {
       final PreimageSha256Condition condition
-          = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getCondition();
+          = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getDerivedCondition();
 
       assertThat(condition.getType(), is(CryptoConditionType.PREIMAGE_SHA256));
       assertThat(condition.getCost(), is(37L));
@@ -60,11 +60,11 @@ public class PreimageSha256ConditionTest extends AbstractCryptoConditionTest {
   @Test
   public void equalsHashcode() {
     final PreimageSha256Condition condition1
-        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getCondition();
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getDerivedCondition();
     final PreimageSha256Condition condition2
-        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getCondition();
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getDerivedCondition();
     final PreimageSha256Condition condition3
-        = PreimageSha256Fulfillment.from(PREIMAGE2.getBytes()).getCondition();
+        = PreimageSha256Fulfillment.from(PREIMAGE2.getBytes()).getDerivedCondition();
 
     assertThat(condition1.equals(condition1), CoreMatchers.is(true));
     assertThat(condition2.equals(condition2), CoreMatchers.is(true));
@@ -86,7 +86,7 @@ public class PreimageSha256ConditionTest extends AbstractCryptoConditionTest {
   @Test
   public void testToString() {
     final PreimageSha256Condition condition
-        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getCondition();
+        = PreimageSha256Fulfillment.from(PREIMAGE.getBytes()).getDerivedCondition();
 
     assertThat(condition.toString(),
         CoreMatchers

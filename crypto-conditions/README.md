@@ -99,7 +99,7 @@ $ mvn checkstyle:checkstyle
   byte[] preimage = "My Secret Preimage".getBytes(Charset.defaultCharset());
 
   PreimageSha256Fulfillment fulfillment = PreimageSha256Fulfillment.from(preimage);
-  PreimageSha256Condition condition = fulfillment.getCondition();
+  PreimageSha256Condition condition = fulfillment.getDerivedCondition();
 
   if (fulfillment.verify(condition, new byte[0])) {
     System.out.println("Fulfillment is valid!");
@@ -116,7 +116,7 @@ $ mvn checkstyle:checkstyle
 	final String prefix = "order-1234";
 	final PrefixSha256Fulfillment fulfillment = PrefixSha256Fulfillment
 	    .from(prefix.getBytes(), 100, subfulfillment);
-	final PrefixSha256Condition condition = fulfillment.getCondition();
+	final PrefixSha256Condition condition = fulfillment.getDerivedCondition();
   
 	// Verify the fulfillment
 	if (fulfillment.verify(condition, new byte[0])) {
@@ -142,7 +142,7 @@ $ mvn checkstyle:checkstyle
   //Generate ED25519-SHA-256 Fulfillment and Condition
   Ed25519Sha256Fulfillment fulfillment = Ed25519Sha256Fulfillment.from(
   (EdDSAPublicKey) edDsaKeyPair.getPublic(), edDsaSignature);
-  Ed25519Sha256Condition condition = fulfillment.getCondition();
+  Ed25519Sha256Condition condition = fulfillment.getDerivedCondition();
   
   if (fulfillment.verify(condition, optionalMessageToSign)) {
     System.out.println("Fulfillment is valid!");
@@ -223,7 +223,7 @@ URI uriEncodedCondition = CryptoConditionUri.toUri(condition);
 
 Any contribution is very much appreciated! 
 
-[![join the chat][rocketchat-image]][rocketchat-url]
+[![Rocket.Chat](https://open.rocket.chat/images/join-chat.svg)](https://chat.hyperledger.org/channel/quilt)
 
 ## License
 

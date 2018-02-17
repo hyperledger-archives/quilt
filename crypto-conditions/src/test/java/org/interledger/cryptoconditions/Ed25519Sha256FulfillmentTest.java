@@ -53,7 +53,7 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
 
       assertThat(ed25519Sha256Fulfillment.getType(), is(CryptoConditionType.ED25519_SHA256));
       assertThat(ed25519Sha256Fulfillment
-          .verify(ed25519Sha256Fulfillment.getCondition(), MESSAGE.getBytes()), is(true));
+          .verify(ed25519Sha256Fulfillment.getDerivedCondition(), MESSAGE.getBytes()), is(true));
     };
 
     // Run single-threaded...
@@ -78,7 +78,8 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
     final KeyPair ed25519KeyPair = TestKeyFactory.generateRandomEd25519KeyPair();
     final Ed25519Sha256Fulfillment actual
         = constructEd25519Sha256Fulfillment(ed25519KeyPair);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), MESSAGE.getBytes()));
+    assertTrue("Invalid condition",
+        actual.verify(actual.getDerivedCondition(), MESSAGE.getBytes()));
   }
 
   @Test
@@ -98,7 +99,7 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
     } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
       throw new RuntimeException(e);
     }
-    assertTrue("Invalid condition", actual.verify(actual.getCondition()));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition()));
   }
 
   @Test
