@@ -144,6 +144,14 @@ public class ThresholdSha256FulfillmentTest extends AbstractFactoryTest {
     );
     assertThat(fulfillmentWithFulfillment2.verify(oneOfTwoCondition, new byte[0]), is(true));
 
+    // No fulfillments
+    final ThresholdSha256Fulfillment fulfillmentWithNoFulfillments = ThresholdSha256Fulfillment
+        .from(
+            Lists.newArrayList(subcondition1, subcondition2),
+            Lists.newArrayList()
+        );
+    assertThat(fulfillmentWithNoFulfillments.verify(oneOfTwoCondition, new byte[0]), is(false));
+
     // In order to fulfill a threshold condition, the count of the sub-fulfillments MUST be equal to
     // the threshold. Thus, construct a Fulfillment with two fulfillments, and expect it to NOT
     // verify properly against oneOfTwoCondition.
@@ -153,6 +161,15 @@ public class ThresholdSha256FulfillmentTest extends AbstractFactoryTest {
             Lists.newArrayList(subfulfillment1, subfulfillment2)
         );
     assertThat(fulfillmentWithTwoFulfillments.verify(oneOfTwoCondition, new byte[0]), is(false));
+
+    // Same as the above test, but with the same fulfillment twice.
+    final ThresholdSha256Fulfillment fulfillmentWithTwoDuplicateFulfillment
+        = ThresholdSha256Fulfillment.from(
+        Lists.newArrayList(),
+        Lists.newArrayList(subfulfillment1, subfulfillment1)
+    );
+    assertThat(fulfillmentWithTwoDuplicateFulfillment.verify(oneOfTwoCondition, new byte[0]),
+        is(false));
   }
 
   @Test
