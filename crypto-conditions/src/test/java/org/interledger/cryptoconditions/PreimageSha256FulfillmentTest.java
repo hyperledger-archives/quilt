@@ -4,17 +4,19 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.constructPreimageFulfillment;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import java.util.Base64;
+import java.util.UUID;
 
 /**
  * Unit tests {@link PreimageSha256Fulfillment}.
  */
-public class PreimageSha256FulfillmentTest {
+public class PreimageSha256FulfillmentTest extends AbstractCryptoConditionTest {
 
   private static final String PREIMAGE = "when this baby hits 88 miles per hour";
   private static final String PREIMAGE2 = "Nobody calls me chicken!";
@@ -29,6 +31,30 @@ public class PreimageSha256FulfillmentTest {
       37,
       FINGERPRINT_BYTES
   );
+
+  /**
+   * Tests concurrently creating an instance of {@link PreimageSha256Fulfillment}. This test
+   * validates the fix for Github issue #40 where construction of this class was not thread-safe.
+   *
+   * @see "https://github.com/interledger/java-crypto-conditions/issues/40"
+   * @see "https://github.com/junit-team/junit4/wiki/multithreaded-code-and-concurrency"
+   */
+  @Test
+  public void testConstructionUsingMultipleThreads() throws Exception {
+    final Runnable runnableTest = () -> {
+      final PreimageSha256Fulfillment preimageSha256Fulfillment =
+          constructPreimageFulfillment(UUID.randomUUID().toString());
+      assertThat(preimageSha256Fulfillment.getType(), is(CryptoConditionType.PREIMAGE_SHA256));
+      assertThat(preimageSha256Fulfillment.verify(preimageSha256Fulfillment.getCondition()),
+          is(true));
+    };
+
+    // Run single-threaded...
+    this.runConcurrent(1, runnableTest);
+    // Run multi-threaded...
+    this.runConcurrent(runnableTest);
+  }
+
 
   @Test(expected = NullPointerException.class)
   public final void testNullPreimage() {

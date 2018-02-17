@@ -34,8 +34,6 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
     Security.addProvider(bc);
   }
 
-  // TODO: Add these multithreaded tests to all fulfillment test classes!
-
   /**
    * Tests concurrently creating an instance of {@link RsaSha256Fulfillment}. This test validates
    * the fix for Github issue #40 where construction of this class was not thread-safe.
@@ -52,6 +50,9 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
           );
 
       assertThat(rsaSha256Fulfillment.getType(), is(CryptoConditionType.RSA_SHA256));
+      assertThat(
+          rsaSha256Fulfillment.verify(rsaSha256Fulfillment.getCondition(), MESSAGE.getBytes()),
+          is(true));
     };
 
     // Run single-threaded...

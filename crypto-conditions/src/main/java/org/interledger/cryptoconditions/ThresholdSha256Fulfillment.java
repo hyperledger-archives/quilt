@@ -129,8 +129,6 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
       Objects.requireNonNull(subconditions);
       Objects.requireNonNull(subfulfillments);
 
-      // TODO: See https://github.com/hyperledger/quilt/issues/78
-      //final Set<Condition> allConditions = new HashSet<>();
       final List<Condition> allConditions = new ArrayList<>();
 
       // Add all subconditions...

@@ -214,14 +214,6 @@ public class ThresholdFactory {
               totalN));
     }
 
-    // TODO: Consider removing this, since no verification is happening in this method.
-    // If the number of fulfillments exceeds the threshold, then only the threshold-number of
-    // fulfillments should be used for verification purposes. So, in order to verify, I need to pick
-    // one of the extra fulfillments, convert it to a conditino,
-    //      // and then use the correct number of fulfillments and conditions.
-    //if (subfulfillments.size() > thresholdM) {
-    //}
-
     return ThresholdSha256Fulfillment.from(subconditions, subfulfillments);
   }
 

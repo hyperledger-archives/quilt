@@ -52,6 +52,8 @@ public class Ed25519Sha256FulfillmentTest extends AbstractCryptoConditionTest {
           );
 
       assertThat(ed25519Sha256Fulfillment.getType(), is(CryptoConditionType.ED25519_SHA256));
+      assertThat(ed25519Sha256Fulfillment
+          .verify(ed25519Sha256Fulfillment.getCondition(), MESSAGE.getBytes()), is(true));
     };
 
     // Run single-threaded...
