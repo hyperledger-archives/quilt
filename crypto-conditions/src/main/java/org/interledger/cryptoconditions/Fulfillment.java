@@ -19,7 +19,7 @@ public interface Fulfillment<C extends Condition> {
    *
    * @return A {@link Condition} that can be fulfilled by this fulfillment.
    */
-  C getCondition();
+  C getDerivedCondition();
 
   /**
    * <p>Validation of a fulfillment (F) against a condition (C) and a message (M), in the majority
@@ -53,7 +53,20 @@ public interface Fulfillment<C extends Condition> {
    * @return {@code true} if this fulfillment validates the supplied condition and message; {@code
    *     false} otherwise.
    *
-   * @see "https://tools.ietf.org/html/draft-thomas-crypto-conditions-03#section-5"
+   * @see "https://tools.ietf.org/html/draft-thomas-crypto-conditions-04#section-5"
    */
   boolean verify(C condition, byte[] message);
+
+  /**
+   * <p>Validation of a fulfillment (F) against a condition (C) and an empty message (M). See
+   * Javadoc for {@link #verify(Condition, byte[])} for more details about the specific details of
+   * this method.</p>
+   *
+   * @param condition A {@link Condition} that this fulfillment should verify.
+   *
+   * @see "https://tools.ietf.org/html/draft-thomas-crypto-conditions-04#section-5"
+   */
+  default boolean verify(C condition) {
+    return verify(condition, "".getBytes());
+  }
 }

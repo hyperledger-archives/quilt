@@ -20,7 +20,7 @@ public interface PreimageSha256Fulfillment extends Fulfillment<PreimageSha256Con
    *
    * @param preimage The preimage associated with the fulfillment.
    *
-   * @return A newly created, immutable instance of {@link PreimageSha256Condition}.
+   * @return A newly created, immutable instance of {@link PreimageSha256Fulfillment}.
    */
   static PreimageSha256Fulfillment from(final byte[] preimage) {
     Objects.requireNonNull(preimage);
@@ -37,7 +37,7 @@ public interface PreimageSha256Fulfillment extends Fulfillment<PreimageSha256Con
     return ImmutablePreimageSha256Fulfillment.builder()
         .type(CryptoConditionType.PREIMAGE_SHA256)
         .encodedPreimage(encodedPreimage)
-        .condition(condition)
+        .derivedCondition(condition)
         .build();
   }
 
@@ -87,7 +87,7 @@ public interface PreimageSha256Fulfillment extends Fulfillment<PreimageSha256Con
           "Can't verify a PreimageSha256Fulfillment against an null condition.");
       Objects.requireNonNull(message, "Message must not be null!");
 
-      return getCondition().equals(condition);
+      return getDerivedCondition().equals(condition);
     }
   }
 }

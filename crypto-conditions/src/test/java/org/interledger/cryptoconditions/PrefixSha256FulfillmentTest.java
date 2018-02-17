@@ -5,6 +5,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE1;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.constructPrefixSha256Fulfillment;
 import static org.junit.Assert.assertTrue;
 
 import org.interledger.cryptoconditions.helpers.TestFulfillmentFactory;
@@ -12,28 +13,44 @@ import org.interledger.cryptoconditions.helpers.TestFulfillmentFactory;
 import org.junit.Test;
 
 import java.util.Base64;
+import java.util.UUID;
 
 /**
  * Unit tests {@link PrefixSha256Fulfillment}.
  */
-public class PrefixSha256FulfillmentTest {
+public class PrefixSha256FulfillmentTest extends AbstractCryptoConditionTest {
 
   private static final String PREFIX = "when this baby hits 88 miles per hour";
   private static final String PREFIX2 = "Nobody calls me chicken!";
   private static final String ENCODED_PREFIX
       = "d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg==";
-  private static final String ENCODED_FINGERPRINT = "iL1xV1F0IvtokoaU1n2eVOvcwhy4me4vroUKg8vFnOE";
-  private static final byte[] FINGERPRINT_BYTES = Base64.getUrlDecoder()
-      .decode(ENCODED_FINGERPRINT);
+  private static final String ENCODED_FINGERPRINT = "-28EVNr7rOwQ_XsvrJVxLvjBY38ZNZlHaPHYpsIbmH4";
 
   private static final PreimageSha256Fulfillment SUBFULFILLMENT = TestFulfillmentFactory
       .constructPreimageFulfillment(PREIMAGE1);
 
-  private static final PrefixSha256Fulfillment TEST_FULFILLMENT = PrefixSha256Fulfillment.from(
-      PREFIX.getBytes(),
-      100,
-      SUBFULFILLMENT
-  );
+  /**
+   * Tests concurrently creating an instance of {@link RsaSha256Fulfillment}. This test validates
+   * the fix for Github issue #40 where construction of this class was not thread-safe.
+   *
+   * @see "https://github.com/interledger/java-crypto-conditions/issues/40"
+   * @see "https://github.com/junit-team/junit4/wiki/multithreaded-code-and-concurrency"
+   */
+  @Test
+  public void testConstructionUsingMultipleThreads() throws Exception {
+    final Runnable runnableTest = () -> {
+      final PrefixSha256Fulfillment preimageSha256Fulfillment =
+          constructPrefixSha256Fulfillment(UUID.randomUUID().toString());
+      assertThat(preimageSha256Fulfillment.getType(), is(CryptoConditionType.PREFIX_SHA256));
+      assertThat(preimageSha256Fulfillment.verify(preimageSha256Fulfillment.getDerivedCondition()),
+          is(true));
+    };
+
+    // Run single-threaded...
+    this.runConcurrent(1, runnableTest);
+    // Run multi-threaded...
+    this.runConcurrent(runnableTest);
+  }
 
   @Test(expected = NullPointerException.class)
   public final void testFromWithNullPrefix() {
@@ -59,7 +76,14 @@ public class PrefixSha256FulfillmentTest {
   public final void testValidateDerivedCondition() {
     final PrefixSha256Fulfillment actual = TestFulfillmentFactory
         .constructPrefixSha256Fulfillment(PREFIX);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), new byte[]{}));
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), new byte[]{}));
+  }
+
+  @Test
+  public final void testValidateDerivedConditionWithEmptyMessage() {
+    final PrefixSha256Fulfillment actual = TestFulfillmentFactory
+        .constructPrefixSha256Fulfillment(PREFIX);
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition()));
   }
 
   @Test
@@ -74,7 +98,7 @@ public class PrefixSha256FulfillmentTest {
         is("d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg=="));
     assertThat(actual.getPrefix(), is(Base64.getDecoder().decode(actual.getPrefixBase64Url())));
     assertThat(actual.getType(), is(CryptoConditionType.PREFIX_SHA256));
-    assertThat(actual.getCondition(), is(not(nullValue())));
+    assertThat(actual.getDerivedCondition(), is(not(nullValue())));
   }
 
   @Test
@@ -110,17 +134,17 @@ public class PrefixSha256FulfillmentTest {
 
     assertThat(fulfillment.toString(),
         is("PrefixSha256Fulfillment{"
-            + "prefix=d2hlbiB0aGlzIGJhYnkgaGl0cyA4OCBtaWxlcyBwZXIgaG91cg==, "
+            + "prefix=" + ENCODED_PREFIX + ", "
             + "maxMessageLength=1000, "
             + "subfulfillment=PreimageSha256Fulfillment{"
             + "encodedPreimage=Um9hZHM_IFdoZXJlIHdlJ3JlIGdvaW5nLCB3ZSBkb24ndCBuZWVkIHJvYWRzLg==, "
             + "type=PREIMAGE-SHA-256, "
-            + "condition=PreimageSha256Condition{"
+            + "derivedCondition=PreimageSha256Condition{"
             + "type=PREIMAGE-SHA-256, "
-            + "fingerprint=-28EVNr7rOwQ_XsvrJVxLvjBY38ZNZlHaPHYpsIbmH4, "
+            + "fingerprint=" + ENCODED_FINGERPRINT + ", "
             + "cost=46}}, "
             + "type=PREFIX-SHA-256, "
-            + "condition=PrefixSha256Condition{"
+            + "derivedCondition=PrefixSha256Condition{"
             + "subtypes=[PREIMAGE-SHA-256], "
             + "type=PREFIX-SHA-256, "
             + "fingerprint=2ugoaAzCSomLbveq9nNmSJp5X-esBSjBw5IGFgvYF9w, "

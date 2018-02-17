@@ -3,18 +3,22 @@ package org.interledger.cryptoconditions;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.MESSAGE;
+import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.constructRsaSha256Fulfillment;
 import static org.junit.Assert.assertTrue;
 
-import org.interledger.cryptoconditions.helpers.TestFulfillmentFactory;
 import org.interledger.cryptoconditions.helpers.TestKeyFactory;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.interfaces.RSAPublicKey;
 
 /**
@@ -30,8 +34,6 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
     Security.addProvider(bc);
   }
 
-  // TODO: Add these multithreaded tests to all fulfillment test classes!
-
   /**
    * Tests concurrently creating an instance of {@link RsaSha256Fulfillment}. This test validates
    * the fix for Github issue #40 where construction of this class was not thread-safe.
@@ -42,12 +44,15 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
   @Test
   public void testConstructionUsingMultipleThreads() throws Exception {
     final Runnable runnableTest = () -> {
-      final RsaSha256Fulfillment rsaSha256Fulfillment = TestFulfillmentFactory
-          .constructRsaSha256Fulfillment(
+      final RsaSha256Fulfillment rsaSha256Fulfillment =
+          constructRsaSha256Fulfillment(
               TestKeyFactory.generateRandomRsaKeyPair()
           );
 
       assertThat(rsaSha256Fulfillment.getType(), is(CryptoConditionType.RSA_SHA256));
+      assertThat(
+          rsaSha256Fulfillment.verify(rsaSha256Fulfillment.getDerivedCondition(), MESSAGE.getBytes()),
+          is(true));
     };
 
     // Run single-threaded...
@@ -71,19 +76,36 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
   public final void testValidate() {
     final KeyPair rsaKeyPair = TestKeyFactory.generateRandomRsaKeyPair();
     final RsaSha256Fulfillment actual
-        = TestFulfillmentFactory.constructRsaSha256Fulfillment(rsaKeyPair);
-    assertTrue("Invalid condition", actual.verify(actual.getCondition(), MESSAGE.getBytes()));
+        = constructRsaSha256Fulfillment(rsaKeyPair);
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition(), MESSAGE.getBytes()));
+  }
+
+  @Test
+  public final void testValidateWithEmptyMessage() {
+    final KeyPair rsaKeyPair = TestKeyFactory.generateRandomRsaKeyPair();
+
+    final RsaSha256Fulfillment actual;
+    try {
+      final Signature rsaSigner = Signature.getInstance("SHA256withRSA/PSS");
+      rsaSigner.initSign(rsaKeyPair.getPrivate());
+      // Empty message...
+      byte[] rsaSignature = rsaSigner.sign();
+      actual = constructRsaSha256Fulfillment((RSAPublicKey) rsaKeyPair.getPublic(), rsaSignature);
+    } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
+      throw new RuntimeException(e);
+    }
+    assertTrue("Invalid condition", actual.verify(actual.getDerivedCondition()));
   }
 
   @Test
   public void equalsHashcode() {
     final RsaSha256Fulfillment fulfillment1
-        = TestFulfillmentFactory.constructRsaSha256Fulfillment(
+        = constructRsaSha256Fulfillment(
         TestKeyFactory.generateRandomRsaKeyPair()
     );
     final RsaSha256Fulfillment fulfillment2 = fulfillment1;
     final RsaSha256Fulfillment fulfillment3
-        = TestFulfillmentFactory.constructRsaSha256Fulfillment(
+        = constructRsaSha256Fulfillment(
         TestKeyFactory.generateRandomRsaKeyPair()
     );
 
@@ -106,7 +128,7 @@ public class RsaSha256FulfillmentTest extends AbstractCryptoConditionTest {
 
   @Test
   public void testToString() {
-    final RsaSha256Fulfillment fulfillment = TestFulfillmentFactory.constructRsaSha256Fulfillment(
+    final RsaSha256Fulfillment fulfillment = constructRsaSha256Fulfillment(
         TestKeyFactory.generateRandomRsaKeyPair()
     );
 

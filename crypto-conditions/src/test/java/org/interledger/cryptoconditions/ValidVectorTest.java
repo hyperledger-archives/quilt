@@ -42,8 +42,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * This class tests the Java implementation of crypto-conditions based on a set of pre-computed
- * and validated test vectors found in the crypto-conditions spec repository.
+ * This class tests the Java implementation of crypto-conditions based on a set of pre-computed and
+ * validated test vectors found in the crypto-conditions spec repository.
  *
  * <p>Specifically, this harness performs the following validations according to the source of the
  * test 'vectors' file in the crypto-conditions rfc project:</p>
@@ -225,7 +225,7 @@ public class ValidVectorTest {
                 testVector.getJson().getMaxMessageLength(),
                 TestVectorFactory
                     .getFulfillmentFromTestVectorJson(testVector.getJson().getSubfulfillment())
-                    .getCondition()
+                    .getDerivedCondition()
             );
         break;
       }
@@ -277,7 +277,7 @@ public class ValidVectorTest {
     final Fulfillment testVectorFulfillment = CryptoConditionReader
         .readFulfillment(BaseEncoding.base16().decode(testVector.getFulfillment()));
 
-    final String derivedUri = CryptoConditionUri.toUri(testVectorFulfillment.getCondition())
+    final String derivedUri = CryptoConditionUri.toUri(testVectorFulfillment.getDerivedCondition())
         .toString();
 
     assertThat(testVector.getConditionUri(), is(derivedUri));
@@ -305,7 +305,7 @@ public class ValidVectorTest {
   }
 
   @Test
-  public void testCost() throws URISyntaxException, DerEncodingException {
+  public void testCost() {
     final long actualCost = TestVectorFactory.getConditionFromTestVectorJson(testVector.getJson())
         .getCost();
 
@@ -333,14 +333,14 @@ public class ValidVectorTest {
         assertEquals(testVector.getName() + " [compare max message length]",
             testVector.getJson().getMaxMessageLength(), prefixFulfillment.getMaxMessageLength());
         CryptoConditionAssert.assertSetOfTypesIsEqual(testVector.getName() + " [compare subtypes]",
-            testVector.getSubtypes(), prefixFulfillment.getCondition().getSubtypes());
+            testVector.getSubtypes(), prefixFulfillment.getDerivedCondition().getSubtypes());
         // TODO Should we test for equality of subfulfillments?
         break;
 
       case THRESHOLD_SHA256:
         ThresholdSha256Fulfillment thresholdFulfillment = (ThresholdSha256Fulfillment) fulfillment;
         CryptoConditionAssert.assertSetOfTypesIsEqual(testVector.getName() + " [compare subtypes]",
-            testVector.getSubtypes(), thresholdFulfillment.getCondition().getSubtypes());
+            testVector.getSubtypes(), thresholdFulfillment.getDerivedCondition().getSubtypes());
         // TODO Should we test for equality of subfulfillments and subconditions?
         break;
 
@@ -365,7 +365,8 @@ public class ValidVectorTest {
         break;
 
       default:
-        throw new Exception("Unknown fulfillment type: " + fulfillment.getType());
+        throw new Exception(
+            "Unknown fulfillment type: " + fulfillment.getType());
     }
   }
 }

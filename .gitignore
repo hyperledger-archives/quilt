@@ -172,6 +172,16 @@ local.properties
 .scala_dependencies
 .worksheet
 
+# Project files
+**/.classpath
+**/.project
+
+# m2e-code-quality for Eclipse CS Checkstyle / PMD / FindBugs Plug-Ins
+**/.checkstyle
+**/.pmd
+**/.pmdruleset.xml
+**/.fbExcludeFilterFile
+
 ### Kotlin template
 # Compiled class file
 
