@@ -19,20 +19,21 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
   /**
    * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}.</p>
    *
-   * <p>Per the spec, this method will imply the threshold based upon the number of fulfillments
+   * <p>Per the spec, this method will imply the threshold based upon the number of sub-fulfillments
    * present in {@code subfulfillments}. This logic can be confusing, especially when trying to
-   * construct threshold fulfillments that are only partially, yet validly, fulfilled. For example,
-   * if there exists a 1-of-2 {@link ThresholdSha256Condition} (i.e., Threshold = 1), and then there
-   * are several threshold fulfillments that would be verified by this condition. The most obvious
-   * is a 2-of-2 threshold fulfillment, which could be constrcuted using this method by supplying
-   * zero subconditions and two subfulfillments. Alternatively, a 1-of-2 fulfillment could be
-   * constructed using this method by supplying 1 subcondition and one sub-fulfillment. Note in this
-   * case that it would be incorrect in this scenario to call this method with two sub-fulfillments
-   * because this would construct a 2-of-2 threshold fulfillment, which would not verify with a
-   * 1-of-2 threshold condition.</p>
+   * construct threshold fulfillments that are only partially, yet validly, fulfilled.</p>
    *
-   * <p>Because this behavior can be confusing, it is recommended that callers instead use concrete
-   * helper methods from {@link ThresholdFactory}.</p>
+   * <p>For example, if there exists a 1-of-2 {@link ThresholdSha256Condition} (i.e., Threshold =
+   * 1), then it might be tempting to assume that there exists several threshold fulfillments that
+   * could be verified by such a condition. The most obvious candidate is a 2-of-2 threshold
+   * fulfillment, which could be constructed using this method by supplying zero sub-conditions and
+   * two sub-fulfillments. However, in reality, such a sub-fulfillment (the 2-of-2) would not verify
+   * with a 1-of-2 threshold condition because a threshold fulfillment created with two
+   * sub-fulfillments <b>always</b> has a threshold of two.</p>
+   *
+   * <p>Because usage of this method always involves an inferred threshold, which might be
+   * unexpected, it is recommended that callers utilize helper methods from {@link ThresholdFactory}
+   * instead.</p>
    *
    * <p>Concurrency Note: This method will create a shallow-copy of both {@code subconditions} and
    * {@code subfulfillments} before performing any operations, in order to guard against external
@@ -137,8 +138,8 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
       // Add all derived subconditions...
       allConditions.addAll(
           subfulfillments.stream()
-                  .map(Fulfillment::getDerivedCondition)
-                  .collect(Collectors.toList())
+              .map(Fulfillment::getDerivedCondition)
+              .collect(Collectors.toList())
       );
 
       // Per the crypto-condtions specification, implementations must use the length of the

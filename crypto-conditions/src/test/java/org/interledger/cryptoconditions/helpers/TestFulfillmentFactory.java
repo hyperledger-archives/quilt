@@ -23,7 +23,7 @@ import java.security.interfaces.RSAPublicKey;
 public class TestFulfillmentFactory {
 
   public static final String PREIMAGE1 = "Roads? Where we're going, we don't need roads.";
-  public static final String PREIMAGE2 = "Roads? Where we're going, we don't need roads.";
+  public static final String PREIMAGE2 = "Great Scott!";
   public static final String PREFIX1 = "Order-12345";
   public static final String PREFIX2 = "Order-98765";
   public static final String MESSAGE = "Doc Brown";

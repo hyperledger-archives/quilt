@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import com.google.common.collect.Lists;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
@@ -138,7 +139,8 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
   @Test(expected = IllegalArgumentException.class)
   public void mOfNWithNegativeThreshold() {
     try {
-      ThresholdFactory.constructMOfNCondition(-1, 2, Lists.newArrayList(subcondition1, subcondition2));
+      ThresholdFactory
+          .constructMOfNCondition(-1, 2, Lists.newArrayList(subcondition1, subcondition2));
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage(), is("Threshold must not be negative!"));
       throw e;
@@ -155,7 +157,8 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
     );
 
     final ThresholdSha256Condition thresholdCondition = ThresholdFactory
-        .constructMOfNCondition(0, 3, Lists.newArrayList(subcondition1, subcondition2, subcondition3));
+        .constructMOfNCondition(0, 3,
+            Lists.newArrayList(subcondition1, subcondition2, subcondition3));
     assertThat(thresholdFulfillment.verify(thresholdCondition, "".getBytes()), is(true));
   }
 
@@ -463,7 +466,10 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
     {
       // Simulate publishing a fulfillment with 1 of the corresponding sub-fulfillments.
       final ThresholdSha256Fulfillment fulfillment = ThresholdFactory
-          .oneOfTwoFulfillment(subfulfillment1, subcondition2);
+          .constructMOfNFulfillment(1, 2,
+              Lists.newArrayList(subcondition1),
+              Lists.newArrayList(subfulfillment2)
+          );
       assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(true));
     }
 
@@ -471,8 +477,8 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
       // Simulate publishing a fulfillment with the other 1 of the corresponding sub-fulfillments.
       final ThresholdSha256Fulfillment fulfillment = ThresholdFactory
           .constructMOfNFulfillment(1, 2,
-              Lists.newArrayList(subcondition1),
-              Lists.newArrayList(subfulfillment2)
+              Lists.newArrayList(subcondition2),
+              Lists.newArrayList(subfulfillment1)
           );
       assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(true));
     }
@@ -501,7 +507,8 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
       // to the actual sub-conditions used in the main threshold fulfillment.
       final ThresholdSha256Fulfillment fulfillment = ThresholdFactory
           .constructMOfNFulfillment(1, 2,
-              Lists.newArrayList(PreimageSha256Fulfillment.from("foo".getBytes()).getDerivedCondition()),
+              Lists.newArrayList(
+                  PreimageSha256Fulfillment.from("foo".getBytes()).getDerivedCondition()),
               Lists.newArrayList(subfulfillment2)
           );
       assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(false));
@@ -526,7 +533,7 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
               Lists.newArrayList(),
               Lists.newArrayList(subfulfillment1, subfulfillment2)
           );
-      assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(false));
+      assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(true));
     }
 
     {
@@ -557,6 +564,90 @@ public class ThresholdFactoryTest extends AbstractFactoryTest {
           );
       assertThat(fulfillment.verify(thresholdCondition, "".getBytes()), is(false));
     }
+  }
+
+  /**
+   * Tests weighting where at least 2 fulfillments are required, but 1 party has two votes. This is
+   * comparable to an escrow transaction, where each party to the escrow has only a single vote, and
+   * both votes are required to fulfill a transaction, but the escrow provider can supply two votes
+   * to force a decision.
+   */
+  @Test
+  public void testDuplicateConditionsAndFulfillments() {
+    final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
+        2, Lists
+            .newArrayList(subcondition1, subcondition1, subcondition2, subcondition3)
+    );
+
+    // Escrow Only (insufficient)
+    ThresholdSha256Fulfillment fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(subcondition1, subcondition2, subcondition3),
+        Lists.newArrayList(subfulfillment1)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(false));
+
+    // Escrow Only (sufficient)
+    fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(subcondition2, subcondition3),
+        Lists.newArrayList(subfulfillment1, subfulfillment1)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(true));
+
+    // Escrow+Party2
+    fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(subcondition1, subcondition3),
+        Lists.newArrayList(subfulfillment1, subfulfillment2)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(true));
+
+    // Escrow+Party3
+    fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(subcondition1, subcondition2),
+        Lists.newArrayList(subfulfillment1, subfulfillment3)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(true));
+
+    // Party2+Party3
+    fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(subcondition1, subcondition1),
+        Lists.newArrayList(subfulfillment2, subfulfillment3)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(true));
+
+    // Sufficient fulfillments (1 escrow condition)
+    fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(subcondition1),
+        Lists.newArrayList(subfulfillment1, subfulfillment2, subfulfillment3)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(true));
+
+    // All fulfillments (too many)
+    fulfillment = ThresholdFactory.constructMOfNFulfillment(
+        2, 4,
+        Lists.newArrayList(),
+        Lists.newArrayList(subfulfillment1, subfulfillment1, subfulfillment2, subfulfillment3)
+    );
+    assertThat(fulfillment.verify(condition, new byte[0]), is(true));
+
+    // Party2+Party3 (w\o escrow condition)
+    try {
+      ThresholdFactory.constructMOfNFulfillment(
+          2, 4,
+          Lists.newArrayList(),
+          Lists.newArrayList(subfulfillment2, subfulfillment3)
+      );
+      Assert.fail(
+          "Constructing a 2-of-4 threshold fulfillment requires at least 4 conditions + fulfillments!");
+    } catch (IllegalArgumentException e) {
+      // do nothing
+    }
+
   }
 
 }

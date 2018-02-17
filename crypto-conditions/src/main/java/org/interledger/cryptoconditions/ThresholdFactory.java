@@ -214,7 +214,24 @@ public class ThresholdFactory {
               totalN));
     }
 
-    return ThresholdSha256Fulfillment.from(subconditions, subfulfillments);
+    // For 1-of-2 fulfillment, if the threshold is set to 1, but 2 fulfillments are published,
+    // then one of the fulfillments should be converted to a condition.
+
+    // Create new, immutable lists
+    final List<Condition> immutableSubconditions = Collections.unmodifiableList(
+        // Skip the first _thresholdM_ sub-fulfillments, and use the rest of the sub-fulfillments
+        // as sub-conditions, plus the originally supplied sub-conditions.
+        Stream.concat(
+            subconditions.stream(),
+            subfulfillments.stream().skip(thresholdM).map(Fulfillment::getDerivedCondition)
+        ).collect(Collectors.toList())
+    );
+    final List<Fulfillment> immutableSubFulfillments = Collections.unmodifiableList(
+        // Use the first _thresholdM_ sub-fulfillments as the fulfillments.
+        subfulfillments.stream().limit(thresholdM).collect(Collectors.toList())
+    );
+
+    return ThresholdSha256Fulfillment.from(immutableSubconditions, immutableSubFulfillments);
   }
 
 }
