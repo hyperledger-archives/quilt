@@ -4,12 +4,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.interledger.core.InterledgerAddress;
-
 import org.junit.Test;
 
 /**
- * Unit tests for {@link ImmutableInterledgerAddress.Builder}.
+ * Unit tests for {@link InterledgerAddressBuilder}.
  */
 public class InterledgerAddressBuilderTest {
 
@@ -36,7 +34,7 @@ public class InterledgerAddressBuilderTest {
   private static final String TOO_LONG = JUST_RIGHT + "67890123456789012345678901234567890123456";
 
   @Test(expected = IllegalStateException.class)
-  public void test_constructor_wit_uninitialized_build() throws Exception {
+  public void test_constructor_wit_uninitialized_build() {
     try {
       InterledgerAddress.builder().build();
     } catch (IllegalStateException e) {
@@ -47,7 +45,7 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void test_wither_with_null_value() throws Exception {
+  public void test_wither_with_null_value() {
     try {
       InterledgerAddress.builder()
           .value(null)
@@ -59,21 +57,21 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test
-  public void testConstruction_DeliverableAddress() throws Exception {
+  public void testConstruction_DeliverableAddress() {
     final InterledgerAddress address = InterledgerAddress.builder().value(TEST1_US_USD_BOB).build();
     assertThat(address.getValue(), is(TEST1_US_USD_BOB));
     assertThat(address.isLedgerPrefix(), is(not(true)));
   }
 
   @Test
-  public void testConstruction_LedgerPrefix() throws Exception {
+  public void testConstruction_LedgerPrefix() {
     final InterledgerAddress address = InterledgerAddress.builder().value(TEST1_US_USD).build();
     assertThat(address.getValue(), is(TEST1_US_USD));
     assertThat(address.isLedgerPrefix(), is(true));
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_empty_address() throws Exception {
+  public void test_empty_address() {
     final String value = "";
     try {
       InterledgerAddress.builder().value(value).build();
@@ -84,7 +82,7 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_blank_address() throws Exception {
+  public void test_blank_address() {
     final String value = "  ";
     try {
       InterledgerAddress.builder().value(value).build();
@@ -95,7 +93,7 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_address_with_space() throws Exception {
+  public void test_address_with_space() {
     final String value = TEST1_US_USD_BOB + " space";
     try {
       InterledgerAddress.builder().value(value).build();
@@ -106,7 +104,7 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_address_too_long() throws Exception {
+  public void test_address_too_long() {
     final String value = TOO_LONG;
     try {
       InterledgerAddress.builder().value(value).build();
@@ -117,7 +115,7 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test
-  public void test_address_just_right_length() throws Exception {
+  public void test_address_just_right_length() {
     // This is 1023 characters long...
     final String value = "";
     final InterledgerAddress address = InterledgerAddress.builder().value(JUST_RIGHT).build();
@@ -126,7 +124,7 @@ public class InterledgerAddressBuilderTest {
   }
 
   @Test
-  public void test_address_all_valid_characters() throws Exception {
+  public void test_address_all_valid_characters() {
     final String allValues = "g.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_~-.";
     final InterledgerAddress address = InterledgerAddress.builder().value(allValues).build();
     assertThat(address.getValue(), is(allValues));

@@ -4,10 +4,8 @@ import org.interledger.annotations.Immutable;
 
 import org.immutables.value.Value;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -34,13 +32,16 @@ import java.util.regex.Pattern;
  */
 public interface InterledgerAddress {
 
-  String ADDRPRFX_REGEX = "(?=^.{1,1023}$)"
+  String ADDRESS_PREFIX_REGEX = "(?=^.{1,1023}$)"
       + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])*$";
-  Pattern ADDRPRFX_PATTERN = Pattern.compile(ADDRPRFX_REGEX);
+  Pattern ADDRESS_PREFIX_PATTERN = Pattern.compile(ADDRESS_PREFIX_REGEX);
 
-  String DESTADDR_REGEX = "(?=^.{1,1023}$)"
+  String DESTINATION_ADDRESS_REGEX = "(?=^.{1,1023}$)"
       + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])+[a-zA-Z0-9_~-]+$";
-  Pattern DESTADDR_PATTERN = Pattern.compile(DESTADDR_REGEX);
+  Pattern DESTINATION_ADDRESS_PATTERN = Pattern.compile(DESTINATION_ADDRESS_REGEX);
+
+  String ROOT_REGEX = "^(g|private|example|peer|self|test[1-3]?)[.]$";
+  Pattern ROOT_PATTERN = Pattern.compile(ROOT_REGEX);
 
   /**
    * Constructor to allow quick construction from a String representation of an ILP address.
@@ -54,8 +55,8 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Helper method to determine if an Interledger Address conforms to the specifications
-   * outlined in Interledger RFC #15.
+   * Helper method to determine if an Interledger Address conforms to the specifications outlined in
+   * Interledger RFC #15.
    *
    * @param value A {@link String} representing a potential Interledger Address value.
    *
@@ -66,7 +67,8 @@ public interface InterledgerAddress {
    */
   static boolean isValid(final String value) {
     Objects.requireNonNull(value);
-    return (value.endsWith(".") ? ADDRPRFX_PATTERN : DESTADDR_PATTERN).matcher(value)
+    return (value.endsWith(".") ? ADDRESS_PREFIX_PATTERN : DESTINATION_ADDRESS_PATTERN)
+        .matcher(value)
         .matches();
   }
 
@@ -289,9 +291,6 @@ public interface InterledgerAddress {
     // All ILP addresse have a parent prefix, except for Root prefixes.
     return isRootPrefix() == false;
   }
-
-  String ROOT_REGEX = "^(g|private|example|peer|self|test[1-3])[.]$";
-  Pattern ROOT_PATTERN = Pattern.compile(ROOT_REGEX);
 
   /**
    * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of: "g.",
