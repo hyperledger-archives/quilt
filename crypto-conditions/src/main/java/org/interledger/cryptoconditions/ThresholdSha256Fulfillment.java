@@ -17,24 +17,32 @@ import java.util.stream.Collectors;
 public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256Condition> {
 
   /**
-   * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}. It should be noted that any
-   * fulfillments present in {@code subfulfillments} will be converted to a condition for
-   * fingerprinting purposes. Thus, in order to create a 1-of-2 fulfillment, for example, each list
-   * should contain only one entry (as opposed to supplying two conditions, and a single
-   * fulfillment). Because this behavior can be confusing to use properly, it is recommended that
-   * callers instead use concrete helper methods from {@link ThresholdFactory}.</p>
+   * <p>Constructs an instance of {@link ThresholdSha256Fulfillment}.</p>
    *
-   * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
-   * performing any validation, business logic, or object construction. For more scenarios, this
-   * will provide adequate immutability for any operations performed  by this method. However,
-   * during the brief period of time that this method is operating, callers should not consider this
-   * method to be thread-safe. This is because another thread could mutate the subconditions list
-   * (e.g., by adding or removing a condition), which may cause unpredictable behavior. Thus, if
-   * thread-safety is required when calling this method, be sure to guard against any concurrency
-   * issues in your system, perhaps by passing-in an immutable copy of subconditions before calling
-   * this method. Finally, for purposes of this method, shallow-copies are adequate because all
-   * instance of {@link Condition} are immutable, and thus thread-safe, so one this method finishes
-   * operation, the returned object will be fully immutable.</p>
+   * <p>Per the spec, this method will imply the threshold based upon the number of fulfillments
+   * present in {@code subfulfillments}. This logic can be confusing, especially when trying to
+   * construct threshold fulfillments that are only partially, yet validly, fulfilled. For example,
+   * if there exists a 1-of-2 {@link ThresholdSha256Condition} (i.e., Threshold = 1), and then there
+   * are several threshold fulfillments that would be verified by this condition. The most obvious
+   * is a 2-of-2 threshold fulfillment, which could be constrcuted using this method by supplying
+   * zero subconditions and two subfulfillments. Alternatively, a 1-of-2 fulfillment could be
+   * constructed using this method by supplying 1 subcondition and one sub-fulfillment. Note in this
+   * case that it would be incorrect in this scenario to call this method with two sub-fulfillments
+   * because this would construct a 2-of-2 threshold fulfillment, which would not verify with a
+   * 1-of-2 threshold condition.</p>
+   *
+   * <p>Because this behavior can be confusing, it is recommended that callers instead use concrete
+   * helper methods from {@link ThresholdFactory}.</p>
+   *
+   * <p>Concurrency Note: This method will create a shallow-copy of both {@code subconditions} and
+   * {@code subfulfillments} before performing any operations, in order to guard against external
+   * list mutations. During the brief period of time that this method is shallow-copying, callers
+   * should not consider this method to be thread-safe. This is because another thread could mutate
+   * the lists (e.g., by adding or removing a sub-condition), which may cause unpredictable
+   * behavior. In addition, this method assumes the sub-condition and sub-fulfillment
+   * implementations are immutable, making shallow-copy operations sufficient to protect against
+   * external list mutation. However, if your environment uses mutable implementations of either
+   * {@link Condition} or {@link Fulfillment}, such shallow-copying may not be sufficient.</p>
    *
    * @param subconditions   An ordered {@link List} of unfulfilled sub-conditions that correspond to
    *                        the threshold condition being fulfilled. For example, if a given
@@ -54,9 +62,6 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
    * @return A newly created, immutable instance of {@link ThresholdSha256Fulfillment}.
    */
   static ThresholdSha256Fulfillment from(
-      // TODO: depending on the outcome of https://github.com/rfcs/crypto-conditions/issues/34,
-      // remove or add the threshold below.
-      //final int threshold,
       final List<Condition> subconditions, final List<Fulfillment> subfulfillments
   ) {
     Objects.requireNonNull(subconditions, "subconditions must not be null!");

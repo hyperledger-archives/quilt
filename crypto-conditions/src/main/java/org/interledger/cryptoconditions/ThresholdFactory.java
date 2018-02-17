@@ -74,20 +74,15 @@ public class ThresholdFactory {
    * supply the same sub-condition more than once, for example for weighted threshold operations
    * where one particular sub-condition should be given more weight than another sub-condition.</p>
    *
-   * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
-   * performing any validation, business logic, or object construction. For most scenarios, this
-   * will provide adequate immutability for any operations performed by this method. However, during
-   * the brief period of time that this method is deep-copying, callers should not consider this
-   * method to be thread-safe. This is because another thread could mutate the sub-conditions list
-   * (e.g., by adding or removing a condition), which may cause unpredictable behavior. Thus, if
-   * thread-safety is required when calling this method, be sure to guard against any concurrency
-   * issues in your system, perhaps by passing-in an immutable copy of {@code subconditions} into
-   * this method, or perhaps by wrapping it in an immutable variant such as via {@link
-   * Collections#unmodifiableList(List)}. Finally, this method assumes any instance of {@link
-   * Condition} is immutable (all supplied implementations of {@link Condition} and {@link
-   * Fulfillment} supplied by this library are immutable), making shallow-copied lists acceptable.
-   * If you supply alternate, mutable implementations of {@link Condition} to this method,
-   * unpredictable results might occur in high-concurrency scenarios.</p>
+   * <p>Concurrency Note: This method will create a shallow-copy of both {@code subconditions} and
+   * {@code subfulfillments} before performing any operations, in order to guard against external
+   * list mutations. During the brief period of time that this method is shallow-copying, callers
+   * should not consider this method to be thread-safe. This is because another thread could mutate
+   * the lists (e.g., by adding or removing a sub-condition), which may cause unpredictable
+   * behavior. In addition, this method assumes the sub-condition and sub-fulfillment
+   * implementations are immutable, making shallow-copy operations sufficient to protect against
+   * external list mutation. However, if your environment uses mutable implementations of either
+   * {@link Condition} or {@link Fulfillment}, such shallow-copying may not be sufficient.</p>
    *
    * @param thresholdM       The minimum number of sub-fulfillments required to fulfill the
    *                         threshold fulfillment associated with the threshold condition generated
