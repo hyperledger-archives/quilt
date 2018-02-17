@@ -121,8 +121,6 @@ public interface ThresholdSha256Fulfillment extends Fulfillment<ThresholdSha256C
      *                        ThresholdSha256Fulfillment#from(List, List)}.
      *
      * @return The {@link ThresholdSha256Condition} that corresponds to this fulfillment.
-     *
-     * @see ""
      */
     static ThresholdSha256Condition constructCondition(
         final List<Condition> subconditions, final List<Fulfillment> subfulfillments
