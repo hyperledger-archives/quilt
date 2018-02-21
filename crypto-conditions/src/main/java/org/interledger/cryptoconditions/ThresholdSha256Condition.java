@@ -235,15 +235,17 @@ public interface ThresholdSha256Condition extends CompoundSha256Condition {
       Objects.requireNonNull(subconditions);
 
       // Sort by cost
-      subconditions.sort((Condition c1, Condition c2) -> (int) (c2.getCost() - c1.getCost()));
+      List<Condition> sortedSubconditions = subconditions.stream()
+              .sorted((Condition c1, Condition c2) -> (int) (c2.getCost() - c1.getCost()))
+              .collect(Collectors.toList());
 
       // Count only up to the threshold...
       long largestCosts = 0;
       for (int i = 0; i < threshold; i++) {
-        largestCosts += subconditions.get(i).getCost();
+        largestCosts += sortedSubconditions.get(i).getCost();
       }
 
-      return largestCosts + (subconditions.size() * 1024);
+      return largestCosts + (sortedSubconditions.size() * 1024);
     }
 
     /**
