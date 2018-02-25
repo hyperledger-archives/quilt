@@ -18,8 +18,6 @@ public class InterledgerAddressTest {
 
   private static final boolean IS_LEDGER_PREFIX = true;
   private static final boolean IS_NOT_LEDGER_PREFIX = false;
-  private static final String EXPECTED_ERROR_MESSAGE =
-      "Invalid characters in address: ['%s']. Reference Interledger ILP-RFC-15 for proper format.";
 
   @Test
   public void testGetValue() {
@@ -75,14 +73,8 @@ public class InterledgerAddressTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testAddressWithBlank() {
-    final String value = "g.foo.  ";
     final InterledgerAddress addressPrefix = InterledgerAddress.of("g.foo.");
-    try {
-      addressPrefix.with("  ");
-    } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
-      throw e;
-    }
+    addressPrefix.with("  ");
   }
 
   /**
@@ -128,14 +120,7 @@ public class InterledgerAddressTest {
   @Test(expected = IllegalArgumentException.class)
   public void testDestinationAddressWithoutEnoughSegments() {
     final String destinationAddressString = "g.foo";
-    try {
-      InterledgerAddress.of(destinationAddressString);
-    } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE,
-          destinationAddressString))
-      );
-      throw e;
-    }
+    InterledgerAddress.of(destinationAddressString);
   }
 
   @Test

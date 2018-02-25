@@ -6,7 +6,6 @@ import org.immutables.value.Value;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Interledger Protocol (ILP) Addresses identify Ledger accounts (or groups of Ledger accounts) in
@@ -32,16 +31,7 @@ import java.util.regex.Pattern;
  */
 public interface InterledgerAddress {
 
-  String ADDRESS_PREFIX_REGEX = "(?=^.{1,1023}$)"
-      + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])*$";
-  Pattern ADDRESS_PREFIX_PATTERN = Pattern.compile(ADDRESS_PREFIX_REGEX);
-
-  String DESTINATION_ADDRESS_REGEX = "(?=^.{1,1023}$)"
-      + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])+[a-zA-Z0-9_~-]+$";
-  Pattern DESTINATION_ADDRESS_PATTERN = Pattern.compile(DESTINATION_ADDRESS_REGEX);
-
-  String ROOT_REGEX = "^(g|private|example|peer|self|test[1-3]?)[.]$";
-  Pattern ROOT_PATTERN = Pattern.compile(ROOT_REGEX);
+  InterledgerAddressParser ADDRESS_PARSER = new InterledgerAddressParser();
 
   /**
    * Constructor to allow quick construction from a String representation of an ILP address.
@@ -67,9 +57,8 @@ public interface InterledgerAddress {
    */
   static boolean isValid(final String value) {
     Objects.requireNonNull(value);
-    return (value.endsWith(".") ? ADDRESS_PREFIX_PATTERN : DESTINATION_ADDRESS_PATTERN)
-        .matcher(value)
-        .matches();
+    ADDRESS_PARSER.validate(value);
+    return true;
   }
 
   /**
@@ -303,7 +292,7 @@ public interface InterledgerAddress {
     // Alternate implementation (Note: A prefix is a root prefix if it has only a single period)
     // final int numPeriods = getValue().length() - getValue().replaceAll("[.!?]+", "").length();
     // return numPeriods == 1;
-    return ROOT_PATTERN.matcher(this.getValue()).matches();
+    return ADDRESS_PARSER.isSchemePrefix(getValue());
   }
 
   @Immutable
@@ -316,10 +305,7 @@ public interface InterledgerAddress {
      */
     @Value.Check
     void check() {
-      if (!InterledgerAddress.isValid(getValue())) {
-        throw new IllegalArgumentException(String.format("Invalid characters in address: ['%s']. "
-            + "Reference Interledger ILP-RFC-15 for proper format.", getValue()));
-      }
+      InterledgerAddress.isValid(getValue());
     }
   }
 
