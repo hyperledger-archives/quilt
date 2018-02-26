@@ -74,12 +74,11 @@ public class InterledgerAddressTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testAddressWithBlank() {
-    final String value = "g.foo.  ";
     final InterledgerAddress addressPrefix = InterledgerAddress.of("g.foo.");
     try {
       addressPrefix.with("  ");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
       throw e;
     }
   }
@@ -126,13 +125,10 @@ public class InterledgerAddressTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testDestinationAddressWithoutEnoughSegments() {
-    final String destinationAddressString = "g.foo";
     try {
-      InterledgerAddress.of(destinationAddressString);
+      InterledgerAddress.of("g.foo");
     } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE,
-          destinationAddressString))
-      );
+      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
       throw e;
     }
   }

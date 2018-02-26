@@ -95,33 +95,30 @@ public class InterledgerAddressSchemeTest {
    */
   @Test(expected = IllegalArgumentException.class)
   public void test_address_with_only_scheme_address() throws Exception {
-    final String value = this.scheme;
     try {
       InterledgerAddress.builder().value(this.scheme).build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
       throw e;
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void test_destination_address_with_invalid_scheme() throws Exception {
-    final String value = this.scheme + "1.foo";
     try {
-      InterledgerAddress.builder().value(value).build();
+      InterledgerAddress.builder().value(this.scheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
       throw e;
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void test_prefix_with_invalid_scheme() throws Exception {
-    final String value = this.scheme + "1.foo.";
     try {
       InterledgerAddress.builder().value(this.scheme + "1.foo.").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
       throw e;
     }
   }
