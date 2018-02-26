@@ -305,7 +305,11 @@ public interface InterledgerAddress {
      */
     @Value.Check
     void check() {
-      InterledgerAddress.isValid(getValue());
+      try {
+        InterledgerAddress.isValid(getValue());
+      } catch (final IllegalArgumentException e) {
+        throw new IllegalArgumentException("Address is invalid", e);
+      }
     }
   }
 

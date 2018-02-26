@@ -18,6 +18,7 @@ public class InterledgerAddressTest {
 
   private static final boolean IS_LEDGER_PREFIX = true;
   private static final boolean IS_NOT_LEDGER_PREFIX = false;
+  private static final String EXPECTED_ERROR_MESSAGE = "Address is invalid";
 
   @Test
   public void testGetValue() {
@@ -73,8 +74,14 @@ public class InterledgerAddressTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testAddressWithBlank() {
+    final String value = "g.foo.  ";
     final InterledgerAddress addressPrefix = InterledgerAddress.of("g.foo.");
-    addressPrefix.with("  ");
+    try {
+      addressPrefix.with("  ");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      throw e;
+    }
   }
 
   /**
@@ -120,7 +127,14 @@ public class InterledgerAddressTest {
   @Test(expected = IllegalArgumentException.class)
   public void testDestinationAddressWithoutEnoughSegments() {
     final String destinationAddressString = "g.foo";
-    InterledgerAddress.of(destinationAddressString);
+    try {
+      InterledgerAddress.of(destinationAddressString);
+    } catch (final IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE,
+          destinationAddressString))
+      );
+      throw e;
+    }
   }
 
   @Test

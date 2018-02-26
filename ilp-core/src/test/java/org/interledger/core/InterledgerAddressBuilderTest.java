@@ -11,6 +11,8 @@ import org.junit.Test;
  */
 public class InterledgerAddressBuilderTest {
 
+  private static final String EXPECTED_ERROR_MESSAGE = "Address is invalid";
+
   private static final String TEST1_US_USD_BOB = "test1.us.usd.bob";
   private static final String TEST1_US_USD = "test1.us.usd.";
   private static final String JUST_RIGHT =
@@ -69,22 +71,46 @@ public class InterledgerAddressBuilderTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void test_empty_address() {
-    InterledgerAddress.builder().value("").build();
+    final String value = "";
+    try {
+      InterledgerAddress.builder().value(value).build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      throw e;
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void test_blank_address() {
-    InterledgerAddress.builder().value("  ").build();
+    final String value = "  ";
+    try {
+      InterledgerAddress.builder().value(value).build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      throw e;
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void test_address_with_space() {
-    InterledgerAddress.builder().value(TEST1_US_USD_BOB + " space").build();
+    final String value = TEST1_US_USD_BOB + " space";
+    try {
+      InterledgerAddress.builder().value(value).build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      throw e;
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void test_address_too_long() {
-    InterledgerAddress.builder().value(TOO_LONG).build();
+    final String value = TOO_LONG;
+    try {
+      InterledgerAddress.builder().value(value).build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(EXPECTED_ERROR_MESSAGE, value)));
+      throw e;
+    }
   }
 
   @Test
