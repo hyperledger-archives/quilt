@@ -63,8 +63,9 @@ final class InterledgerAddressParser {
    * Validates an ILP address.
    * 
    * @param addressString The ILP address to validate
+   * @throws IllegalArgumentException When validation is rejected
    */
-  void validate(final String addressString) {
+  void validate(final String addressString) throws IllegalArgumentException {
     if (isFullyValid(addressString)) {
       return;
     }
