@@ -8,6 +8,7 @@ import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.ME
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE1;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE2;
 
+import com.google.common.collect.ImmutableList;
 import org.interledger.cryptoconditions.ThresholdSha256Condition.AbstractThresholdSha256Condition;
 import org.interledger.cryptoconditions.der.DerEncodingException;
 import org.interledger.cryptoconditions.helpers.TestConditionFactory;
@@ -63,7 +64,7 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
   }
 
   /**
-   * Constructs a Threshold Fulfillment using two duplicate fulfillments, and asserts that only one
+   * Constructs a Threshold Condition using two duplicate conditions, and asserts that only one
    * is used in total.
    */
   @Test
@@ -85,8 +86,8 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
   }
 
   /**
-   * Constructs a Threshold Fulfillment using two duplicate fulfillments, and asserts that only one
-   * is used in total.
+   * Constructs a Threshold Condition using two conditions, and asserts that the
+   * resulting conditions is valid.
    */
   @Test
   public void testOneOfTwoThresholdCondition() {
@@ -106,6 +107,29 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
         is("cFYYmVSDhC_rSX6DPWQUTwG7iuWpQODWJXffjL8ROXM"));
     assertThat(condition.getCost(), is(2094L));
     assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
+  }
+
+  /**
+   * Constructs a Threshold Condition using an immutable list of two conditions, and asserts that
+   * the resulting condition is valid.
+   */
+  @Test
+  public void testImmutableListOfSubconditions() {
+      final PreimageSha256Condition subcondition1 = TestConditionFactory
+          .constructPreimageCondition(PREIMAGE1);
+      final PreimageSha256Condition subcondition2 = TestConditionFactory
+          .constructPreimageCondition(PREIMAGE2);
+
+
+      final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
+              1, ImmutableList.of(subcondition1, subcondition2)
+      );
+
+      assertThat(condition.getSubtypes().contains(CryptoConditionType.PREIMAGE_SHA256), is(true));
+      assertThat(condition.getFingerprintBase64Url(),
+              is("cFYYmVSDhC_rSX6DPWQUTwG7iuWpQODWJXffjL8ROXM"));
+      assertThat(condition.getCost(), is(2094L));
+      assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
   }
 
   @Test(expected = IllegalArgumentException.class)
