@@ -297,6 +297,22 @@ public class InterledgerAddressTest {
   }
 
   /**
+   * Assert that a non-address prefix fails the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
+   * check with the provided message.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testRequireAddressPrefixNotAddressPrefixWithMessage() {
+    try {
+      InterledgerAddress.requireAddressPrefix(InterledgerAddress.of("example.bar.baz"),
+          "Destination addresses are disallowed");
+      fail("Should have thrown an IllegalArgumentException!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("Destination addresses are disallowed"));
+      throw e;
+    }
+  }
+
+  /**
    * Assert that a address prefix passes the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
    * check.
    */
@@ -338,6 +354,22 @@ public class InterledgerAddressTest {
       assertThat(e.getMessage(), is(
           "InterledgerAddress 'example.bar.' must NOT be an Address Prefix ending with a dot (.)")
       );
+      throw e;
+    }
+  }
+
+  /**
+   * Assert that a address prefix fails the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
+   * check with the provided message.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testRequireNotAddressPrefixIsAddressPrefixWithErrorMessage() {
+    try {
+      InterledgerAddress.requireNotAddressPrefix(InterledgerAddress.of("example.bar."),
+          "Address prefixes are disallowed");
+      fail("Should have thrown an IllegalArgumentException!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("Address prefixes are disallowed"));
       throw e;
     }
   }
