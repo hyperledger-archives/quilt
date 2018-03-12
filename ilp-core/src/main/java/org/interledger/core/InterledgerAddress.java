@@ -98,7 +98,7 @@ public interface InterledgerAddress {
    * </pre>
    * </blockquote>
    *
-   * @param addressPrefix A {@link InterledgerAddress} to check.
+   * @param address A {@link InterledgerAddress} to check.
    * @param errorMessage An error message to output upon invalidation.
    *
    * @return {@code ledgerPrefix} if its value ends with a dot (.).
@@ -106,21 +106,21 @@ public interface InterledgerAddress {
    * @throws IllegalArgumentException if the supplied Interledger address is not a
    *     ledger-prefix. Embeds the {@code errorMessage}.
    */
-  static InterledgerAddress requireAddressPrefix(final InterledgerAddress addressPrefix,
+  static InterledgerAddress requireAddressPrefix(final InterledgerAddress address,
       final String errorMessage) {
-    Objects.requireNonNull(addressPrefix, (errorMessage != null)
+    Objects.requireNonNull(address, (errorMessage != null)
         ? errorMessage
-        : "addressPrefix must not be null!"
+        : "InterledgerAddress must not be null!"
     );
-    if (!addressPrefix.isLedgerPrefix()) {
+    if (!address.isLedgerPrefix()) {
       throw new IllegalArgumentException((errorMessage != null)
           ? errorMessage
           : String.format("InterledgerAddress '%s' must be an Address Prefix ending with a dot (.)",
-              addressPrefix.getValue()
+              address.getValue()
           )
       );
     } else {
-      return addressPrefix;
+      return address;
     }
   }
 
@@ -163,7 +163,7 @@ public interface InterledgerAddress {
    * </pre>
    * </blockquote>
    *
-   * @param addressPrefix A {@link InterledgerAddress} to check.
+   * @param address A {@link InterledgerAddress} to check.
    * @param errorMessage An error message to output upon invalidation.
    *
    * @return {@code addressPrefix} if its value ends with a dot (.).
@@ -171,22 +171,22 @@ public interface InterledgerAddress {
    * @throws IllegalArgumentException if the supplied Interledger address is not a
    *     ledger-prefix. Embeds the {@code errorMessage}.
    */
-  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress addressPrefix,
+  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address,
       final String errorMessage) {
-    Objects.requireNonNull(addressPrefix, (errorMessage != null)
+    Objects.requireNonNull(address, (errorMessage != null)
         ? errorMessage
-        : "addressPrefix must not be null!"
+        : "InterledgerAddress must not be null!"
     );
-    if (addressPrefix.isLedgerPrefix()) {
+    if (address.isLedgerPrefix()) {
       throw new IllegalArgumentException((errorMessage != null)
           ? errorMessage
           : String.format(
               "InterledgerAddress '%s' must NOT be an Address Prefix ending with a dot (.)",
-              addressPrefix.getValue()
+              address.getValue()
           )
       );
     } else {
-      return addressPrefix;
+      return address;
     }
   }
 

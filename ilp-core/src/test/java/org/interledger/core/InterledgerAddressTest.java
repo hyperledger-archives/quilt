@@ -275,7 +275,7 @@ public class InterledgerAddressTest {
       fail("Should have thrown an NullPointerException!");
     } catch (NullPointerException e) {
       assertThat(e.getMessage(),
-          is("addressPrefix must not be null!"));
+          is("InterledgerAddress must not be null!"));
       throw e;
     }
   }
@@ -336,7 +336,7 @@ public class InterledgerAddressTest {
       fail("Should have thrown an NullPointerException!");
     } catch (NullPointerException e) {
       assertThat(e.getMessage(),
-          is("addressPrefix must not be null!"));
+          is("InterledgerAddress must not be null!"));
       throw e;
     }
   }
