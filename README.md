@@ -48,3 +48,37 @@ using the Octet Encoding Rules (OER).
 Dev-ops is a module for shared build and test tools
 
 [READ MORE](./dev-ops)
+
+## Usage
+
+### Requirements
+
+#### Maven
+This project uses Maven to manage dependencies and other aspects of the build. 
+To install Maven, follow the instructions at [https://maven.apache.org/install.html](https://maven.apache.org/install.html).
+
+#### Unlimited Strength Encryption Policy Files 
+In order to properly build this project, you must download and install Java Cryptography Extension 
+(JCE) Unlimited Strength Jurisdiction Policy files. For more details, follow the instructions 
+[here](http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html). 
+
+### Get the code
+
+``` sh
+git clone https://github.com/hyperledger/quilt
+cd quilt/crypto-conditions
+```
+
+### Build the Project
+To build the project, execute the following command:
+
+```bash
+$ mvn clean install
+```
+
+#### Checkstyle
+The project uses checkstyle to keep code style consistent. All Checkstyle checks are run by default during the build, but if you would like to run checkstyle checks, use the following command:
+
+```bash
+$ mvn checkstyle:checkstyle
+```
