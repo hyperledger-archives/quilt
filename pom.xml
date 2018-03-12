@@ -97,7 +97,6 @@
     <module>ilp-annotations</module>
     <module>jackson-datatypes</module>
     <module>ilp-core-codecs</module>
-    <module>connector-examples</module>
     <!-- TODO Add new modules with PSK and IPR code
         <module>core-transport-psk</module>
         <module>core-transport-ipr</module>
