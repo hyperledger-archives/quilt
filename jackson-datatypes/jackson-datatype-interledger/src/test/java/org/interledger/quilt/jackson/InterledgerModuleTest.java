@@ -69,6 +69,7 @@ public class InterledgerModuleTest {
 
   /**
    * Get test parameters.
+   *
    * @return the parameters for the tests
    */
   @Parameters

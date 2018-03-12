@@ -4,11 +4,8 @@ import org.interledger.annotations.Immutable;
 
 import org.immutables.value.Value;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Interledger Protocol (ILP) Addresses identify Ledger accounts (or groups of Ledger accounts) in
@@ -34,13 +31,7 @@ import java.util.regex.Pattern;
  */
 public interface InterledgerAddress {
 
-  String ADDRPRFX_REGEX = "(?=^.{1,1023}$)"
-      + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])*$";
-  Pattern ADDRPRFX_PATTERN = Pattern.compile(ADDRPRFX_REGEX);
-
-  String DESTADDR_REGEX = "(?=^.{1,1023}$)"
-      + "^(g|private|example|peer|self|test[1-3]?)[.]([a-zA-Z0-9_~-]+[.])+[a-zA-Z0-9_~-]+$";
-  Pattern DESTADDR_PATTERN = Pattern.compile(DESTADDR_REGEX);
+  InterledgerAddressParser ADDRESS_PARSER = new InterledgerAddressParser();
 
   /**
    * Constructor to allow quick construction from a String representation of an ILP address.
@@ -54,8 +45,8 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Helper method to determine if an Interledger Address conforms to the specifications
-   * outlined in Interledger RFC #15.
+   * Helper method to determine if an Interledger Address conforms to the specifications outlined in
+   * Interledger RFC #15.
    *
    * @param value A {@link String} representing a potential Interledger Address value.
    *
@@ -66,8 +57,8 @@ public interface InterledgerAddress {
    */
   static boolean isValid(final String value) {
     Objects.requireNonNull(value);
-    return (value.endsWith(".") ? ADDRPRFX_PATTERN : DESTADDR_PATTERN).matcher(value)
-        .matches();
+    ADDRESS_PARSER.validate(value);
+    return true;
   }
 
   /**
@@ -290,9 +281,6 @@ public interface InterledgerAddress {
     return isRootPrefix() == false;
   }
 
-  String ROOT_REGEX = "^(g|private|example|peer|self|test[1-3])[.]$";
-  Pattern ROOT_PATTERN = Pattern.compile(ROOT_REGEX);
-
   /**
    * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of: "g.",
    * "private.", "example.", "peer.", "self.", "test1.", "test2.", or "test3.". Any other kind of
@@ -304,7 +292,7 @@ public interface InterledgerAddress {
     // Alternate implementation (Note: A prefix is a root prefix if it has only a single period)
     // final int numPeriods = getValue().length() - getValue().replaceAll("[.!?]+", "").length();
     // return numPeriods == 1;
-    return ROOT_PATTERN.matcher(this.getValue()).matches();
+    return ADDRESS_PARSER.isSchemePrefix(getValue());
   }
 
   @Immutable
@@ -317,9 +305,10 @@ public interface InterledgerAddress {
      */
     @Value.Check
     void check() {
-      if (!InterledgerAddress.isValid(getValue())) {
-        throw new IllegalArgumentException(String.format("Invalid characters in address: ['%s']. "
-            + "Reference Interledger ILP-RFC-15 for proper format.", getValue()));
+      try {
+        InterledgerAddress.isValid(getValue());
+      } catch (final IllegalArgumentException e) {
+        throw new IllegalArgumentException("Address is invalid", e);
       }
     }
   }

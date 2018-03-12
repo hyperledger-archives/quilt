@@ -43,23 +43,21 @@ public interface ThresholdSha256Condition extends CompoundSha256Condition {
   /**
    * <p>Constructs an instance of {@link ThresholdSha256Condition}.</p>
    *
-   * <p>Concurrency Note: This method will create a shallow-copy of {@code subconditions} before
-   * performing any validation, business logic, or object construction. For more scenarios, this
-   * will provide adequate immutability for any operations performed  by this method. However,
-   * during the brief period of time that this method is operating, callers should not consider this
-   * method to be thread-safe. This is because another thread could mutate the subconditions list
-   * (e.g., by adding or removing a condition), which may cause unpredictable behavior. Thus, if
-   * thread-safety is required when calling this method, be sure to guard against any concurrency
-   * issues in your system, perhaps by passing-in an immutable copy of subconditions before calling
-   * this method. Finally, for purposes of this method, shallow-copies are adequate because all
-   * instance of {@link Condition} are immutable, and thus thread-safe, so one this method finishes
-   * operation, the returned object will be fully immutable.</p>
+   * <p>Concurrency Note: This method will create a shallow-copy of both {@code subconditions} and
+   * {@code subfulfillments} before performing any operations, in order to guard against external
+   * list mutations. During the brief period of time that this method is shallow-copying, callers
+   * should not consider this method to be thread-safe. This is because another thread could mutate
+   * the lists (e.g., by adding or removing a sub-condition), which may cause unpredictable
+   * behavior. In addition, this method assumes the sub-condition and sub-fulfillment
+   * implementations are immutable, making shallow-copy operations sufficient to protect against
+   * external list mutation. However, if your environment uses mutable implementations of either
+   * {@link Condition} or {@link Fulfillment}, such shallow-copying may not be sufficient.</p>
    *
    * @param threshold     Determines the threshold that is used to consider this condition
    *                      fulfilled. If the number of valid subfulfillments in a {@link
    *                      ThresholdSha256Fulfillment} is greater or equal to this number, this
    *                      threshold condition will be considered to be fulfilled.
-   * @param subconditions A set from subconditions that this condition is dependent on.
+   * @param subconditions A set from sub-conditions that this condition is dependent on.
    *
    * @return A newly created, immutable instance of {@link ThresholdSha256Condition}.
    */
@@ -70,7 +68,6 @@ public interface ThresholdSha256Condition extends CompoundSha256Condition {
     // subconditions list. See Javadoc for suggestions related to thread-safety and this method.
     final List<Condition> immutableSubconditions = subconditions.stream()
         .collect(Collectors.toList());
-
     if (threshold > immutableSubconditions.size()) {
       throw new IllegalArgumentException(
           "Threshold must be less than or equal to the number of subconditions!");
@@ -238,15 +235,17 @@ public interface ThresholdSha256Condition extends CompoundSha256Condition {
       Objects.requireNonNull(subconditions);
 
       // Sort by cost
-      subconditions.sort((Condition c1, Condition c2) -> (int) (c2.getCost() - c1.getCost()));
+      List<Condition> sortedSubconditions = subconditions.stream()
+              .sorted((Condition c1, Condition c2) -> (int) (c2.getCost() - c1.getCost()))
+              .collect(Collectors.toList());
 
       // Count only up to the threshold...
       long largestCosts = 0;
       for (int i = 0; i < threshold; i++) {
-        largestCosts += subconditions.get(i).getCost();
+        largestCosts += sortedSubconditions.get(i).getCost();
       }
 
-      return largestCosts + (subconditions.size() * 1024);
+      return largestCosts + (sortedSubconditions.size() * 1024);
     }
 
     /**
