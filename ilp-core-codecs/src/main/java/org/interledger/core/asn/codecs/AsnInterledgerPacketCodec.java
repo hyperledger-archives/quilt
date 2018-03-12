@@ -6,8 +6,10 @@ import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
+import org.interledger.encoding.asn.framework.AsnObjectCodec;
 import org.interledger.encoding.asn.framework.CodecException;
 
 /**
@@ -52,13 +54,13 @@ public class AsnInterledgerPacketCodec<T extends InterledgerPacket> extends AsnS
     //The packet type has been set so set the packet data
     switch (typeId) {
       case InterledgerPacketTypes.PREPARE:
-        setCodecAt(1, new AsnInterledgerPreparePacketDataCodec());
+        setCodecAt(1, new AsnOpenTypeCodec<>(new AsnInterledgerPreparePacketDataCodec()));
         return;
       case InterledgerPacketTypes.FULFILL:
-        setCodecAt(1, new AsnInterledgerFulfillPacketDataCodec());
+        setCodecAt(1, new AsnOpenTypeCodec<>(new AsnInterledgerFulfillPacketDataCodec()));
         return;
       case InterledgerPacketTypes.REJECT:
-        setCodecAt(1, new AsnInterledgerRejectPacketDataCodec());
+        setCodecAt(1, new AsnOpenTypeCodec<>(new AsnInterledgerRejectPacketDataCodec()));
         return;
       default:
         throw new CodecException(
