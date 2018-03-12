@@ -3,6 +3,8 @@ package org.interledger.core;
 import org.interledger.annotations.Immutable;
 import org.interledger.cryptoconditions.PreimageSha256Condition;
 
+import org.immutables.value.Value.Default;
+
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
@@ -76,6 +78,11 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerPreparePacket implements InterledgerPreparePacket {
 
+    @Override
+    @Default
+    public byte[] getData() {
+      return new byte[0];
+    }
   }
 
 }

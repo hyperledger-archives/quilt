@@ -3,6 +3,8 @@ package org.interledger.core;
 import org.interledger.annotations.Immutable;
 import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 
+import org.immutables.value.Value.Default;
+
 import java.util.Arrays;
 
 public interface InterledgerFulfillPacket extends InterledgerPacket {
@@ -29,6 +31,11 @@ public interface InterledgerFulfillPacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerFulfillPacket implements InterledgerFulfillPacket {
 
+    @Override
+    @Default
+    public byte[] getData() {
+      return new byte[0];
+    }
   }
 
 }

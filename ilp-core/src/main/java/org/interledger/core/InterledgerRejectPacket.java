@@ -2,6 +2,8 @@ package org.interledger.core;
 
 import org.interledger.annotations.Immutable;
 
+import org.immutables.value.Value.Default;
+
 import java.util.Arrays;
 
 public interface InterledgerRejectPacket extends InterledgerPacket {
@@ -47,5 +49,10 @@ public interface InterledgerRejectPacket extends InterledgerPacket {
   @Immutable
   abstract class AbstractInterledgerRejectPacket implements InterledgerRejectPacket {
 
+    @Override
+    @Default
+    public byte[] getData() {
+      return new byte[0];
+    }
   }
 }

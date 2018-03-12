@@ -64,10 +64,8 @@ public class InterledgerPreparePacketTest {
           .executionCondition(mock(PreimageSha256Condition.class))
           .expiresAt(Instant.now())
           .build();
-      fail();
     } catch (IllegalStateException e) {
-      assert (e.getMessage().startsWith("Cannot build InterledgerPreparePacket, "
-          + "some of required attributes are not set"));
+      fail();
     }
 
     //No expiry
@@ -76,7 +74,6 @@ public class InterledgerPreparePacketTest {
           .destination(mock(InterledgerAddress.class))
           .amount(mock(BigInteger.class))
           .executionCondition(mock(PreimageSha256Condition.class))
-          .data(new byte[]{})
           .build();
       fail();
     } catch (IllegalStateException e) {
@@ -90,7 +87,6 @@ public class InterledgerPreparePacketTest {
           .destination(mock(InterledgerAddress.class))
           .amount(mock(BigInteger.class))
           .expiresAt(Instant.now())
-          .data(new byte[]{})
           .build();
       fail();
     } catch (IllegalStateException e) {
@@ -104,7 +100,6 @@ public class InterledgerPreparePacketTest {
           .destination(mock(InterledgerAddress.class))
           .executionCondition(mock(PreimageSha256Condition.class))
           .expiresAt(Instant.now())
-          .data(new byte[]{})
           .build();
       fail();
     } catch (IllegalStateException e) {
@@ -119,7 +114,6 @@ public class InterledgerPreparePacketTest {
           .amount(mock(BigInteger.class))
           .executionCondition(mock(PreimageSha256Condition.class))
           .expiresAt(Instant.now())
-          .data(new byte[]{})
           .build();
       fail();
     } catch (IllegalStateException e) {
@@ -133,7 +127,6 @@ public class InterledgerPreparePacketTest {
             .amount(mock(BigInteger.class))
             .executionCondition(mock(PreimageSha256Condition.class))
             .expiresAt(Instant.now())
-            .data(new byte[]{})
             .build();
     assertThat(interledgerPreparePacket, is(not(nullValue())));
   }
