@@ -95,6 +95,11 @@ public class InterledgerAddressParserTest {
   }
 
   @Test(expected = NullPointerException.class)
+  public void testRequireAddressPrefixWithNullErrorMessage() {
+      addressParser.requireAddressPrefix(InterledgerAddress.of("g."), null);
+  }
+
+  @Test(expected = NullPointerException.class)
   public void testRequireAddressPrefixWithNullAddressAndErrorMessage() {
     try {
       addressParser.requireAddressPrefix(null, "An address prefix is mandatory");
@@ -126,8 +131,6 @@ public class InterledgerAddressParserTest {
     }
   }
 
-
-
   @Test
   public void testRequireNotAddressPrefix() {
     assertThat(addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo.bar")),
@@ -144,6 +147,11 @@ public class InterledgerAddressParserTest {
       assertThat(e.getMessage(), is("InterledgerAddress must not be null!"));
       throw e;
     }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testRequireNotAddressPrefixWithNullErrorMessage() {
+      addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo.bar"), null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -177,8 +185,6 @@ public class InterledgerAddressParserTest {
       throw e;
     }
   }
-
-
 
   @Test
   public void testValidate() {
