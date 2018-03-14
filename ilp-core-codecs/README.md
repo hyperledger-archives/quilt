@@ -24,7 +24,6 @@ final InterledgerPreparePacket packet
   .executionCondition(
       PreimageSha256Condition.fromCostAndFingerprint(32, preimage))
   .expiresAt(Instant.now().plus().plusSeconds(30))
-  .data(new byte[] {})
   .build();
 
 context.write(packet, outputStream);
