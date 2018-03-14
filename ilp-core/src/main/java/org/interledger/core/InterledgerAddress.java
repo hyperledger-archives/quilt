@@ -62,7 +62,7 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Checks and requires that the specified {@code addressPrefix} is an address prefix per {@link
+   * Checks and requires that the specified {@code address} is an address prefix per {@link
    * InterledgerAddress#isLedgerPrefix()}.
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
@@ -74,18 +74,18 @@ public interface InterledgerAddress {
    * </pre>
    * </blockquote>
    *
-   * @param addressPrefix A {@link InterledgerAddress} to check.
+   * @param address A {@link InterledgerAddress} to check.
    *
-   * @return {@code ledgerPrefix} if its value ends with a dot (.).
+   * @return {@code address} if its value ends with a dot (.).
    *
    * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
    */
-  static InterledgerAddress requireAddressPrefix(final InterledgerAddress addressPrefix) {
-    return requireAddressPrefix(addressPrefix, null);
+  static InterledgerAddress requireAddressPrefix(final InterledgerAddress address) {
+    return requireAddressPrefix(address, null);
   }
 
   /**
-   * Checks and requires that the specified {@code addressPrefix} is an address prefix per {@link
+   * Checks and requires that the specified {@code address} is an address prefix per {@link
    * InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
@@ -101,7 +101,7 @@ public interface InterledgerAddress {
    * @param address A {@link InterledgerAddress} to check.
    * @param errorMessage An error message to output upon invalidation.
    *
-   * @return {@code ledgerPrefix} if its value ends with a dot (.).
+   * @return {@code address} if its value ends with a dot (.).
    *
    * @throws IllegalArgumentException if the supplied Interledger address is not a
    *     ledger-prefix. Embeds the {@code errorMessage}.
@@ -125,7 +125,7 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Checks and requires that the specified {@code addressPrefix} is not an address prefix per
+   * Checks and requires that the specified {@code address} is not an address prefix per
    * {@link InterledgerAddress#isLedgerPrefix()}.
    *
    *
@@ -138,18 +138,18 @@ public interface InterledgerAddress {
    * </pre>
    * </blockquote>
    *
-   * @param addressPrefix A {@link InterledgerAddress} to check.
+   * @param address A {@link InterledgerAddress} to check.
    *
-   * @return {@code addressPrefix} if its value ends with a dot (.).
+   * @return {@code address} if its value ends with a dot (.).
    *
    * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
    */
-  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress addressPrefix) {
-    return requireNotAddressPrefix(addressPrefix, null);
+  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address) {
+    return requireNotAddressPrefix(address, null);
   }
 
   /**
-   * Checks and requires that the specified {@code addressPrefix} is not an address prefix per
+   * Checks and requires that the specified {@code address} is not an address prefix per
    * {@link InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.
    *
    *
@@ -166,7 +166,7 @@ public interface InterledgerAddress {
    * @param address A {@link InterledgerAddress} to check.
    * @param errorMessage An error message to output upon invalidation.
    *
-   * @return {@code addressPrefix} if its value ends with a dot (.).
+   * @return {@code address} if its value ends with a dot (.).
    *
    * @throws IllegalArgumentException if the supplied Interledger address is not a
    *     ledger-prefix. Embeds the {@code errorMessage}.
