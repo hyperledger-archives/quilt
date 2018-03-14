@@ -281,6 +281,22 @@ public class InterledgerAddressTest {
   }
 
   /**
+   * Assert that {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)} fails with a
+   * <tt>null</tt> address prefix and a provided error message.
+   */
+  @Test(expected = NullPointerException.class)
+  public void testRequireLedgerPrefixWithNullPrefixAndErrorMessage() {
+    try {
+      InterledgerAddress.requireAddressPrefix(null, "An address prefix is mandatory");
+      fail("Should have thrown an NullPointerException!");
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(),
+          is("An address prefix is mandatory"));
+      throw e;
+    }
+  }
+
+  /**
    * Assert that a non-address prefix fails the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
    * check.
    */
@@ -298,16 +314,16 @@ public class InterledgerAddressTest {
 
   /**
    * Assert that a non-address prefix fails the {@link InterledgerAddress#requireAddressPrefix(InterledgerAddress)}
-   * check with the provided message.
+   * check with the provided error message.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void testRequireAddressPrefixNotAddressPrefixWithMessage() {
+  public void testRequireAddressPrefixNotAddressPrefixWithErrorMessage() {
     try {
       InterledgerAddress.requireAddressPrefix(InterledgerAddress.of("example.bar.baz"),
-          "Destination addresses are disallowed");
+          "An address prefix is mandatory");
       fail("Should have thrown an IllegalArgumentException!");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("Destination addresses are disallowed"));
+      assertThat(e.getMessage(), is("An address prefix is mandatory"));
       throw e;
     }
   }
@@ -342,6 +358,22 @@ public class InterledgerAddressTest {
   }
 
   /**
+   * Assert that {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)} fails with a
+   * <tt>null</tt> address prefix and a provided error message.
+   */
+  @Test(expected = NullPointerException.class)
+  public void testRequireNotAddressPrefixWithNullPrefixAndErrorMessage() {
+    try {
+      InterledgerAddress.requireNotAddressPrefix(null, "A destination address is mandatory");
+      fail("Should have thrown an NullPointerException!");
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(),
+          is("A destination address is mandatory"));
+      throw e;
+    }
+  }
+
+  /**
    * Assert that a address prefix fails the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
    * check.
    */
@@ -360,16 +392,16 @@ public class InterledgerAddressTest {
 
   /**
    * Assert that a address prefix fails the {@link InterledgerAddress#requireNotAddressPrefix(InterledgerAddress)}
-   * check with the provided message.
+   * check with the provided error message.
    */
   @Test(expected = IllegalArgumentException.class)
   public void testRequireNotAddressPrefixIsAddressPrefixWithErrorMessage() {
     try {
       InterledgerAddress.requireNotAddressPrefix(InterledgerAddress.of("example.bar."),
-          "Address prefixes are disallowed");
+          "A destination address is mandatory");
       fail("Should have thrown an IllegalArgumentException!");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("Address prefixes are disallowed"));
+      assertThat(e.getMessage(), is("A destination address is mandatory"));
       throw e;
     }
   }
