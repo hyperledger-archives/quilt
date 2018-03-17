@@ -2,6 +2,7 @@ package org.interledger.core;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,7 @@ final class InterledgerAddressParser {
    * @throws IllegalArgumentException When validation is rejected
    */
   void validate(final String addressString) throws IllegalArgumentException {
+    Objects.requireNonNull(addressString); // No error-message because this should never happen
     if (isFullyValid(addressString)) {
       return;
     }
@@ -58,6 +60,7 @@ final class InterledgerAddressParser {
    * @return True if address is a scheme prefix, false otherwise
    */
   boolean isSchemePrefix(final String addressString) {
+    Objects.requireNonNull(addressString); // No error-message because this should never happen
     return SCHEME_PREFIX_ONLY_PATTERN.matcher(addressString).matches();
   }
 

@@ -363,7 +363,7 @@ public interface InterledgerAddress {
    *     return {@code true}.
    */
   default boolean hasParentPrefix() {
-    // All ILP addresse have a parent prefix, except for Root prefixes.
+    // All ILP addresses have a parent prefix, except for Root prefixes.
     return isRootPrefix() == false;
   }
 
