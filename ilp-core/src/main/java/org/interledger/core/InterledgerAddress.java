@@ -8,24 +8,22 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Interledger Protocol (ILP) Addresses identify Ledger accounts (or groups of Ledger accounts) in
- * an ILP network, and provide a way to route a payment to its intended destination.
+ * <p>Interledger Protocol (ILP) Addresses identify ledger accounts (or groups of ledger accounts)
+ * in an ILP network, and provide a way to route a payment to its intended destination.</p>
  *
  * <p>Interledger Addresses can be subdivided into two categories:</p>
  *
- * <p> <b>Destination Addresses</b> are complete addresses that can receive payments. A destination
+ * <p><b>Destination Addresses</b> are complete addresses that can receive payments. A destination
  * address always maps to one account in a ledger, though it can also provide more specific
  * information, such as an invoice ID or a sub-account. Destination addresses MUST NOT end in a
  * period (.) character. </p>
  *
- * <p> <b>Address Prefixes</b> are incomplete addresses representing a grouping of destination
+ * <p><b>Address Prefixes</b> are incomplete addresses representing a grouping of destination
  * addresses. Many depths of grouping are possible, for example: groups of accounts or sub-accounts;
  * an individual ledger or sub-ledger; or entire neighborhoods of ledgers. Address prefixes MUST end
  * in a period (.) character. </p>
  *
- * <p> The formal specification for an Interledger Addresses is defined in <a
- * href="https://github.com/interledger/rfcs/tree/master/0015-ilp-addresses">Interledger RFC
- * #15</a>. </p>
+ * <p> The formal specification for an Interledger Addresses is defined in Interledger RFC #15.</p>
  *
  * @see "https://github.com/interledger/rfcs/tree/master/0015-ilp-addresses"
  */
@@ -45,15 +43,13 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Helper method to determine if an Interledger Address conforms to the specifications outlined in
-   * Interledger RFC #15.
+   * <p>Helper method to determine if an Interledger Address conforms to the specifications outlined
+   * in Interledger RFC #15.</p>
    *
    * @param value A {@link String} representing a potential Interledger Address value.
    *
    * @return {@code true} if the supplied {@code value} conforms to the requirements of RFC 15;
    *     {@code false} otherwise.
-   *
-   * @see "https://github.com/interledger/rfcs/tree/master/0015-ilp-addresses"
    */
   static boolean isValid(final String value) {
     Objects.requireNonNull(value);
@@ -62,11 +58,13 @@ public interface InterledgerAddress {
   }
 
   /**
-   * Checks and requires that the specified {@code address} is an address prefix per {@link
-   * InterledgerAddressParser#requireAddressPrefix(InterledgerAddress)}.
+   * <p>Checks and requires that the specified {@code address} is an address prefix per {@link
+   * InterledgerAddressParser#requireAddressPrefix(InterledgerAddress)}.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p> <blockquote>
+   * constructors, as demonstrated below:</p>
+   *
+   * <blockquote>
    * <pre>
    * public Foo(InterledgerAddress bar) {
    *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar);
@@ -76,21 +74,23 @@ public interface InterledgerAddress {
    *
    * @param address A {@link InterledgerAddress} to check.
    *
-   * @return {@code address} if its value ends with a dot (.).
+   * @return The supplied {@code address} if its value ends with a dot (.).
    *
-   * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
+   * @throws IllegalArgumentException if the supplied address is not a <tt>ledger-prefix</tt>.
    */
   static InterledgerAddress requireAddressPrefix(final InterledgerAddress address) {
     return ADDRESS_PARSER.requireAddressPrefix(address);
   }
 
   /**
-   * Checks and requires that the specified {@code address} is an address prefix per {@link
-   * InterledgerAddressParser#requireAddressPrefix(InterledgerAddress,String)},
-   * providing an error message upon invalidation.
+   * <p>Checks and requires that the specified {@code address} is an address prefix per {@link
+   * InterledgerAddressParser#requireAddressPrefix(InterledgerAddress, String)}, providing an error
+   * message upon invalidation.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p> <blockquote>
+   * constructors, as demonstrated below:</p>
+   *
+   * <blockquote>
    * <pre>
    * public Foo(InterledgerAddress bar) {
    *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar,
@@ -99,26 +99,27 @@ public interface InterledgerAddress {
    * </pre>
    * </blockquote>
    *
-   * @param address A {@link InterledgerAddress} to check.
+   * @param address      A {@link InterledgerAddress} to check.
    * @param errorMessage An error message to output upon invalidation.
    *
-   * @return {@code address} if its value ends with a dot (.).
+   * @return The supplied {@code address} if its value ends with a dot <tt>(.)</tt>.
    *
-   * @throws IllegalArgumentException if the supplied Interledger address is not a
-   *     ledger-prefix. Embeds the {@code errorMessage}.
+   * @throws IllegalArgumentException if the supplied address is not a ledger-prefix.
    */
-  static InterledgerAddress requireAddressPrefix(final InterledgerAddress address,
-      final String errorMessage) {
+  static InterledgerAddress requireAddressPrefix(
+      final InterledgerAddress address, final String errorMessage
+  ) {
     return ADDRESS_PARSER.requireAddressPrefix(address, errorMessage);
   }
 
   /**
-   * Checks and requires that the specified {@code address} is not an address prefix per
-   * {@link InterledgerAddressParser#requireNotAddressPrefix(InterledgerAddress)}.
-   *
+   * <p>Checks and requires that the specified {@code address} is not an address prefix per {@link
+   * InterledgerAddressParser#requireNotAddressPrefix(InterledgerAddress)}.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p> <blockquote>
+   * constructors, as demonstrated below:</p>
+   *
+   * <blockquote>
    * <pre>
    * public Foo(InterledgerAddress bar) {
    *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar);
@@ -128,71 +129,73 @@ public interface InterledgerAddress {
    *
    * @param address A {@link InterledgerAddress} to check.
    *
-   * @return {@code address} if its value ends with a dot (.).
+   * @return The supplied {@code address} if its value ends with a dot <tt>(.)</tt>.
    *
-   * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
+   * @throws IllegalArgumentException if the supplied address is a ledger-prefix.
    */
   static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address) {
     return ADDRESS_PARSER.requireNotAddressPrefix(address);
   }
 
   /**
-   * Checks and requires that the specified {@code address} is not an address prefix per
-   * {@link InterledgerAddressParser#requireNotAddressPrefix(InterledgerAddress,String)},
-   * providing an error message upon invalidation.
-   *
+   * <p>Checks and requires that the specified {@code address} is not an address prefix per {@link
+   * InterledgerAddressParser#requireNotAddressPrefix(InterledgerAddress, String)}, providing an
+   * error message upon invalidation.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p> <blockquote>
+   * constructors, as demonstrated below:</p>
+   *
+   * <blockquote>
    * <pre>
    * public Foo(InterledgerAddress bar) {
-   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar,
-   *         bar + " must be a destination address");
+   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar, bar + " must be a
+   * destination
+   * address");
    * }
    * </pre>
    * </blockquote>
    *
-   * @param address A {@link InterledgerAddress} to check.
+   * @param address      A {@link InterledgerAddress} to check.
    * @param errorMessage An error message to output upon invalidation.
    *
-   * @return {@code address} if its value ends with a dot (.).
+   * @return The supplied {@code address} if its value ends with a dot (.).
    *
-   * @throws IllegalArgumentException if the supplied Interledger address is not a
-   *     ledger-prefix. Embeds the {@code errorMessage}.
+   * @throws IllegalArgumentException if the supplied address is a ledger-prefix.
    */
-  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address,
-      final String errorMessage) {
+  static InterledgerAddress requireNotAddressPrefix(
+      final InterledgerAddress address, final String errorMessage
+  ) {
     return ADDRESS_PARSER.requireNotAddressPrefix(address, errorMessage);
   }
 
   /**
-   * Get the default builder.
+   * <p>Get the default builder.</p>
    *
-   * @return a {@link InterledgerAddressBuilder} instance.
+   * @return An {@link InterledgerAddressBuilder} instance.
    */
   static InterledgerAddressBuilder builder() {
     return new InterledgerAddressBuilder();
   }
 
   /**
-   * Return this address's value as a non-null {@link String}. For example:
-   * <code>us.usd.bank.account</code>
+   * <p>Accessor for this address's value as a non-null {@link String}. For example:
+   * <code>us.usd.bank.account</code></p>
    *
    * @return A {@link String} representation of this Interledger address.
    */
   String getValue();
 
   /**
-   * Tests if this Interledger address represents a ledger prefix.
+   * <p>Tests if this Interledger address represents a ledger prefix.</p>
    *
-   * @return True if the address is a ledger prefix, false otherwise.
+   * @return {@code true} if the address is a ledger prefix, {@code false} otherwise.
    */
   default boolean isLedgerPrefix() {
     return getValue().endsWith(".");
   }
 
   /**
-   * Tests if this InterledgerAddress starts with the specified {@code addressSegment}.
+   * <p>Tests if this InterledgerAddress starts with the specified {@code addressSegment}.</p>
    *
    * @param addressSegment An {@link String} prefix to compare against.
    *
@@ -200,12 +203,11 @@ public interface InterledgerAddress {
    */
   default boolean startsWith(final String addressSegment) {
     Objects.requireNonNull(addressSegment, "addressSegment must not be null!");
-    return this.getValue()
-        .startsWith(addressSegment);
+    return this.getValue().startsWith(addressSegment);
   }
 
   /**
-   * Tests if this InterledgerAddress starts with the specified {@code interledgerAddress}.
+   * <p>Tests if this InterledgerAddress starts with the specified {@code interledgerAddress}.</p>
    *
    * @param interledgerAddress An {@link InterledgerAddress} prefix to compare against.
    *
@@ -293,11 +295,11 @@ public interface InterledgerAddress {
         // Call getPrefix with the account portion's parent.
         // This means jumping over any destination address (i.e. account portion) in order to
         // traverse address prefixes without hitting destination address restrictions
-        final String parentDestAddr = this.getValue().substring(0,
-            this.getValue().lastIndexOf("."));
-        return Optional.of(InterledgerAddress.of(parentDestAddr.substring(0,
-            parentDestAddr.lastIndexOf(".") + 1)
-        ).getPrefix());
+        final String parentDestAddr = this.getValue()
+            .substring(0, this.getValue().lastIndexOf("."));
+        return Optional.of(InterledgerAddress
+            .of(parentDestAddr.substring(0, parentDestAddr.lastIndexOf(".") + 1)
+            ).getPrefix());
       }
     } else {
       return Optional.of(this.getPrefix());
@@ -320,9 +322,10 @@ public interface InterledgerAddress {
   }
 
   /**
-   * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of: "g.",
-   * "private.", "example.", "peer.", "self.", "test1.", "test2.", or "test3.". Any other kind of
-   * valid ILP address (e.g. "g.1") is not a root prefix.</p>
+   * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of: <tt>g.</tt>,
+   * <tt>private.</tt>, <tt>example.</tt>, <tt>peer.</tt>, <tt>self.</tt>, <tt>test1.</tt>,
+   * <tt>test2.</tt>, or <tt>test3.</tt>. Any other kind of valid ILP address (e.g. "g.1") is not a
+   * root prefix.</p>
    *
    * @return {@code true} if this address is a root prefix; {@code false} otherwise.
    */
