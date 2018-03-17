@@ -121,7 +121,6 @@ public class InterledgerRejectPacketTest {
         .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
         .message(message)
         .triggeredBy(FOO)
-        .data(new byte[]{})
         .build();
 
     final InterledgerRejectPacket interledgerProtocolError2
@@ -129,7 +128,6 @@ public class InterledgerRejectPacketTest {
         .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
         .message(message)
         .triggeredBy(FOO)
-        .data(new byte[]{})
         .build();
 
     assertThat(interledgerProtocolError1, is(interledgerProtocolError2));
@@ -144,7 +142,6 @@ public class InterledgerRejectPacketTest {
         .code(InterledgerErrorCode.T99_APPLICATION_ERROR)
         .message(message)
         .triggeredBy(FOO)
-        .data(new byte[]{})
         .build();
 
     assertFalse(interledgerProtocolError1.equals(interledgerProtocolErrorOther));

@@ -55,8 +55,7 @@ public class InterledgerPreparePacketOerSerializerTests {
             .destination(InterledgerAddress.of("test3.foo.bar"))
             .amount(BigInteger.valueOf(100L))
             .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
-            .expiresAt(Instant.now())
-            .data(new byte[] {}).build()},
+            .expiresAt(Instant.now()).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
