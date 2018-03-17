@@ -37,8 +37,11 @@ public interface InterledgerAddress {
    * @param value String representation of an Interledger Address
    *
    * @return an {@link InterledgerAddress} instance.
+   *
+   * @throws NullPointerException if {@code value} is <tt>null</tt>.
    */
   static InterledgerAddress of(final String value) {
+    Objects.requireNonNull(value, "value must not be null!");
     return new InterledgerAddressBuilder().value(value).build();
   }
 
@@ -50,16 +53,18 @@ public interface InterledgerAddress {
    *
    * @return {@code true} if the supplied {@code value} conforms to the requirements of RFC 15;
    *     {@code false} otherwise.
+   *
+   * @throws NullPointerException if {@code value} is <tt>null</tt>.
    */
   static boolean isValid(final String value) {
-    Objects.requireNonNull(value);
+    Objects.requireNonNull(value, "value must not be null!");
     ADDRESS_PARSER.validate(value);
     return true;
   }
 
   /**
    * <p>Checks and requires that the specified {@code address} is an address prefix per {@link
-   * InterledgerAddressParser#requireAddressPrefix(InterledgerAddress)}.</p>
+   * InterledgerAddress#isLedgerPrefix()}.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
    * constructors, as demonstrated below:</p>
@@ -76,16 +81,28 @@ public interface InterledgerAddress {
    *
    * @return The supplied {@code address} if its value ends with a dot (.).
    *
-   * @throws IllegalArgumentException if the supplied address is not a <tt>ledger-prefix</tt>.
+   * @throws NullPointerException     if the supplied {@code address} is <tt>null</tt>.
+   * @throws IllegalArgumentException if the supplied {@code address} is <tt>not</tt> a
+   *                                  <tt>ledger-prefix</tt>.
    */
   static InterledgerAddress requireAddressPrefix(final InterledgerAddress address) {
-    return ADDRESS_PARSER.requireAddressPrefix(address);
+    Objects.requireNonNull(address, "address must not be null!");
+
+    if (!address.isLedgerPrefix()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "InterledgerAddress '%s' must be an Address Prefix ending with a dot (.)",
+              address.getValue()
+          )
+      );
+    } else {
+      return address;
+    }
   }
 
   /**
    * <p>Checks and requires that the specified {@code address} is an address prefix per {@link
-   * InterledgerAddressParser#requireAddressPrefix(InterledgerAddress, String)}, providing an error
-   * message upon invalidation.</p>
+   * InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
    * constructors, as demonstrated below:</p>
@@ -104,17 +121,26 @@ public interface InterledgerAddress {
    *
    * @return The supplied {@code address} if its value ends with a dot <tt>(.)</tt>.
    *
-   * @throws IllegalArgumentException if the supplied address is not a ledger-prefix.
+   * @throws NullPointerException     if the supplied {@code address} or {@code errorMessage} is
+   *                                  <tt>null</tt>.
+   * @throws IllegalArgumentException if the supplied {@code address} is not a ledger-prefix.
    */
   static InterledgerAddress requireAddressPrefix(
       final InterledgerAddress address, final String errorMessage
   ) {
-    return ADDRESS_PARSER.requireAddressPrefix(address, errorMessage);
+    Objects.requireNonNull(address, "address must not be null!");
+    Objects.requireNonNull(errorMessage, "errorMessage must not be null!");
+
+    if (!address.isLedgerPrefix()) {
+      throw new IllegalArgumentException(errorMessage);
+    }
+
+    return address;
   }
 
   /**
    * <p>Checks and requires that the specified {@code address} is not an address prefix per {@link
-   * InterledgerAddressParser#requireNotAddressPrefix(InterledgerAddress)}.</p>
+   * InterledgerAddress#isLedgerPrefix()}.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
    * constructors, as demonstrated below:</p>
@@ -131,16 +157,26 @@ public interface InterledgerAddress {
    *
    * @return The supplied {@code address} if its value ends with a dot <tt>(.)</tt>.
    *
-   * @throws IllegalArgumentException if the supplied address is a ledger-prefix.
+   * @throws NullPointerException     if the supplied {@code address} is <tt>null</tt>.
+   * @throws IllegalArgumentException if the supplied {@code address} is a ledger-prefix.
    */
   static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address) {
-    return ADDRESS_PARSER.requireNotAddressPrefix(address);
+    Objects.requireNonNull(address, "address must not be null!");
+
+    if (address.isLedgerPrefix()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "InterledgerAddress '%s' must NOT be an Address Prefix ending with a dot (.)",
+              address.getValue())
+      );
+    }
+
+    return address;
   }
 
   /**
    * <p>Checks and requires that the specified {@code address} is not an address prefix per {@link
-   * InterledgerAddressParser#requireNotAddressPrefix(InterledgerAddress, String)}, providing an
-   * error message upon invalidation.</p>
+   * InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.</p>
    *
    * <p>This method is designed primarily for doing parameter validation in methods and
    * constructors, as demonstrated below:</p>
@@ -160,12 +196,21 @@ public interface InterledgerAddress {
    *
    * @return The supplied {@code address} if its value ends with a dot (.).
    *
-   * @throws IllegalArgumentException if the supplied address is a ledger-prefix.
+   * @throws NullPointerException     if the supplied {@code address} or {@code errorMessage} is
+   *                                  <tt>null</tt>.
+   * @throws IllegalArgumentException if the supplied {@code address} is a ledger-prefix.
    */
   static InterledgerAddress requireNotAddressPrefix(
       final InterledgerAddress address, final String errorMessage
   ) {
-    return ADDRESS_PARSER.requireNotAddressPrefix(address, errorMessage);
+    Objects.requireNonNull(address, "address must not be null!");
+    Objects.requireNonNull(errorMessage, "errorMessage must not be null!");
+
+    if (address.isLedgerPrefix()) {
+      throw new IllegalArgumentException(errorMessage);
+    }
+
+    return address;
   }
 
   /**
@@ -211,7 +256,8 @@ public interface InterledgerAddress {
    *
    * @param interledgerAddress An {@link InterledgerAddress} prefix to compare against.
    *
-   * @return {@code true} if this InterledgerAddress begins with the specified prefix.
+   * @return {@code true} if the supplied {@code interledgerAddress} begins with the specified
+   *     prefix.
    */
   default boolean startsWith(final InterledgerAddress interledgerAddress) {
     Objects.requireNonNull(interledgerAddress, "interledgerAddress must not be null!");
@@ -237,7 +283,7 @@ public interface InterledgerAddress {
    *
    * @return A new instance representing the original address with a newly specified final segment.
    */
-  default InterledgerAddress with(String addressSegment) {
+  default InterledgerAddress with(final String addressSegment) {
     Objects.requireNonNull(addressSegment, "addressSegment must not be null!");
 
     final StringBuilder sb = new StringBuilder(this.getValue());
