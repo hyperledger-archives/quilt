@@ -2,7 +2,9 @@ package org.interledger.core;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,6 +62,116 @@ final class InterledgerAddressParser {
   );
 
   /**
+   * Checks and requires that the specified {@code address} is an address prefix per {@link
+   * InterledgerAddress#isLedgerPrefix()}.
+   *
+   * <p>This method is designed primarily for doing parameter validation in methods and
+   * constructors, as demonstrated below:</p> <blockquote>
+   * <pre>
+   * public Foo(InterledgerAddress bar) {
+   *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar);
+   * }
+   * </pre>
+   * </blockquote>
+   *
+   * @param address A {@link InterledgerAddress} to check.
+   *
+   * @return {@code address} if its value ends with a dot (.).
+   *
+   * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
+   */
+  InterledgerAddress requireAddressPrefix(final InterledgerAddress address) {
+    return checkIsAddressPrefix(address, (ilpAddress) -> "InterledgerAddress must not be null!",
+        (ilpAddress) -> String.format("InterledgerAddress '%s' must be an Address Prefix ending"
+            + " with a dot (.)", ilpAddress.getValue()));
+  }
+
+  /**
+   * Checks and requires that the specified {@code address} is an address prefix per {@link
+   * InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.
+   *
+   * <p>This method is designed primarily for doing parameter validation in methods and
+   * constructors, as demonstrated below:</p> <blockquote>
+   * <pre>
+   * public Foo(InterledgerAddress bar) {
+   *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar,
+   *         bar + " must be an address prefix);
+   * }
+   * </pre>
+   * </blockquote>
+   *
+   * @param address A {@link InterledgerAddress} to check.
+   * @param errorMessage An error message to output upon invalidation.
+   *
+   * @return {@code address} if its value ends with a dot (.).
+   *
+   * @throws IllegalArgumentException if the supplied Interledger address is not a
+   *     ledger-prefix. Embeds the {@code errorMessage}.
+   */
+  InterledgerAddress requireAddressPrefix(final InterledgerAddress address,
+      final String errorMessage) {
+    Objects.requireNonNull(errorMessage);
+    return checkIsAddressPrefix(address, (ilpAddress) -> errorMessage,
+        (ilpAddress) -> errorMessage);
+  }
+
+  /**
+   * Checks and requires that the specified {@code address} is not an address prefix per
+   * {@link InterledgerAddress#isLedgerPrefix()}.
+   *
+   *
+   * <p>This method is designed primarily for doing parameter validation in methods and
+   * constructors, as demonstrated below:</p> <blockquote>
+   * <pre>
+   * public Foo(InterledgerAddress bar) {
+   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar);
+   * }
+   * </pre>
+   * </blockquote>
+   *
+   * @param address A {@link InterledgerAddress} to check.
+   *
+   * @return {@code address} if its value ends with a dot (.).
+   *
+   * @throws IllegalArgumentException if the supplied Interledger address is not a ledger-prefix.
+   */
+  InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address) {
+    return checkIsNotAddressPrefix(address, (ilpAddress) -> "InterledgerAddress must not be null!",
+        (ilpAddress) -> String.format("InterledgerAddress '%s' must NOT be an Address Prefix ending"
+            + " with a dot (.)", address.getValue()));
+  }
+
+  /**
+   * Checks and requires that the specified {@code address} is not an address prefix per
+   * {@link InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.
+   *
+   *
+   * <p>This method is designed primarily for doing parameter validation in methods and
+   * constructors, as demonstrated below:</p> <blockquote>
+   * <pre>
+   * public Foo(InterledgerAddress bar) {
+   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar,
+   *         bar + " must be a destination address");
+   * }
+   * </pre>
+   * </blockquote>
+   *
+   * @param address A {@link InterledgerAddress} to check.
+   * @param errorMessage An error message to output upon invalidation.
+   *
+   * @return {@code address} if its value ends with a dot (.).
+   *
+   * @throws IllegalArgumentException if the supplied Interledger address is not a
+   *     ledger-prefix. Embeds the {@code errorMessage}.
+   */
+  InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address,
+      final String errorMessage) {
+    Objects.requireNonNull(errorMessage);
+    return checkIsNotAddressPrefix(address, (ilpAddress) -> errorMessage,
+        (ilpAddress) -> errorMessage);
+  }
+
+  /**
    * Validates an ILP address.
    * 
    * @param addressString The ILP address to validate
@@ -80,6 +192,28 @@ final class InterledgerAddressParser {
    */
   boolean isSchemePrefix(final String addressString) {
     return SCHEME_PREFIX_ONLY_PATTERN.matcher(addressString).matches();
+  }
+
+  private InterledgerAddress checkIsAddressPrefix(final InterledgerAddress address,
+      final Function<InterledgerAddress, String> errorMessageIfNullAddress,
+      final Function<InterledgerAddress, String> errorMessageIfNotAddressPrefix) {
+    Objects.requireNonNull(address, errorMessageIfNullAddress.apply(address));
+    if (!address.isLedgerPrefix()) {
+      throw new IllegalArgumentException(errorMessageIfNotAddressPrefix.apply(address));
+    } else {
+      return address;
+    }
+  }
+
+  private InterledgerAddress checkIsNotAddressPrefix(final InterledgerAddress address,
+      final Function<InterledgerAddress, String> errorMessageIfNullAddress,
+      final Function<InterledgerAddress, String> errorMessageIfAddressPrefix) {
+    Objects.requireNonNull(address, errorMessageIfNullAddress.apply(address));
+    if (address.isLedgerPrefix()) {
+      throw new IllegalArgumentException(errorMessageIfAddressPrefix.apply(address));
+    } else {
+      return address;
+    }
   }
 
   private boolean isFullyValid(final String addressString) {
