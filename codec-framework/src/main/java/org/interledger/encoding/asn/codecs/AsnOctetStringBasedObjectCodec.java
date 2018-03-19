@@ -68,6 +68,7 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
     Objects.requireNonNull(bytes);
     validateSize(bytes);
     this.bytes = bytes;
+    this.onValueChangedEvent();
   }
 
   private void validateSize(byte[] bytes) {

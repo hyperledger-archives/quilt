@@ -11,16 +11,14 @@ import java.util.function.Consumer;
  */
 public abstract class AsnObjectCodecBase<T> implements AsnObjectCodec<T> {
 
-  private Consumer<T> encodeEventListener;
+  private Consumer<AsnObjectCodecBase<T>> valueChangedEventListener;
 
   /**
-   * Signal that a value has been encoded into this codec.
-   *
-   * @param value The value encoded into the codec
+   * Signal that the internal value of has been changed in this codec.
    */
-  protected void onEncodeEvent(T value) {
-    if (hasEncodeEventListener()) {
-      encodeEventListener.accept(value);
+  protected void onValueChangedEvent() {
+    if (hasValueChangedEventListener()) {
+      valueChangedEventListener.accept(this);
     }
   }
 
@@ -29,8 +27,8 @@ public abstract class AsnObjectCodecBase<T> implements AsnObjectCodec<T> {
    *
    * @return true if there is a listener
    */
-  public final boolean hasEncodeEventListener() {
-    return encodeEventListener != null;
+  public final boolean hasValueChangedEventListener() {
+    return valueChangedEventListener != null;
   }
 
   /**
@@ -39,18 +37,18 @@ public abstract class AsnObjectCodecBase<T> implements AsnObjectCodec<T> {
    * @param listener The listener that accepts an instance of {@link T}, the new value.
    * @throws IllegalStateException if a there is already a listener.
    */
-  public final void setEncodeEventListener(Consumer<T> listener) {
-    if (hasEncodeEventListener()) {
+  public final void setValueChangedEventListener(Consumer<AsnObjectCodecBase<T>> listener) {
+    if (hasValueChangedEventListener()) {
       throw new IllegalStateException("Can't overwrite an existing listener.");
     }
-    this.encodeEventListener = listener;
+    this.valueChangedEventListener = listener;
   }
 
   /**
    * Remove the value change listener (if one is attached).
    */
   public final void removeEncodeEventListener() {
-    encodeEventListener = null;
+    valueChangedEventListener = null;
   }
 
   @Override

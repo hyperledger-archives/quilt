@@ -27,7 +27,7 @@ public class AsnUint8Codec extends AsnPrimitiveCodec<Integer> {
 
     this.value = value;
 
-    onEncodeEvent(value);
+    onValueChangedEvent();
   }
 
   @Override
