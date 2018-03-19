@@ -77,116 +77,6 @@ public class InterledgerAddressParserTest {
   }
 
   @Test
-  public void testRequireAddressPrefix() {
-    assertThat(addressParser.requireAddressPrefix(InterledgerAddress.of("g.")),
-        is(InterledgerAddress.of("g.")));
-    assertThat(addressParser.requireAddressPrefix(InterledgerAddress.of("g.foo.")),
-        is(InterledgerAddress.of("g.foo.")));
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testRequireAddressPrefixWithNullAddress() {
-    try {
-      addressParser.requireAddressPrefix(null);
-    } catch (final NullPointerException e) {
-      assertThat(e.getMessage(), is("InterledgerAddress must not be null!"));
-      throw e;
-    }
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testRequireAddressPrefixWithNullErrorMessage() {
-      addressParser.requireAddressPrefix(InterledgerAddress.of("g."), null);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testRequireAddressPrefixWithNullAddressAndErrorMessage() {
-    try {
-      addressParser.requireAddressPrefix(null, "An address prefix is mandatory");
-    } catch (final NullPointerException e) {
-      assertThat(e.getMessage(), is("An address prefix is mandatory"));
-      throw e;
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testRequireAddressPrefixWithNoAddressPrefix() {
-    try {
-      addressParser.requireAddressPrefix(InterledgerAddress.of("g.foo.bar"));
-    } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("InterledgerAddress 'g.foo.bar' must be an Address Prefix"
-          + " ending with a dot (.)"));
-      throw e;
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testRequireAddressPrefixWithNoAddressPrefixAndErrorMessage() {
-    try {
-      addressParser.requireAddressPrefix(InterledgerAddress.of("g.foo.bar"), "An address prefix"
-          + " is mandatory");
-    } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("An address prefix is mandatory"));
-      throw e;
-    }
-  }
-
-  @Test
-  public void testRequireNotAddressPrefix() {
-    assertThat(addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo.bar")),
-        is(InterledgerAddress.of("g.foo.bar")));
-    assertThat(addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo.bar.baz")),
-        is(InterledgerAddress.of("g.foo.bar.baz")));
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testRequireNotAddressPrefixWithNullAddress() {
-    try {
-      addressParser.requireNotAddressPrefix(null);
-    } catch (final NullPointerException e) {
-      assertThat(e.getMessage(), is("InterledgerAddress must not be null!"));
-      throw e;
-    }
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testRequireNotAddressPrefixWithNullErrorMessage() {
-      addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo.bar"), null);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testRequireNotAddressPrefixWithNullAddressAndErrorMessage() {
-    try {
-      addressParser.requireNotAddressPrefix(null, "A destination address is mandatory");
-    } catch (final NullPointerException e) {
-      assertThat(e.getMessage(), is("A destination address is mandatory"));
-      throw e;
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testRequireNotAddressPrefixWithNoAddressPrefix() {
-    try {
-      addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo."));
-    } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("InterledgerAddress 'g.foo.' must NOT be an Address"
-          + " Prefix ending with a dot (.)"));
-      throw e;
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testRequireNotAddressPrefixWithNoAddressPrefixAndErrorMessage() {
-    try {
-      addressParser.requireNotAddressPrefix(InterledgerAddress.of("g.foo."), "A destination"
-          + " address is mandatory");
-    } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("A destination address is mandatory"));
-      throw e;
-    }
-  }
-
-  @Test
   public void testValidate() {
     addressParser.validate("self.");
     addressParser.validate("g.");
@@ -225,27 +115,32 @@ public class InterledgerAddressParserTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_04() {
-    assertValidationErrorThenThrow(".foo", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX, "");
+    assertValidationErrorThenThrow(".foo", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
+        "");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_05() {
-    assertValidationErrorThenThrow("gg.", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX, "gg");
+    assertValidationErrorThenThrow("gg.", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
+        "gg");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_06() {
-    assertValidationErrorThenThrow(" g.", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX, " g");
+    assertValidationErrorThenThrow(" g.", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
+        " g");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_07() {
-    assertValidationErrorThenThrow("g .", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX, "g ");
+    assertValidationErrorThenThrow("g .", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
+        "g ");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_08() {
-    assertValidationErrorThenThrow("@@@.", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX, "@@@");
+    assertValidationErrorThenThrow("@@@.", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
+        "@@@");
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -255,12 +150,14 @@ public class InterledgerAddressParserTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_02() {
-    assertValidationErrorThenThrow("g.\u0000", InterledgerAddressParser.Error.INVALID_SEGMENT, "\u0000");
+    assertValidationErrorThenThrow("g.\u0000", InterledgerAddressParser.Error.INVALID_SEGMENT,
+        "\u0000");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_03() {
-    assertValidationErrorThenThrow("g.\u00E9", InterledgerAddressParser.Error.INVALID_SEGMENT, "\u00E9");
+    assertValidationErrorThenThrow("g.\u00E9", InterledgerAddressParser.Error.INVALID_SEGMENT,
+        "\u00E9");
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -275,12 +172,14 @@ public class InterledgerAddressParserTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_06() {
-    assertValidationErrorThenThrow("g.foo.@.baz", InterledgerAddressParser.Error.INVALID_SEGMENT, "@");
+    assertValidationErrorThenThrow("g.foo.@.baz", InterledgerAddressParser.Error.INVALID_SEGMENT,
+        "@");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_07() {
-    assertValidationErrorThenThrow("g.foo.bar.a@1", InterledgerAddressParser.Error.INVALID_SEGMENT, "a@1");
+    assertValidationErrorThenThrow("g.foo.bar.a@1", InterledgerAddressParser.Error.INVALID_SEGMENT,
+        "a@1");
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -291,7 +190,8 @@ public class InterledgerAddressParserTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_09() {
-    assertValidationErrorThenThrow("g.foo.bar.baz\r\n", InterledgerAddressParser.Error.INVALID_SEGMENT,
+    assertValidationErrorThenThrow("g.foo.bar.baz\r\n",
+        InterledgerAddressParser.Error.INVALID_SEGMENT,
         "baz\r\n");
   }
 
@@ -314,8 +214,8 @@ public class InterledgerAddressParserTest {
       assertThat(e.getMessage(), is(String.format(expectedError.getMessageFormat(), errorParams)));
       throw e;
     } catch (final Exception e) {
-        fail("Should have thrown an IllegalArgumentException");
-        throw e;
+      fail("Should have thrown an IllegalArgumentException");
+      throw e;
     }
   }
 
