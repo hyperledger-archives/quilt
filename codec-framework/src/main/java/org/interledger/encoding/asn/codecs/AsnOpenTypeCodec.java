@@ -21,7 +21,8 @@ public class AsnOpenTypeCodec<T> extends AsnObjectCodecBase<T> {
 
   @Override
   public void encode(T value) {
-    innerCodec.encode(value);
+    this.innerCodec.encode(value);
+    this.onValueChangedEvent();
   }
 
   public AsnObjectCodec<T> getInnerCodec() {

@@ -9,7 +9,6 @@ import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
-import org.interledger.encoding.asn.framework.AsnObjectCodec;
 import org.interledger.encoding.asn.framework.CodecException;
 
 /**
@@ -24,7 +23,9 @@ public class AsnInterledgerPacketCodec<T extends InterledgerPacket> extends AsnS
   public AsnInterledgerPacketCodec() {
     super(new AsnUint8Codec(), null);
     AsnUint8Codec asnTypeId = (AsnUint8Codec) getCodecAt(0);
-    asnTypeId.setEncodeEventListener(this::onTypeIdChanged);
+    asnTypeId.setValueChangedEventListener((codec) -> {
+      onTypeIdChanged(codec.decode());
+    });
   }
 
   @Override
@@ -49,7 +50,7 @@ public class AsnInterledgerPacketCodec<T extends InterledgerPacket> extends AsnS
     setValueAt(1, value);
   }
 
-  protected void onTypeIdChanged(Integer typeId) {
+  protected void onTypeIdChanged(int typeId) {
 
     //The packet type has been set so set the packet data
     switch (typeId) {

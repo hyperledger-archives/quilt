@@ -86,6 +86,7 @@ public abstract class AsnCharStringBasedObjectCodec<T> extends AsnPrimitiveCodec
     validateSize(charString);
     validate(charString);
     this.charString = charString;
+    this.onValueChangedEvent();
   }
 
   /**

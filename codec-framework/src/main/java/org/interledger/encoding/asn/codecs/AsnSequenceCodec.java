@@ -50,7 +50,7 @@ public abstract class AsnSequenceCodec<T> extends AsnObjectCodecBase<T> {
    * <p>Implementations can use this function to dynamically set the codecs for a field that has not
    * yet been encoded (usually as a result of the value encoded into another field).
 
-   * @see AsnObjectCodecBase#setEncodeEventListener(Consumer)
+   * @see AsnObjectCodecBase#setValueChangedEventListener(Consumer)
    *
    * @param index Index of the field in the sequence.
    * @param codec Codec to use of encoding/decoding the field.
@@ -82,6 +82,7 @@ public abstract class AsnSequenceCodec<T> extends AsnObjectCodecBase<T> {
 
   public final <U extends AsnObjectCodecBase<V>, V> void setValueAt(int index, V value) {
     ((U) getCodecAt(index)).encode(value);
+    this.onValueChangedEvent();
   }
 
   /**
