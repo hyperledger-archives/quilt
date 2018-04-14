@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>quilt-parent</artifactId>
+    <groupId>org.interledger</groupId>
+    <version>0.11.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>ildcp-core-codecs</artifactId>
+  <name>Interledger Dynamic Configuration Protocol Core Codecs</name>
+  <dependencies>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>ildcp-core</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>codec-framework</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>ilp-core-codecs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.money</groupId>
+      <artifactId>money-api</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

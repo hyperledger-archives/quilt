@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.11.0-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
@@ -86,17 +86,22 @@
     <checkstyle.output.file>
       ${project.build.directory}/checkstyle-reports/checkstyle-result.xml
     </checkstyle.output.file>
+    <!--
     <checkstyle.violationSeverity>warning</checkstyle.violationSeverity>
+    -->
   </properties>
 
   <modules>
     <module>dev-ops</module>
-    <module>crypto-conditions</module>
     <module>codec-framework</module>
+    <module>btp-core</module>
+    <module>btp-core-codecs</module>
+    <module>ildcp-core</module>
+    <module>ildcp-core-codecs</module>
     <module>ilp-core</module>
     <module>ilp-annotations</module>
-    <module>jackson-datatypes</module>
     <module>ilp-core-codecs</module>
+    <module>jackson-datatypes</module>
     <!-- TODO Add new modules with PSK and IPR code
         <module>core-transport-psk</module>
         <module>core-transport-ipr</module>
@@ -108,26 +113,38 @@
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>crypto-conditions</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
+        <artifactId>ilp-annotations</artifactId>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>ilp-annotations</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.interledger</groupId>
         <artifactId>codec-framework</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>ilp-core</artifactId>
-        <version>0.10.0-SNAPSHOT</version>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>ilp-core-codecs</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>btp-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>btp-core-codecs</artifactId>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -183,9 +200,9 @@
       </dependency>
 
       <dependency>
-        <groupId>org.javamoney</groupId>
-        <artifactId>moneta</artifactId>
-        <version>1.1</version>
+        <groupId>javax.money</groupId>
+        <artifactId>money-api</artifactId>
+        <version>1.0.1</version>
       </dependency>
 
     </dependencies>

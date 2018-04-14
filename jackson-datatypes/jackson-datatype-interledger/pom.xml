@@ -15,15 +15,7 @@
   <dependencies>
     <dependency>
       <groupId>org.interledger</groupId>
-      <artifactId>crypto-conditions</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.interledger</groupId>
       <artifactId>ilp-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.interledger</groupId>
-      <artifactId>jackson-datatype-cryptoconditions</artifactId>
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>

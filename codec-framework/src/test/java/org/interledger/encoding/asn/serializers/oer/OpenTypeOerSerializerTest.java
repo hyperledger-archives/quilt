@@ -162,10 +162,12 @@ public class OpenTypeOerSerializerTest {
   }
 
   private static class TestType {
+    public byte[] bytes;
+
     TestType(byte[] bytes) {
       this.bytes = bytes;
     }
-    public byte[] bytes;
+
   }
 
   private static class TestTypeCodec extends AsnOctetStringBasedObjectCodec<TestType> {
@@ -176,8 +178,11 @@ public class OpenTypeOerSerializerTest {
 
     @Override
     public TestType decode() {
+
       return new TestType(this.getBytes());
+
     }
+
     @Override
     public void encode(TestType value) {
       this.setBytes(value.bytes);

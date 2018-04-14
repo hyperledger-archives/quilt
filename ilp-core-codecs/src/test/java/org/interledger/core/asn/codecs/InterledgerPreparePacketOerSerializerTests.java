@@ -1,10 +1,10 @@
 package org.interledger.core.asn.codecs;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
-import org.interledger.cryptoconditions.PreimageSha256Condition;
 import org.interledger.encoding.asn.framework.CodecContext;
 
 import org.hamcrest.CoreMatchers;
@@ -54,20 +54,20 @@ public class InterledgerPreparePacketOerSerializerTests {
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.of("test3.foo.bar"))
             .amount(BigInteger.valueOf(100L))
-            .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
+            .executionCondition(InterledgerCondition.from(condition))
             .expiresAt(Instant.now()).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
+            .executionCondition(InterledgerCondition.from(condition))
             .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(PreimageSha256Condition.fromCostAndFingerprint(32, condition))
+            .executionCondition(InterledgerCondition.from(condition))
             .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},
 
