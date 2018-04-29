@@ -10,7 +10,7 @@
   <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
 
-  <name>Hyperledger Quilt Jackson Datatypes</name>
+  <name>Interledger Jackson Datatypes</name>
   <artifactId>jackson-datatypes</artifactId>
   <description>
     Jackson serialization/deserialization support for Hyperledger Quilt projects.
