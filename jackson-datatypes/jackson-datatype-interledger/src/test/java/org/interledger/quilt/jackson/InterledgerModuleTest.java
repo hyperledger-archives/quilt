@@ -3,11 +3,10 @@ package org.interledger.quilt.jackson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import org.interledger.core.Condition;
+import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.cryptoconditions.Condition;
-import org.interledger.cryptoconditions.PreimageSha256Condition;
-import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
-import org.interledger.quilt.jackson.cryptoconditions.Encoding;
+import org.interledger.quilt.jackson.conditions.Encoding;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,16 +28,16 @@ import java.util.Objects;
 @RunWith(Parameterized.class)
 public class InterledgerModuleTest {
 
-  private static final String CONDITION_DER_BYTES_HEX =
-      "A0258020BF165845FFDB85F44A32052EC6279D2DBF151DE8E3A7D3727C94FC7AB531ACD581012B";
-  private static final String CONDITION_DER_BYTES_BASE64
-      = "oCWAIL8WWEX/24X0SjIFLsYnnS2/FR3o46fTcnyU/Hq1MazVgQEr";
-  private static final String CONDITION_DER_BYTES_BASE64_WITHOUTPADDING
-      = "oCWAIL8WWEX/24X0SjIFLsYnnS2/FR3o46fTcnyU/Hq1MazVgQEr";
-  private static final String CONDITION_DER_BYTES_BASE64_URL
-      = "oCWAIL8WWEX_24X0SjIFLsYnnS2_FR3o46fTcnyU_Hq1MazVgQEr";
-  private static final String CONDITION_DER_BYTES_BASE64_URL_WITHOUTPADDING
-      = "oCWAIL8WWEX_24X0SjIFLsYnnS2_FR3o46fTcnyU_Hq1MazVgQEr";
+  private static final String CONDITION_BYTES_HEX =
+      "BF165845FFDB85F44A32052EC6279D2DBF151DE8E3A7D3727C94FC7AB531ACD5";
+  private static final String CONDITION_BYTES_BASE64
+      = "vxZYRf/bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU=";
+  private static final String CONDITION_BYTES_BASE64_WITHOUTPADDING
+      = "vxZYRf/bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU";
+  private static final String CONDITION_BYTES_BASE64_URL
+      = "vxZYRf_bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU=";
+  private static final String CONDITION_BYTES_BASE64_URL_WITHOUTPADDING
+      = "vxZYRf_bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU";
 
   private static Condition CONDITION = constructCondition();
 
@@ -62,9 +61,9 @@ public class InterledgerModuleTest {
     this.condition = Objects.requireNonNull(condition);
   }
 
-  private static PreimageSha256Condition constructCondition() {
+  private static Condition constructCondition() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return PreimageSha256Fulfillment.from(preimage).getDerivedCondition();
+    return Fulfillment.of(preimage).getCondition();
   }
 
   /**
@@ -76,14 +75,14 @@ public class InterledgerModuleTest {
   public static Collection<Object[]> data() {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter
     // to the CryptoConditionsModuleConditionTest constructor.
-    return Arrays.asList(new Object[][]{
-        {Encoding.HEX, CONDITION_DER_BYTES_HEX, CONDITION},
-        {Encoding.BASE64, CONDITION_DER_BYTES_BASE64, CONDITION},
-        {Encoding.BASE64_WITHOUT_PADDING, CONDITION_DER_BYTES_BASE64_WITHOUTPADDING, CONDITION},
-        {Encoding.BASE64URL, CONDITION_DER_BYTES_BASE64_URL, CONDITION},
+    return Arrays.asList(new Object[][] {
+        {Encoding.HEX, CONDITION_BYTES_HEX, CONDITION},
+        {Encoding.BASE64, CONDITION_BYTES_BASE64, CONDITION},
+        {Encoding.BASE64_WITHOUT_PADDING, CONDITION_BYTES_BASE64_WITHOUTPADDING, CONDITION},
+        {Encoding.BASE64URL, CONDITION_BYTES_BASE64_URL, CONDITION},
         {
             Encoding.BASE64URL_WITHOUT_PADDING,
-            CONDITION_DER_BYTES_BASE64_URL_WITHOUTPADDING,
+            CONDITION_BYTES_BASE64_URL_WITHOUTPADDING,
             CONDITION
         }
     });

@@ -1,17 +1,16 @@
 package org.interledger.quilt.jackson;
 
+import org.interledger.core.Condition;
+import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.cryptoconditions.Condition;
-import org.interledger.cryptoconditions.Fulfillment;
-import org.interledger.quilt.jackson.cryptoconditions.ConditionDeserializer;
-import org.interledger.quilt.jackson.cryptoconditions.Encoding;
-import org.interledger.quilt.jackson.cryptoconditions.FulfillmentDeserializer;
+import org.interledger.quilt.jackson.conditions.ConditionDeserializer;
+import org.interledger.quilt.jackson.conditions.Encoding;
+import org.interledger.quilt.jackson.conditions.FulfillmentDeserializer;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 
 import java.util.Objects;
@@ -28,11 +27,9 @@ public class InterledgerDeserializers extends Deserializers.Base {
   }
 
   @Override
-  public JsonDeserializer<?> findBeanDeserializer(JavaType type,
-      DeserializationConfig config, BeanDescription beanDesc)
-      throws JsonMappingException {
-    final Class<?> raw = type.getRawClass();
-
+  public JsonDeserializer<?> findBeanDeserializer(
+      JavaType type, DeserializationConfig config, BeanDescription beanDesc
+  ) {
     if (type.hasRawClass(InterledgerAddress.class)) {
       return new InterledgerAddressDeserializer();
     }

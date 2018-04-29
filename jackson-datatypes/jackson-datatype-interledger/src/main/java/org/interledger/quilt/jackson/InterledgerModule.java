@@ -1,6 +1,6 @@
 package org.interledger.quilt.jackson;
 
-import org.interledger.quilt.jackson.cryptoconditions.Encoding;
+import org.interledger.quilt.jackson.conditions.Encoding;
 
 import com.fasterxml.jackson.core.util.VersionUtil;
 import com.fasterxml.jackson.databind.module.SimpleModule;

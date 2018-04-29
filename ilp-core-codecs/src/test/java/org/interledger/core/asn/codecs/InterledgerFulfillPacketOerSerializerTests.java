@@ -1,9 +1,8 @@
 package org.interledger.core.asn.codecs;
 
-import org.interledger.core.Condition;
-import org.interledger.core.InterledgerAddress;
+import org.interledger.core.Fulfillment;
+import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacket;
-import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
 import org.interledger.encoding.asn.framework.CodecContext;
 
@@ -18,17 +17,15 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
 /**
- * Unit tests to validate the functionality for all {@link InterledgerPreparePacket} packets.
+ * Unit tests to validate the functionality for all {@link InterledgerFulfillPacket} packets.
  */
 @RunWith(Parameterized.class)
-public class InterledgerPreparePacketOerSerializerTests {
+public class InterledgerFulfillPacketOerSerializerTests {
 
   // first data value (0) is default
   @Parameter
@@ -46,47 +43,44 @@ public class InterledgerPreparePacketOerSerializerTests {
       byteArrayOutputStream.write(i);
     }
 
-    final byte[] conditionBytes = new byte[32];
-    new Random().nextBytes(conditionBytes);
+    final byte[] fulfillmentBytes = new byte[32];
+    new Random().nextBytes(fulfillmentBytes);
 
     return Arrays.asList(new Object[][] {
 
-        {InterledgerPreparePacket.builder()
-            .destination(InterledgerAddress.of("test3.foo.bar"))
-            .amount(BigInteger.valueOf(100L))
-            .executionCondition(Condition.of(conditionBytes))
-            .expiresAt(Instant.now()).build()},
-
-        {InterledgerPreparePacket.builder()
-            .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
-            .amount(BigInteger.valueOf(50L))
-            .executionCondition(Condition.of(conditionBytes))
-            .expiresAt(Instant.now())
-            .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
-
-        {InterledgerPreparePacket.builder()
-            .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
-            .amount(BigInteger.valueOf(50L))
-            .executionCondition(Condition.of(conditionBytes))
-            .expiresAt(Instant.now())
-            .data(byteArrayOutputStream.toByteArray()).build()},
+        {
+            InterledgerFulfillPacket.builder()
+                .fulfillment(Fulfillment.of(fulfillmentBytes))
+                .build()
+        },
+        {
+            InterledgerFulfillPacket.builder()
+                .fulfillment(Fulfillment.of(fulfillmentBytes))
+                .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8})
+                .build()
+        },
+        {
+            InterledgerFulfillPacket.builder()
+                .fulfillment(Fulfillment.of(fulfillmentBytes))
+                .data(byteArrayOutputStream.toByteArray())
+                .build()
+        },
 
     });
   }
 
   /**
-   * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that
-   * this context call specifies the type, whereas the test below determines the type from the
-   * payload.
+   * The primary difference between this test and {@link #testInterledgerPacketCodec()} is that this
+   * context call specifies the type, whereas the test below determines the type from the payload.
    */
   @Test
   public void testIndividualRead() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
-    final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPaymentBytes();
+    final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPacketBytes();
 
-    final InterledgerPreparePacket payment = context.read(InterledgerPreparePacket.class,
+    final InterledgerFulfillPacket packet = context.read(InterledgerFulfillPacket.class,
         asn1OerPaymentBytes);
-    MatcherAssert.assertThat(payment, CoreMatchers.is(packet));
+    MatcherAssert.assertThat(packet, CoreMatchers.is(this.packet));
   }
 
   /**
@@ -95,9 +89,9 @@ public class InterledgerPreparePacketOerSerializerTests {
    * method call.
    */
   @Test
-  public void testInterledgerPaymentCodec() throws Exception {
+  public void testInterledgerPacketCodec() throws Exception {
     final CodecContext context = InterledgerCodecContextFactory.oer();
-    final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPaymentBytes();
+    final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPacketBytes();
 
     final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class,
         asn1OerPaymentBytes);
@@ -106,7 +100,7 @@ public class InterledgerPreparePacketOerSerializerTests {
     MatcherAssert.assertThat(decodedPacket, CoreMatchers.is(packet));
   }
 
-  private ByteArrayInputStream constructAsn1OerPaymentBytes() throws IOException {
+  private ByteArrayInputStream constructAsn1OerPacketBytes() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

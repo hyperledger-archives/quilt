@@ -1,11 +1,11 @@
 package org.interledger.quilt.jackson;
 
+import org.interledger.core.Condition;
+import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.cryptoconditions.Condition;
-import org.interledger.cryptoconditions.Fulfillment;
-import org.interledger.quilt.jackson.cryptoconditions.ConditionSerializer;
-import org.interledger.quilt.jackson.cryptoconditions.Encoding;
-import org.interledger.quilt.jackson.cryptoconditions.FulfillmentSerializer;
+import org.interledger.quilt.jackson.conditions.ConditionSerializer;
+import org.interledger.quilt.jackson.conditions.Encoding;
+import org.interledger.quilt.jackson.conditions.FulfillmentSerializer;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.JavaType;
