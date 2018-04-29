@@ -92,10 +92,10 @@
   <modules>
     <module>dev-ops</module>
     <module>codec-framework</module>
-    <module>ilp-core</module>
     <module>ilp-annotations</module>
-    <module>jackson-datatypes</module>
+    <module>ilp-core</module>
     <module>ilp-core-codecs</module>
+    <module>jackson-datatypes</module>
     <!-- TODO Add new modules with PSK and IPR code
         <module>core-transport-psk</module>
         <module>core-transport-ipr</module>

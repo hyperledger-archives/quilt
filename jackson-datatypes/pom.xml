@@ -19,10 +19,6 @@
   <properties>
     <jackson.version>2.9.1</jackson.version>
   </properties>
-  <modules>
-    <module>jackson-datatype-interledger-address</module>
-    <module>jackson-datatype-interledger</module>
-  </modules>
 
   <dependencyManagement>
     <dependencies>
@@ -60,9 +56,33 @@
       <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <!-- Marking as provided because this dependency is not needed unless Base16 Hex Encoding is used. -->
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk16</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>ilp-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>jackson-datatype-interledger-address</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Hyperledger Quilt Codec Framework</name>
+  <name>Interledger Codec Framework</name>
   <description>A framework for writing codecContext.</description>
 
   <artifactId>codec-framework</artifactId>
