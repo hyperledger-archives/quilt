@@ -9,8 +9,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
-import org.interledger.cryptoconditions.PreimageSha256Condition;
-
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -22,12 +20,14 @@ import java.time.Instant;
 public class InterledgerPreparePacketTest {
 
   @Test
-  public void testBuild() throws Exception {
+  public void testBuild() {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
-    byte[] data = new byte[]{127};
+    byte[] data = new byte[] {127};
     BigInteger amount = BigInteger.TEN;
-    PreimageSha256Condition condition = PreimageSha256Condition.fromCostAndFingerprint(32,
-        new byte[] {0,1,2,3,4,5,6,7,8,9,01,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2});
+    Condition condition = Condition.of(
+        new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
+            7, 8, 9, 0, 1, 2}
+    );
     Instant expiry = Instant.now().plusSeconds(30);
 
     final InterledgerPreparePacket interledgerPreparePacket =
@@ -61,7 +61,7 @@ public class InterledgerPreparePacketTest {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
           .amount(mock(BigInteger.class))
-          .executionCondition(mock(PreimageSha256Condition.class))
+          .executionCondition(mock(Condition.class))
           .expiresAt(Instant.now())
           .build();
     } catch (IllegalStateException e) {
@@ -73,7 +73,7 @@ public class InterledgerPreparePacketTest {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
           .amount(mock(BigInteger.class))
-          .executionCondition(mock(PreimageSha256Condition.class))
+          .executionCondition(mock(Condition.class))
           .build();
       fail();
     } catch (IllegalStateException e) {
@@ -98,7 +98,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .executionCondition(mock(PreimageSha256Condition.class))
+          .executionCondition(mock(Condition.class))
           .expiresAt(Instant.now())
           .build();
       fail();
@@ -107,12 +107,11 @@ public class InterledgerPreparePacketTest {
           + "some of required attributes are not set"));
     }
 
-
     //No destination
     try {
       InterledgerPreparePacket.builder()
           .amount(mock(BigInteger.class))
-          .executionCondition(mock(PreimageSha256Condition.class))
+          .executionCondition(mock(Condition.class))
           .expiresAt(Instant.now())
           .build();
       fail();
@@ -125,7 +124,7 @@ public class InterledgerPreparePacketTest {
         InterledgerPreparePacket.builder()
             .destination(mock(InterledgerAddress.class))
             .amount(mock(BigInteger.class))
-            .executionCondition(mock(PreimageSha256Condition.class))
+            .executionCondition(mock(Condition.class))
             .expiresAt(Instant.now())
             .build();
     assertThat(interledgerPreparePacket, is(not(nullValue())));
@@ -134,10 +133,12 @@ public class InterledgerPreparePacketTest {
   @Test
   public void testEqualsHashCode() throws Exception {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
-    byte[] data = new byte[]{127};
+    byte[] data = new byte[] {127};
     BigInteger amount = BigInteger.TEN;
-    PreimageSha256Condition condition = PreimageSha256Condition.fromCostAndFingerprint(32,
-        new byte[] {0,1,2,3,4,5,6,7,8,9,01,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2});
+    Condition condition = Condition.of(
+        new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
+            7, 8, 9, 0, 1, 2}
+    );
     Instant expiry = Instant.now().plusSeconds(30);
 
     final InterledgerPreparePacket interledgerPreparePacket1 =
@@ -157,7 +158,7 @@ public class InterledgerPreparePacketTest {
             .expiresAt(expiry)
             .data(data)
             .build();
-    
+
     assertTrue(interledgerPreparePacket1.equals(interledgerPreparePacket2));
     assertTrue(interledgerPreparePacket2.equals(interledgerPreparePacket1));
     assertTrue(interledgerPreparePacket1.hashCode() == interledgerPreparePacket2.hashCode());

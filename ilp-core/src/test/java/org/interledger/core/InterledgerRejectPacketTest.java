@@ -3,7 +3,6 @@ package org.interledger.core;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 
@@ -23,7 +22,7 @@ public class InterledgerRejectPacketTest {
   private static final InterledgerAddress BAZ = InterledgerAddress.of("test1.baz.baz");
 
   @Test
-  public void testBuild() throws Exception {
+  public void testBuild() {
     final InterledgerErrorCode errorCode = InterledgerErrorCode.T00_INTERNAL_ERROR;
     final String message = "Test Error";
     final InterledgerAddress triggeredBy = FOO;

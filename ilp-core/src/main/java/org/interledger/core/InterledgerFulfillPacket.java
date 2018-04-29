@@ -1,11 +1,8 @@
 package org.interledger.core;
 
 import org.interledger.annotations.Immutable;
-import org.interledger.cryptoconditions.PreimageSha256Fulfillment;
 
 import org.immutables.value.Value.Default;
-
-import java.util.Arrays;
 
 public interface InterledgerFulfillPacket extends InterledgerPacket {
 
@@ -18,7 +15,7 @@ public interface InterledgerFulfillPacket extends InterledgerPacket {
     return new InterledgerFulfillPacketBuilder();
   }
 
-  PreimageSha256Fulfillment getFulfillment();
+  Fulfillment getFulfillment();
 
   /**
    * Arbitrary data for the sender that is set by the transport layer of a payment (for example,

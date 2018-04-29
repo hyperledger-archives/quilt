@@ -11,7 +11,7 @@ to your project:
 <dependency>
   <groupId>org.interledger.quilt.jackson</groupId>
   <artifactId>jackson-datatypes</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -35,7 +35,7 @@ classes, add the following maven coordinates to your project:
 <dependency>
   <groupId>org.interledger.quilt.jackson</groupId>
   <artifactId>jackson-datatype-cryptoconditions</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -55,7 +55,7 @@ classes, add the following maven coordinates to your project:
 <dependency>
   <groupId>org.interledger.quilt.jackson</groupId>
   <artifactId>jackson-datatype-ilp-core</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
 </dependency>
 ```
 
