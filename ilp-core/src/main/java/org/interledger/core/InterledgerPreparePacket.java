@@ -1,27 +1,25 @@
 package org.interledger.core;
 
 import org.interledger.annotations.Immutable;
-import org.interledger.cryptoconditions.PreimageSha256Condition;
 
 import org.immutables.value.Value.Default;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Arrays;
 
 /**
  * <p>Interledger Payments moves assets of one party to another that consists of one or more ledger
  * transfers, potentially across multiple ledgers.</p>
  *
  * <p>Interledger Payments have three major consumers:</p>
- *   <ul>
- *     <li>Connectors utilize the Interledger Address contained in the payment to route the
+ * <ul>
+ * <li>Connectors utilize the Interledger Address contained in the payment to route the
  * payment.</li>
- *     <li>The receiver of a payment uses it to identify the recipient and which condition to
+ * <li>The receiver of a payment uses it to identify the recipient and which condition to
  * fulfill.</li>
- *     <li>Interledger sub-protocols utilize custom data encoded in a payment to facilitate
+ * <li>Interledger sub-protocols utilize custom data encoded in a payment to facilitate
  * sub-protocol operations.</li>
- *   </ul>
+ * </ul>
  *
  * <p>When a sender prepares a transfer to start a payment, the sender attaches an ILP Payment to
  * the transfer, in the memo field if possible. If a ledger does not support attaching the entire
@@ -57,7 +55,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
 
   Instant getExpiresAt();
 
-  PreimageSha256Condition getExecutionCondition();
+  Condition getExecutionCondition();
 
   /**
    * The Interledger address of the account where the receiver should ultimately receive the

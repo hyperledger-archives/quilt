@@ -23,15 +23,6 @@ Dependency and plugin versions are managed in the parent project.
 
 Issues are labelled and prefixed to make it easy to identify which project they relate to.
 
-### crypto-conditions
-
-Crypto-conditions is an implementation of the crypto-conditions specification available as an Internet Draft:
-[draft-thomas-crypto-conditions-03](https://datatracker.ietf.org/doc/draft-thomas-crypto-conditions/).
-
-[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/crypto-conditions.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Acrypto-conditions)
-
-[READ MORE](./crypto-conditions)
-
 ### ilp-core
 
 The ilp-core module is the base library for any Interledger projects providing service interfaces, event descriptions,
@@ -66,7 +57,7 @@ In order to properly build this project, you must download and install Java Cryp
 
 ``` sh
 git clone https://github.com/hyperledger/quilt
-cd quilt/crypto-conditions
+cd quilt
 ```
 
 ### Build the Project

@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
@@ -91,12 +91,11 @@
 
   <modules>
     <module>dev-ops</module>
-    <module>crypto-conditions</module>
     <module>codec-framework</module>
-    <module>ilp-core</module>
     <module>ilp-annotations</module>
-    <module>jackson-datatypes</module>
+    <module>ilp-core</module>
     <module>ilp-core-codecs</module>
+    <module>jackson-datatypes</module>
     <!-- TODO Add new modules with PSK and IPR code
         <module>core-transport-psk</module>
         <module>core-transport-ipr</module>
@@ -108,26 +107,20 @@
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>crypto-conditions</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
-      </dependency>
-
-      <dependency>
-        <groupId>${project.groupId}</groupId>
         <artifactId>ilp-annotations</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>org.interledger</groupId>
         <artifactId>codec-framework</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>ilp-core</artifactId>
-        <version>0.10.0-SNAPSHOT</version>
+        <version>0.11.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
@@ -180,12 +173,6 @@
         <artifactId>mockito-core</artifactId>
         <version>2.7.22</version>
         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.javamoney</groupId>
-        <artifactId>moneta</artifactId>
-        <version>1.1</version>
       </dependency>
 
     </dependencies>
@@ -255,7 +242,7 @@
             <dependency>
               <groupId>org.interledger</groupId>
               <artifactId>dev-ops</artifactId>
-              <version>0.1.0-SNAPSHOT</version>
+              <version>0.2.0-SNAPSHOT</version>
             </dependency>
           </dependencies>
           <executions>
