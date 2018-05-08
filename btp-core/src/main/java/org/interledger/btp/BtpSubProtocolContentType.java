@@ -14,10 +14,12 @@ public enum BtpSubProtocolContentType {
     this.code = code;
   }
 
-  public int getCode() {
-    return this.code;
-  }
-
+  /**
+   * Get a new {@link BtpSubProtocolContentType} from the given code.
+   *
+   * @param code a type code
+   * @return an instance of {@link BtpSubProtocolContentType}
+   */
   public static BtpSubProtocolContentType fromCode(int code) {
 
     switch (code) {
@@ -27,9 +29,12 @@ public enum BtpSubProtocolContentType {
         return MIME_TEXT_PLAIN_UTF8;
       case 2:
         return MIME_APPLICATION_JSON;
+      default:
+        throw new IllegalArgumentException(format("Unknown BTP Sub-Protocol Content Type: %s", code));
     }
+  }
 
-    throw new IllegalArgumentException(format("Unknown BTP Sub-Protocol Content Type: %s", code));
-
+  public int getCode() {
+    return this.code;
   }
 }

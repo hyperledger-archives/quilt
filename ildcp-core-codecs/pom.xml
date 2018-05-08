@@ -5,12 +5,14 @@
   <parent>
     <artifactId>quilt-parent</artifactId>
     <groupId>org.interledger</groupId>
-    <version>0.11.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>ildcp-core-codecs</artifactId>
   <name>Interledger Dynamic Configuration Protocol Core Codecs</name>
+  <artifactId>ildcp-core-codecs</artifactId>
+  <packaging>jar</packaging>
+
   <dependencies>
     <dependency>
       <groupId>org.interledger</groupId>

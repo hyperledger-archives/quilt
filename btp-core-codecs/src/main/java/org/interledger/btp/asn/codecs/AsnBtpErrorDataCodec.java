@@ -1,19 +1,23 @@
 package org.interledger.btp.asn.codecs;
 
+import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
 import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
 
-import org.interledger.btp.BtpError;
-
 /**
- * Used to encode/decode the body of a MESSAGE and RESPONSE
+ * Used to encode/decode the body of a MESSAGE and RESPONSE.
  */
 public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
 
 
+  /**
+   * Default constructor.
+   *
+   * @param requestId the correlation id of the message/response
+   */
   public AsnBtpErrorDataCodec(long requestId) {
     super(
         requestId,

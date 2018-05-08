@@ -5,22 +5,22 @@
   <parent>
     <artifactId>quilt-parent</artifactId>
     <groupId>org.interledger</groupId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <name>Interledger Core Codecs</name>
   <description>Codecs for the Interledger Core classes.</description>
   <artifactId>ilp-core-codecs</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+
   <dependencies>
     <dependency>
-      <groupId>org.interledger</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>codec-framework</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.interledger</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>ilp-core</artifactId>
     </dependency>
 

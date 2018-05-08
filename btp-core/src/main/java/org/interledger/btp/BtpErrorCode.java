@@ -45,6 +45,12 @@ public enum BtpErrorCode {
     this.code = code;
   }
 
+  /**
+   * Create a {@link BtpErrorCode} from the Sring representation of an error code.
+   *
+   * @param code The error code
+   * @return a new {@link BtpErrorCode}
+   */
   public static BtpErrorCode fromString(String code) {
 
     for (BtpErrorCode errorCode :

@@ -18,6 +18,11 @@ import org.interledger.encoding.asn.framework.CodecContext;
 
 public class BtpCodecs {
 
+  /**
+   * Register the BTP protocol codecs into the provided context.
+   *
+   * @param context the context to register the codecs into
+   */
   public static void register(CodecContext context) {
     context
         .register(BtpError.class, AsnBtpErrorCodec::new)

@@ -4,11 +4,16 @@ import org.interledger.btp.BtpTransfer;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 
 /**
- * Used to encode/decode the body of a MESSAGE and RESPONSE
+ * Used to encode/decode the body of a MESSAGE and RESPONSE.
  */
 public class AsnBtpTransferDataCodec extends AsnBtpPacketDataCodec<BtpTransfer> {
 
 
+  /**
+   * Default constructor.
+   *
+   * @param requestId the correlation id of the message/response
+   */
   public AsnBtpTransferDataCodec(long requestId) {
     super(
         requestId,

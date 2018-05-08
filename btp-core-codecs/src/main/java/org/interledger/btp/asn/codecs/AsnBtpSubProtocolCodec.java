@@ -1,16 +1,18 @@
 package org.interledger.btp.asn.codecs;
 
 import org.interledger.btp.BtpSubProtocol;
+import org.interledger.btp.BtpSubProtocolContentType;
 import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 
-import org.interledger.btp.BtpSubProtocolContentType;
-
 public class AsnBtpSubProtocolCodec extends AsnSequenceCodec<BtpSubProtocol> {
 
+  /**
+   * Default constructor.
+   */
   public AsnBtpSubProtocolCodec() {
     super(
         new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED),

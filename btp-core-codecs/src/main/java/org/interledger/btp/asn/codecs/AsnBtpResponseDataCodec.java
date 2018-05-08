@@ -5,6 +5,11 @@ import org.interledger.btp.BtpResponse;
 public class AsnBtpResponseDataCodec extends AsnBtpPacketDataCodec<BtpResponse> {
 
 
+  /**
+   * Default constructor.
+   *
+   * @param requestId the correlation id of the response
+   */
   public AsnBtpResponseDataCodec(long requestId) {
     super(
         requestId,

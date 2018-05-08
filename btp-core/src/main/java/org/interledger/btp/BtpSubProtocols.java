@@ -11,10 +11,20 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   public static final String AUTH_USERNAME = "auth_username";
   public static final String INTERLEDGER = "ilp";
 
+  /**
+   * Get the primary {@link BtpSubProtocol}.
+   *
+   * @return the {@link BtpSubProtocol} that is first in the list
+   */
   public BtpSubProtocol getPrimarySubProtocol() {
     return get(0);
   }
 
+  /**
+   * Create a new {@link BtpSubProtocols} list with the given {@link BtpSubProtocol} as the primary sub-protocol.
+   * @param protocol the sub-protocol to use as the primary
+   * @return a new {@link BtpSubProtocols} list with only a primary sub-protocol
+   */
   public static BtpSubProtocols fromPrimarySubProtocol(BtpSubProtocol protocol) {
     BtpSubProtocols subProtocols = new BtpSubProtocols();
     subProtocols.add(protocol);
@@ -22,6 +32,12 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   }
 
 
+  /**
+   * Check if a given {@link BtpSubProtocol} exists in this list.
+   *
+   * @param protocolName the name of the {@link BtpSubProtocol}
+   * @return a <code>true</code> if a {@link BtpSubProtocol} exists with the given name
+   */
   public boolean hasSubProtocol(String protocolName) {
     for (BtpSubProtocol protocol : this) {
       if (protocol.getProtocolName().equals(protocolName)) {
@@ -31,6 +47,12 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
     return false;
   }
 
+  /**
+   * Get the {@link BtpSubProtocol} by name.
+   *
+   * @param protocolName the name of the {@link BtpSubProtocol}
+   * @return a {@link BtpSubProtocol} or null if none exists with the given name
+   */
   public BtpSubProtocol getSubProtocol(String protocolName) {
     for (BtpSubProtocol protocol : this) {
       if (protocol.getProtocolName().equals(protocolName)) {

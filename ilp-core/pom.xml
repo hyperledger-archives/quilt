@@ -6,18 +6,13 @@
   <parent>
     <groupId>org.interledger</groupId>
     <artifactId>quilt-parent</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.12.0-SNAPSHOT</version>
   </parent>
-
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.interledger</groupId>
-  <artifactId>ilp-core</artifactId>
-  <version>0.11.0-SNAPSHOT</version>
 
   <name>Interledger Core</name>
+  <artifactId>ilp-core</artifactId>
   <description>Core libraries for implementing the Interledger suite of protocols.</description>
-  <url>https://github.com/interledger/java-ilp-core</url>
-  <inceptionYear>2016</inceptionYear>
   <packaging>jar</packaging>
 
   <dependencies>

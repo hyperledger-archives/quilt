@@ -16,6 +16,9 @@ public class AsnIldcpResponseCodec extends AsnSequenceCodec<IldcpResponse> {
 
   private final CurrencyContext currencyContext;
 
+  /**
+   * Default constructor.
+   */
   public AsnIldcpResponseCodec() {
     super(
         new AsnInterledgerAddressCodec(),
@@ -35,12 +38,12 @@ public class AsnIldcpResponseCodec extends AsnSequenceCodec<IldcpResponse> {
   @Override
   public IldcpResponse decode() {
     return null;
-// TODO
-//    return IldcpResponse.builder()
-//        .interledgerAddress(getValueAt(0))
-//        .currencyScale(getValueAt(1))
-//        .currencyUnit(CurrencyUnitBuilder.of(getValueAt(2), currencyContext).build())
-//        .build();
+    // TODO
+    //    return IldcpResponse.builder()
+    //        .interledgerAddress(getValueAt(0))
+    //        .currencyScale(getValueAt(1))
+    //        .currencyUnit(CurrencyUnitBuilder.of(getValueAt(2), currencyContext).build())
+    //        .build();
   }
 
   /**

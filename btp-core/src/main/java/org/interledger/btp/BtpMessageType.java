@@ -19,6 +19,12 @@ public enum BtpMessageType {
     return this.code;
   }
 
+  /**
+   * Get a new {@link BtpMessageType} from the code.
+   *
+   * @param code the message type code.
+   * @return A new {@link BtpMessageType} from the provided code
+   */
   public static BtpMessageType fromCode(int code) {
 
     switch (code) {
@@ -30,9 +36,9 @@ public enum BtpMessageType {
         return BtpMessageType.MESSAGE;
       case 7:
         return BtpMessageType.TRANSFER;
+      default:
+        throw new IllegalArgumentException(format("Unknown BTP Message Type: %s", code));
     }
-
-    throw new IllegalArgumentException(format("Unknown BTP Message Type: %s", code));
 
   }
 }

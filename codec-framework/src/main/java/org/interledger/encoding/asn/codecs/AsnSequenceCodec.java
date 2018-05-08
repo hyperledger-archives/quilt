@@ -76,10 +76,10 @@ public abstract class AsnSequenceCodec<T> extends AsnObjectCodecBase<T> {
    * Set and encoded a value using the codec at the given index.
    *
    * @param index the index of the field that is being encoded.
+   * @param value the value of the field that is being encoded.
    * @param <U> the type of the codec at the given index.
    * @param <V> the type of the value that will be encoded.
    */
-
   public final <U extends AsnObjectCodecBase<V>, V> void setValueAt(int index, V value) {
     ((U) getCodecAt(index)).encode(value);
     this.onValueChangedEvent();
