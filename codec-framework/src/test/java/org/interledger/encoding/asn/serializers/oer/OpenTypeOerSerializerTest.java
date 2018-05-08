@@ -3,10 +3,8 @@ package org.interledger.encoding.asn.serializers.oer;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.interledger.encoding.asn.codecs.AsnOctetStringBasedObjectCodec;
-import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
-import org.interledger.encoding.asn.framework.AsnObjectCodec;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 
@@ -167,7 +165,6 @@ public class OpenTypeOerSerializerTest {
     TestType(byte[] bytes) {
       this.bytes = bytes;
     }
-
   }
 
   private static class TestTypeCodec extends AsnOctetStringBasedObjectCodec<TestType> {
@@ -178,9 +175,7 @@ public class OpenTypeOerSerializerTest {
 
     @Override
     public TestType decode() {
-
       return new TestType(this.getBytes());
-
     }
 
     @Override

@@ -89,6 +89,8 @@ public class ConditionModuleTest extends AbstractConditionModuleTest {
   }
 
   @Value.Immutable
+  //  @JsonSerialize(as = ImmutableConditionContainer.class)
+  //  @JsonDeserialize(as = ImmutableConditionContainer.class)
   interface PreimageConditionContainer {
 
     @JsonProperty("condition")
