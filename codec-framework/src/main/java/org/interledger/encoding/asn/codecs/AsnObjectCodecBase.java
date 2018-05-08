@@ -48,7 +48,7 @@ public abstract class AsnObjectCodecBase<T> implements AsnObjectCodec<T> {
    * Remove the value change listener (if one is attached).
    */
   public final void removeEncodeEventListener() {
-    valueChangedEventListener = null;
+    this.valueChangedEventListener = null;
   }
 
   @Override

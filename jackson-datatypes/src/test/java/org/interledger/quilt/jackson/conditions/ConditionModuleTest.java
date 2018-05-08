@@ -73,26 +73,26 @@ public class ConditionModuleTest extends AbstractConditionModuleTest {
 
   @Test
   public void testSerializeDeserialize() throws IOException {
-//    final PreimageConditionContainer expectedContainer = ImmutableConditionContainer
-//        .builder()
-//        .condition(CONDITION)
-//        .build();
-//
-//    final String json = objectMapper.writeValueAsString(expectedContainer);
-//    assertThat(json, is(
-//        String.format("{\"condition\":\"%s\"}", expectedEncodedValue)
-//    ));
-//
-//    final PreimageConditionContainer actualAddressContainer = objectMapper
-//        .readValue(json, PreimageConditionContainer.class);
-//
-//    assertThat(actualAddressContainer, is(expectedContainer));
-//    assertThat(actualAddressContainer.getCondition(), is(CONDITION));
+    //    final PreimageConditionContainer expectedContainer = ImmutableConditionContainer
+    //        .builder()
+    //        .condition(CONDITION)
+    //        .build();
+    //
+    //    final String json = objectMapper.writeValueAsString(expectedContainer);
+    //    assertThat(json, is(
+    //        String.format("{\"condition\":\"%s\"}", expectedEncodedValue)
+    //    ));
+    //
+    //    final PreimageConditionContainer actualAddressContainer = objectMapper
+    //        .readValue(json, PreimageConditionContainer.class);
+    //
+    //    assertThat(actualAddressContainer, is(expectedContainer));
+    //    assertThat(actualAddressContainer.getCondition(), is(CONDITION));
   }
 
   @Value.Immutable
-//  @JsonSerialize(as = ImmutableConditionContainer.class)
-//  @JsonDeserialize(as = ImmutableConditionContainer.class)
+  //  @JsonSerialize(as = ImmutableConditionContainer.class)
+  //  @JsonDeserialize(as = ImmutableConditionContainer.class)
   interface PreimageConditionContainer {
 
     @JsonProperty("condition")
