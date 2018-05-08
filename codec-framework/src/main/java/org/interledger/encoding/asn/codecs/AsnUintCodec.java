@@ -21,7 +21,7 @@ public class AsnUintCodec extends AsnOctetStringBasedObjectCodec<BigInteger> {
   public void encode(BigInteger value) {
 
 
-    if (value.compareTo(BigInteger.ZERO) <= 0) {
+    if (value.compareTo(BigInteger.ZERO) < 0) {
       throw new IllegalArgumentException("value must be positive or zero");
     }
 
