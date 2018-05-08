@@ -1,22 +1,22 @@
 package org.interledger.core.asn.codecs;
 
-import org.interledger.core.InterledgerCondition;
+import org.interledger.core.Condition;
 import org.interledger.encoding.asn.codecs.AsnOctetStringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 
-public class AsnConditionCodec extends AsnOctetStringBasedObjectCodec<InterledgerCondition> {
+public class AsnConditionCodec extends AsnOctetStringBasedObjectCodec<Condition> {
 
   public AsnConditionCodec() {
     super(new AsnSizeConstraint(32));
   }
 
   @Override
-  public InterledgerCondition decode() {
-    return InterledgerCondition.from(getBytes());
+  public Condition decode() {
+    return Condition.of(getBytes());
   }
 
   @Override
-  public void encode(InterledgerCondition value) {
-    setBytes(value.getBytes());
+  public void encode(Condition value) {
+    setBytes(value.getHash());
   }
 }

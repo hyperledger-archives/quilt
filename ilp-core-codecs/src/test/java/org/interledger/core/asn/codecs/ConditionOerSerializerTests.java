@@ -3,7 +3,7 @@ package org.interledger.core.asn.codecs;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.interledger.core.InterledgerCondition;
+import org.interledger.core.Condition;
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
 import org.interledger.encoding.asn.framework.CodecContext;
 
@@ -23,7 +23,7 @@ public class ConditionOerSerializerTests {
 
   // first data value (0) is default
   @Parameter
-  public InterledgerCondition condition;
+  public Condition condition;
 
   /**
    * The data for this test...
@@ -31,7 +31,7 @@ public class ConditionOerSerializerTests {
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays
-        .asList(new Object[][] {{InterledgerCondition.from(new byte[32])},
+        .asList(new Object[][] {{Condition.of(new byte[32])},
             // TODO: Some more test values
         });
   }
@@ -46,8 +46,7 @@ public class ConditionOerSerializerTests {
     final ByteArrayInputStream byteArrayInputStream =
         new ByteArrayInputStream(outputStream.toByteArray());
 
-    final InterledgerCondition decodedCondition
-        = context.read(InterledgerCondition.class, byteArrayInputStream);
+    final Condition decodedCondition = context.read(Condition.class, byteArrayInputStream);
     assertThat(decodedCondition, is(condition));
   }
 }

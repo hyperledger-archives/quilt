@@ -15,7 +15,7 @@ public interface InterledgerFulfillPacket extends InterledgerPacket {
     return new InterledgerFulfillPacketBuilder();
   }
 
-  InterledgerFulfillment getFulfillment();
+  Fulfillment getFulfillment();
 
   /**
    * Arbitrary data for the sender that is set by the transport layer of a payment (for example,

@@ -1,10 +1,10 @@
 package org.interledger.core.asn.framework;
 
+import org.interledger.core.Condition;
+import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
-import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
@@ -38,12 +38,11 @@ public class InterledgerCodecContextFactory {
    * @return A new instance of {@link CodecContext}.
    */
   public static CodecContext oer() {
-
     return CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
         .register(Instant.class, AsnTimestampCodec::new)
-        .register(InterledgerCondition.class, AsnConditionCodec::new,
+        .register(Condition.class, AsnConditionCodec::new,
             new AsnOctetStringOerSerializer())
-        .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new,
+        .register(Fulfillment.class, AsnFulfillmentCodec::new,
             new AsnOctetStringOerSerializer())
         .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new,
             new AsnCharStringOerSerializer())
@@ -57,7 +56,5 @@ public class InterledgerCodecContextFactory {
             new AsnSequenceOerSerializer())
         .register(InterledgerRejectPacket.class, AsnInterledgerRejectPacketCodec::new,
             new AsnSequenceOerSerializer());
-
   }
-
 }
