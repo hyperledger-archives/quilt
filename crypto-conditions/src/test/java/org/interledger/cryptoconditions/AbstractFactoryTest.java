@@ -22,6 +22,9 @@ public abstract class AbstractFactoryTest extends AbstractCryptoConditionTest {
   protected PreimageSha256Fulfillment subfulfillment5;
   protected PreimageSha256Condition subcondition5;
 
+  /**
+   * Setup test data.
+   */
   @Before
   public void setup() {
     // Construct Preimage Fulfillment/Condition #1

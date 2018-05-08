@@ -8,11 +8,11 @@ import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.ME
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE1;
 import static org.interledger.cryptoconditions.helpers.TestFulfillmentFactory.PREIMAGE2;
 
-import com.google.common.collect.ImmutableList;
 import org.interledger.cryptoconditions.ThresholdSha256Condition.AbstractThresholdSha256Condition;
 import org.interledger.cryptoconditions.der.DerEncodingException;
 import org.interledger.cryptoconditions.helpers.TestConditionFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 import org.hamcrest.CoreMatchers;
@@ -115,21 +115,21 @@ public class ThresholdSha256ConditionTest extends AbstractCryptoConditionTest {
    */
   @Test
   public void testImmutableListOfSubconditions() {
-      final PreimageSha256Condition subcondition1 = TestConditionFactory
-          .constructPreimageCondition(PREIMAGE1);
-      final PreimageSha256Condition subcondition2 = TestConditionFactory
-          .constructPreimageCondition(PREIMAGE2);
+    final PreimageSha256Condition subcondition1 = TestConditionFactory
+        .constructPreimageCondition(PREIMAGE1);
+    final PreimageSha256Condition subcondition2 = TestConditionFactory
+        .constructPreimageCondition(PREIMAGE2);
 
 
-      final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
-              1, ImmutableList.of(subcondition1, subcondition2)
-      );
+    final ThresholdSha256Condition condition = ThresholdSha256Condition.from(
+        1, ImmutableList.of(subcondition1, subcondition2)
+    );
 
-      assertThat(condition.getSubtypes().contains(CryptoConditionType.PREIMAGE_SHA256), is(true));
-      assertThat(condition.getFingerprintBase64Url(),
-              is("cFYYmVSDhC_rSX6DPWQUTwG7iuWpQODWJXffjL8ROXM"));
-      assertThat(condition.getCost(), is(2094L));
-      assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
+    assertThat(condition.getSubtypes().contains(CryptoConditionType.PREIMAGE_SHA256), is(true));
+    assertThat(condition.getFingerprintBase64Url(),
+        is("cFYYmVSDhC_rSX6DPWQUTwG7iuWpQODWJXffjL8ROXM"));
+    assertThat(condition.getCost(), is(2094L));
+    assertThat(condition.getType(), is(CryptoConditionType.THRESHOLD_SHA256));
   }
 
   @Test(expected = IllegalArgumentException.class)
