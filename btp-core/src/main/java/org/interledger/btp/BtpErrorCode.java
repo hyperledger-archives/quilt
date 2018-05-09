@@ -53,14 +53,13 @@ public enum BtpErrorCode {
    */
   public static BtpErrorCode fromString(String code) {
 
-    for (BtpErrorCode errorCode :
-        BtpErrorCode.values()) {
+    for (BtpErrorCode errorCode : BtpErrorCode.values()) {
       if (errorCode.code.equals(code)) {
         return errorCode;
       }
     }
 
-    throw new RuntimeException("Unknown code: " + code);
+    throw new IllegalArgumentException("Unknown BTP Error code: " + code);
   }
 
   public String getCode() {
