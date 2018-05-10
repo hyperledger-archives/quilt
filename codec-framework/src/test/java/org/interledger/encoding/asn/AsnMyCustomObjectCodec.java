@@ -7,6 +7,7 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
+import org.interledger.encoding.asn.codecs.AsnUintCodec;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
 
 import java.math.BigInteger;
@@ -25,7 +26,9 @@ public class AsnMyCustomObjectCodec extends AsnSequenceCodec<MyCustomObject> {
         new AsnUint32Codec(),
         new AsnUint64Codec(),
         new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED),
-        new AsnOctetStringCodec(32));
+        new AsnOctetStringCodec(32),
+        new AsnUintCodec()
+    );
 
   }
 
@@ -39,6 +42,7 @@ public class AsnMyCustomObjectCodec extends AsnSequenceCodec<MyCustomObject> {
       .uint64Property(getValueAt(4))
       .octetStringProperty(getValueAt(5))
       .fixedLengthOctetStringProperty(getValueAt(6))
+      .uintProperty(getValueAt(7))
       .build();
   }
 
@@ -51,6 +55,7 @@ public class AsnMyCustomObjectCodec extends AsnSequenceCodec<MyCustomObject> {
     setValueAt(4, value.getUint64Property());
     setValueAt(5, value.getOctetStringProperty());
     setValueAt(6, value.getFixedLengthOctetStringProperty());
+    setValueAt(7, value.getUintProperty());
   }
 
 }

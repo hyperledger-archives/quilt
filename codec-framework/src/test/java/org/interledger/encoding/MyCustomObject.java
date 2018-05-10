@@ -25,6 +25,8 @@ public interface MyCustomObject {
 
   byte[] getOctetStringProperty();
 
+  BigInteger getUintProperty();
+
   /**
    * Fixed size of 32 bytes.
    */
