@@ -1,7 +1,5 @@
 package org.interledger.quilt.jackson.conditions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64URL;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64URL_WITHOUT_PADDING;

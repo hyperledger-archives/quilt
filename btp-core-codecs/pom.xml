@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>quilt-parent</artifactId>
+    <groupId>org.interledger</groupId>
+    <version>0.12.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>btp-core-codecs</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Bilateral Transfer Protocol Core Codecs</name>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>btp-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>codec-framework</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+    </dependency>
+  </dependencies>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+</project>
