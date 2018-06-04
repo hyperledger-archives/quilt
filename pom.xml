@@ -21,6 +21,10 @@
     </license>
   </licenses>
 
+  <organization>
+    <name>Interledger</name>
+  </organization>
+
   <!-- Signing profile for signed distributions -->
   <profiles>
     <profile>
