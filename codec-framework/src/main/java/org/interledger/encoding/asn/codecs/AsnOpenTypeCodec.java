@@ -4,7 +4,7 @@ package org.interledger.encoding.asn.codecs;
  * ========================LICENSE_START=================================
  * Interledger Codec Framework
  * %%
- * Copyright (C) 2017 - 2018 Interledger
+ * Copyright (C) 2017 - 2018 Hyperledger and its contributors
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

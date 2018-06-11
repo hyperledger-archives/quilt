@@ -4,7 +4,7 @@ package org.interledger.ildcp.asn.framework;
  * ========================LICENSE_START=================================
  * Interledger Dynamic Configuration Protocol Core Codecs
  * %%
- * Copyright (C) 2017 - 2018 Interledger
+ * Copyright (C) 2017 - 2018 Hyperledger and its contributors
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
