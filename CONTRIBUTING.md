@@ -4,7 +4,7 @@ Hyperledger Quilt is a truly open source project. It is a community led effort t
 
 The initial versions of Quilt are *_Java_* implementations however any other language implementation is welcomed. Please log an issue if you'd like to contribute using a new lnaguage/stack and we'll get the necessary repo changes made so you can.
 
-First time contributors can either find a module that has not yet been implemented and try that or look for a ["Good First Issue"]() 
+First time contributors can either find a module that has not yet been implemented and try that or look for a ["Good First Issue"](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3A"good+first+issue") 
 
 ## Goals
 
