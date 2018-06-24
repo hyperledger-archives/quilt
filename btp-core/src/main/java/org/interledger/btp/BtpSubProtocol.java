@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,8 @@ package org.interledger.btp;
  */
 
 import org.interledger.annotations.Immutable;
+
+import org.immutables.value.Value.Default;
 
 import java.nio.charset.StandardCharsets;
 
@@ -32,9 +34,13 @@ public interface BtpSubProtocol {
 
   String getProtocolName();
 
-  BtpSubProtocolContentType getContentType();
+  default BtpSubProtocolContentType getContentType() {
+    return BtpSubProtocolContentType.MIME_APPLICATION_OCTET_STREAM;
+  }
 
-  byte[] getData();
+  default byte[] getData() {
+    return new byte[0];
+  }
 
   default String getDataAsString() {
     return new String(getData(), StandardCharsets.UTF_8);
@@ -43,6 +49,15 @@ public interface BtpSubProtocol {
   @Immutable
   abstract class AbstractBtpSubProtocol implements BtpSubProtocol {
 
+    @Default
+    public BtpSubProtocolContentType getContentType() {
+      return BtpSubProtocolContentType.MIME_APPLICATION_OCTET_STREAM;
+    }
+
+    @Default
+    public byte[] getData() {
+      return new byte[0];
+    }
   }
 
 }
