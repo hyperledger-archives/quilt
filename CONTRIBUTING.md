@@ -1,6 +1,6 @@
 # Contributing
 
-Hyperledger Quilt is a truly open source project. It is a community led effort to provide the components developers need to work with the [Interledger Protocol](https://interledger.org).
+Hyperledger Quilt is a truly open source project. It is a community-led effort to provide the components developers need to work with the [Interledger Protocol](https://interledger.org).
 
 The initial versions of Quilt are *_Java_* implementations however any other language implementation is welcomed. Please log an issue if you'd like to contribute using a new lnaguage/stack and we'll get the necessary repo changes made so you can.
 
@@ -8,20 +8,20 @@ First time contributors can either find a module that has not yet been implement
 
 ## Goals
 
-To use Interledger an application requires one or more of the following components:
+To use Interledger, an application requires one or more of the following components:
 
-  1. Interledger Protocol Codecs
-  1. ILDCP Protocol Codecs
-  1. Bilateral Transfer Protocol Codecs
-  1. STREAM Protocol Codecs, Sender and Receiver
+  1. [Interledger Protocol](https://interledger.org/rfcs/0027-interledger-protocol-4/) Codecs
+  1. [IL-DCP](https://github.com/interledgerjs/ilp-protocol-ildcp) Protocol Codecs
+  1. [Bilateral Transfer Protocol](https://interledger.org/rfcs/0023-bilateral-transfer-protocol/) Codecs
+  1. [STREAM Protocol](https://interledger.org/rfcs/0029-stream/) Codecs, Sender and Receiver
 
 Our goal is to provide these componenets for as many languages/platforms as possible.
 
 ## Structure and Conventions
 
-For each protocol in the stack there is a module that defines the domain objects and another module that provides the codecs for those objects, leveraging the codec framework. New protocols should follow the same convention.
+For each protocol in the stack there is a module that defines the domain objects and another module that provides the codecs for those objects, leveraging the [codec framework](https://github.com/hyperledger/quilt/wiki/Codec-Framework). New protocols should follow the same convention.
 
-Domain objects are defined as interfaces with internal abstract class definitions that use the Immutables library to generate immutable implementations with handy builders.
+Domain objects are defined as interfaces with internal abstract class definitions that use the [Immutables](https://immutables.github.io/) library to generate immutable implementations with handy builders.
 
 The standard Immutables config is encapsulated in a custom annotation which should be used on the abstract class definitions. See the interfaces in [ilp-core](ilp-core) as an example.
 
@@ -63,4 +63,4 @@ It is most commonly used over Websockets but any transport that is able to frame
 ### STREAM Protocol
 
 STREAM is the transport protocol that is used to establish a connection between two enitities on the Interledger and exchange money and data between them.
-No implemetation is available in Java yet, *THIS IS A GREAT, BUT ADVANCED, COPNTRIBUTION TO TACKLE*.
+No implemetation is available in Java yet, *THIS IS A GREAT, BUT ADVANCED, CONTRIBUTION TO TACKLE*.
