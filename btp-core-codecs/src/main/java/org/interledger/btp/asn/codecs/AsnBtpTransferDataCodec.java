@@ -50,6 +50,7 @@ public class AsnBtpTransferDataCodec extends AsnBtpPacketDataCodec<BtpTransfer> 
   @Override
   public BtpTransfer decode() {
     return BtpTransfer.builder()
+        .requestId(getRequestId())
         .amount(getValueAt(0))
         .subProtocols(getValueAt(1))
         .build();
