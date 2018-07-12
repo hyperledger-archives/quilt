@@ -44,16 +44,64 @@ Dev-ops is a module for shared build and test tools
 
 ### Requirements
 
-#### Maven
-This project uses Maven to manage dependencies and other aspects of the build. 
-To install Maven, follow the instructions at [https://maven.apache.org/install.html](https://maven.apache.org/install.html).
-
 #### Unlimited Strength Encryption Policy Files 
 In order to properly build this project, you must download and install Java Cryptography Extension 
 (JCE) Unlimited Strength Jurisdiction Policy files. For more details, follow the instructions 
 [here](http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html). 
 
-### Get the code
+#### Maven
+This project uses Maven to manage dependencies and other aspects of the build. 
+To install Maven, follow the instructions at [https://maven.apache.org/install.html](https://maven.apache.org/install.html).
+
+Modules in this library can be included in your project by first adding a Snapshot Repository to your `pom.xml` file, like this:
+
+```
+<repositories>
+    ...
+    <repository>
+        <id>sonatype</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
+    ...
+</repositories>
+```
+Next, add the following Maven dependency:
+
+```
+<dependencies>
+  ...
+  <dependency>
+    <groupId>org.interledger</groupId>
+    <artifactId>java-ilp-core</artifactId>
+    <version>0.12.0-SNAPSHOT</version>
+  </dependency>
+  ...
+</dependencies>
+```
+
+#### Gradle
+To import this library into a project that uses gradle, first add the Snapshot Repository to your `gradle.properties` file, like this:
+
+```
+repositories {
+    mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+```
+Next, import this library as a dependency, like this:
+
+```
+dependencies {
+    ...
+    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.7.0-SNAPSHOT'
+    ...
+}
+```
+
+## Development
+We welcome any and all submissions, whether it's a typo, bug fix, or new feature. To get started, first download the code:
 
 ``` sh
 git clone https://github.com/hyperledger/quilt
