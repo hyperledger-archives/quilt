@@ -75,8 +75,9 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
   boolean validateCondition(InterledgerCondition condition);
 
   /**
-   * An immutable implementation from InterledgerFulfillment optimized for efficient operations that only create copies
-   * from the internal data as required and only performs late generation from the hash when required.
+   * An immutable implementation from InterledgerFulfillment optimized for efficient operations that
+   * only create copies from the internal data as required and only performs late generation from
+   * the hash when required.
    */
   class ImmutableInterledgerFulfillment implements InterledgerFulfillment {
 

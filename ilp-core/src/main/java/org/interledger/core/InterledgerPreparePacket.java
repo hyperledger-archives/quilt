@@ -75,7 +75,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
 
   Instant getExpiresAt();
 
-  Condition getExecutionCondition();
+  InterledgerCondition getExecutionCondition();
 
   /**
    * The Interledger address of the account where the receiver should ultimately receive the

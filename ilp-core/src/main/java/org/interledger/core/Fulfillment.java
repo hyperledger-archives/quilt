@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * The fulfillment of a {@link Condition}.
+ * The fulfillment of an {@link InterledgerCondition}.
  *
  * <p>The standard for Interledger payments is for the fulfillment to be the pre-image of a SHA-256
  * hash (the condition).
@@ -63,7 +63,7 @@ public interface Fulfillment {
       final byte[] hash = digest.digest(preimage);
       return Fulfillment.builder()
           .preimage(Arrays.copyOf(preimage, 32))
-          .condition(Condition.of(hash))
+          .condition(InterledgerCondition.from(hash))
           .build();
     } catch (NoSuchAlgorithmException e) {
       throw new InterledgerRuntimeException(e);
@@ -78,11 +78,11 @@ public interface Fulfillment {
   byte[] getPreimage();
 
   /**
-   * Get the {@link Condition} that is fulfilled by this Fulfillment.
+   * Get the {@link InterledgerCondition} that is fulfilled by this Fulfillment.
    *
    * @return a condition representing the SHA-256 hash of this preimage.
    */
-  Condition getCondition();
+  InterledgerCondition getCondition();
 
   /**
    * Validate a given condition against this fulfillment.
@@ -92,7 +92,7 @@ public interface Fulfillment {
    * @return true if this fulfillment fulfills the given condition.
    */
   @Value.Derived
-  default boolean validate(final Condition condition) {
+  default boolean validate(final InterledgerCondition condition) {
     Objects.requireNonNull(condition, "condition must not be null!");
     return this.getCondition().equals(condition);
   }
