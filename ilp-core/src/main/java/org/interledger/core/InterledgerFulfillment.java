@@ -36,19 +36,19 @@ import java.util.Objects;
 public interface InterledgerFulfillment extends Comparable<InterledgerFulfillment> {
 
   /**
-   * Create a new immutable InterledgerFulfillment from the provided 32-hashBytes.
+   * Create a new immutable InterledgerFulfillment from the provided 32-hash.
    *
    * @param bytes 32-byte preimage
    *
    * @return the fulfillment containing these byteAsnConditionCodecs
    */
   static InterledgerFulfillment from(byte[] bytes) {
-    Objects.requireNonNull(bytes, "hashBytes cannot be null");
+    Objects.requireNonNull(bytes, "hash cannot be null");
     return new ImmutableInterledgerFulfillment(bytes);
   }
 
   /**
-   * <p>Get the internal hashBytes from the fulfillment.</p>
+   * <p>Get the internal hash from the fulfillment.</p>
    *
    * <p>Implementations should return a safe copy from the data to preserve the immutability from
    * the fulfillment.</p>
@@ -133,7 +133,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
 
       if (other instanceof InterledgerFulfillment) {
 
-        //Only call getHashBytes() if we have to (avoid array copy)
+        //Only call getHash() if we have to (avoid array copy)
         byte[] otherBytes = (other instanceof ImmutableInterledgerFulfillment)
             ? ((ImmutableInterledgerFulfillment) other).preimageBytes
             : ((InterledgerFulfillment) other).getPreimage();
@@ -156,7 +156,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
         return 0;
       }
 
-      //Only call getHashBytes() if we have to (avoid array copy)
+      //Only call getHash() if we have to (avoid array copy)
       byte[] otherBytes = (other instanceof ImmutableInterledgerFulfillment)
           ? ((ImmutableInterledgerFulfillment) other).preimageBytes
           : other.getPreimage();

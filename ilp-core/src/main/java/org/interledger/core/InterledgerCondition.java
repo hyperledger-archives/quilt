@@ -34,17 +34,17 @@ import java.util.Objects;
 public interface InterledgerCondition extends Comparable<InterledgerCondition> {
 
   /**
-   * <p>Create a new immutable {@link InterledgerCondition} from the provided 32-hashBytes.</p>
+   * <p>Create a new immutable {@link InterledgerCondition} from the provided 32-hash.</p>
    *
    * <p>This method is typically only used during deserialization. To generate a condition based
    * on an fulfillment use {@link InterledgerFulfillment#getCondition()}.</p>
    *
    * @param hashBytes A 32-byte SHA-256 hash digest.
    *
-   * @return The {@link InterledgerCondition} containing the supplied hashBytes.
+   * @return The {@link InterledgerCondition} containing the supplied hash.
    */
   static InterledgerCondition from(final byte[] hashBytes) {
-    Objects.requireNonNull(hashBytes, "hashBytes cannot be null");
+    Objects.requireNonNull(hashBytes, "hash cannot be null");
     return new ImmutableInterledgerCondition(hashBytes);
   }
 
@@ -60,22 +60,22 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
    */
   static InterledgerCondition from(final InterledgerCondition interledgerCondition) {
     Objects.requireNonNull(interledgerCondition, "interledgerCondition cannot be null");
-    //Only call getHashBytes() if we have to (avoid array copy)
+    //Only call getHash() if we have to (avoid array copy)
     byte[] otherBytes = (interledgerCondition instanceof ImmutableInterledgerCondition)
-        ? ((ImmutableInterledgerCondition) interledgerCondition).hashBytes
-        : interledgerCondition.getHashBytes();
+        ? ((ImmutableInterledgerCondition) interledgerCondition).hash
+        : interledgerCondition.getHash();
     return new ImmutableInterledgerCondition(otherBytes);
   }
 
   /**
-   * Get the internal hashBytes from the condition.
+   * Get the internal hash from the condition.
    *
    * <p>Implementations should return a safe copy from the data to preserve the immutability from
    * the condition.
    *
    * @return the 32 byte condition
    */
-  byte[] getHashBytes();
+  byte[] getHash();
 
   /**
    * An immutable implementation from InterledgerCondition optimized for efficient operations that
@@ -84,14 +84,14 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
   final class ImmutableInterledgerCondition implements InterledgerCondition {
 
     //Package private so it is accessible from InterledgerFulfillment to avoid copying if possible
-    final byte[] hashBytes = new byte[32];
+    final byte[] hash = new byte[32];
 
-    private ImmutableInterledgerCondition(byte[] hashBytes) {
-      if (hashBytes.length != 32) {
+    private ImmutableInterledgerCondition(byte[] hash) {
+      if (hash.length != 32) {
         throw new IllegalArgumentException(
             "InterledgerCondition must be created with exactly 32 bytes.");
       }
-      System.arraycopy(hashBytes, 0, this.hashBytes, 0, 32);
+      System.arraycopy(hash, 0, this.hash, 0, 32);
     }
 
     @Override
@@ -102,12 +102,12 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
 
       if (other instanceof InterledgerCondition) {
 
-        //Only call getHashBytes() if we have to (avoid array copy)
+        //Only call getHash() if we have to (avoid array copy)
         byte[] otherBytes = (other instanceof ImmutableInterledgerCondition)
-            ? ((ImmutableInterledgerCondition) other).hashBytes
-            : ((InterledgerCondition) other).getHashBytes();
+            ? ((ImmutableInterledgerCondition) other).hash
+            : ((InterledgerCondition) other).getHash();
 
-        return Arrays.equals(hashBytes, otherBytes);
+        return Arrays.equals(hash, otherBytes);
       }
 
       return false;
@@ -121,7 +121,7 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
     @Override
     public int hashCode() {
       int hashCode = 5381;
-      hashCode += (hashCode << 5) + Arrays.hashCode(hashBytes);
+      hashCode += (hashCode << 5) + Arrays.hashCode(hash);
       return hashCode;
     }
 
@@ -133,13 +133,13 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
     @Override
     public String toString() {
       return "Condition{"
-          + "hash=" + Arrays.toString(hashBytes)
+          + "hash=" + Arrays.toString(hash)
           + "}";
     }
 
     @Override
-    public byte[] getHashBytes() {
-      return Arrays.copyOf(this.hashBytes, 32);
+    public byte[] getHash() {
+      return Arrays.copyOf(this.hash, 32);
     }
 
     @Override
@@ -153,18 +153,18 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
         return 0;
       }
 
-      //Only call getHashBytes() if we have to (avoid array copy)
+      //Only call getHash() if we have to (avoid array copy)
       byte[] otherBytes = (other instanceof ImmutableInterledgerCondition)
-          ? ((ImmutableInterledgerCondition) other).hashBytes
-          : other.getHashBytes();
+          ? ((ImmutableInterledgerCondition) other).hash
+          : other.getHash();
 
-      if (otherBytes == this.hashBytes) {
+      if (otherBytes == this.hash) {
         return 0;
       }
 
       for (int i = 0; i < 32; i++) {
-        if (this.hashBytes[i] != otherBytes[i]) {
-          return this.hashBytes[i] - otherBytes[i];
+        if (this.hash[i] != otherBytes[i]) {
+          return this.hash[i] - otherBytes[i];
         }
       }
 

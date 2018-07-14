@@ -47,7 +47,7 @@ public class SerializerUtils {
     Objects.requireNonNull(encoder);
     Objects.requireNonNull(interledgerCondition);
 
-    return encoder.encodeToString(interledgerCondition.getHashBytes());
+    return encoder.encodeToString(interledgerCondition.getHash());
   }
 
   /**

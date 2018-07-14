@@ -41,6 +41,6 @@ public class AsnConditionCodec extends AsnOctetStringBasedObjectCodec<Interledge
 
   @Override
   public void encode(InterledgerCondition value) {
-    setBytes(value.getHashBytes());
+    setBytes(value.getHash());
   }
 }

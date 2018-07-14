@@ -64,7 +64,7 @@ public class ConditionSerializer extends StdScalarSerializer<InterledgerConditio
 
     switch (encoding) {
       case HEX: {
-        gen.writeString(BaseEncoding.base16().encode(condition.getHashBytes()));
+        gen.writeString(BaseEncoding.base16().encode(condition.getHash()));
         break;
       }
       case BASE64: {

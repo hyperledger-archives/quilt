@@ -63,7 +63,7 @@ public class InterledgerConditionTest {
 
   @Test
   public void testGetBytes() {
-    assertArrayEquals(InterledgerCondition.from(BYTES_1).getHashBytes(), BYTES_1);
+    assertArrayEquals(InterledgerCondition.from(BYTES_1).getHash(), BYTES_1);
   }
 
   @Test
