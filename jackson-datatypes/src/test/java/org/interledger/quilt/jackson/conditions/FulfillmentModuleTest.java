@@ -44,15 +44,15 @@ import java.util.Objects;
 public class FulfillmentModuleTest extends AbstractConditionModuleTest {
 
   private static final String PREIMAGE_FULFILLMENT_DER_BYTES_HEX =
-      "A02D802B796F75206275696C7420612074696D65206D616368696E65206F7574206F6620612044654C6F7265616E3F";
+      "726F6164733F20776865726520776527726520676F696E6720776520646F6E27";
   private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64
-      = "oC2AK3lvdSBidWlsdCBhIHRpbWUgbWFjaGluZSBvdXQgb2YgYSBEZUxvcmVhbj8=";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_WITHOUTPADDING
-      = "oC2AK3lvdSBidWlsdCBhIHRpbWUgbWFjaGluZSBvdXQgb2YgYSBEZUxvcmVhbj8";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL
       = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL_WITHOUTPADDING
+  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_WITHOUTPADDING
       = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
+  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL
+      = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
+  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL_WITHOUTPADDING
+      = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
 
   private static InterledgerFulfillment FULFILLMENT = constructPreimageFulfillment();
 
