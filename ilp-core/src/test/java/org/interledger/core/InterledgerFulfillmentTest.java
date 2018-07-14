@@ -76,7 +76,7 @@ public class InterledgerFulfillmentTest {
 
   @Test
   public void testGetBytes() {
-    assertArrayEquals(InterledgerFulfillment.from(BYTES_1).getBytes(), BYTES_1);
+    assertArrayEquals(InterledgerFulfillment.from(BYTES_1).getPreimage(), BYTES_1);
   }
 
 

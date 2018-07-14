@@ -20,9 +20,9 @@ package org.interledger.quilt.jackson;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.quilt.jackson.address.InterledgerAddressSerializer;
 import org.interledger.quilt.jackson.conditions.ConditionSerializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
@@ -58,7 +58,7 @@ public class InterledgerSerializers extends Serializers.Base {
     if (InterledgerCondition.class.isAssignableFrom(raw)) {
       return new ConditionSerializer(cryptoConditionEncoding);
     }
-    if (Fulfillment.class.isAssignableFrom(raw)) {
+    if (InterledgerFulfillment.class.isAssignableFrom(raw)) {
       return new FulfillmentSerializer(cryptoConditionEncoding);
     }
     return null;

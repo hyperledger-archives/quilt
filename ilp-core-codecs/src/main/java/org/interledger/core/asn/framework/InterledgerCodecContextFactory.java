@@ -20,11 +20,11 @@ package org.interledger.core.asn.framework;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
@@ -62,7 +62,7 @@ public class InterledgerCodecContextFactory {
         .register(Instant.class, AsnTimestampCodec::new)
         .register(InterledgerCondition.class, AsnConditionCodec::new,
             new AsnOctetStringOerSerializer())
-        .register(Fulfillment.class, AsnFulfillmentCodec::new,
+        .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new,
             new AsnOctetStringOerSerializer())
         .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new,
             new AsnCharStringOerSerializer())

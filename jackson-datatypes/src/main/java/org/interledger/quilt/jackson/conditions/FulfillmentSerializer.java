@@ -20,7 +20,6 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -33,7 +32,7 @@ import java.util.Base64;
 import java.util.Objects;
 
 /**
- * Jackson serializer {@link Fulfillment} using configurable encodings.
+ * Jackson serializer {@link InterledgerFulfillment} using configurable encodings.
  */
 public class FulfillmentSerializer extends StdScalarSerializer<InterledgerFulfillment> {
 
@@ -58,7 +57,7 @@ public class FulfillmentSerializer extends StdScalarSerializer<InterledgerFulfil
     switch (encoding) {
       case HEX: {
         gen.writeString(
-            BaseEncoding.base16().encode(fulfillment.getBytes())
+            BaseEncoding.base16().encode(fulfillment.getPreimage())
         );
         break;
       }

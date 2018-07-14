@@ -20,7 +20,6 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 
@@ -52,11 +51,12 @@ public class SerializerUtils {
   }
 
   /**
-   * Helper method to encode a {@link Fulfillment} using the supplied Base64 encoder, which might be
-   * Base64 or Base64Url, with or without padding.
+   * Helper method to encode a {@link InterledgerFulfillment} using the supplied Base64 encoder,
+   * which might be Base64 or Base64Url, with or without padding.
    *
    * @param encoder     A {@link Base64.Encoder} to encode with.
-   * @param fulfillment A {@link Fulfillment} to encode into Base64 using the supplied encoder.
+   * @param fulfillment A {@link InterledgerFulfillment} to encode into Base64 using the supplied
+   *                    encoder.
    *
    * @return The base64-encoded version of {@code fulfillment}.
    */
@@ -66,6 +66,6 @@ public class SerializerUtils {
     Objects.requireNonNull(encoder);
     Objects.requireNonNull(fulfillment);
 
-    return encoder.encodeToString(fulfillment.getBytes());
+    return encoder.encodeToString(fulfillment.getPreimage());
   }
 }

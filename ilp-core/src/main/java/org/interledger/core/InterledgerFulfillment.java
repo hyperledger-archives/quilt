@@ -48,31 +48,30 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
   }
 
   /**
-   * Get the internal hashBytes from the fulfillment.
+   * <p>Get the internal hashBytes from the fulfillment.</p>
    *
    * <p>Implementations should return a safe copy from the data to preserve the immutability from
-   * the fulfillment.
+   * the fulfillment.</p>
    *
    * @return the 32 byte preimage
    */
-  byte[] getBytes();
+  byte[] getPreimage();
 
   /**
-   * Get the condition that is valid for this fulfillment.
+   * <p>Get the condition that is valid for this fulfillment.</p>
    *
    * <p>Implementations MUST ensure that <code>f.validateCondition(f.getCondition())</code> always
-   * returns
-   * <code>true</code>.
+   * returns <code>true</code>.</p>
    *
    * @return the condition for this fulfillment.
    */
   InterledgerCondition getCondition();
 
   /**
-   * Check that the provided condition is valid for this fulfillment.
+   * <p>Check that the provided condition is valid for this fulfillment.</p>
    *
    * <p>A valid condition is the 32 byte SHA-256 hash digest from the 32 byte opreimage represented
-   * by this fulfillment.
+   * by this fulfillment.</p>
    *
    * @param condition an InterledgerCondition
    *
@@ -87,45 +86,43 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
    */
   class ImmutableInterledgerFulfillment implements InterledgerFulfillment {
 
-    private final byte[] bytes = new byte[32];
+    private final byte[] preimageBytes = new byte[32];
+    private final InterledgerCondition condition;
 
-    private InterledgerCondition condition;
-    private byte[] conditionBytes;
-
-    protected ImmutableInterledgerFulfillment(byte[] bytes) {
-      if (bytes.length != 32) {
-        throw new IllegalArgumentException("InterledgerFulfillment must be exactly 32 hashBytes.");
+    protected ImmutableInterledgerFulfillment(byte[] preimageBytes) {
+      if (preimageBytes.length != 32) {
+        throw new IllegalArgumentException(
+            "Interledger preimages must be exactly 32 preimageBytes.");
       }
-      System.arraycopy(bytes, 0, this.bytes, 0, 32);
+      System.arraycopy(preimageBytes, 0, this.preimageBytes, 0, 32);
+
+      try {
+        // MessageDigest is not threadsafe, but is cheap to construct...
+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        final byte[] hash = digest.digest(preimageBytes);
+        this.condition = InterledgerCondition.from(hash);
+      } catch (NoSuchAlgorithmException e) {
+        //This should never happen as all JVMs ship with a SHA-256 digest implementation
+        throw new InterledgerRuntimeException(
+            "Unable to get SHA-256 message digest instance.", e
+        );
+      }
     }
 
     @Override
     public InterledgerCondition getCondition() {
-      if (this.condition == null) {
-        try {
-          MessageDigest digest = MessageDigest.getInstance("SHA-256");
-          this.conditionBytes = digest.digest(bytes);
-          this.condition = InterledgerCondition.from(conditionBytes);
-        } catch (NoSuchAlgorithmException e) {
-          //This should never happen as all JVMs ship with a SHA-256 digest implementation
-          throw new RuntimeException("Unable to get SHA-256 message digest instance.", e);
-        }
-      }
-      return condition;
+      return this.condition;
     }
 
     @Override
-    public byte[] getBytes() {
-      return Arrays.copyOf(bytes, 32);
+    public byte[] getPreimage() {
+      return Arrays.copyOf(preimageBytes, 32);
     }
 
     @Override
-    public boolean validateCondition(InterledgerCondition condition) {
-      Objects.requireNonNull(condition, "condition can't be null");
-      byte[] otherBytes = (condition instanceof InterledgerCondition.ImmutableInterledgerCondition)
-          ? ((InterledgerCondition.ImmutableInterledgerCondition) condition).hashBytes
-          : condition.getHashBytes();
-      return Arrays.equals(conditionBytes, otherBytes);
+    public boolean validateCondition(final InterledgerCondition condition) {
+      Objects.requireNonNull(condition, "condition must not be null!");
+      return this.getCondition().equals(condition);
     }
 
     @Override
@@ -138,10 +135,10 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
 
         //Only call getHashBytes() if we have to (avoid array copy)
         byte[] otherBytes = (other instanceof ImmutableInterledgerFulfillment)
-            ? ((ImmutableInterledgerFulfillment) other).bytes
-            : ((InterledgerFulfillment) other).getBytes();
+            ? ((ImmutableInterledgerFulfillment) other).preimageBytes
+            : ((InterledgerFulfillment) other).getPreimage();
 
-        return Arrays.equals(bytes, otherBytes);
+        return Arrays.equals(preimageBytes, otherBytes);
       }
 
       return false;
@@ -149,7 +146,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
     }
 
     @Override
-    public int compareTo(InterledgerFulfillment other) {
+    public int compareTo(final InterledgerFulfillment other) {
 
       if (other == null) {
         return 1;
@@ -161,16 +158,16 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
 
       //Only call getHashBytes() if we have to (avoid array copy)
       byte[] otherBytes = (other instanceof ImmutableInterledgerFulfillment)
-          ? ((ImmutableInterledgerFulfillment) other).bytes
-          : other.getBytes();
+          ? ((ImmutableInterledgerFulfillment) other).preimageBytes
+          : other.getPreimage();
 
-      if (otherBytes == this.bytes) {
+      if (otherBytes == this.preimageBytes) {
         return 0;
       }
 
       for (int i = 0; i < 32; i++) {
-        if (this.bytes[i] != otherBytes[i]) {
-          return this.bytes[i] - otherBytes[i];
+        if (this.preimageBytes[i] != otherBytes[i]) {
+          return this.preimageBytes[i] - otherBytes[i];
         }
       }
 

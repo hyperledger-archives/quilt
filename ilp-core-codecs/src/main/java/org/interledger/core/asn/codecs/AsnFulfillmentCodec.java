@@ -9,9 +9,9 @@ package org.interledger.core.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,23 +20,23 @@ package org.interledger.core.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.encoding.asn.codecs.AsnOctetStringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 
-public class AsnFulfillmentCodec extends AsnOctetStringBasedObjectCodec<Fulfillment> {
+public class AsnFulfillmentCodec extends AsnOctetStringBasedObjectCodec<InterledgerFulfillment> {
 
   public AsnFulfillmentCodec() {
     super(new AsnSizeConstraint(32));
   }
 
   @Override
-  public Fulfillment decode() {
-    return Fulfillment.of(getBytes());
+  public InterledgerFulfillment decode() {
+    return InterledgerFulfillment.from(getBytes());
   }
 
   @Override
-  public void encode(Fulfillment value) {
+  public void encode(final InterledgerFulfillment value) {
     setBytes(value.getPreimage());
   }
 }

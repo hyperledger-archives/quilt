@@ -85,7 +85,6 @@ public class FulfillmentModuleTest extends AbstractConditionModuleTest {
         {Encoding.BASE64URL_WITHOUT_PADDING,
             PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL_WITHOUTPADDING},
     });
-
   }
 
   @Test

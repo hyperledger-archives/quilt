@@ -23,9 +23,9 @@ package org.interledger.quilt.jackson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.quilt.jackson.conditions.Encoding;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -85,7 +85,7 @@ public class InterledgerModuleTest {
 
   private static InterledgerCondition constructCondition() {
     final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return Fulfillment.of(preimage).getCondition();
+    return InterledgerFulfillment.from(preimage).getCondition();
   }
 
   /**

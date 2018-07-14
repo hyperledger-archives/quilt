@@ -20,12 +20,12 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 
 /**
  * Indicates the type of encoding and decoding to use when serializing and deserializing a {@link
- * InterledgerCondition} or {@link Fulfillment}.
+ * InterledgerCondition} or {@link InterledgerFulfillment}.
  */
 public enum Encoding {
   HEX,

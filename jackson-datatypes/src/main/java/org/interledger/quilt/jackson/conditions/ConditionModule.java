@@ -22,7 +22,6 @@ package org.interledger.quilt.jackson.conditions;
 
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64;
 
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 
@@ -40,7 +39,7 @@ import java.util.Objects;
 
 /**
  * A Jackson {@link SimpleModule} for serializing and deserializing Crypto-Condition objects like
- * {@link InterledgerCondition} and {@link Fulfillment}.
+ * {@link InterledgerCondition} and {@link InterledgerFulfillment}.
  */
 public class ConditionModule extends SimpleModule {
 
@@ -88,7 +87,8 @@ public class ConditionModule extends SimpleModule {
       ) {
         if (InterledgerCondition.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new ConditionSerializer(encoding);
-        } else if (Fulfillment.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
+        } else if (InterledgerFulfillment.class
+            .isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new FulfillmentSerializer(encoding);
         } else {
           return serializer;
@@ -105,7 +105,8 @@ public class ConditionModule extends SimpleModule {
       ) {
         if (InterledgerCondition.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new ConditionDeserializer(encoding);
-        } else if (Fulfillment.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
+        } else if (InterledgerFulfillment.class
+            .isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new FulfillmentDeserializer(encoding);
         } else {
           return super.modifyDeserializer(config, beanDesc, deserializer);
