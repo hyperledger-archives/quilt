@@ -49,15 +49,15 @@ import java.util.Objects;
 public class InterledgerModuleTest {
 
   private static final String CONDITION_BYTES_HEX =
-      "BF165845FFDB85F44A32052EC6279D2DBF151DE8E3A7D3727C94FC7AB531ACD5";
+      "D8391BB7F1E6AF13F9D21745481FF024AE8429A2280478B42B174D4716AC7353";
   private static final String CONDITION_BYTES_BASE64
-      = "vxZYRf/bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU=";
+      = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M=";
   private static final String CONDITION_BYTES_BASE64_WITHOUTPADDING
-      = "vxZYRf/bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU";
+      = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M";
   private static final String CONDITION_BYTES_BASE64_URL
-      = "vxZYRf_bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU=";
+      = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M=";
   private static final String CONDITION_BYTES_BASE64_URL_WITHOUTPADDING
-      = "vxZYRf_bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU";
+      = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M";
 
   private static InterledgerCondition CONDITION = constructCondition();
 
@@ -84,7 +84,7 @@ public class InterledgerModuleTest {
   }
 
   private static InterledgerCondition constructCondition() {
-    final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
+    final byte[] preimage = "you built a time machine out of ".getBytes();
     return InterledgerFulfillment.from(preimage).getCondition();
   }
 
