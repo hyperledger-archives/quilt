@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,29 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   public static final String INTERLEDGER = "ilp";
 
   /**
+   * Create a new {@link BtpSubProtocols} list with no sub-protocols.
+   *
+   * @return a new {@link BtpSubProtocols} list with no sub-protocols.
+   */
+  public static BtpSubProtocols empty() {
+    return new BtpSubProtocols();
+  }
+
+  /**
+   * Create a new {@link BtpSubProtocols} list with the given {@link BtpSubProtocol} as the primary
+   * sub-protocol.
+   *
+   * @param protocol the sub-protocol to use as the primary
+   *
+   * @return a new {@link BtpSubProtocols} list with only a primary sub-protocol
+   */
+  public static BtpSubProtocols fromPrimarySubProtocol(BtpSubProtocol protocol) {
+    BtpSubProtocols subProtocols = new BtpSubProtocols();
+    subProtocols.add(protocol);
+    return subProtocols;
+  }
+
+  /**
    * Get the primary {@link BtpSubProtocol}.
    *
    * @return the {@link BtpSubProtocol} that is first in the list
@@ -41,21 +64,10 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   }
 
   /**
-   * Create a new {@link BtpSubProtocols} list with the given {@link BtpSubProtocol} as the primary sub-protocol.
-   * @param protocol the sub-protocol to use as the primary
-   * @return a new {@link BtpSubProtocols} list with only a primary sub-protocol
-   */
-  public static BtpSubProtocols fromPrimarySubProtocol(BtpSubProtocol protocol) {
-    BtpSubProtocols subProtocols = new BtpSubProtocols();
-    subProtocols.add(protocol);
-    return subProtocols;
-  }
-
-
-  /**
    * Check if a given {@link BtpSubProtocol} exists in this list.
    *
    * @param protocolName the name of the {@link BtpSubProtocol}
+   *
    * @return a <code>true</code> if a {@link BtpSubProtocol} exists with the given name
    */
   public boolean hasSubProtocol(String protocolName) {
@@ -71,6 +83,7 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
    * Get the {@link BtpSubProtocol} by name.
    *
    * @param protocolName the name of the {@link BtpSubProtocol}
+   *
    * @return a {@link BtpSubProtocol} or null if none exists with the given name
    */
   public BtpSubProtocol getSubProtocol(String protocolName) {

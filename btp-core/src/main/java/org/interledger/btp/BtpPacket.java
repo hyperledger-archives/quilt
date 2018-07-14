@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,20 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
+import org.immutables.value.Value.Default;
+
+import java.util.Optional;
+
 public interface BtpPacket {
 
   BtpMessageType getType();
 
   long getRequestId();
 
-  BtpSubProtocols getSubProtocols();
+  @Default
+  default BtpSubProtocols getSubProtocols() {
+    return BtpSubProtocols.empty();
+  }
 
   /**
    * Get the primary {@link BtpSubProtocol}.
@@ -44,30 +51,24 @@ public interface BtpPacket {
    * Get the {@link BtpSubProtocol} by name.
    *
    * @param protocolName the name of the {@link BtpSubProtocol}
+   *
    * @return a {@link BtpSubProtocol} or null if none exists with the given name
    */
-  default BtpSubProtocol getSubProtocol(String protocolName) {
-    for (BtpSubProtocol protocol : getSubProtocols()) {
-      if (protocol.getProtocolName().equals(protocolName)) {
-        return protocol;
-      }
-    }
-    return null;
+  default Optional<BtpSubProtocol> getSubProtocol(String protocolName) {
+    return getSubProtocols().stream()
+        .filter(btpSubProtocol -> btpSubProtocol.getProtocolName().equals(protocolName))
+        .findFirst();
   }
 
   /**
    * Check if a given {@link BtpSubProtocol} exists in this message.
    *
    * @param protocolName the name of the {@link BtpSubProtocol}
+   *
    * @return a <code>true</code> if a {@link BtpSubProtocol} exists with the given name
    */
   default boolean hasSubProtocol(String protocolName) {
-    for (BtpSubProtocol protocol : getSubProtocols()) {
-      if (protocol.getProtocolName().equals(protocolName)) {
-        return true;
-      }
-    }
-    return false;
+    return getSubProtocol(protocolName).isPresent();
   }
 
 }

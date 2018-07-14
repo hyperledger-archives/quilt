@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,8 @@ package org.interledger.btp;
  */
 
 import org.interledger.annotations.Immutable;
+
+import org.immutables.value.Value.Default;
 
 import java.time.Instant;
 
@@ -32,11 +34,17 @@ public interface BtpError extends BtpPacket {
 
   BtpErrorCode getErrorCode();
 
-  String getErrorName();
+  default String getErrorName() {
+    return getErrorCode().name();
+  }
 
-  Instant getTriggeredAt();
+  default Instant getTriggeredAt() {
+    return Instant.now();
+  }
 
-  byte[] getErrorData();
+  default byte[] getErrorData() {
+    return new byte[0];
+  }
 
   @Immutable
   abstract class AbstractBtpError implements BtpError {
@@ -46,6 +54,29 @@ public interface BtpError extends BtpPacket {
       return BtpMessageType.ERROR;
     }
 
+    @Override
+    @Default
+    public String getErrorName() {
+      return getErrorCode().name();
+    }
+
+    @Override
+    @Default
+    public Instant getTriggeredAt() {
+      return Instant.now();
+    }
+
+    @Override
+    @Default
+    public byte[] getErrorData() {
+      return new byte[0];
+    }
+
+    @Override
+    @Default
+    public BtpSubProtocols getSubProtocols() {
+      return BtpSubProtocols.empty();
+    }
   }
 
 }

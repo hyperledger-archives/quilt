@@ -20,8 +20,6 @@ package org.interledger.encoding.asn.framework;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.encoding.asn.codecs.AsnObjectCodecBase;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

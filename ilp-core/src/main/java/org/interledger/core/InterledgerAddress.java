@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,12 +20,16 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
-
 import org.immutables.value.Value;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 
 /**
  * <p>Interledger Protocol (ILP) Addresses identify ledger accounts (or groups of ledger accounts)
@@ -51,6 +55,8 @@ public interface InterledgerAddress {
 
   InterledgerAddressParser ADDRESS_PARSER = new InterledgerAddressParser();
 
+  String ADDRESS_DELIMITER = ".";
+
   /**
    * Constructor to allow quick construction from a String representation of an ILP address.
    *
@@ -62,11 +68,12 @@ public interface InterledgerAddress {
    */
   static InterledgerAddress of(final String value) {
     Objects.requireNonNull(value, "value must not be null!");
-    return new InterledgerAddressBuilder().value(value).build();
+    return InterledgerAddress.builder().value(value).build();
   }
 
   /**
-   * <p>Helper method to determine if an Interledger Address conforms to the specifications outlined
+   * <p>Helper method to determine if an Interledger Address conforms to the specifications
+   * outlined
    * in Interledger RFC #15.</p>
    *
    * @param value A {@link String} representing a potential Interledger Address value.
@@ -83,163 +90,12 @@ public interface InterledgerAddress {
   }
 
   /**
-   * <p>Checks and requires that the specified {@code address} is an address prefix per {@link
-   * InterledgerAddress#isLedgerPrefix()}.</p>
-   *
-   * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p>
-   *
-   * <blockquote>
-   * <pre>
-   * public Foo(InterledgerAddress bar) {
-   *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar);
-   * }
-   * </pre>
-   * </blockquote>
-   *
-   * @param address A {@link InterledgerAddress} to check.
-   *
-   * @return The supplied {@code address} if its value ends with a dot (.).
-   *
-   * @throws NullPointerException     if the supplied {@code address} is <tt>null</tt>.
-   * @throws IllegalArgumentException if the supplied {@code address} is <tt>not</tt> a
-   *                                  <tt>ledger-prefix</tt>.
-   */
-  static InterledgerAddress requireAddressPrefix(final InterledgerAddress address) {
-    Objects.requireNonNull(address, "address must not be null!");
-
-    if (!address.isLedgerPrefix()) {
-      throw new IllegalArgumentException(
-          String.format(
-              "InterledgerAddress '%s' must be an Address Prefix ending with a dot (.)",
-              address.getValue()
-          )
-      );
-    } else {
-      return address;
-    }
-  }
-
-  /**
-   * <p>Checks and requires that the specified {@code address} is an address prefix per {@link
-   * InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.</p>
-   *
-   * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p>
-   *
-   * <blockquote>
-   * <pre>
-   * public Foo(InterledgerAddress bar) {
-   *     this.ledgerPrefix = InterledgerAddress.requireAddressPrefix(bar,
-   *         bar + " must be an address prefix);
-   * }
-   * </pre>
-   * </blockquote>
-   *
-   * @param address      A {@link InterledgerAddress} to check.
-   * @param errorMessage An error message to output upon invalidation.
-   *
-   * @return The supplied {@code address} if its value ends with a dot <tt>(.)</tt>.
-   *
-   * @throws NullPointerException     if the supplied {@code address} or {@code errorMessage} is
-   *                                  <tt>null</tt>.
-   * @throws IllegalArgumentException if the supplied {@code address} is not a ledger-prefix.
-   */
-  static InterledgerAddress requireAddressPrefix(
-      final InterledgerAddress address, final String errorMessage
-  ) {
-    Objects.requireNonNull(address, "address must not be null!");
-    Objects.requireNonNull(errorMessage, "errorMessage must not be null!");
-
-    if (!address.isLedgerPrefix()) {
-      throw new IllegalArgumentException(errorMessage);
-    }
-
-    return address;
-  }
-
-  /**
-   * <p>Checks and requires that the specified {@code address} is not an address prefix per {@link
-   * InterledgerAddress#isLedgerPrefix()}.</p>
-   *
-   * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p>
-   *
-   * <blockquote>
-   * <pre>
-   * public Foo(InterledgerAddress bar) {
-   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar);
-   * }
-   * </pre>
-   * </blockquote>
-   *
-   * @param address A {@link InterledgerAddress} to check.
-   *
-   * @return The supplied {@code address} if its value ends with a dot <tt>(.)</tt>.
-   *
-   * @throws NullPointerException     if the supplied {@code address} is <tt>null</tt>.
-   * @throws IllegalArgumentException if the supplied {@code address} is a ledger-prefix.
-   */
-  static InterledgerAddress requireNotAddressPrefix(final InterledgerAddress address) {
-    Objects.requireNonNull(address, "address must not be null!");
-
-    if (address.isLedgerPrefix()) {
-      throw new IllegalArgumentException(
-          String.format(
-              "InterledgerAddress '%s' must NOT be an Address Prefix ending with a dot (.)",
-              address.getValue())
-      );
-    }
-
-    return address;
-  }
-
-  /**
-   * <p>Checks and requires that the specified {@code address} is not an address prefix per {@link
-   * InterledgerAddress#isLedgerPrefix()}, providing an error message upon invalidation.</p>
-   *
-   * <p>This method is designed primarily for doing parameter validation in methods and
-   * constructors, as demonstrated below:</p>
-   *
-   * <blockquote>
-   * <pre>
-   * public Foo(InterledgerAddress bar) {
-   *     this.nonLedgerPrefix = InterledgerAddress.requireNotAddressPrefix(bar, bar + " must be a
-   * destination
-   * address");
-   * }
-   * </pre>
-   * </blockquote>
-   *
-   * @param address      A {@link InterledgerAddress} to check.
-   * @param errorMessage An error message to output upon invalidation.
-   *
-   * @return The supplied {@code address} if its value ends with a dot (.).
-   *
-   * @throws NullPointerException     if the supplied {@code address} or {@code errorMessage} is
-   *                                  <tt>null</tt>.
-   * @throws IllegalArgumentException if the supplied {@code address} is a ledger-prefix.
-   */
-  static InterledgerAddress requireNotAddressPrefix(
-      final InterledgerAddress address, final String errorMessage
-  ) {
-    Objects.requireNonNull(address, "address must not be null!");
-    Objects.requireNonNull(errorMessage, "errorMessage must not be null!");
-
-    if (address.isLedgerPrefix()) {
-      throw new IllegalArgumentException(errorMessage);
-    }
-
-    return address;
-  }
-
-  /**
    * <p>Get the default builder.</p>
    *
-   * @return An {@link InterledgerAddressBuilder} instance.
+   * @return An {@link ImmutableInterledgerAddress.Builder} instance.
    */
-  static InterledgerAddressBuilder builder() {
-    return new InterledgerAddressBuilder();
+  static ImmutableInterledgerAddress.Builder builder() {
+    return ImmutableInterledgerAddress.builder();
   }
 
   /**
@@ -249,15 +105,6 @@ public interface InterledgerAddress {
    * @return A {@link String} representation of this Interledger address.
    */
   String getValue();
-
-  /**
-   * <p>Tests if this Interledger address represents a ledger prefix.</p>
-   *
-   * @return {@code true} if the address is a ledger prefix, {@code false} otherwise.
-   */
-  default boolean isLedgerPrefix() {
-    return getValue().endsWith(".");
-  }
 
   /**
    * <p>Tests if this InterledgerAddress starts with the specified {@code addressSegment}.</p>
@@ -307,31 +154,26 @@ public interface InterledgerAddress {
     Objects.requireNonNull(addressSegment, "addressSegment must not be null!");
 
     final StringBuilder sb = new StringBuilder(this.getValue());
-    if (!this.isLedgerPrefix()) {
-      sb.append(".");
-    }
+    sb.append(ADDRESS_DELIMITER);
     sb.append(addressSegment);
-
     return InterledgerAddress.of(sb.toString());
   }
 
   /**
-   * <p>Return this address's prefix, which is a new {@link InterledgerAddress} containing the
-   * characters inside of {@link #getValue()}, up-to and including the last period. If this address
-   * is already a prefix, then this instance is instead returned unchanged.</p>
+   * <p>Return this address's global-allocation-scheme prefix, which is a new {@link
+   * InterledgerAddress} containing the
+   * characters inside of {@link #getValue()}, up-to but excluding the last period.</p>
    *
    * <p>For example, calling this method on an address 'g.example.alice' would yield a new address
-   * containing 'g.example.'. Conversely, calling this method on an address that is already a
-   * prefix, like 'g.example.' would yield the same instance, 'g.example.'.</p>
+   * containing 'g.'. Conversely, calling this method on an address that is already a global
+   * allocation scheme address, like <tt>g</tt> would yield the same instance, for example
+   * <tt>g</tt>.</p>
    *
    * @return A potentially new {@link InterledgerAddress} representing the prefix of this address.
    */
   default InterledgerAddress getPrefix() {
-    if (this.isLedgerPrefix()) {
-      return this;
-    } else {
-      return InterledgerAddress.of(getValue().substring(0, this.getValue().lastIndexOf(".") + 1));
-    }
+    return InterledgerAddress
+        .of(getValue().substring(0, this.getValue().indexOf(ADDRESS_DELIMITER) + 1));
   }
 
   /**
@@ -351,26 +193,21 @@ public interface InterledgerAddress {
    *
    * @return An optionally present parent-prefix.
    */
-  default Optional<InterledgerAddress> getParentPrefix() {
-    // If this address is not a prefix, then just return the prefix. Otherwise, look deeper.
-    if (this.isLedgerPrefix()) {
-      // If the prefix is a root prefix, return Optional#empty. Otherwise, return the parent prefix.
-      if (isRootPrefix()) {
-        return Optional.empty();
-      } else {
-        // Call getPrefix with the account portion's parent.
-        // This means jumping over any destination address (i.e. account portion) in order to
-        // traverse address prefixes without hitting destination address restrictions
-        final String parentDestAddr = this.getValue()
-            .substring(0, this.getValue().lastIndexOf("."));
-        return Optional.of(InterledgerAddress
-            .of(parentDestAddr.substring(0, parentDestAddr.lastIndexOf(".") + 1)
-            ).getPrefix());
-      }
+  default Optional<InterledgerAddress> getParentAddress() {
+    // If the prefix is a root prefix, return Optional#empty. Otherwise, return the parent prefix.
+    if (isRootAddress()) {
+      return Optional.empty();
     } else {
-      return Optional.of(this.getPrefix());
+      final String parentDestAddr = this.getValue()
+          .substring(0, this.getValue().lastIndexOf(ADDRESS_DELIMITER));
+      return Optional.of(
+          InterledgerAddress
+              .of(parentDestAddr.substring(0, parentDestAddr.lastIndexOf(ADDRESS_DELIMITER)))
+              .getPrefix()
+      );
     }
   }
+
 
   /**
    * <p>Determines if this ILP Address has a parent-prefix.</p>
@@ -382,27 +219,27 @@ public interface InterledgerAddress {
    *     prefix address), then return {@code false} if this address is a Root prefix; otherwise,
    *     return {@code true}.
    */
-  default boolean hasParentPrefix() {
-    // All ILP addresses have a parent prefix, except for Root prefixes.
-    return isRootPrefix() == false;
+  default boolean hasParentAddress() {
+    // All ILP addresses have a parent address, except for Root prefixes.
+    return isRootAddress() == false;
   }
 
   /**
-   * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of: <tt>g.</tt>,
+   * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of:
+   * <tt>g.</tt>,
    * <tt>private.</tt>, <tt>example.</tt>, <tt>peer.</tt>, <tt>self.</tt>, <tt>test1.</tt>,
    * <tt>test2.</tt>, or <tt>test3.</tt>. Any other kind of valid ILP address (e.g. "g.1") is not a
    * root prefix.</p>
    *
    * @return {@code true} if this address is a root prefix; {@code false} otherwise.
    */
-  default boolean isRootPrefix() {
-    // Alternate implementation (Note: A prefix is a root prefix if it has only a single period)
-    // final int numPeriods = getValue().length() - getValue().replaceAll("[.!?]+", "").length();
-    // return numPeriods == 1;
-    return ADDRESS_PARSER.isSchemePrefix(getValue());
+  default boolean isRootAddress() {
+    // A prefix is a root prefix if it has zero periods)
+    final int numPeriods = getValue().length() - (getValue().replaceAll("[.!?]+", "").length());
+    return numPeriods == 0;
   }
 
-  @Immutable
+  @Value.Immutable
   abstract class AbstractInterledgerAddress implements InterledgerAddress {
 
     /**
@@ -418,6 +255,112 @@ public interface InterledgerAddress {
         throw new IllegalArgumentException("Address is invalid", e);
       }
     }
+  }
+
+  /**
+   * A parser for validating an {@link InterledgerAddress}.
+   */
+  final class InterledgerAddressParser {
+
+    private static final int MIN_ADDRESS_LENGTH = 1;
+    private static final int MAX_ADDRESS_LENGTH = 1023;
+    private static final int DESTINATION_ADDRESS_MIN_SEGMENTS = 1;
+    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
+    private static final String SEGMENT_REGEX = "[a-zA-Z0-9_~-]+";
+    private static final String SEPARATOR_CHARACTER = ".";
+    private static final String SEPARATOR_REGEX = "[" + SEPARATOR_CHARACTER + "]";
+    private static final String SCHEME_PREFIX_REGEX = SCHEME_REGEX + SEPARATOR_REGEX;
+    private static final String SEGMENT_PREFIX_REGEX = SEGMENT_REGEX + SEPARATOR_REGEX;
+    private static final String ADDRESS_LENGTH_BOUNDARIES_REGEX =
+        "(?=^.{" + MIN_ADDRESS_LENGTH + "," + MAX_ADDRESS_LENGTH + "}$)";
+    private static final String ADDRESS_REGEX = ADDRESS_LENGTH_BOUNDARIES_REGEX
+        + "^" + SCHEME_PREFIX_REGEX + "(" + SEGMENT_PREFIX_REGEX + ")+" + SEGMENT_REGEX + "$";
+    private static final Pattern ADDRESS_PATTERN = Pattern.compile(ADDRESS_REGEX);
+
+    /**
+     * Validates an ILP address.
+     *
+     * @param addressString The ILP address to validate
+     *
+     * @throws IllegalArgumentException When validation is rejected
+     */
+    void validate(final String addressString) throws IllegalArgumentException {
+      Objects.requireNonNull(addressString); // No error-message because this should never happen
+      if (isFullyValid(addressString)) {
+        return;
+      }
+      throw new IllegalArgumentException(getFirstInvalidityCause(addressString));
+    }
+
+    private boolean isFullyValid(final String addressString) {
+      return true;// ADDRESS_PATTERN.matcher(addressString).matches();
+    }
+
+    private String getFirstInvalidityCause(final String invalidAddressString) {
+      final List<String> schemeAndSegments = Arrays
+          .asList(invalidAddressString.split(SEPARATOR_REGEX, -1));
+      final int schemeAndSegmentsSize = schemeAndSegments.size();
+
+      // validates scheme prefix existence
+      //     'schemeAndSegmentsSize < 2' ensures scheme is followed by a trailing separator
+      //     (i.e. scheme prefix = scheme + separator)
+      if (invalidAddressString.isEmpty() || schemeAndSegmentsSize < 1) {
+        return String.format(Error.MISSING_SCHEME_PREFIX.getMessageFormat());
+      }
+      // validates scheme prefix format
+      final String schemePrefix = schemeAndSegments.get(0);
+      if (!Pattern.compile(SCHEME_REGEX).matcher(schemePrefix).matches()) {
+        return String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), schemePrefix);
+      }
+
+      // validates each segment format
+      final List<String> segments = schemeAndSegments.stream().skip(1).collect(Collectors.toList());
+      final int segmentsSize = segments.size();
+      final Matcher segmentMatcher = Pattern.compile(SEGMENT_REGEX).matcher("");
+      final Optional<String> invalidSegment = segments.stream()
+          .filter(segment -> {
+            segmentMatcher.reset(segment);
+            return !segmentMatcher.matches();
+          })
+          .findFirst();
+      if (invalidSegment.isPresent()) {
+        return String.format(Error.INVALID_SEGMENT.getMessageFormat(), invalidSegment.get());
+      }
+
+      // validates the minimum number of segments for a destination address
+      final boolean isDestinationAddress = !invalidAddressString.endsWith(SEPARATOR_CHARACTER);
+      if (isDestinationAddress && segmentsSize < DESTINATION_ADDRESS_MIN_SEGMENTS) {
+        return String.format(Error.SEGMENTS_UNDERFLOW.getMessageFormat());
+      }
+
+      // validates max address length
+      if (!Pattern.compile(ADDRESS_LENGTH_BOUNDARIES_REGEX).matcher(invalidAddressString)
+          .matches()) {
+        return String.format(Error.ADDRESS_OVERFLOW.getMessageFormat());
+      }
+
+      // fault: should have found an error cause
+      throw new RuntimeException();
+    }
+
+    enum Error {
+      ADDRESS_OVERFLOW("Address is too long"),
+      INVALID_SEGMENT("The '%s' segment has an invalid format"),
+      INVALID_SCHEME_PREFIX("The '%s' scheme prefix has an invalid format"),
+      MISSING_SCHEME_PREFIX("Address does not start with a scheme prefix"),
+      SEGMENTS_UNDERFLOW("Destination address has too few segments");
+
+      private String messageFormat;
+
+      Error(final String messageFormat) {
+        this.messageFormat = messageFormat;
+      }
+
+      public String getMessageFormat() {
+        return messageFormat;
+      }
+    }
+
   }
 
 }
