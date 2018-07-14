@@ -56,5 +56,9 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>ilp-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>ilp-core-codecs</artifactId>
+    </dependency>
   </dependencies>
 </project>

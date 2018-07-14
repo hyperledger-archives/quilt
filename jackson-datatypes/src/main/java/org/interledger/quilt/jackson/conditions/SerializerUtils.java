@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.conditions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,9 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Condition;
 import org.interledger.core.Fulfillment;
+import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 
 import java.util.Base64;
 import java.util.Objects;
@@ -32,19 +33,22 @@ import java.util.Objects;
 public class SerializerUtils {
 
   /**
-   * Helper method to encode a {@link Condition} using the supplied Base64 encoder, which might be
-   * Base64 or Base64Url, with or without padding.
+   * Helper method to encode a {@link InterledgerCondition} using the supplied Base64 encoder, which
+   * might be Base64 or Base64Url, with or without padding.
    *
-   * @param encoder   A {@link Base64.Encoder} to encode with.
-   * @param condition A {@link Condition} to encode into Base64 using the supplied encoder.
+   * @param encoder              A {@link Base64.Encoder} to encode with.
+   * @param interledgerCondition A {@link InterledgerCondition} to encode into Base64 using the
+   *                             supplied encoder.
    *
-   * @return The base64-encoded version of {@code condition}.
+   * @return The base64-encoded version of {@code interledgerCondition}.
    */
-  public static String encodeBase64(final Base64.Encoder encoder, final Condition condition) {
+  public static String encodeBase64(
+      final Base64.Encoder encoder, final InterledgerCondition interledgerCondition
+  ) {
     Objects.requireNonNull(encoder);
-    Objects.requireNonNull(condition);
+    Objects.requireNonNull(interledgerCondition);
 
-    return encoder.encodeToString(condition.getHash());
+    return encoder.encodeToString(interledgerCondition.getHashBytes());
   }
 
   /**
@@ -56,10 +60,12 @@ public class SerializerUtils {
    *
    * @return The base64-encoded version of {@code fulfillment}.
    */
-  public static String encodeBase64(final Base64.Encoder encoder, final Fulfillment fulfillment) {
+  public static String encodeBase64(
+      final Base64.Encoder encoder, final InterledgerFulfillment fulfillment
+  ) {
     Objects.requireNonNull(encoder);
     Objects.requireNonNull(fulfillment);
 
-    return encoder.encodeToString(fulfillment.getPreimage());
+    return encoder.encodeToString(fulfillment.getBytes());
   }
 }

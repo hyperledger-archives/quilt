@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.conditions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Condition;
+import org.interledger.core.InterledgerCondition;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -33,9 +33,9 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Jackson deserializer for {@link Condition} using configurable encodings.
+ * Jackson deserializer for {@link InterledgerCondition} using configurable encodings.
  */
-public class ConditionDeserializer extends StdScalarDeserializer<Condition> {
+public class ConditionDeserializer extends StdScalarDeserializer<InterledgerCondition> {
 
   private final Encoding encoding;
 
@@ -51,22 +51,22 @@ public class ConditionDeserializer extends StdScalarDeserializer<Condition> {
   }
 
   @Override
-  public Condition deserialize(JsonParser jsonParser, DeserializationContext ctxt)
+  public InterledgerCondition deserialize(JsonParser jsonParser, DeserializationContext ctxt)
       throws IOException {
 
     switch (encoding) {
       case HEX: {
-        return Condition.of(
+        return InterledgerCondition.from(
             BaseEncoding.base16().decode(jsonParser.getText().toUpperCase(Locale.US))
         );
       }
       case BASE64:
       case BASE64_WITHOUT_PADDING: {
-        return Condition.of(Base64.getDecoder().decode(jsonParser.getText()));
+        return InterledgerCondition.from(Base64.getDecoder().decode(jsonParser.getText()));
       }
       case BASE64URL:
       case BASE64URL_WITHOUT_PADDING: {
-        return Condition.of(Base64.getUrlDecoder().decode(jsonParser.getText()));
+        return InterledgerCondition.from(Base64.getUrlDecoder().decode(jsonParser.getText()));
       }
       default: {
         throw new RuntimeException("Unhandled Condition Encoding!");

@@ -20,9 +20,9 @@ package org.interledger.quilt.jackson;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Condition;
 import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerCondition;
 import org.interledger.quilt.jackson.address.InterledgerAddressDeserializer;
 import org.interledger.quilt.jackson.conditions.ConditionDeserializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
@@ -55,7 +55,7 @@ public class InterledgerDeserializers extends Deserializers.Base {
       return new InterledgerAddressDeserializer();
     }
 
-    if (type.hasRawClass(Condition.class)) {
+    if (type.hasRawClass(InterledgerCondition.class)) {
       return new ConditionDeserializer(cryptoConditionEncoding);
     }
 

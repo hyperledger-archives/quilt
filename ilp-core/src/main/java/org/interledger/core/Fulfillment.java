@@ -33,7 +33,7 @@ import java.util.Objects;
  * <p>The standard for Interledger payments is for the fulfillment to be the pre-image of a SHA-256
  * hash (the condition).
  *
- * <p>The fulfillment (pre-image) must be exactly 32 bytes.
+ * <p>The fulfillment (pre-image) must be exactly 32 hashBytes.
  */
 @Value.Immutable
 public interface Fulfillment {
@@ -103,7 +103,7 @@ public interface Fulfillment {
   @Value.Check
   default void check() {
     if (getPreimage().length != 32) {
-      throw new IllegalArgumentException("Preimage must be 32 bytes.");
+      throw new IllegalArgumentException("Preimage must be 32 hashBytes.");
     }
   }
 }
