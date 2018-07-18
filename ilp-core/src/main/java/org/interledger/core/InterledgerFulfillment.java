@@ -42,7 +42,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
    *
    * @return the fulfillment containing the supplied pre-image.
    */
-  static InterledgerFulfillment from(byte[] preimage) {
+  static InterledgerFulfillment of(byte[] preimage) {
     Objects.requireNonNull(preimage, "preimage cannot be null");
     return new ImmutableInterledgerFulfillment(preimage);
   }

@@ -32,7 +32,7 @@ public class AsnFulfillmentCodec extends AsnOctetStringBasedObjectCodec<Interled
 
   @Override
   public InterledgerFulfillment decode() {
-    return InterledgerFulfillment.from(getBytes());
+    return InterledgerFulfillment.of(getBytes());
   }
 
   @Override

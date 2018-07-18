@@ -76,15 +76,15 @@ public class InterledgerFulfillmentTest {
 
   @Test
   public void testGetBytes() {
-    assertArrayEquals(InterledgerFulfillment.from(BYTES_1).getPreimage(), BYTES_1);
+    assertArrayEquals(InterledgerFulfillment.of(BYTES_1).getPreimage(), BYTES_1);
   }
 
 
   @Test
   public void testGetCondition() {
 
-    InterledgerCondition condition1 = InterledgerFulfillment.from(BYTES_1).getCondition();
-    InterledgerCondition condition2 = InterledgerFulfillment.from(BYTES_2).getCondition();
+    InterledgerCondition condition1 = InterledgerFulfillment.of(BYTES_1).getCondition();
+    InterledgerCondition condition2 = InterledgerFulfillment.of(BYTES_2).getCondition();
 
     assertEquals(condition1, COND_1);
     assertEquals(condition2, COND_2);
@@ -93,34 +93,34 @@ public class InterledgerFulfillmentTest {
 
   @Test
   public void testEquals() {
-    InterledgerFulfillment fulfillment = InterledgerFulfillment.from(BYTES_1);
+    InterledgerFulfillment fulfillment = InterledgerFulfillment.of(BYTES_1);
     byte[] copyOfBytes1 = Arrays.copyOf(BYTES_1, 32);
 
     assertEquals(fulfillment, fulfillment); //Same object
-    assertEquals(fulfillment, InterledgerFulfillment.from(BYTES_1)); //Same array as input
-    assertEquals(fulfillment, InterledgerFulfillment.from(copyOfBytes1)); //Equal arrays as input
+    assertEquals(fulfillment, InterledgerFulfillment.of(BYTES_1)); //Same array as input
+    assertEquals(fulfillment, InterledgerFulfillment.of(copyOfBytes1)); //Equal arrays as input
   }
 
   @Test
   public void testNotEquals() {
-    assertNotEquals(InterledgerFulfillment.from(BYTES_1), InterledgerFulfillment.from(BYTES_2));
+    assertNotEquals(InterledgerFulfillment.of(BYTES_1), InterledgerFulfillment.of(BYTES_2));
   }
 
   @Test
   public void testCompare() {
-    assertTrue(InterledgerFulfillment.from(BYTES_1).compareTo(InterledgerFulfillment.from(BYTES_1)) == 0);
-    assertTrue(InterledgerFulfillment.from(BYTES_1).compareTo(InterledgerFulfillment.from(BYTES_2)) < 0);
-    assertTrue(InterledgerFulfillment.from(BYTES_2).compareTo(InterledgerFulfillment.from(BYTES_1)) > 0);
+    assertTrue(InterledgerFulfillment.of(BYTES_1).compareTo(InterledgerFulfillment.of(BYTES_1)) == 0);
+    assertTrue(InterledgerFulfillment.of(BYTES_1).compareTo(InterledgerFulfillment.of(BYTES_2)) < 0);
+    assertTrue(InterledgerFulfillment.of(BYTES_2).compareTo(InterledgerFulfillment.of(BYTES_1)) > 0);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testUnderFlow() {
-    InterledgerFulfillment.from(UNDERFLOW_BYTES);
+    InterledgerFulfillment.of(UNDERFLOW_BYTES);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testOverFlow() {
-    InterledgerFulfillment.from(OVERFLOW_BYTES);
+    InterledgerFulfillment.of(OVERFLOW_BYTES);
   }
 
 }

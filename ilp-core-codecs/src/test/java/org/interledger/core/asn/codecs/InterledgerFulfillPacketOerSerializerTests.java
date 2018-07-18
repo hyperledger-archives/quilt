@@ -70,18 +70,18 @@ public class InterledgerFulfillPacketOerSerializerTests {
 
         {
             InterledgerFulfillPacket.builder()
-                .fulfillment(InterledgerFulfillment.from(fulfillmentBytes))
+                .fulfillment(InterledgerFulfillment.of(fulfillmentBytes))
                 .build()
         },
         {
             InterledgerFulfillPacket.builder()
-                .fulfillment(InterledgerFulfillment.from(fulfillmentBytes))
+                .fulfillment(InterledgerFulfillment.of(fulfillmentBytes))
                 .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8})
                 .build()
         },
         {
             InterledgerFulfillPacket.builder()
-                .fulfillment(InterledgerFulfillment.from(fulfillmentBytes))
+                .fulfillment(InterledgerFulfillment.of(fulfillmentBytes))
                 .data(byteArrayOutputStream.toByteArray())
                 .build()
         },

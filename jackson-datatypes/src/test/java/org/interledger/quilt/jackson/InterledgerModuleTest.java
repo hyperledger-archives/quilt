@@ -85,7 +85,7 @@ public class InterledgerModuleTest {
 
   private static InterledgerCondition constructCondition() {
     final byte[] preimage = "you built a time machine out of ".getBytes();
-    return InterledgerFulfillment.from(preimage).getCondition();
+    return InterledgerFulfillment.of(preimage).getCondition();
   }
 
   /**
