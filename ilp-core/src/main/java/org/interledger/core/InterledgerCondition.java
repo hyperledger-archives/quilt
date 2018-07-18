@@ -39,13 +39,13 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
    * <p>This method is typically only used during deserialization. To generate a condition based
    * on an fulfillment use {@link InterledgerFulfillment#getCondition()}.</p>
    *
-   * @param hashBytes A 32-byte SHA-256 hash digest.
+   * @param hash A 32-byte SHA-256 hash digest.
    *
    * @return The {@link InterledgerCondition} containing the supplied hash.
    */
-  static InterledgerCondition from(final byte[] hashBytes) {
-    Objects.requireNonNull(hashBytes, "hash cannot be null");
-    return new ImmutableInterledgerCondition(hashBytes);
+  static InterledgerCondition from(final byte[] hash) {
+    Objects.requireNonNull(hash, "hash cannot be null");
+    return new ImmutableInterledgerCondition(hash);
   }
 
   /**
