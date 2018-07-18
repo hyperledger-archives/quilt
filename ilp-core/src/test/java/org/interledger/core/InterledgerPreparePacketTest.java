@@ -44,7 +44,7 @@ public class InterledgerPreparePacketTest {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[] {127};
     BigInteger amount = BigInteger.TEN;
-    InterledgerCondition interledgerCondition = InterledgerCondition.from(
+    InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
     );
@@ -155,7 +155,7 @@ public class InterledgerPreparePacketTest {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[] {127};
     BigInteger amount = BigInteger.TEN;
-    InterledgerCondition interledgerCondition = InterledgerCondition.from(
+    InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
     );

@@ -63,7 +63,7 @@ public abstract class AbstractConditionModuleTest {
 
   static InterledgerCondition constructPreimageCondition() {
     final byte[] preimage = PREIMAGE.getBytes();
-    return InterledgerCondition.from(preimage);
+    return InterledgerCondition.of(preimage);
   }
 
   //////////////////

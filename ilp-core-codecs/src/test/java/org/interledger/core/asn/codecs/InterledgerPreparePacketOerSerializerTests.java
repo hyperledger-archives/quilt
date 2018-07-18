@@ -74,20 +74,20 @@ public class InterledgerPreparePacketOerSerializerTests {
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.of("test3.foo.bar"))
             .amount(BigInteger.valueOf(100L))
-            .executionCondition(InterledgerCondition.from(conditionBytes))
+            .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now()).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(InterledgerCondition.from(conditionBytes))
+            .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(InterledgerCondition.from(conditionBytes))
+            .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},
 

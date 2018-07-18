@@ -51,7 +51,7 @@ public class ConditionOerSerializerTests {
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays
-        .asList(new Object[][] {{InterledgerCondition.from(new byte[32])},
+        .asList(new Object[][] {{InterledgerCondition.of(new byte[32])},
             // TODO: Some more test values
         });
   }

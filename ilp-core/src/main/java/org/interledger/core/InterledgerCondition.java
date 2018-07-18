@@ -34,7 +34,7 @@ import java.util.Objects;
 public interface InterledgerCondition extends Comparable<InterledgerCondition> {
 
   /**
-   * <p>Create a new immutable {@link InterledgerCondition} from the provided 32-hash.</p>
+   * <p>Create a new immutable {@link InterledgerCondition} using the provided 32-byte hash.</p>
    *
    * <p>This method is typically only used during deserialization. To generate a condition based
    * on an fulfillment use {@link InterledgerFulfillment#getCondition()}.</p>
@@ -43,7 +43,7 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
    *
    * @return The {@link InterledgerCondition} containing the supplied hash.
    */
-  static InterledgerCondition from(final byte[] hash) {
+  static InterledgerCondition of(final byte[] hash) {
     Objects.requireNonNull(hash, "hash cannot be null");
     return new ImmutableInterledgerCondition(hash);
   }
@@ -52,7 +52,7 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
    * <p>Create a new immutable InterledgerCondition from the InterledgerCondition.</p>
    *
    * <p>Note that this method is optimized to perform fewer array copies than {@link
-   * InterledgerCondition#from(byte[])}.</p>
+   * InterledgerCondition#of(byte[])}.</p>
    *
    * @param interledgerCondition An existing {@link InterledgerCondition} to copy from.
    *

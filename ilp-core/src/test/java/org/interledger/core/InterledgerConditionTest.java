@@ -63,55 +63,55 @@ public class InterledgerConditionTest {
 
   @Test
   public void testGetBytes() {
-    assertArrayEquals(InterledgerCondition.from(BYTES_1).getHash(), BYTES_1);
+    assertArrayEquals(InterledgerCondition.of(BYTES_1).getHash(), BYTES_1);
   }
 
   @Test
   public void testEquals() {
-    InterledgerCondition condition = InterledgerCondition.from(BYTES_1);
+    InterledgerCondition condition = InterledgerCondition.of(BYTES_1);
     byte[] copyOfBytes1 = Arrays.copyOf(BYTES_1, 32);
 
     assertEquals(condition, condition); //Same object
-    assertEquals(condition, InterledgerCondition.from(BYTES_1)); //Same array as input
-    assertEquals(condition, InterledgerCondition.from(copyOfBytes1)); //Equal arrays as input
+    assertEquals(condition, InterledgerCondition.of(BYTES_1)); //Same array as input
+    assertEquals(condition, InterledgerCondition.of(copyOfBytes1)); //Equal arrays as input
   }
 
   @Test
   public void testNotEquals() {
-    assertNotEquals(InterledgerCondition.from(BYTES_1), InterledgerCondition.from(BYTES_2));
+    assertNotEquals(InterledgerCondition.of(BYTES_1), InterledgerCondition.of(BYTES_2));
   }
 
   @Test
   public void testCompare() {
     assertTrue(
-        InterledgerCondition.from(BYTES_1).compareTo(InterledgerCondition.from(BYTES_1)) == 0
+        InterledgerCondition.of(BYTES_1).compareTo(InterledgerCondition.of(BYTES_1)) == 0
     );
     assertTrue(
-        InterledgerCondition.from(BYTES_1).compareTo(InterledgerCondition.from(BYTES_2)) < 0
+        InterledgerCondition.of(BYTES_1).compareTo(InterledgerCondition.of(BYTES_2)) < 0
     );
     assertTrue(
-        InterledgerCondition.from(BYTES_2).compareTo(InterledgerCondition.from(BYTES_1)) > 0
+        InterledgerCondition.of(BYTES_2).compareTo(InterledgerCondition.of(BYTES_1)) > 0
     );
   }
 
   @Test
   public void testHashCode() {
-    assertTrue(InterledgerCondition.from(BYTES_1).hashCode() == InterledgerCondition
-        .from(BYTES_1).hashCode());
-    assertFalse(InterledgerCondition.from(BYTES_1).hashCode() == InterledgerCondition
-        .from(BYTES_2).hashCode());
-    assertFalse(InterledgerCondition.from(BYTES_2).hashCode() == InterledgerCondition
-        .from(BYTES_1).hashCode());
+    assertTrue(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition
+        .of(BYTES_1).hashCode());
+    assertFalse(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition
+        .of(BYTES_2).hashCode());
+    assertFalse(InterledgerCondition.of(BYTES_2).hashCode() == InterledgerCondition
+        .of(BYTES_1).hashCode());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testUnderFlow() {
-    InterledgerCondition.from(UNDERFLOW_BYTES);
+    InterledgerCondition.of(UNDERFLOW_BYTES);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testOverFlow() {
-    InterledgerCondition.from(OVERFLOW_BYTES);
+    InterledgerCondition.of(OVERFLOW_BYTES);
   }
 
 }

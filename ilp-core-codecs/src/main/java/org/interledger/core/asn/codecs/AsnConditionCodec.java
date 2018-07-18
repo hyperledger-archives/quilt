@@ -36,7 +36,7 @@ public class AsnConditionCodec extends AsnOctetStringBasedObjectCodec<Interledge
 
   @Override
   public InterledgerCondition decode() {
-    return InterledgerCondition.from(getBytes());
+    return InterledgerCondition.of(getBytes());
   }
 
   @Override

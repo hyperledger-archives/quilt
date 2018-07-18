@@ -36,7 +36,7 @@ import java.util.Objects;
 public interface InterledgerFulfillment extends Comparable<InterledgerFulfillment> {
 
   /**
-   * Create a new immutable InterledgerFulfillment from the provided 32 pre-image.
+   * Create a new immutable InterledgerFulfillment using the provided 32-byte pre-image.
    *
    * @param preimage 32-byte pre-image
    *
@@ -70,7 +70,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
   /**
    * <p>Check that the provided condition is valid for this fulfillment.</p>
    *
-   * <p>A valid condition is the 32 byte SHA-256 hash digest from the 32 byte opreimage represented
+   * <p>A valid condition is the 32-byte SHA-256 hash digest of the 32-byte pre-image represented
    * by this fulfillment.</p>
    *
    * @param condition an InterledgerCondition
@@ -80,9 +80,9 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
   boolean validateCondition(InterledgerCondition condition);
 
   /**
-   * An immutable implementation from InterledgerFulfillment optimized for efficient operations that
-   * only create copies from the internal data as required and only performs late generation from
-   * the hash when required.
+   * An immutable implementation of InterledgerFulfillment optimized for efficient operations that
+   * only create copies of the internal data as required and only performs late generation of the
+   * hash when required.
    */
   class ImmutableInterledgerFulfillment implements InterledgerFulfillment {
 
@@ -100,7 +100,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
         // MessageDigest is not threadsafe, but is cheap to construct...
         final MessageDigest digest = MessageDigest.getInstance("SHA-256");
         final byte[] hash = digest.digest(preimageBytes);
-        this.condition = InterledgerCondition.from(hash);
+        this.condition = InterledgerCondition.of(hash);
       } catch (NoSuchAlgorithmException e) {
         //This should never happen as all JVMs ship with a SHA-256 digest implementation
         throw new InterledgerRuntimeException(

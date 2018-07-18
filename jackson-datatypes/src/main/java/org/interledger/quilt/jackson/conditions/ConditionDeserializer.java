@@ -56,17 +56,17 @@ public class ConditionDeserializer extends StdScalarDeserializer<InterledgerCond
 
     switch (encoding) {
       case HEX: {
-        return InterledgerCondition.from(
+        return InterledgerCondition.of(
             BaseEncoding.base16().decode(jsonParser.getText().toUpperCase(Locale.US))
         );
       }
       case BASE64:
       case BASE64_WITHOUT_PADDING: {
-        return InterledgerCondition.from(Base64.getDecoder().decode(jsonParser.getText()));
+        return InterledgerCondition.of(Base64.getDecoder().decode(jsonParser.getText()));
       }
       case BASE64URL:
       case BASE64URL_WITHOUT_PADDING: {
-        return InterledgerCondition.from(Base64.getUrlDecoder().decode(jsonParser.getText()));
+        return InterledgerCondition.of(Base64.getUrlDecoder().decode(jsonParser.getText()));
       }
       default: {
         throw new RuntimeException("Unhandled Condition Encoding!");

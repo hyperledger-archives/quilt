@@ -59,14 +59,14 @@ public class InterledgerFulfillmentTest {
       0
   };
 
-  private static InterledgerCondition COND_1 = InterledgerCondition.from(new byte[] {
+  private static InterledgerCondition COND_1 = InterledgerCondition.of(new byte[] {
       -36, -79, -84, 74, 93, -29, 112, -54, -48, -111,
       -63, 63, 19, -82, -30, -7, 54, -62, 120, -6,
       5, -46, 100, 101, 60, 12, 19, 33, -123, 42,
       53, -24
   });
 
-  private static InterledgerCondition COND_2 = InterledgerCondition.from(new byte[] {
+  private static InterledgerCondition COND_2 = InterledgerCondition.of(new byte[] {
       -1, -121, 82, -4, 108, 78, -100, 121, -32, 83,
       112, 112, 90, -99, -81, -98, -69, 65, 3, -125,
       123, 121, 26, -68, -99, -31, 48, 107, -98, -52,
