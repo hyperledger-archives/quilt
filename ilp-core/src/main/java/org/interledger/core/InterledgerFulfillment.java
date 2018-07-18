@@ -36,19 +36,19 @@ import java.util.Objects;
 public interface InterledgerFulfillment extends Comparable<InterledgerFulfillment> {
 
   /**
-   * Create a new immutable InterledgerFulfillment from the provided 32-hash.
+   * Create a new immutable InterledgerFulfillment from the provided 32 pre-image.
    *
-   * @param bytes 32-byte preimage
+   * @param preimage 32-byte pre-image
    *
-   * @return the fulfillment containing these byteAsnConditionCodecs
+   * @return the fulfillment containing the supplied pre-image.
    */
-  static InterledgerFulfillment from(byte[] bytes) {
-    Objects.requireNonNull(bytes, "hash cannot be null");
-    return new ImmutableInterledgerFulfillment(bytes);
+  static InterledgerFulfillment from(byte[] preimage) {
+    Objects.requireNonNull(preimage, "preimage cannot be null");
+    return new ImmutableInterledgerFulfillment(preimage);
   }
 
   /**
-   * <p>Get the internal hash from the fulfillment.</p>
+   * <p>Get the internal pre-image from the fulfillment.</p>
    *
    * <p>Implementations should return a safe copy from the data to preserve the immutability from
    * the fulfillment.</p>
