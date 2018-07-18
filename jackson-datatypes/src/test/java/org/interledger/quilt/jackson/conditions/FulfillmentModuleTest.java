@@ -43,15 +43,15 @@ import java.util.Objects;
 @RunWith(Parameterized.class)
 public class FulfillmentModuleTest extends AbstractConditionModuleTest {
 
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_HEX =
+  private static final String PREIMAGE_FULFILLMENT_BYTES_HEX =
       "726F6164733F20776865726520776527726520676F696E6720776520646F6E27";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64
+  private static final String PREIMAGE_FULFILLMENT_BYTES_BASE64
       = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_WITHOUTPADDING
+  private static final String PREIMAGE_FULFILLMENT_BYTES_BASE64_WITHOUTPADDING
       = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL
+  private static final String PREIMAGE_FULFILLMENT_BYTES_BASE64_URL
       = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
-  private static final String PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL_WITHOUTPADDING
+  private static final String PREIMAGE_FULFILLMENT_BYTES_BASE64_URL_WITHOUTPADDING
       = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
 
   private static InterledgerFulfillment FULFILLMENT = constructPreimageFulfillment();
@@ -78,12 +78,12 @@ public class FulfillmentModuleTest extends AbstractConditionModuleTest {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter
     // to the CryptoConditionsModuleFulfillmentTest constructor.
     return Arrays.asList(new Object[][] {
-        {Encoding.HEX, PREIMAGE_FULFILLMENT_DER_BYTES_HEX},
-        {Encoding.BASE64, PREIMAGE_FULFILLMENT_DER_BYTES_BASE64},
-        {Encoding.BASE64_WITHOUT_PADDING, PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_WITHOUTPADDING},
-        {Encoding.BASE64URL, PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL},
+        {Encoding.HEX, PREIMAGE_FULFILLMENT_BYTES_HEX},
+        {Encoding.BASE64, PREIMAGE_FULFILLMENT_BYTES_BASE64},
+        {Encoding.BASE64_WITHOUT_PADDING, PREIMAGE_FULFILLMENT_BYTES_BASE64_WITHOUTPADDING},
+        {Encoding.BASE64URL, PREIMAGE_FULFILLMENT_BYTES_BASE64_URL},
         {Encoding.BASE64URL_WITHOUT_PADDING,
-            PREIMAGE_FULFILLMENT_DER_BYTES_BASE64_URL_WITHOUTPADDING},
+            PREIMAGE_FULFILLMENT_BYTES_BASE64_URL_WITHOUTPADDING},
     });
   }
 

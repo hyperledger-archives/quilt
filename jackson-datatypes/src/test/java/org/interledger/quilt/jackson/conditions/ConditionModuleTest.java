@@ -48,15 +48,15 @@ import java.util.Objects;
 @RunWith(Parameterized.class)
 public class ConditionModuleTest extends AbstractConditionModuleTest {
 
-  private static final String PREIMAGE_CONDITION_DER_BYTES_HEX =
+  private static final String PREIMAGE_CONDITION_BYTES_HEX =
       "726F6164733F20776865726520776527726520676F696E6720776520646F6E27";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64
       = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64_WITHOUTPADDING
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64_WITHOUTPADDING
       = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64_URL
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64_URL
       = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64_URL_WITHOUTPADDING
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64_URL_WITHOUTPADDING
       = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
 
   private static InterledgerCondition CONDITION = constructPreimageCondition();
@@ -83,11 +83,11 @@ public class ConditionModuleTest extends AbstractConditionModuleTest {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter
     // to the CryptoConditionsModuleConditionTest constructor.
     return Arrays.asList(new Object[][] {
-        {HEX, PREIMAGE_CONDITION_DER_BYTES_HEX},
-        {BASE64, PREIMAGE_CONDITION_DER_BYTES_BASE64},
-        {BASE64_WITHOUT_PADDING, PREIMAGE_CONDITION_DER_BYTES_BASE64_WITHOUTPADDING},
-        {BASE64URL, PREIMAGE_CONDITION_DER_BYTES_BASE64_URL},
-        {BASE64URL_WITHOUT_PADDING, PREIMAGE_CONDITION_DER_BYTES_BASE64_URL_WITHOUTPADDING},
+        {HEX, PREIMAGE_CONDITION_BYTES_HEX},
+        {BASE64, PREIMAGE_CONDITION_BYTES_BASE64},
+        {BASE64_WITHOUT_PADDING, PREIMAGE_CONDITION_BYTES_BASE64_WITHOUTPADDING},
+        {BASE64URL, PREIMAGE_CONDITION_BYTES_BASE64_URL},
+        {BASE64URL_WITHOUT_PADDING, PREIMAGE_CONDITION_BYTES_BASE64_URL_WITHOUTPADDING},
     });
 
   }
