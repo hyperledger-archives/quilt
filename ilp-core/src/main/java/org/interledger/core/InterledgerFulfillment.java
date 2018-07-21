@@ -86,20 +86,20 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
    */
   class ImmutableInterledgerFulfillment implements InterledgerFulfillment {
 
-    private final byte[] preimageBytes = new byte[32];
+    private final byte[] preimage = new byte[32];
     private final InterledgerCondition condition;
 
-    protected ImmutableInterledgerFulfillment(byte[] preimageBytes) {
-      if (preimageBytes.length != 32) {
+    protected ImmutableInterledgerFulfillment(final byte[] preimage) {
+      if (preimage.length != 32) {
         throw new IllegalArgumentException(
-            "Interledger preimages must be exactly 32 preimageBytes.");
+            "Interledger preimages must be exactly 32 bytes.");
       }
-      System.arraycopy(preimageBytes, 0, this.preimageBytes, 0, 32);
+      System.arraycopy(preimage, 0, this.preimage, 0, 32);
 
       try {
         // MessageDigest is not threadsafe, but is cheap to construct...
         final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        final byte[] hash = digest.digest(preimageBytes);
+        final byte[] hash = digest.digest(preimage);
         this.condition = InterledgerCondition.of(hash);
       } catch (NoSuchAlgorithmException e) {
         //This should never happen as all JVMs ship with a SHA-256 digest implementation
@@ -116,7 +116,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
 
     @Override
     public byte[] getPreimage() {
-      return Arrays.copyOf(preimageBytes, 32);
+      return Arrays.copyOf(preimage, 32);
     }
 
     @Override
@@ -133,12 +133,12 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
 
       if (other instanceof InterledgerFulfillment) {
 
-        //Only call getHash() if we have to (avoid array copy)
+        //Only call getPreimage() if we have to (avoid array copy)
         byte[] otherBytes = (other instanceof ImmutableInterledgerFulfillment)
-            ? ((ImmutableInterledgerFulfillment) other).preimageBytes
+            ? ((ImmutableInterledgerFulfillment) other).preimage
             : ((InterledgerFulfillment) other).getPreimage();
 
-        return Arrays.equals(preimageBytes, otherBytes);
+        return Arrays.equals(preimage, otherBytes);
       }
 
       return false;
@@ -156,18 +156,18 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
         return 0;
       }
 
-      //Only call getHash() if we have to (avoid array copy)
-      byte[] otherBytes = (other instanceof ImmutableInterledgerFulfillment)
-          ? ((ImmutableInterledgerFulfillment) other).preimageBytes
+      //Only call getPreimage() if we have to (avoid array copy)
+      byte[] otherPreimage = (other instanceof ImmutableInterledgerFulfillment)
+          ? ((ImmutableInterledgerFulfillment) other).preimage
           : other.getPreimage();
 
-      if (otherBytes == this.preimageBytes) {
+      if (otherPreimage == this.preimage) {
         return 0;
       }
 
       for (int i = 0; i < 32; i++) {
-        if (this.preimageBytes[i] != otherBytes[i]) {
-          return this.preimageBytes[i] - otherBytes[i];
+        if (this.preimage[i] != otherPreimage[i]) {
+          return this.preimage[i] - otherPreimage[i];
         }
       }
 
