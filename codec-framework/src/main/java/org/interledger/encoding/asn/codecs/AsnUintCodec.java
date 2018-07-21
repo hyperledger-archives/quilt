@@ -24,7 +24,13 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 
 /**
- * An ASN.1 codec for UInt64 objects that decodes them into {@link BigInteger} values..
+ * <p>An ASN.1 codec for a variable-size ASN.1 OER integer type, backed by {@link BigInteger}.</p>
+ *
+ * <p>Per the OER definitions, the integer value is encoded as a length prefix, followed by an
+ * unsigned binary integer occupying a variable number of octets; the length prefix contains the
+ * number of subsequent octets.</p>
+ *
+ * @see "http://www.oss.com/asn1/resources/books-whitepapers-pubs/Overview_of_OER.pdf"
  */
 public class AsnUintCodec extends AsnOctetStringBasedObjectCodec<BigInteger> {
 

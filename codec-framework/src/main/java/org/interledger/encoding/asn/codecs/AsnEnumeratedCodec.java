@@ -79,11 +79,14 @@ public class AsnEnumeratedCodec<T> extends AsnObjectCodecBase<Collection<T>> {
   /**
    * Encode the provided value into the codec to be written during serialization.
    *
-   * @param value the value to encode
+   * @param values the value to encode
    */
   @Override
-  public void encode(final Collection<T> value) {
-    final Collection<T> values = getValue();
+  public void encode(final Collection<T> values) {
+    Objects.requireNonNull(values);
+    //final Collection<T> values = getValue();
+    this.setValue(values);
+
     varUintCodec.encode(BigInteger.valueOf(values.size()));
 
     Objects.requireNonNull(values).stream()

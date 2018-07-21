@@ -85,7 +85,7 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
     private InterledgerCondition condition;
     private byte[] conditionBytes;
 
-    protected ImmutableInterledgerFulfillment(byte[] bytes) {
+    protected ImmutableInterledgerFulfillment(final byte[] bytes) {
       if (bytes.length != 32) {
         throw new IllegalArgumentException("InterledgerFulfillment must be exactly 32 bytes.");
       }
