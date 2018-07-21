@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.conditions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ package org.interledger.quilt.jackson.conditions;
 
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64;
 
-import org.interledger.core.Condition;
-import org.interledger.core.Fulfillment;
+import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.BeanDescription;
@@ -39,7 +39,7 @@ import java.util.Objects;
 
 /**
  * A Jackson {@link SimpleModule} for serializing and deserializing Crypto-Condition objects like
- * {@link Condition} and {@link Fulfillment}.
+ * {@link InterledgerCondition} and {@link InterledgerFulfillment}.
  */
 public class ConditionModule extends SimpleModule {
 
@@ -70,10 +70,10 @@ public class ConditionModule extends SimpleModule {
 
     this.encoding = Objects.requireNonNull(encoding, "Encoding must not be null!");
 
-    addSerializer(Condition.class, new ConditionSerializer(encoding));
-    addDeserializer(Condition.class, new ConditionDeserializer(encoding));
-    addSerializer(Fulfillment.class, new FulfillmentSerializer(encoding));
-    addDeserializer(Fulfillment.class, new FulfillmentDeserializer(encoding));
+    addSerializer(InterledgerCondition.class, new ConditionSerializer(encoding));
+    addDeserializer(InterledgerCondition.class, new ConditionDeserializer(encoding));
+    addSerializer(InterledgerFulfillment.class, new FulfillmentSerializer(encoding));
+    addDeserializer(InterledgerFulfillment.class, new FulfillmentDeserializer(encoding));
   }
 
   @Override
@@ -85,9 +85,10 @@ public class ConditionModule extends SimpleModule {
           BeanDescription beanDesc,
           JsonSerializer<?> serializer
       ) {
-        if (Condition.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
+        if (InterledgerCondition.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new ConditionSerializer(encoding);
-        } else if (Fulfillment.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
+        } else if (InterledgerFulfillment.class
+            .isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new FulfillmentSerializer(encoding);
         } else {
           return serializer;
@@ -102,9 +103,10 @@ public class ConditionModule extends SimpleModule {
           BeanDescription beanDesc,
           JsonDeserializer<?> deserializer
       ) {
-        if (Condition.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
+        if (InterledgerCondition.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new ConditionDeserializer(encoding);
-        } else if (Fulfillment.class.isAssignableFrom(beanDesc.getType().getRawClass())) {
+        } else if (InterledgerFulfillment.class
+            .isAssignableFrom(beanDesc.getType().getRawClass())) {
           return new FulfillmentDeserializer(encoding);
         } else {
           return super.modifyDeserializer(config, beanDesc, deserializer);

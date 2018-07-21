@@ -102,7 +102,6 @@ public class InterledgerAddressModuleTest {
 
     @Override
     public int hashCode() {
-
       return Objects.hash(getInterledgerAddress());
     }
 
