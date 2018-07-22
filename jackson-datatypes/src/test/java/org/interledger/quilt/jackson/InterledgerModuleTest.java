@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ package org.interledger.quilt.jackson;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-import org.interledger.core.Condition;
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.quilt.jackson.conditions.Encoding;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -49,20 +49,20 @@ import java.util.Objects;
 public class InterledgerModuleTest {
 
   private static final String CONDITION_BYTES_HEX =
-      "BF165845FFDB85F44A32052EC6279D2DBF151DE8E3A7D3727C94FC7AB531ACD5";
+      "D8391BB7F1E6AF13F9D21745481FF024AE8429A2280478B42B174D4716AC7353";
   private static final String CONDITION_BYTES_BASE64
-      = "vxZYRf/bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU=";
+      = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M=";
   private static final String CONDITION_BYTES_BASE64_WITHOUTPADDING
-      = "vxZYRf/bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU";
+      = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M";
   private static final String CONDITION_BYTES_BASE64_URL
-      = "vxZYRf_bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU=";
+      = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M=";
   private static final String CONDITION_BYTES_BASE64_URL_WITHOUTPADDING
-      = "vxZYRf_bhfRKMgUuxiedLb8VHejjp9NyfJT8erUxrNU";
+      = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M";
 
-  private static Condition CONDITION = constructCondition();
+  private static InterledgerCondition CONDITION = constructCondition();
 
   private ObjectMapper objectMapper;
-  private Condition condition;
+  private InterledgerCondition condition;
   private Encoding encodingToUse;
   private String expectedEncodedValue;
 
@@ -71,19 +71,21 @@ public class InterledgerModuleTest {
    *
    * @param encodingToUse        A {@link Encoding} to use for each test run.
    * @param expectedEncodedValue A {@link String} encoded in the above encoding to assert against.
-   * @param condition            A {@link Condition} to encode and decode for each test run.
+   * @param condition            A {@link InterledgerCondition} to encode and decode for each test
+   *                             run.
    */
   public InterledgerModuleTest(
-      final Encoding encodingToUse, final String expectedEncodedValue, final Condition condition
+      final Encoding encodingToUse, final String expectedEncodedValue,
+      final InterledgerCondition condition
   ) {
     this.encodingToUse = Objects.requireNonNull(encodingToUse);
     this.expectedEncodedValue = Objects.requireNonNull(expectedEncodedValue);
     this.condition = Objects.requireNonNull(condition);
   }
 
-  private static Condition constructCondition() {
-    final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return Fulfillment.of(preimage).getCondition();
+  private static InterledgerCondition constructCondition() {
+    final byte[] preimage = "you built a time machine out of ".getBytes();
+    return InterledgerFulfillment.of(preimage).getCondition();
   }
 
   /**
@@ -119,8 +121,8 @@ public class InterledgerModuleTest {
 
     final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo.");
 
-    final InterledgerContainer expectedContainer = new InterledgerContainer(expectedAddress,
-        condition);
+    final InterledgerContainer expectedContainer
+        = new InterledgerContainer(expectedAddress, condition);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json, is(
@@ -142,12 +144,12 @@ public class InterledgerModuleTest {
     private final InterledgerAddress interledgerAddress;
 
     @JsonProperty("execution_condition")
-    private final Condition condition;
+    private final InterledgerCondition condition;
 
     @JsonCreator
     public InterledgerContainer(
         @JsonProperty("ledger_prefix") final InterledgerAddress interledgerAddress,
-        @JsonProperty("execution_condition") final Condition condition
+        @JsonProperty("execution_condition") final InterledgerCondition condition
     ) {
       this.interledgerAddress = Objects.requireNonNull(interledgerAddress);
       this.condition = Objects.requireNonNull(condition);
@@ -157,7 +159,7 @@ public class InterledgerModuleTest {
       return interledgerAddress;
     }
 
-    public Condition getCondition() {
+    public InterledgerCondition getCondition() {
       return condition;
     }
 

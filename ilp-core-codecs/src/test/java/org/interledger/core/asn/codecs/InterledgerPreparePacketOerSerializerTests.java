@@ -9,9 +9,9 @@ package org.interledger.core.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ package org.interledger.core.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Condition;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
@@ -74,20 +74,20 @@ public class InterledgerPreparePacketOerSerializerTests {
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.of("test3.foo.bar"))
             .amount(BigInteger.valueOf(100L))
-            .executionCondition(Condition.of(conditionBytes))
+            .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now()).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(Condition.of(conditionBytes))
+            .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(BigInteger.valueOf(50L))
-            .executionCondition(Condition.of(conditionBytes))
+            .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},
 
