@@ -73,7 +73,7 @@ Next, add the following Maven dependency:
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>java-ilp-core</artifactId>
-    <version>0.12.0-SNAPSHOT</version>
+    <version>0.12.1-SNAPSHOT</version>
   </dependency>
   ...
 </dependencies>
@@ -95,7 +95,7 @@ Next, import this library as a dependency, like this:
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.7.0-SNAPSHOT'
+    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.12.1-SNAPSHOT'
     ...
 }
 ```

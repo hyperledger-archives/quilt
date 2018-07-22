@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,7 @@ public class AsnUintCodec extends AsnOctetStringBasedObjectCodec<BigInteger> {
   }
 
   @Override
-  public void encode(BigInteger value) {
-
+  public void encode(final BigInteger value) {
 
     if (value.compareTo(BigInteger.ZERO) < 0) {
       throw new IllegalArgumentException("value must be positive or zero");
@@ -47,9 +46,11 @@ public class AsnUintCodec extends AsnOctetStringBasedObjectCodec<BigInteger> {
 
     byte[] bytes = value.toByteArray();
 
-    // BigInteger's toByteArray writes data in two's complement,
-    // so positive values may have a leading 0x00 byte.
-    if (bytes[0] == 0x00) {
+    // BigInteger's toByteArray writes data in two's complement, so positive values may have a
+    // leading 0x00 byte, which we want to strip off. However, we only want to strip these
+    // leading values off if the number of bytes is greater than 1 so that we don't produce an
+    // empty array when the BigInteger value is 0.
+    if (bytes[0] == 0x00 && bytes.length > 1) {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       baos.write(bytes, 1, bytes.length - 1);
       setBytes(baos.toByteArray());
