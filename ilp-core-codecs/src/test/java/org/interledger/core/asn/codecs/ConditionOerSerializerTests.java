@@ -9,9 +9,9 @@ package org.interledger.core.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ package org.interledger.core.asn.codecs;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.interledger.core.Condition;
+import org.interledger.core.InterledgerCondition;
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
 import org.interledger.encoding.asn.framework.CodecContext;
 
@@ -43,7 +43,7 @@ public class ConditionOerSerializerTests {
 
   // first data value (0) is default
   @Parameter
-  public Condition condition;
+  public InterledgerCondition condition;
 
   /**
    * The data for this test...
@@ -51,7 +51,7 @@ public class ConditionOerSerializerTests {
   @Parameters
   public static Collection<Object[]> data() {
     return Arrays
-        .asList(new Object[][] {{Condition.of(new byte[32])},
+        .asList(new Object[][] {{InterledgerCondition.of(new byte[32])},
             // TODO: Some more test values
         });
   }
@@ -66,7 +66,8 @@ public class ConditionOerSerializerTests {
     final ByteArrayInputStream byteArrayInputStream =
         new ByteArrayInputStream(outputStream.toByteArray());
 
-    final Condition decodedCondition = context.read(Condition.class, byteArrayInputStream);
+    final InterledgerCondition decodedCondition = context
+        .read(InterledgerCondition.class, byteArrayInputStream);
     assertThat(decodedCondition, is(condition));
   }
 }

@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class InterledgerPreparePacketTest {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[] {127};
     BigInteger amount = BigInteger.TEN;
-    Condition condition = Condition.of(
+    InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
     );
@@ -54,14 +54,14 @@ public class InterledgerPreparePacketTest {
         InterledgerPreparePacket.builder()
             .destination(destination)
             .amount(amount)
-            .executionCondition(condition)
+            .executionCondition(interledgerCondition)
             .expiresAt(expiry)
             .data(data)
             .build();
 
     assertThat(interledgerPreparePacket.getDestination(), is(destination));
     assertThat(interledgerPreparePacket.getAmount(), is(amount));
-    assertThat(interledgerPreparePacket.getExecutionCondition(), is(condition));
+    assertThat(interledgerPreparePacket.getExecutionCondition(), is(interledgerCondition));
     assertThat(interledgerPreparePacket.getExpiresAt(), is(expiry));
     assertThat(interledgerPreparePacket.getData(), is(data));
   }
@@ -81,7 +81,7 @@ public class InterledgerPreparePacketTest {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
           .amount(mock(BigInteger.class))
-          .executionCondition(mock(Condition.class))
+          .executionCondition(mock(InterledgerCondition.class))
           .expiresAt(Instant.now())
           .build();
     } catch (IllegalStateException e) {
@@ -93,7 +93,7 @@ public class InterledgerPreparePacketTest {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
           .amount(mock(BigInteger.class))
-          .executionCondition(mock(Condition.class))
+          .executionCondition(mock(InterledgerCondition.class))
           .build();
       fail();
     } catch (IllegalStateException e) {
@@ -118,7 +118,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .executionCondition(mock(Condition.class))
+          .executionCondition(mock(InterledgerCondition.class))
           .expiresAt(Instant.now())
           .build();
       fail();
@@ -131,7 +131,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .amount(mock(BigInteger.class))
-          .executionCondition(mock(Condition.class))
+          .executionCondition(mock(InterledgerCondition.class))
           .expiresAt(Instant.now())
           .build();
       fail();
@@ -144,18 +144,18 @@ public class InterledgerPreparePacketTest {
         InterledgerPreparePacket.builder()
             .destination(mock(InterledgerAddress.class))
             .amount(mock(BigInteger.class))
-            .executionCondition(mock(Condition.class))
+            .executionCondition(mock(InterledgerCondition.class))
             .expiresAt(Instant.now())
             .build();
     assertThat(interledgerPreparePacket, is(not(nullValue())));
   }
 
   @Test
-  public void testEqualsHashCode() throws Exception {
+  public void testEqualsHashCode() {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[] {127};
     BigInteger amount = BigInteger.TEN;
-    Condition condition = Condition.of(
+    InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
     );
@@ -165,7 +165,7 @@ public class InterledgerPreparePacketTest {
         InterledgerPreparePacket.builder()
             .destination(destination)
             .amount(amount)
-            .executionCondition(condition)
+            .executionCondition(interledgerCondition)
             .expiresAt(expiry)
             .data(data)
             .build();
@@ -174,7 +174,7 @@ public class InterledgerPreparePacketTest {
         InterledgerPreparePacket.builder()
             .destination(destination)
             .amount(amount)
-            .executionCondition(condition)
+            .executionCondition(interledgerCondition)
             .expiresAt(expiry)
             .data(data)
             .build();
@@ -186,7 +186,7 @@ public class InterledgerPreparePacketTest {
     final InterledgerPreparePacket interledgerPreparePacket3 = InterledgerPreparePacket.builder()
         .destination(destination)
         .amount(amount.add(BigInteger.ONE))
-        .executionCondition(condition)
+        .executionCondition(interledgerCondition)
         .expiresAt(expiry)
         .data(data)
         .build();

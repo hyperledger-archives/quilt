@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.conditions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,18 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
+import static org.hamcrest.core.Is.is;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64URL;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64URL_WITHOUT_PADDING;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64_WITHOUT_PADDING;
 import static org.interledger.quilt.jackson.conditions.Encoding.HEX;
+import static org.junit.Assert.assertThat;
 
-import org.interledger.core.Condition;
+import org.interledger.core.InterledgerCondition;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.immutables.value.Value;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -38,6 +40,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Validates the functionality of {@link ConditionModule}.
@@ -45,18 +48,18 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class ConditionModuleTest extends AbstractConditionModuleTest {
 
-  private static final String PREIMAGE_CONDITION_DER_BYTES_HEX =
-      "A0258020BF165845FFDB85F44A32052EC6279D2DBF151DE8E3A7D3727C94FC7AB531ACD581012B";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64
-      = "oCWAIL8WWEX/24X0SjIFLsYnnS2/FR3o46fTcnyU/Hq1MazVgQEr";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64_WITHOUTPADDING
-      = "oCWAIL8WWEX/24X0SjIFLsYnnS2/FR3o46fTcnyU/Hq1MazVgQEr";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64_URL
-      = "oCWAIL8WWEX_24X0SjIFLsYnnS2_FR3o46fTcnyU_Hq1MazVgQEr";
-  private static final String PREIMAGE_CONDITION_DER_BYTES_BASE64_URL_WITHOUTPADDING
-      = "oCWAIL8WWEX_24X0SjIFLsYnnS2_FR3o46fTcnyU_Hq1MazVgQEr";
+  private static final String PREIMAGE_CONDITION_BYTES_HEX =
+      "726F6164733F20776865726520776527726520676F696E6720776520646F6E27";
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64
+      = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64_WITHOUTPADDING
+      = "cm9hZHM/IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64_URL
+      = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic=";
+  private static final String PREIMAGE_CONDITION_BYTES_BASE64_URL_WITHOUTPADDING
+      = "cm9hZHM_IHdoZXJlIHdlJ3JlIGdvaW5nIHdlIGRvbic";
 
-  private static Condition CONDITION = constructPreimageCondition();
+  private static InterledgerCondition CONDITION = constructPreimageCondition();
 
   /**
    * Required-args Constructor (used by JUnit's parameterized test annotation).
@@ -80,41 +83,72 @@ public class ConditionModuleTest extends AbstractConditionModuleTest {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter
     // to the CryptoConditionsModuleConditionTest constructor.
     return Arrays.asList(new Object[][] {
-        {HEX, PREIMAGE_CONDITION_DER_BYTES_HEX},
-        {BASE64, PREIMAGE_CONDITION_DER_BYTES_BASE64},
-        {BASE64_WITHOUT_PADDING, PREIMAGE_CONDITION_DER_BYTES_BASE64_WITHOUTPADDING},
-        {BASE64URL, PREIMAGE_CONDITION_DER_BYTES_BASE64_URL},
-        {BASE64URL_WITHOUT_PADDING, PREIMAGE_CONDITION_DER_BYTES_BASE64_URL_WITHOUTPADDING},
+        {HEX, PREIMAGE_CONDITION_BYTES_HEX},
+        {BASE64, PREIMAGE_CONDITION_BYTES_BASE64},
+        {BASE64_WITHOUT_PADDING, PREIMAGE_CONDITION_BYTES_BASE64_WITHOUTPADDING},
+        {BASE64URL, PREIMAGE_CONDITION_BYTES_BASE64_URL},
+        {BASE64URL_WITHOUT_PADDING, PREIMAGE_CONDITION_BYTES_BASE64_URL_WITHOUTPADDING},
     });
 
   }
 
   @Test
   public void testSerializeDeserialize() throws IOException {
-    //    final PreimageConditionContainer expectedContainer = ImmutableConditionContainer
-    //        .builder()
-    //        .condition(CONDITION)
-    //        .build();
-    //
-    //    final String json = objectMapper.writeValueAsString(expectedContainer);
-    //    assertThat(json, is(
-    //        String.format("{\"condition\":\"%s\"}", expectedEncodedValue)
-    //    ));
-    //
-    //    final PreimageConditionContainer actualAddressContainer = objectMapper
-    //        .readValue(json, PreimageConditionContainer.class);
-    //
-    //    assertThat(actualAddressContainer, is(expectedContainer));
-    //    assertThat(actualAddressContainer.getCondition(), is(CONDITION));
+    final PreimageConditionContainer expectedContainer = new PreimageConditionContainer(CONDITION);
+
+    final String json = objectMapper.writeValueAsString(expectedContainer);
+    assertThat(json, is(
+        String.format("{\"condition\":\"%s\"}", expectedEncodedValue)
+    ));
+
+    final PreimageConditionContainer actualAddressContainer = objectMapper
+        .readValue(json, PreimageConditionContainer.class);
+
+    assertThat(actualAddressContainer, is(expectedContainer));
+    assertThat(actualAddressContainer.getCondition(), is(CONDITION));
   }
 
-  @Value.Immutable
-  //  @JsonSerialize(as = ImmutableConditionContainer.class)
-  //  @JsonDeserialize(as = ImmutableConditionContainer.class)
-  interface PreimageConditionContainer {
+  private static class PreimageConditionContainer {
 
     @JsonProperty("condition")
-    Condition getCondition();
+    private final InterledgerCondition condition;
+
+    @JsonCreator
+    private PreimageConditionContainer(
+        @JsonProperty("condition") final InterledgerCondition condition
+    ) {
+      this.condition = Objects.requireNonNull(condition);
+    }
+
+    public InterledgerCondition getCondition() {
+      return condition;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PreimageConditionContainer that = (PreimageConditionContainer) o;
+      return Objects.equals(getCondition(), that.getCondition());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getCondition());
+    }
+
+    @Override
+    public String toString() {
+      final StringBuffer sb = new StringBuffer("PreimageConditionContainer{");
+      sb.append("condition=").append(condition);
+      sb.append('}');
+      return sb.toString();
+    }
   }
+
 
 }

@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.conditions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,8 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Condition;
-import org.interledger.core.Fulfillment;
-import org.interledger.quilt.jackson.conditions.ConditionModule;
-import org.interledger.quilt.jackson.conditions.Encoding;
+import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -38,17 +36,17 @@ import java.util.Objects;
  */
 public abstract class AbstractConditionModuleTest {
 
-  /**
-   * Need to add BouncyCastle so we have a provider that supports SHA256withRSA/PSS signatures
-   */
+  private static final String PREIMAGE = "roads? where we're going we don'";
+
+  //Add BouncyCastle so we have a provider that supports SHA256withRSA/PSS signatures.
   static {
     Provider bc = new BouncyCastleProvider();
     Security.addProvider(bc);
   }
 
-  protected ObjectMapper objectMapper;
-  protected Encoding encodingToUse;
-  protected String expectedEncodedValue;
+  ObjectMapper objectMapper;
+  String expectedEncodedValue;
+  private Encoding encodingToUse;
 
   /**
    * Required-args Constructor (used by JUnit's parameterized test annotation).
@@ -56,32 +54,30 @@ public abstract class AbstractConditionModuleTest {
    * @param encodingToUse        A {@link Encoding} to use for each test run.
    * @param expectedEncodedValue A {@link String} encoded in the above encoding to assert against.
    */
-  public AbstractConditionModuleTest(
+  AbstractConditionModuleTest(
       final Encoding encodingToUse, final String expectedEncodedValue
   ) {
     this.encodingToUse = Objects.requireNonNull(encodingToUse);
     this.expectedEncodedValue = Objects.requireNonNull(expectedEncodedValue);
   }
 
+  static InterledgerCondition constructPreimageCondition() {
+    final byte[] preimage = PREIMAGE.getBytes();
+    return InterledgerCondition.of(preimage);
+  }
+
   //////////////////
   // Protected Helpers
   //////////////////
 
-
-  protected static Condition constructPreimageCondition() {
-    final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return Condition.of(preimage);
-  }
-
-  protected static Fulfillment constructPreimageFulfillment() {
-    final byte[] preimage = "you built a time machine out of a DeLorean?".getBytes();
-    return Fulfillment.of(preimage);
+  static InterledgerFulfillment constructPreimageFulfillment() {
+    final byte[] preimage = PREIMAGE.getBytes();
+    return InterledgerFulfillment.of(preimage);
   }
 
   @Before
   public void setup() {
-    this.objectMapper = new ObjectMapper()
-        .registerModule(new ConditionModule(encodingToUse));
+    this.objectMapper = new ObjectMapper().registerModule(new ConditionModule(encodingToUse));
   }
 
 }

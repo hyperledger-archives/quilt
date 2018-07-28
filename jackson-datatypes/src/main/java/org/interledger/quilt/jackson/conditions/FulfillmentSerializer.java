@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.conditions;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Fulfillment;
+import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -32,9 +32,9 @@ import java.util.Base64;
 import java.util.Objects;
 
 /**
- * Jackson serializer {@link Fulfillment} using configurable encodings.
+ * Jackson serializer {@link InterledgerFulfillment} using configurable encodings.
  */
-public class FulfillmentSerializer extends StdScalarSerializer<Fulfillment> {
+public class FulfillmentSerializer extends StdScalarSerializer<InterledgerFulfillment> {
 
   private final Encoding encoding;
 
@@ -45,13 +45,14 @@ public class FulfillmentSerializer extends StdScalarSerializer<Fulfillment> {
    *                 and fulfillments.
    */
   public FulfillmentSerializer(final Encoding encoding) {
-    super(Fulfillment.class, false);
+    super(InterledgerFulfillment.class, false);
     this.encoding = Objects.requireNonNull(encoding, "Encoding must not be null!");
   }
 
   @Override
-  public void serialize(Fulfillment fulfillment, JsonGenerator gen, SerializerProvider provider)
-      throws IOException {
+  public void serialize(
+      InterledgerFulfillment fulfillment, JsonGenerator gen, SerializerProvider provider
+  ) throws IOException {
 
     switch (encoding) {
       case HEX: {

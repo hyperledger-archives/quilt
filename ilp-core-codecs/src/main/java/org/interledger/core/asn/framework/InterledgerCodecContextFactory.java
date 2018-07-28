@@ -9,9 +9,9 @@ package org.interledger.core.asn.framework;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,11 @@ package org.interledger.core.asn.framework;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Condition;
-import org.interledger.core.Fulfillment;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
@@ -60,9 +60,9 @@ public class InterledgerCodecContextFactory {
   public static CodecContext oer() {
     return CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
         .register(Instant.class, AsnTimestampCodec::new)
-        .register(Condition.class, AsnConditionCodec::new,
+        .register(InterledgerCondition.class, AsnConditionCodec::new,
             new AsnOctetStringOerSerializer())
-        .register(Fulfillment.class, AsnFulfillmentCodec::new,
+        .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new,
             new AsnOctetStringOerSerializer())
         .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new,
             new AsnCharStringOerSerializer())
