@@ -21,23 +21,23 @@ package org.interledger.encoding.asn.codecs;
  */
 
 /**
- * An ASN.1 codec for UInt8 objects that decodes them into {@link Integer} values.
+ * An ASN.1 codec for UInt8 objects that decodes them into {@link Short} values.
  */
-public class AsnUint8Codec extends AsnPrimitiveCodec<Integer> {
+public class AsnUint8Codec extends AsnPrimitiveCodec<Short> {
 
-  private Integer value;
+  private Short value;
 
   public AsnUint8Codec() {
-    super(new AsnSizeConstraint(0,1));
+    super(new AsnSizeConstraint(1));
   }
 
   @Override
-  public Integer decode() {
+  public Short decode() {
     return value;
   }
 
   @Override
-  public void encode(Integer value) {
+  public void encode(Short value) {
 
     if (value > 255 || value < 0) {
       throw new IllegalArgumentException(

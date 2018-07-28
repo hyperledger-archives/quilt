@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,34 +20,20 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.encoding.asn.codecs.AsnUint64Codec;
-import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.encoding.asn.framework.CodecContextFactory;
-
 import com.google.common.primitives.Longs;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link AsnUint64Codec}.
+ * Parameterized unit tests for encoding an instance of {@link BigInteger}.
  */
 @RunWith(Parameterized.class)
-public class BigIntegerOerSerializerTest {
-
-  private final BigInteger inputValue;
-  private final byte[] asn1OerBytes;
-  private CodecContext codecContext;
+public class BigIntegerOerSerializerTest extends AbstractSerializerTest<BigInteger> {
 
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
@@ -57,8 +43,7 @@ public class BigIntegerOerSerializerTest {
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code intValue}.
    */
   public BigIntegerOerSerializerTest(final BigInteger inputValue, final byte[] asn1OerBytes) {
-    this.inputValue = inputValue;
-    this.asn1OerBytes = asn1OerBytes;
+    super(inputValue, BigInteger.class, asn1OerBytes);
   }
 
   /**
@@ -164,49 +149,5 @@ public class BigIntegerOerSerializerTest {
                     (byte) 0xFF, (byte) 0xFF, (byte) 0xFF}}
         }
     );
-  }
-
-  /**
-   * Test setup.
-   */
-  @Before
-  public void setUp() throws Exception {
-    // Register the codec to be tested...
-    codecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
-  }
-
-  @Test
-  public void read() throws Exception {
-    final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(asn1OerBytes);
-    final BigInteger actualValue =
-        codecContext.read(BigInteger.class, byteArrayInputStream);
-
-    MatcherAssert.assertThat(actualValue, CoreMatchers.is(inputValue));
-  }
-
-  @Test
-  public void write() throws Exception {
-    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    codecContext.write(inputValue, byteArrayOutputStream);
-    MatcherAssert.assertThat(byteArrayOutputStream.toByteArray(),
-        CoreMatchers.is(this.asn1OerBytes));
-  }
-
-  @Test
-  public void writeThenRead() throws Exception {
-    // Write...
-    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    codecContext.write(inputValue, byteArrayOutputStream);
-    MatcherAssert.assertThat(byteArrayOutputStream.toByteArray(), CoreMatchers.is(asn1OerBytes));
-
-    // Read...
-    final ByteArrayInputStream byteArrayInputStream =
-        new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    final BigInteger decodedValue = codecContext.read(BigInteger.class, byteArrayInputStream);
-
-    // Write...
-    final ByteArrayOutputStream byteArrayOutputStream2 = new ByteArrayOutputStream();
-    codecContext.write(decodedValue, byteArrayOutputStream2);
-    MatcherAssert.assertThat(byteArrayOutputStream2.toByteArray(), CoreMatchers.is(asn1OerBytes));
   }
 }

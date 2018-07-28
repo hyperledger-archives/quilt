@@ -42,7 +42,6 @@ public class AsnUint32Codec extends AsnOctetStringBasedObjectCodec<Long> {
 
   @Override
   public void encode(Long value) {
-
     if (value > 4294967295L || value < 0) {
       throw new IllegalArgumentException(
           "Uint32 only supports values from 0 to 4294967295, value "

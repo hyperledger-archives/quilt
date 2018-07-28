@@ -37,7 +37,9 @@ public interface MyCustomObject {
    */
   String getFixedLengthUtf8StringProperty();
 
-  int getUint8Property();
+  short getUint8Property();
+
+  int getUint16Property();
 
   long getUint32Property();
 

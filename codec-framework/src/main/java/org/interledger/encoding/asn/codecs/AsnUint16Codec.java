@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,31 +23,35 @@ package org.interledger.encoding.asn.codecs;
 /**
  * An ASN.1 codec for UInt16 objects that decodes them into {@link Integer} values.
  */
-public class AsnUint16Codec extends AsnPrimitiveCodec<Integer> {
-
-  private Integer value;
+public class AsnUint16Codec extends AsnOctetStringBasedObjectCodec<Integer> {
 
   public AsnUint16Codec() {
-    super(new AsnSizeConstraint(0,1));
+    super(new AsnSizeConstraint(2));
   }
 
   @Override
   public Integer decode() {
+    byte[] bytes = getBytes();
+    int value = 0;
+    for (int i = 0; i <= 1; i++) {
+      value <<= Byte.SIZE;
+      value |= (bytes[i] & 0xFF);
+    }
     return value;
   }
 
   @Override
   public void encode(Integer value) {
-
     if (value > 65535 || value < 0) {
       throw new IllegalArgumentException(
-          "Uint16 only supports values from 0 to 65535, value "
-              + value + " is out of range.");
+          "Uint16 only supports values from 0 to 65535, value " + value + " is out of range.");
     }
 
-    this.value = value;
-
-    onValueChangedEvent();
+    byte[] bytes = new byte[2];
+    for (int i = 0; i <= 1; i++) {
+      bytes[i] = ((byte) ((value >> (Byte.SIZE * (1 - i))) & 0xFF));
+    }
+    setBytes(bytes);
   }
 
   @Override
