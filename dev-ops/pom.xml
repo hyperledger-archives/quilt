@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.interledger</groupId>
   <artifactId>dev-ops</artifactId>
-  <version>0.12.0-SNAPSHOT</version>
+  <version>0.12.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Hyperledger Quilt Dev-Ops Tools</name>
