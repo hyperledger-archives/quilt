@@ -73,6 +73,22 @@ public class AsnUintCodecTest {
         {
             BigInteger.valueOf(65535L),
             BaseEncoding.base16().decode("FFFF")
+        },
+        {
+            BigInteger.valueOf(2147483647L),
+            BaseEncoding.base16().decode("7FFFFFFF")
+        },
+        {
+            BigInteger.valueOf(2147483648L),
+            BaseEncoding.base16().decode("80000000")
+        },
+        {
+            BigInteger.valueOf(9223372036854775807L),
+            BaseEncoding.base16().decode("7FFFFFFFFFFFFFFF")
+        },
+        {
+            new BigInteger("9223372036854775808"),
+            BaseEncoding.base16().decode("8000000000000000")
         }
     });
   }
