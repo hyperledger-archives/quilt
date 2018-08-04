@@ -26,6 +26,7 @@ import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress
 import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.ILLEGAL_ENDING;
 import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.INVALID_SEGMENT;
 import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.MISSING_SCHEME_PREFIX;
+import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error;
 import org.interledger.core.InterledgerAddress.AllocationScheme;
@@ -291,11 +292,6 @@ public class InterledgerAddressTest {
     }
   }
 
-//  @Test
-//  public void testGetPrefixFromAllocationScheme() {
-//    assertThat(InterledgerAddress.of("g").getPrefix().isPresent(), is(false));
-//  }
-
   @Test
   public void testGetPrefixFromShortPrefix() {
     assertThat(InterledgerAddress.of("g.1").getPrefix().isPresent(), is(false));
@@ -331,24 +327,6 @@ public class InterledgerAddressTest {
     assertThat(address.getPrefix().get().value(), is("g.alpha.beta.charlie.delta"));
   }
 
-//  @Test
-//  public void testGetPrefix() {
-//    assertThat(InterledgerAddress.of("g.bob").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("g.bob.foo").getPrefix().get().value(), is("g.bob"));
-//    assertThat(
-//        InterledgerAddress.of("g.bob.foo").getPrefix().get().value(), is("g.bob")
-//    );
-//    assertThat(InterledgerAddress.of("g").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("private").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("example").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("peer").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("self").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("test").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("test1").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("test2").getPrefix().isPresent(), is(false));
-//    assertThat(InterledgerAddress.of("test3").getPrefix().isPresent(), is(false));
-//  }
-
   @Test
   public void testHasPrefix() {
     assertThat(InterledgerAddress.of("g.bob").hasPrefix(), is(false));
@@ -365,31 +343,7 @@ public class InterledgerAddressTest {
     assertThat(InterledgerAddress.of("test1.1.1").hasPrefix(), is(true));
     assertThat(InterledgerAddress.of("test2.1.1").hasPrefix(), is(true));
     assertThat(InterledgerAddress.of("test3.1.1").hasPrefix(), is(true));
-
-    //assertThat(InterledgerAddress.of("g").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("private").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("example").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("peer").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("self").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test1").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test2").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test3").hasPrefix(), is(false));
   }
-
-  // TODO: Add to AllocationScheme Tests...
-//  @Test
-//  public void testIsRootPrefix() {
-//    assertThat(InterledgerAddress.of("g").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("private").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("example").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("peer").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("self").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test1").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test2").hasPrefix(), is(false));
-//    assertThat(InterledgerAddress.of("test3").hasPrefix(), is(false));
-//  }
 
   @Test
   public void testAddressEqualsHashcode() {
@@ -418,188 +372,134 @@ public class InterledgerAddressTest {
         is("InterledgerAddress{value=g.foo}"));
   }
 
-//  @Test
-//  public void testIsSchemePrefix() {
-//    assertThat(addressParser.isSchemePrefix("self"), is(false));
-//    assertThat(addressParser.isSchemePrefix("self"), is(true));
-//    assertThat(addressParser.isSchemePrefix("g"), is(true));
-//    assertThat(addressParser.isSchemePrefix("g.foo"), is(false));
-//    assertThat(addressParser.isSchemePrefix("g.foo"), is(false));
-//    assertThat(addressParser.isSchemePrefix("g.g"), is(false));
-//    assertThat(addressParser.isSchemePrefix("g.foo.bar"), is(false));
-//    assertThat(addressParser.isSchemePrefix(JUST_RIGHT), is(false));
-//  }
-//
-//  @Test(expected = NullPointerException.class)
-//  public void testIsSchemePrefixWithNullAddress() {
-//    assertThat(addressParser.isSchemePrefix(null), is(false));
-//  }
+  @Test(expected = NullPointerException.class)
+  public void testValidateWithNullAddress() {
+    InterledgerAddress.builder().value(null).build();
+  }
 
-//  @Test
-//  public void testIsSchemePrefixWithEmptyAddress() {
-//    assertThat(addressParser.isSchemePrefix(""), is(false));
-//  }
-
-//  @Test
-//  public void testIsSchemePrefixWithInvalidAddresses() {
-//    assertThat(addressParser.isSchemePrefix("g"), is(false));
-//    assertThat(addressParser.isSchemePrefix("self"), is(false));
-//    assertThat(addressParser.isSchemePrefix(""), is(false));
-//    assertThat(addressParser.isSchemePrefix(".self"), is(false));
-//    assertThat(addressParser.isSchemePrefix(".foo"), is(false));
-//    assertThat(addressParser.isSchemePrefix(".@@@"), is(false));
-//    assertThat(addressParser.isSchemePrefix("gg"), is(false));
-//    assertThat(addressParser.isSchemePrefix(" g"), is(false));
-//    assertThat(addressParser.isSchemePrefix("g "), is(false));
-//    assertThat(addressParser.isSchemePrefix("g. "), is(false));
-//    assertThat(addressParser.isSchemePrefix("g.\r\n"), is(false));
-//    assertThat(addressParser.isSchemePrefix("foo"), is(false));
-//    assertThat(addressParser.isSchemePrefix("@@@"), is(false));
-//    assertThat(addressParser.isSchemePrefix("g.foo"), is(false));
-//  }
-//
-//  @Test
-//  public void testValidate() {
-//    addressParser.validate("self");
-//    addressParser.validate("g");
-//    addressParser.validate("g.foo");
-//    addressParser.validate("g.g");
-//    addressParser.validate("g.foo.bar");
-//    addressParser.validate("g.foo.bar");
-//    addressParser.validate("g.foo.bar.baz");
-//    addressParser.validate(JUST_RIGHT);
-//  }
-
-//  @Test(expected = NullPointerException.class)
-//  public void testValidateWithNullAddress() {
-//    addressParser.validate(null);
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithEmptyAddress() {
-//    assertValidationErrorThenThrow("", InterledgerAddressParser.Error.MISSING_SCHEME_PREFIX);
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_01() {
-//    assertValidationErrorThenThrow("g", InterledgerAddressParser.Error.MISSING_SCHEME_PREFIX);
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
+  //  @Test(expected = IllegalArgumentException.class)
 //  public void testValidateWithInvalidSchemePrefix_02() {
 //    assertValidationErrorThenThrow("self", InterledgerAddressParser.Error.MISSING_SCHEME_PREFIX);
 //  }
 //
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_03() {
-//    assertValidationErrorThenThrow("", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX, "");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_04() {
-//    assertValidationErrorThenThrow(".foo", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
-//        "");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_05() {
-//    assertValidationErrorThenThrow("gg", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
-//        "gg");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_06() {
-//    assertValidationErrorThenThrow(" g", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
-//        " g");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_07() {
-//    assertValidationErrorThenThrow("g ", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
-//        "g ");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSchemePrefix_08() {
-//    assertValidationErrorThenThrow("@@@", InterledgerAddressParser.Error.INVALID_SCHEME_PREFIX,
-//        "@@@");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_01() {
-//    assertValidationErrorThenThrow("g.@@@", InterledgerAddressParser.Error.INVALID_SEGMENT, "@@@");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_02() {
-//    assertValidationErrorThenThrow("g. ", InterledgerAddressParser.Error.INVALID_SEGMENT,
-//        " ");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_03() {
-//    assertValidationErrorThenThrow("g.é", InterledgerAddressParser.Error.INVALID_SEGMENT,
-//        "é");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_04() {
-//    assertValidationErrorThenThrow("g.", InterledgerAddressParser.Error.INVALID_SEGMENT, "");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_05() {
-//    assertValidationErrorThenThrow("g..bar", InterledgerAddressParser.Error.INVALID_SEGMENT, "");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_06() {
-//    assertValidationErrorThenThrow("g.foo.@.baz", InterledgerAddressParser.Error.INVALID_SEGMENT,
-//        "@");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_07() {
-//    assertValidationErrorThenThrow("g.foo.bar.a@1", InterledgerAddressParser.Error.INVALID_SEGMENT,
-//        "a@1");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_08() {
-//    assertValidationErrorThenThrow("g.foo.bar.baz ", InterledgerAddressParser.Error.INVALID_SEGMENT,
-//        "baz ");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithInvalidSegment_09() {
-//    assertValidationErrorThenThrow("g.foo.bar.baz\r\n",
-//        InterledgerAddressParser.Error.INVALID_SEGMENT,
-//        "baz\r\n");
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithSegmentsUnderflow() {
-//    assertValidationErrorThenThrow("g.foo", InterledgerAddressParser.Error.SEGMENTS_UNDERFLOW);
-//  }
-//
-//  @Test(expected = IllegalArgumentException.class)
-//  public void testValidateWithLengthOverflow() {
-//    assertValidationErrorThenThrow(TOO_LONG, InterledgerAddressParser.Error.SEGMENTS_UNDERFLOW.getMessageFormat());
-//  }
-//
-//  private void assertValidationErrorThenThrow(final String actualAddressString,
-//      final InterledgerAddressParser.Error expectedError, final Object... errorParams) {
-//    try {
-//      addressParser.validate(actualAddressString);
-//      fail("Should have thrown an IllegalArgumentException");
-//    } catch (final IllegalArgumentException e) {
-//      assertThat(e.getMessage(), is(String.format(expectedError.getMessageFormat(), errorParams)));
-//      throw e;
-//    } catch (final Exception e) {
-//      fail("Should have thrown an IllegalArgumentException");
-//      throw e;
-//    }
-//  }
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSchemePrefix_04() {
+
+    try {
+      InterledgerAddress.builder().value(".foo").build();
+    } catch (Exception e) {
+
+      assertValidationErrorThenThrow(".foo", Error.INVALID_SCHEME_PREFIX,
+          "");
+
+    }
+
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSchemePrefix_05() {
+    assertValidationErrorThenThrow("gg", Error.INVALID_SCHEME_PREFIX,
+        "gg");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSchemePrefix_06() {
+    assertValidationErrorThenThrow(" g", Error.INVALID_SCHEME_PREFIX,
+        " g");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSchemePrefix_07() {
+    assertValidationErrorThenThrow("g ", Error.INVALID_SCHEME_PREFIX,
+        "g ");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSchemePrefix_08() {
+    assertValidationErrorThenThrow("@@@", Error.INVALID_SCHEME_PREFIX,
+        "@@@");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_01() {
+    assertValidationErrorThenThrow("g.@@@", Error.INVALID_SEGMENT, "@@@");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_02() {
+    assertValidationErrorThenThrow("g. ", Error.INVALID_SEGMENT,
+        " ");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_03() {
+    assertValidationErrorThenThrow("g.é", Error.INVALID_SEGMENT,
+        "é");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_04() {
+    assertValidationErrorThenThrow("g.", Error.ILLEGAL_ENDING, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_04b() {
+    assertValidationErrorThenThrow("g.foo.", Error.ILLEGAL_ENDING, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_05() {
+    assertValidationErrorThenThrow("g..bar", Error.INVALID_SEGMENT, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_06() {
+    assertValidationErrorThenThrow("g.foo.@.baz", Error.INVALID_SEGMENT,
+        "@");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_07() {
+    assertValidationErrorThenThrow("g.foo.bar.a@1", Error.INVALID_SEGMENT,
+        "a@1");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_08() {
+    assertValidationErrorThenThrow("g.foo.bar.baz ", Error.INVALID_SEGMENT,
+        "baz ");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithInvalidSegment_09() {
+    assertValidationErrorThenThrow("g.foo.bar.baz\r\n",
+        Error.INVALID_SEGMENT,
+        "baz\r\n");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithSegmentsUnderflow() {
+    assertValidationErrorThenThrow("g", Error.SEGMENTS_UNDERFLOW);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateWithLengthOverflow() {
+    assertValidationErrorThenThrow(TOO_LONG, Error.ADDRESS_OVERFLOW);
+  }
+
+  private void assertValidationErrorThenThrow(final String actualAddressString,
+      final Error expectedError, final Object... errorParams) {
+    try {
+      InterledgerAddress.builder().value(actualAddressString).build();
+      fail("Should have thrown an IllegalArgumentException");
+    } catch (final IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(expectedError.getMessageFormat(), errorParams)));
+      throw e;
+    } catch (final Exception e) {
+      fail("Should have thrown an IllegalArgumentException");
+      throw e;
+    }
+  }
 
 
 }

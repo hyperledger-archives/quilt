@@ -38,15 +38,17 @@ import java.util.stream.Collectors;
  *
  * <p>Interledger is a graph where <tt>Nodes</tt> are the vertices and <tt>Accounts</tt> are the
  * edges. A fulfilled ILP packet will modify the balances for all accounts along the path between a
- * sending node and a receiving node. This is no different for a connector than for an SPSP receiver
+ * sending Node and a receiving Node. This is no different for a connector than for an SPSP receiver
  * (both are ILP nodes and in both cases, the accounts whose balances change are all accounts along
  * the path).</p>
  *
  * <p>The identifier+locator primitive defined by an InterledgerAddress also provides a way to
  * route ILP packets to their intended destination through a series of Nodes, including any number
- * of ILP Connectors (Note that this This happens after address lookup using a higher-level protocol
- * such as <tt>SPSP</tt>. Addresses are <tt>not</tt> meant to be user-facing, but allow several
- * ASCII characters for easy debugging.</p>
+ * of ILP Connectors (this happens after address-lookup using a higher-level protocol such as
+ * <tt>SPSP</tt>).</p>
+ *
+ * <p>Addresses are <tt>not</tt> meant to be user-facing, but allow several ASCII
+ * characters for easy debugging.</p>
  *
  * <p>Note that because an InterledgerAddress represents an Interledger <tt>Node</tt>, ILP payments
  * are always addressed to a Node, and _not_ to an account. For example, there will usually be a 1:1
@@ -165,7 +167,7 @@ public interface InterledgerAddress {
    *
    * <p>If this address has only a single segment after the allocation scheme, then this method
    * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #value()} , up-to but excluding
+   * InterledgerAddress} containing the characters inside of {@link #value()}, up-to but excluding
    * last period.</p>
    *
    * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
@@ -281,8 +283,6 @@ public interface InterledgerAddress {
           return messageFormat;
         }
       }
-
-
     }
   }
 
