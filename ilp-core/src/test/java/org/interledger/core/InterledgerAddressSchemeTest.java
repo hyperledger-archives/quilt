@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,11 @@ package org.interledger.core;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.ILLEGAL_ENDING;
+import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.INVALID_SCHEME_PREFIX;
+import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.SEGMENTS_UNDERFLOW;
 
-import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddress.AllocationScheme;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,112 +36,170 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.Arrays;
 
 /**
- * Unit tests for {@link ImmutableInterledgerAddress.Builder} schemes.
+ * Unit tests for {@link InterledgerAddress.AllocationScheme}.
  */
 @RunWith(Parameterized.class)
 public class InterledgerAddressSchemeTest {
 
-  private static final String EXPECTED_ERROR_MESSAGE = "Address is invalid";
-  private final String scheme;
+  private final String allocationScheme;
 
-  public InterledgerAddressSchemeTest(final String scheme) {
-    this.scheme = scheme;
+  public InterledgerAddressSchemeTest(final String allocationScheme) {
+    this.allocationScheme = allocationScheme;
   }
 
   /**
    * Generates an {@link Iterable} of arrays containing Strings that will be passed to each of the
    * test methods of this test.
    */
-  @Parameters(name = "{index}: scheme({0})")
+  @Parameters(name = "{index}: allocationScheme({0})")
   public static Iterable<Object[]> schemes() {
-    return Arrays.asList(new Object[][]{{"g"}, {"private"}, {"example"}, {"peer"}, {"self"},
-        {"test1"}, {"test2"}, {"test3"}});
+    return Arrays.asList(new Object[][] {
+        {"g"}, {"private"}, {"example"}, {"peer"}, {"self"}, {"test1"}, {"test2"}, {"test3"}
+    });
   }
+
+  /**
+   * Assert that each scheme is validly created.
+   */
+  @Test
+  public void test_allocation_scheme_() {
+    final AllocationScheme allocationScheme = InterledgerAddress.AllocationScheme
+        .builder()
+        .value(this.allocationScheme)
+        .build();
+    assertThat(allocationScheme.value(), is(this.allocationScheme));
+  }
+
+  /**
+   * Assert that something like "g.foo" is invalid.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void test_allocation_scheme__with_too_much() {
+    try {
+      AllocationScheme.builder().value(this.allocationScheme + ".foo").build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String.format(
+          INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "" + ".foo")
+          )
+      );
+      throw e;
+    }
+  }
+
+  /**
+   * Assert that something like "g.foo." is invalid.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void test_allocation_scheme__with_too_much_plus_trailing_dot() {
+    try {
+      AllocationScheme.builder().value(this.allocationScheme + ".foo.").build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(String
+          .format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + ".foo.")));
+      throw e;
+    }
+  }
+
+  /**
+   * Assert that creating an address with something like "g." is invalid.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void test_allocation_scheme__with_trailing_dot() {
+    try {
+      AllocationScheme.builder().value(this.allocationScheme + ".").build();
+    } catch (IllegalArgumentException e) {
+      assertThat(
+          e.getMessage(),
+          is(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "."))
+      );
+      throw e;
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void test_allocation_scheme_address_with_invalid_scheme() {
+    try {
+      AllocationScheme.builder().value(this.allocationScheme + "1.foo").build();
+    } catch (IllegalArgumentException e) {
+      assertThat(
+          e.getMessage(),
+          is(String.format(
+              INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1.foo")
+          )
+      );
+      throw e;
+    }
+  }
+
+  /////////////////////////////
+  // Address tests with schemes
+  /////////////////////////////
 
   /**
    * Assert that something like "g.foo.bob" is valid.
    */
   @Test
-  public void test_scheme_with_neighborhood_and_account_as_address() throws Exception {
+  public void test_scheme_with_neighborhood_and_account_as_address() {
     final InterledgerAddress address =
-        InterledgerAddress.builder().value(this.scheme + ".foo.bob").build();
-    assertThat(address.getValue(), is(this.scheme + ".foo.bob"));
-    assertThat(address.isLedgerPrefix(), is(false));
+        InterledgerAddress.builder().value(this.allocationScheme + ".foo.bob").build();
+    assertThat(address.value(), is(this.allocationScheme + ".foo.bob"));
   }
 
   /**
-   * Assert that something like "g.foo.bob." is valid.
+   * Assert that something like "g.foo.bar" is valid.
    */
   @Test
-  public void test_scheme_with_neighborhood_and_ledger_identifier_as_prefix() throws Exception {
-    final InterledgerAddress addressPrefix =
-        InterledgerAddress.builder().value(this.scheme + ".foo.bob.").build();
-    assertThat(addressPrefix.getValue(), is(this.scheme + ".foo.bob."));
-    assertThat(addressPrefix.isLedgerPrefix(), is(true));
+  public void test_scheme_with_only_address() {
+    final InterledgerAddress address =
+        InterledgerAddress.builder().value(this.allocationScheme + ".foo.bar").build();
+    assertThat(address.value(), is(this.allocationScheme + ".foo.bar"));
   }
 
   /**
    * Assert that something like "g.foo" is valid.
    */
   @Test
-  public void test_scheme_with_only_address() throws Exception {
-    final InterledgerAddress address =
-        InterledgerAddress.builder().value(this.scheme + ".foo.bar").build();
-    assertThat(address.getValue(), is(this.scheme + ".foo.bar"));
-    assertThat(address.isLedgerPrefix(), is(false));
-  }
-
-  /**
-   * Assert that something like "g.foo." is valid.
-   */
-  @Test
-  public void test_scheme_with_neighborhood_as_prefix() throws Exception {
+  public void test_scheme_with_neighborhood_as_prefix() {
     final InterledgerAddress addressPrefix =
-        InterledgerAddress.builder().value(this.scheme + ".foo.").build();
-    assertThat(addressPrefix.getValue(), is(this.scheme + ".foo."));
-    assertThat(addressPrefix.isLedgerPrefix(), is(true));
+        InterledgerAddress.builder().value(this.allocationScheme + ".foo").build();
+    assertThat(addressPrefix.value(), is(this.allocationScheme + ".foo"));
   }
 
   /**
-   * Assert that something like "g." is valid.
-   */
-  @Test
-  public void test_address_with_only_scheme_prefix() throws Exception {
-    final InterledgerAddress address =
-        InterledgerAddress.builder().value(this.scheme + ".").build();
-    assertThat(address.getValue(), is(this.scheme + "."));
-    assertThat(address.isLedgerPrefix(), is(true));
-  }
-
-  /**
-   * Assert that something like "g" is invalid.
+   * Assert that creating an address with something like "g." is invalid.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void test_address_with_only_scheme_address() throws Exception {
+  public void test_address_with_only_scheme_and_dot() {
     try {
-      InterledgerAddress.builder().value(this.scheme).build();
+      InterledgerAddress.builder().value(this.allocationScheme + ".").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
+      assertThat(e.getMessage(), is(ILLEGAL_ENDING.getMessageFormat()));
+      throw e;
+    }
+  }
+
+  /**
+   * Assert that creating an address with something like "g" is invalid.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void test_address_with_only_scheme() {
+    try {
+      InterledgerAddress.builder().value(this.allocationScheme).build();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is(SEGMENTS_UNDERFLOW.getMessageFormat()));
       throw e;
     }
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_destination_address_with_invalid_scheme() throws Exception {
+  public void test_address_with_invalid_scheme() {
     try {
-      InterledgerAddress.builder().value(this.scheme + "1.foo").build();
+      InterledgerAddress.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
-      throw e;
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void test_prefix_with_invalid_scheme() throws Exception {
-    try {
-      InterledgerAddress.builder().value(this.scheme + "1.foo.").build();
-    } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(EXPECTED_ERROR_MESSAGE));
+      assertThat(
+          e.getMessage(),
+          is(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1"))
+      );
       throw e;
     }
   }

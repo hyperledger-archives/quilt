@@ -52,15 +52,14 @@ public class InterledgerAddressModuleTest {
 
   @Test
   public void testSerializeDeserialize() throws IOException {
-
-    final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo.");
+    final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo");
 
     final InterledgerContainer expectedContainer = new InterledgerContainer(expectedAddress);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json, is(
         String.format("{\"ledger_prefix\":\"%s\"}",
-            expectedContainer.getInterledgerAddress().getValue(),
+            expectedContainer.getInterledgerAddress().value(),
             HEX_CONDITION_DER_BYTES)
     ));
 
