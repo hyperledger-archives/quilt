@@ -345,12 +345,12 @@ public interface InterledgerAddress {
     private String getFirstInvalidityCause(final String invalidAddressString) {
       // validate no trailing period.
       if (invalidAddressString.endsWith(".")) {
-        return String.format(Error.ILLEGAL_ENDING.getMessageFormat());
+        return Error.ILLEGAL_ENDING.getMessageFormat();
       }
 
       // validates scheme prefix existence
       if (invalidAddressString.isEmpty()) {
-        return String.format(Error.MISSING_SCHEME_PREFIX.getMessageFormat());
+        return Error.MISSING_SCHEME_PREFIX.getMessageFormat();
       }
 
       final List<String> schemeAndSegments = Arrays.asList(
@@ -384,7 +384,7 @@ public interface InterledgerAddress {
       // validates max address length
       if (!Pattern.compile(ADDRESS_LENGTH_BOUNDARIES_REGEX).matcher(invalidAddressString)
           .matches()) {
-        return String.format(Error.ADDRESS_OVERFLOW.getMessageFormat());
+        return Error.ADDRESS_OVERFLOW.getMessageFormat();
       }
 
       // fault: should have found an error cause
