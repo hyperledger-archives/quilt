@@ -369,12 +369,12 @@ public class InterledgerAddressTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_02() {
-    assertValidationErrorThenThrow("self", Error.MISSING_SCHEME_PREFIX);
+    assertValidationErrorThenThrow(".self", Error.INVALID_SCHEME_PREFIX);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_04() {
-    assertValidationErrorThenThrow(".foo", Error.MISSING_SCHEME_PREFIX);
+    assertValidationErrorThenThrow(".foo", Error.INVALID_SCHEME_PREFIX);
   }
 
   @Test(expected = IllegalArgumentException.class)
