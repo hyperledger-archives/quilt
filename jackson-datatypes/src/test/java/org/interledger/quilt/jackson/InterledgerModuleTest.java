@@ -119,7 +119,7 @@ public class InterledgerModuleTest {
   @Test
   public void testSerializeDeserialize() throws IOException {
 
-    final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo.");
+    final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo");
 
     final InterledgerContainer expectedContainer
         = new InterledgerContainer(expectedAddress, condition);
@@ -127,7 +127,7 @@ public class InterledgerModuleTest {
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json, is(
         String.format("{\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\"}",
-            expectedContainer.getInterledgerAddress().getValue(),
+            expectedContainer.getInterledgerAddress().value(),
             expectedEncodedValue)
     ));
 

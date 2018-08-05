@@ -9,9 +9,9 @@ package org.interledger.quilt.jackson.address;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,15 +52,14 @@ public class InterledgerAddressModuleTest {
 
   @Test
   public void testSerializeDeserialize() throws IOException {
-
-    final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo.");
+    final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo");
 
     final InterledgerContainer expectedContainer = new InterledgerContainer(expectedAddress);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json, is(
         String.format("{\"ledger_prefix\":\"%s\"}",
-            expectedContainer.getInterledgerAddress().getValue(),
+            expectedContainer.getInterledgerAddress().value(),
             HEX_CONDITION_DER_BYTES)
     ));
 
