@@ -21,6 +21,7 @@ package org.interledger.core;
  */
 
 import org.immutables.value.Value;
+import org.immutables.value.Value.Lazy;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,35 +31,59 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-
 /**
- * <p>Interledger Protocol (ILP) Addresses identify ledger accounts (or groups of ledger accounts)
- * in an ILP network, and provide a way to route a payment to its intended destination.</p>
+ * <p>Interledger Protocol (ILP) Addresses serve as both an <tt>identifier</tt> and a
+ * <tt>locator</tt> for ILP nodes (e.g., connectors, mini-connectors, clients, senders,
+ * receivers, listeners, etc.)</p>
  *
- * <p>Interledger Addresses can be subdivided into two categories:</p>
+ * <p>Interledger is a graph where <tt>Nodes</tt> are the vertices and <tt>Accounts</tt> are the
+ * edges. A fulfilled ILP packet will modify the balances for all accounts along the path between a
+ * sending Node and a receiving Node. This is no different for a connector than for an SPSP receiver
+ * (both are ILP nodes and in both cases, the accounts whose balances change are all accounts along
+ * the path).</p>
  *
- * <p><b>Destination Addresses</b> are complete addresses that can receive payments. A destination
- * address always maps to one account in a ledger, though it can also provide more specific
- * information, such as an invoice ID or a sub-account. Destination addresses MUST NOT end in a
- * period (.) character. </p>
+ * <p>The identifier+locator primitive defined by an InterledgerAddress also provides a way to
+ * route ILP packets to their intended destination through a series of Nodes, including any number
+ * of ILP Connectors (this happens after address-lookup using a higher-level protocol such as
+ * <tt>SPSP</tt>).</p>
  *
- * <p><b>Address Prefixes</b> are incomplete addresses representing a grouping of destination
- * addresses. Many depths of grouping are possible, for example: groups of accounts or sub-accounts;
- * an individual ledger or sub-ledger; or entire neighborhoods of ledgers. Address prefixes MUST end
- * in a period (.) character. </p>
+ * <p>Addresses are <tt>not</tt> meant to be user-facing, but allow several ASCII
+ * characters for easy debugging.</p>
  *
- * <p> The formal specification for an Interledger Addresses is defined in Interledger RFC #15.</p>
+ * <p>Note that because an InterledgerAddress represents an Interledger <tt>Node</tt>, ILP payments
+ * are always addressed to a Node, and _not_ to an account. For example, there will usually be a 1:1
+ * relationship between a receiver and the receiver's account (e.g., if a node is running a local
+ * moneyd). However, even in these cases, it is important to note that a payment is still addressed
+ * to the receiver Node, and not to the account. This is because balances are not always
+ * tracked/recorded on every node. In fact, some accounts are limited only by bandwidth, while
+ * others are not limited nor recorded at all.</p>
+ *
+ * <p>Interledger Addresses have the following requirements:</p>
+ *
+ * <ol>
+ * <li>The address MUST begin with a prefix indicating the allocation scheme.</li>
+ * <li>Each "segment" of the address MUST contain one or more of the following characters:
+ * Alphanumeric characters, upper or lower case (Addresses are **case-sensitive** so that they can
+ * contain data encoded in formats such as base64url.); Underscore (`_`); Tilde (`~`); Hyphen (`-`)
+ * </li>
+ * <li>Each segment MUST be separated from other segments by a period character (`.`).</li>
+ * <li>Addresses MUST NOT end in a period (`.`) character, and MUST contain at least one segment
+ * after the allocation scheme prefix.</li>
+ * <li>The total length of an ILP Address must be no more than **1023 characters** including the
+ * allocation scheme prefix, separators, and all segments.</li>
+ * </ol>
+ *
+ * <p>The formal specification for an Interledger Addresses is defined in Interledger RFC #15.</p>
  *
  * @see "https://github.com/interledger/rfcs/tree/master/0015-ilp-addresses"
+ * @see "https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009
+ *     -simple-payment-setup-protocol.md"
  */
 public interface InterledgerAddress {
 
-  InterledgerAddressParser ADDRESS_PARSER = new InterledgerAddressParser();
-
-  String ADDRESS_DELIMITER = ".";
-
   /**
-   * Constructor to allow quick construction from a String representation of an ILP address.
+   * Constructor to allow quick construction from a {@link String} representation of an ILP
+   * address.
    *
    * @param value String representation of an Interledger Address
    *
@@ -68,34 +93,16 @@ public interface InterledgerAddress {
    */
   static InterledgerAddress of(final String value) {
     Objects.requireNonNull(value, "value must not be null!");
-    return InterledgerAddress.builder().value(value).build();
+    return builder().value(value).build();
   }
 
   /**
-   * <p>Helper method to determine if an Interledger Address conforms to the specifications
-   * outlined
-   * in Interledger RFC #15.</p>
+   * <p>Construct a default builder.</p>
    *
-   * @param value A {@link String} representing a potential Interledger Address value.
-   *
-   * @return {@code true} if the supplied {@code value} conforms to the requirements of RFC 15;
-   *     {@code false} otherwise.
-   *
-   * @throws NullPointerException if {@code value} is <tt>null</tt>.
+   * @return An {@link InterledgerAddressBuilder} instance.
    */
-  static boolean isValid(final String value) {
-    Objects.requireNonNull(value, "value must not be null!");
-    ADDRESS_PARSER.validate(value);
-    return true;
-  }
-
-  /**
-   * <p>Get the default builder.</p>
-   *
-   * @return An {@link ImmutableInterledgerAddress.Builder} instance.
-   */
-  static ImmutableInterledgerAddress.Builder builder() {
-    return ImmutableInterledgerAddress.builder();
+  static InterledgerAddressBuilder builder() {
+    return new InterledgerAddressBuilder();
   }
 
   /**
@@ -104,7 +111,14 @@ public interface InterledgerAddress {
    *
    * @return A {@link String} representation of this Interledger address.
    */
-  String getValue();
+  String value();
+
+  /**
+   * <p>Return this address's allocation scheme.</p>
+   *
+   * @return A {@link AllocationScheme} representing the prefix of this address.
+   */
+  AllocationScheme allocationScheme();
 
   /**
    * <p>Tests if this InterledgerAddress starts with the specified {@code addressSegment}.</p>
@@ -115,7 +129,7 @@ public interface InterledgerAddress {
    */
   default boolean startsWith(final String addressSegment) {
     Objects.requireNonNull(addressSegment, "addressSegment must not be null!");
-    return this.getValue().startsWith(addressSegment);
+    return this.value().startsWith(addressSegment);
   }
 
   /**
@@ -128,22 +142,12 @@ public interface InterledgerAddress {
    */
   default boolean startsWith(final InterledgerAddress interledgerAddress) {
     Objects.requireNonNull(interledgerAddress, "interledgerAddress must not be null!");
-    return this.startsWith(interledgerAddress.getValue());
+    return this.value().startsWith(interledgerAddress.value());
   }
 
   /**
-   * <p>Return a new InterledgerAddress by postfixing the supplied {@code segment} to this address.
-   * </p>
-   *
-   * <p>This method can be used to construct both address prefixes and destination addresses. For
-   * example, if the value of this address is '<code>us.usd.</code>', then calling this method with
-   * an argument of '<code>bob</code>' would result in a new Interledger Address with a value of
-   * '<code>us.usd.bob</code>', which is a destination address.</p>
-   *
-   * <p>Likewise, if the value of this address is '<code>us.usd.pacific.</code>', then calling this
-   * method with an argument of '<code>creditunions.</code>' would result in a new Interledger
-   * Address with a value of '<code>us.usd.pacific.creditunions.</code>', which is an address
-   * prefix.</p>
+   * <p>Return a new {@link InterledgerAddress} by suffixing the supplied {@code addressSegment}
+   * onto the current address.</p>
    *
    * @param addressSegment A {@link String} to be appended to this address as an additional
    *                       segment.
@@ -153,94 +157,169 @@ public interface InterledgerAddress {
   default InterledgerAddress with(final String addressSegment) {
     Objects.requireNonNull(addressSegment, "addressSegment must not be null!");
 
-    final StringBuilder sb = new StringBuilder(this.getValue());
-    sb.append(ADDRESS_DELIMITER);
-    sb.append(addressSegment);
-    return InterledgerAddress.of(sb.toString());
+    // `+` operator uses StringBuilder internally, so for small numbers of appends, `+` is
+    // equivalent in performance, but provides better code readability.
+    return InterledgerAddress.of(this.value() + "." + addressSegment);
   }
 
   /**
-   * <p>Return this address's global-allocation-scheme prefix, which is a new {@link
-   * InterledgerAddress} containing the
-   * characters inside of {@link #getValue()}, up-to but excluding the last period.</p>
+   * <p>Return this address's prefix.</p>
    *
-   * <p>For example, calling this method on an address 'g.example.alice' would yield a new address
-   * containing 'g.'. Conversely, calling this method on an address that is already a global
-   * allocation scheme address, like <tt>g</tt> would yield the same instance, for example
-   * <tt>g</tt>.</p>
+   * <p>If this address has only a single segment after the allocation scheme, then this method
+   * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
+   * InterledgerAddress} containing the characters inside of {@link #value()}, up-to but excluding
+   * last period.</p>
    *
-   * @return A potentially new {@link InterledgerAddress} representing the prefix of this address.
+   * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
+   * address containing <tt>g.example</tt>. However, calling this method on an address like
+   * <tt>g.example</tt> would yield {@link Optional#empty()}.</p>
+   *
+   * @return An optionally present parent-prefix as an {@link InterledgerAddress}.
    */
-  default InterledgerAddress getPrefix() {
-    return InterledgerAddress
-        .of(getValue().substring(0, this.getValue().indexOf(ADDRESS_DELIMITER) + 1));
-  }
-
-  /**
-   * <p>Return this address's parent prefix.</p>
-   *
-   * <p>If this address is a destination address, then this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to and
-   * including last period. If this address is instead a prefix, then this instance returns a new
-   * {@link InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to and
-   * including second-to-last period, unless this address is a root prefix, in which case, {@link
-   * Optional#empty()} is returned.</p>
-   *
-   * <p>For example, calling this method on an address 'g.example.alice' would yield a new address
-   * containing 'g.example.'. Likewise, calling this method on an address that is already a prefix,
-   * like 'g.example.' would yield 'g.'. Finally, calling this method on a root prefix, like "self."
-   * would yield {@link Optional#empty()}.</p>
-   *
-   * @return An optionally present parent-prefix.
-   */
-  default Optional<InterledgerAddress> getParentAddress() {
-    // If the prefix is a root prefix, return Optional#empty. Otherwise, return the parent prefix.
-    if (isRootAddress()) {
-      return Optional.empty();
-    } else {
-      final String parentDestAddr = this.getValue()
-          .substring(0, this.getValue().lastIndexOf(ADDRESS_DELIMITER));
+  default Optional<InterledgerAddress> getPrefix() {
+    // An address will always contain at least one period (.), so we can always
+    final String value = value();
+    final boolean hasMultipleDots = value.indexOf('.', value.indexOf('.') + 1) != -1;
+    if (hasMultipleDots) {
       return Optional.of(
-          InterledgerAddress
-              .of(parentDestAddr.substring(0, parentDestAddr.lastIndexOf(ADDRESS_DELIMITER)))
-              .getPrefix()
+          InterledgerAddress.builder()
+              .value(value.substring(0, value.lastIndexOf(".")))
+              .build()
       );
+    } else {
+      return Optional.empty();
     }
   }
-
 
   /**
    * <p>Determines if this ILP Address has a parent-prefix.</p>
    *
-   * <p>If this address is a destination address, then it has a parent prefix. However, if the
-   * address is a prefix, then it only has a parent if it is _not_ a Root Prefix.</p>
-   *
-   * @return {@code true} if this address is a destination address. Otherwise (if this address is a
-   *     prefix address), then return {@code false} if this address is a Root prefix; otherwise,
-   *     return {@code true}.
+   * @return {@code true} if this address has more than two segments after the allocation scheme.
+   *     Otherwise return {@code false}.
    */
-  default boolean hasParentAddress() {
-    // All ILP addresses have a parent address, except for Root prefixes.
-    return isRootAddress() == false;
+  default boolean hasPrefix() {
+    return getPrefix().isPresent();
   }
 
   /**
-   * <p>Determines if this address is a "root" prefix, which per ILP-RFC-15, is one of:
-   * <tt>g.</tt>,
-   * <tt>private.</tt>, <tt>example.</tt>, <tt>peer.</tt>, <tt>self.</tt>, <tt>test1.</tt>,
-   * <tt>test2.</tt>, or <tt>test3.</tt>. Any other kind of valid ILP address (e.g. "g.1") is not a
-   * root prefix.</p>
+   * The first part of an {@link AllocationScheme}, which indicates to which ILP network the address
+   * belongs to.
    *
-   * @return {@code true} if this address is a root prefix; {@code false} otherwise.
+   * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses"
    */
-  default boolean isRootAddress() {
-    // A prefix is a root prefix if it has zero periods)
-    final int numPeriods = getValue().length() - (getValue().replaceAll("[.!?]+", "").length());
-    return numPeriods == 0;
+  interface AllocationScheme {
+
+    /**
+     * Constructor to allow quick construction from a {@link String} representation of an ILP
+     * address allocation scheme.
+     *
+     * @param value String representation of an Interledger Address allocation scheme.
+     *
+     * @return an {@link AllocationScheme} instance.
+     *
+     * @throws NullPointerException if {@code value} is <tt>null</tt>.
+     */
+    static AllocationScheme of(final String value) {
+      Objects.requireNonNull(value, "value must not be null!");
+      return builder().value(value).build();
+    }
+
+    /**
+     * <p>Construct a default builder.</p>
+     *
+     * @return An {@link AllocationSchemeBuilder} instance.
+     */
+    static AllocationSchemeBuilder builder() {
+      return new AllocationSchemeBuilder();
+    }
+
+    String value();
+
+    /**
+     * <p>An implementation of {@link AllocationScheme} that enforces allowed
+     * value per RFC-15.</p>
+     *
+     * <p>This immutable is interned because it only holds a {@link String} value, which itself
+     * is interned via the Java String pool.</p>
+     */
+    @Value.Immutable
+    @Value.Style(
+        typeBuilder = "*Builder",
+        visibility = Value.Style.ImplementationVisibility.PRIVATE,
+        builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
+        defaults = @Value.Immutable(intern = true))
+    abstract class AbstractAllocationScheme implements AllocationScheme {
+
+      private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)$";
+      private static final Pattern SCHEME_PREFIX_ONLY_PATTERN = Pattern.compile(SCHEME_REGEX);
+
+      /**
+       * Precondition enforcer that ensures the value is a valid Interledger Address.
+       *
+       * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses/0015-ilp-addresses.md"
+       */
+      @Value.Check
+      void check() {
+        if (!SCHEME_PREFIX_ONLY_PATTERN.matcher(value()).matches()) {
+          throw new IllegalArgumentException(
+              String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), value())
+          );
+        }
+      }
+
+      /**
+       * A potential error that might be emitted if an invalid AllocationScheme is encountered.
+       */
+      enum Error {
+        INVALID_SCHEME_PREFIX("The '%s' AllocationScheme is invalid!");
+
+        private String messageFormat;
+
+        Error(final String messageFormat) {
+          this.messageFormat = messageFormat;
+        }
+
+        public String getMessageFormat() {
+          return messageFormat;
+        }
+      }
+    }
   }
 
+  /**
+   * <p>An implementation of {@link InterledgerAddress} that enforces allowed value per RFC-15.</p>
+   *
+   * <p>This immutable is interned because it only holds a {@link String} value, which itself is
+   * interned via the Java String pool.</p>
+   */
   @Value.Immutable
+  @Value.Style(
+      typeBuilder = "*Builder",
+      visibility = Value.Style.ImplementationVisibility.PRIVATE,
+      builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
+      defaults = @Value.Immutable(intern = true))
   abstract class AbstractInterledgerAddress implements InterledgerAddress {
+
+    private static final String VALID_ADDRESS_REGEX
+        = "(?=^.{1,1023}$)^(g|private|example|peer|self|test[1-3]?|local)([.][a-zA-Z0-9_~-]+)+$";
+    private static final Pattern VALID_ADDRESS_PATTERN = Pattern.compile(VALID_ADDRESS_REGEX);
+
+    private static final int ADDRESS_MIN_SEGMENTS = 2;
+    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
+    private static final String SEGMENT_REGEX = "[a-zA-Z0-9_~-]+";
+    private static final String SEPARATOR_REGEX = "[.]";
+    private static final String ADDRESS_LENGTH_BOUNDARIES_REGEX = "(?=^.{1,1023}$)";
+
+    /**
+     * Validation of an ILP address occurs via Regex, so we don't need to aggressivly compute this
+     * value. Thus, it is marked <tt>Lazy</tt> so that immutables will not generate this value
+     * unless it is called.
+     */
+    @Override
+    @Lazy
+    public AllocationScheme allocationScheme() {
+      return AllocationScheme.of(value().substring(0, value().indexOf('.')));
+    }
 
     /**
      * Precondition enforcer that ensures the value is a valid Interledger Address.
@@ -249,64 +328,34 @@ public interface InterledgerAddress {
      */
     @Value.Check
     void check() {
-      try {
-        InterledgerAddress.isValid(getValue());
-      } catch (final IllegalArgumentException e) {
-        throw new IllegalArgumentException("Address is invalid", e);
+      if (!VALID_ADDRESS_PATTERN.matcher(value()).matches()) {
+        // For performance reasons, we only do we do deeper introspection of the error if the input
+        // fails the VALID_ADDRESS_PATTERN check.
+        throw new IllegalArgumentException(getFirstInvalidityCause(value()));
       }
     }
-  }
-
-  /**
-   * A parser for validating an {@link InterledgerAddress}.
-   */
-  final class InterledgerAddressParser {
-
-    private static final int MIN_ADDRESS_LENGTH = 1;
-    private static final int MAX_ADDRESS_LENGTH = 1023;
-    private static final int DESTINATION_ADDRESS_MIN_SEGMENTS = 1;
-    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
-    private static final String SEGMENT_REGEX = "[a-zA-Z0-9_~-]+";
-    private static final String SEPARATOR_CHARACTER = ".";
-    private static final String SEPARATOR_REGEX = "[" + SEPARATOR_CHARACTER + "]";
-    private static final String SCHEME_PREFIX_REGEX = SCHEME_REGEX + SEPARATOR_REGEX;
-    private static final String SEGMENT_PREFIX_REGEX = SEGMENT_REGEX + SEPARATOR_REGEX;
-    private static final String ADDRESS_LENGTH_BOUNDARIES_REGEX =
-        "(?=^.{" + MIN_ADDRESS_LENGTH + "," + MAX_ADDRESS_LENGTH + "}$)";
-    private static final String ADDRESS_REGEX = ADDRESS_LENGTH_BOUNDARIES_REGEX
-        + "^" + SCHEME_PREFIX_REGEX + "(" + SEGMENT_PREFIX_REGEX + ")+" + SEGMENT_REGEX + "$";
-    private static final Pattern ADDRESS_PATTERN = Pattern.compile(ADDRESS_REGEX);
 
     /**
-     * Validates an ILP address.
+     * Inspect an invalid Address String and determine the cause.
      *
-     * @param addressString The ILP address to validate
+     * @param invalidAddressString A {@link String} containing an invalid Interledger Address.
      *
-     * @throws IllegalArgumentException When validation is rejected
+     * @return An error String.
      */
-    void validate(final String addressString) throws IllegalArgumentException {
-      Objects.requireNonNull(addressString); // No error-message because this should never happen
-      if (isFullyValid(addressString)) {
-        return;
-      }
-      throw new IllegalArgumentException(getFirstInvalidityCause(addressString));
-    }
-
-    private boolean isFullyValid(final String addressString) {
-      return true;// ADDRESS_PATTERN.matcher(addressString).matches();
-    }
-
     private String getFirstInvalidityCause(final String invalidAddressString) {
-      final List<String> schemeAndSegments = Arrays
-          .asList(invalidAddressString.split(SEPARATOR_REGEX, -1));
-      final int schemeAndSegmentsSize = schemeAndSegments.size();
+      // validate no trailing period.
+      if (invalidAddressString.endsWith(".")) {
+        return Error.ILLEGAL_ENDING.getMessageFormat();
+      }
 
       // validates scheme prefix existence
-      //     'schemeAndSegmentsSize < 2' ensures scheme is followed by a trailing separator
-      //     (i.e. scheme prefix = scheme + separator)
-      if (invalidAddressString.isEmpty() || schemeAndSegmentsSize < 1) {
-        return String.format(Error.MISSING_SCHEME_PREFIX.getMessageFormat());
+      if (invalidAddressString.isEmpty()) {
+        return Error.MISSING_SCHEME_PREFIX.getMessageFormat();
       }
+
+      final List<String> schemeAndSegments = Arrays.asList(
+          invalidAddressString.split(SEPARATOR_REGEX, -1)
+      );
       // validates scheme prefix format
       final String schemePrefix = schemeAndSegments.get(0);
       if (!Pattern.compile(SCHEME_REGEX).matcher(schemePrefix).matches()) {
@@ -328,27 +377,32 @@ public interface InterledgerAddress {
       }
 
       // validates the minimum number of segments for a destination address
-      final boolean isDestinationAddress = !invalidAddressString.endsWith(SEPARATOR_CHARACTER);
-      if (isDestinationAddress && segmentsSize < DESTINATION_ADDRESS_MIN_SEGMENTS) {
-        return String.format(Error.SEGMENTS_UNDERFLOW.getMessageFormat());
+      if (segmentsSize < ADDRESS_MIN_SEGMENTS) {
+        return Error.SEGMENTS_UNDERFLOW.getMessageFormat();
       }
 
       // validates max address length
       if (!Pattern.compile(ADDRESS_LENGTH_BOUNDARIES_REGEX).matcher(invalidAddressString)
           .matches()) {
-        return String.format(Error.ADDRESS_OVERFLOW.getMessageFormat());
+        return Error.ADDRESS_OVERFLOW.getMessageFormat();
       }
 
       // fault: should have found an error cause
-      throw new RuntimeException();
+      throw new IllegalArgumentException(String.format(
+          "Unable to find error for invalid InterledgerAddress: %s", invalidAddressString
+      ));
     }
 
+    /**
+     * A potential error that might be emitted if an invalid Interledger Address is encountered.
+     */
     enum Error {
-      ADDRESS_OVERFLOW("Address is too long"),
+      INVALID_SCHEME_PREFIX("The '%s' AllocationScheme is invalid!"),
+      ILLEGAL_ENDING("An InterledgerAddress MUST not end with a period (.) character"),
+      ADDRESS_OVERFLOW("InterledgerAddress is too long"),
       INVALID_SEGMENT("The '%s' segment has an invalid format"),
-      INVALID_SCHEME_PREFIX("The '%s' scheme prefix has an invalid format"),
-      MISSING_SCHEME_PREFIX("Address does not start with a scheme prefix"),
-      SEGMENTS_UNDERFLOW("Destination address has too few segments");
+      MISSING_SCHEME_PREFIX("InterledgerAddress does not start with a scheme prefix"),
+      SEGMENTS_UNDERFLOW("InterledgerAddress has too few segments");
 
       private String messageFormat;
 
@@ -360,7 +414,6 @@ public interface InterledgerAddress {
         return messageFormat;
       }
     }
-
   }
 
 }

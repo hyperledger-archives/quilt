@@ -18,21 +18,21 @@ import java.util.Objects;
 public class AsnUintCodecTest {
 
   private final BigInteger expectedUint;
-  private final byte[] exptedEncodedBytes;
+  private final byte[] expectedEncodedBytes;
 
   private AsnUintCodec codec;
 
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param expectedUint       The expected value, as a {@link BigInteger}, of {@code
-   *                           exptedEncodedBytes}, once encoded.
-   * @param exptedEncodedBytes The expected encoded value, in bytes, of {@code expectedUint}.
+   * @param expectedUint         The expected value, as a {@link BigInteger}, of {@code
+   *                             exptedEncodedBytes}, once encoded.
+   * @param expectedEncodedBytes The expected encoded value, in bytes, of {@code expectedUint}.
    */
   public AsnUintCodecTest(
-      final BigInteger expectedUint, final byte[] exptedEncodedBytes) {
+      final BigInteger expectedUint, final byte[] expectedEncodedBytes) {
     this.expectedUint = Objects.requireNonNull(expectedUint);
-    this.exptedEncodedBytes = Objects.requireNonNull(exptedEncodedBytes);
+    this.expectedEncodedBytes = Objects.requireNonNull(expectedEncodedBytes);
   }
 
   /**
@@ -72,6 +72,22 @@ public class AsnUintCodecTest {
         {
             BigInteger.valueOf(65535L),
             BaseEncoding.base16().decode("FFFF")
+        },
+        {
+            BigInteger.valueOf(2147483647L),
+            BaseEncoding.base16().decode("7FFFFFFF")
+        },
+        {
+            BigInteger.valueOf(2147483648L),
+            BaseEncoding.base16().decode("80000000")
+        },
+        {
+            BigInteger.valueOf(9223372036854775807L),
+            BaseEncoding.base16().decode("7FFFFFFFFFFFFFFF")
+        },
+        {
+            new BigInteger("9223372036854775808"),
+            BaseEncoding.base16().decode("8000000000000000")
         }
     });
   }
@@ -93,14 +109,14 @@ public class AsnUintCodecTest {
 
   @Test
   public void decode() {
-    codec.setBytes(this.exptedEncodedBytes);
+    codec.setBytes(this.expectedEncodedBytes);
     assertThat(codec.decode(), is(this.expectedUint));
   }
 
   @Test
   public void encode() {
     codec.encode(expectedUint);
-    assertThat(codec.getBytes(), is(this.exptedEncodedBytes));
+    assertThat(codec.getBytes(), is(this.expectedEncodedBytes));
   }
 
   @Test
