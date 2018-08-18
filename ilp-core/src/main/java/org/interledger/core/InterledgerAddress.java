@@ -111,7 +111,7 @@ public interface InterledgerAddress {
    *
    * @return A {@link String} representation of this Interledger address.
    */
-  String value();
+  String getValue();
 
   /**
    * <p>Return this address's allocation scheme.</p>
@@ -129,7 +129,7 @@ public interface InterledgerAddress {
    */
   default boolean startsWith(final String addressSegment) {
     Objects.requireNonNull(addressSegment, "addressSegment must not be null!");
-    return this.value().startsWith(addressSegment);
+    return this.getValue().startsWith(addressSegment);
   }
 
   /**
@@ -142,7 +142,7 @@ public interface InterledgerAddress {
    */
   default boolean startsWith(final InterledgerAddress interledgerAddress) {
     Objects.requireNonNull(interledgerAddress, "interledgerAddress must not be null!");
-    return this.value().startsWith(interledgerAddress.value());
+    return this.getValue().startsWith(interledgerAddress.getValue());
   }
 
   /**
@@ -159,7 +159,7 @@ public interface InterledgerAddress {
 
     // `+` operator uses StringBuilder internally, so for small numbers of appends, `+` is
     // equivalent in performance, but provides better code readability.
-    return InterledgerAddress.of(this.value() + "." + addressSegment);
+    return InterledgerAddress.of(this.getValue() + "." + addressSegment);
   }
 
   /**
@@ -167,7 +167,7 @@ public interface InterledgerAddress {
    *
    * <p>If this address has only a single segment after the allocation scheme, then this method
    * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #value()}, up-to but excluding
+   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but excluding
    * last period.</p>
    *
    * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
@@ -178,7 +178,7 @@ public interface InterledgerAddress {
    */
   default Optional<InterledgerAddress> getPrefix() {
     // An address will always contain at least one period (.), so we can always
-    final String value = value();
+    final String value = getValue();
     final boolean hasMultipleDots = value.indexOf('.', value.indexOf('.') + 1) != -1;
     if (hasMultipleDots) {
       return Optional.of(
@@ -220,7 +220,7 @@ public interface InterledgerAddress {
      * @throws NullPointerException if {@code value} is <tt>null</tt>.
      */
     static AllocationScheme of(final String value) {
-      Objects.requireNonNull(value, "value must not be null!");
+      Objects.requireNonNull(value, "getValue must not be null!");
       return builder().value(value).build();
     }
 
@@ -318,7 +318,7 @@ public interface InterledgerAddress {
     @Override
     @Lazy
     public AllocationScheme allocationScheme() {
-      return AllocationScheme.of(value().substring(0, value().indexOf('.')));
+      return AllocationScheme.of(getValue().substring(0, getValue().indexOf('.')));
     }
 
     /**
@@ -328,10 +328,10 @@ public interface InterledgerAddress {
      */
     @Value.Check
     void check() {
-      if (!VALID_ADDRESS_PATTERN.matcher(value()).matches()) {
+      if (!VALID_ADDRESS_PATTERN.matcher(getValue()).matches()) {
         // For performance reasons, we only do we do deeper introspection of the error if the input
         // fails the VALID_ADDRESS_PATTERN check.
-        throw new IllegalArgumentException(getFirstInvalidityCause(value()));
+        throw new IllegalArgumentException(getFirstInvalidityCause(getValue()));
       }
     }
 

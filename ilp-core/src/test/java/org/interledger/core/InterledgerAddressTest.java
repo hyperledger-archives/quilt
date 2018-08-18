@@ -89,13 +89,13 @@ public class InterledgerAddressTest {
   @Test
   public void testConstruction_DeliverableAddress() {
     final InterledgerAddress address = InterledgerAddress.builder().value(TEST1_US_USD_BOB).build();
-    assertThat(address.value(), is(TEST1_US_USD_BOB));
+    assertThat(address.getValue(), is(TEST1_US_USD_BOB));
   }
 
   @Test
   public void testConstruction_LedgerPrefix() {
     final InterledgerAddress address = InterledgerAddress.builder().value(TEST1_US_USD).build();
-    assertThat(address.value(), is(TEST1_US_USD));
+    assertThat(address.getValue(), is(TEST1_US_USD));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -148,14 +148,14 @@ public class InterledgerAddressTest {
   public void test_address_just_right_length() {
     // This is 1023 characters long...
     final InterledgerAddress address = InterledgerAddress.builder().value(JUST_RIGHT).build();
-    assertThat(address.value(), is(JUST_RIGHT));
+    assertThat(address.getValue(), is(JUST_RIGHT));
   }
 
   @Test
   public void test_address_all_valid_characters() {
     final String allValues = "g.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_~.-";
     final InterledgerAddress address = InterledgerAddress.builder().value(allValues).build();
-    assertThat(address.value(), is(allValues));
+    assertThat(address.getValue(), is(allValues));
   }
 
   ////////////////////////
@@ -164,7 +164,7 @@ public class InterledgerAddressTest {
 
   @Test
   public void testValue() {
-    assertThat(InterledgerAddress.of("g.foo.bob").value(), is("g.foo.bob"));
+    assertThat(InterledgerAddress.of("g.foo.bob").getValue(), is("g.foo.bob"));
   }
 
   @Test
@@ -236,7 +236,7 @@ public class InterledgerAddressTest {
   public void testAddressPrefixWithAddressPrefix() {
     final InterledgerAddress destinationAddress = InterledgerAddress.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).value(),
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
         is("g.foo.bob.boz"));
   }
 
@@ -247,7 +247,7 @@ public class InterledgerAddressTest {
   public void testAddressPrefixWithDestinationAddress() {
     final InterledgerAddress addressPrefix = InterledgerAddress.of("g.foo");
     final String additionalDestinationAddress = "bob";
-    assertThat(addressPrefix.with(additionalDestinationAddress).value(), is("g.foo.bob"));
+    assertThat(addressPrefix.with(additionalDestinationAddress).getValue(), is("g.foo.bob"));
   }
 
   /**
@@ -257,7 +257,7 @@ public class InterledgerAddressTest {
   public void testDestinationAddressWithDestinationAddress() {
     final InterledgerAddress destinationAddress = InterledgerAddress.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).value(),
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
         is("g.foo.bob.boz"));
   }
 
@@ -268,7 +268,7 @@ public class InterledgerAddressTest {
   public void testAddressWithAddress() {
     final InterledgerAddress destinationAddress = InterledgerAddress.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).value(),
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
         is("g.foo.bob.boz"));
   }
 
@@ -296,25 +296,25 @@ public class InterledgerAddressTest {
   @Test
   public void testGetPrefixFromLongPrefix() {
     final InterledgerAddress address = InterledgerAddress.of("g.alpha.beta.charlie.delta.echo");
-    assertThat(address.getPrefix().get().value(), is("g.alpha.beta.charlie.delta"));
+    assertThat(address.getPrefix().get().getValue(), is("g.alpha.beta.charlie.delta"));
   }
 
   @Test
   public void testGetPrefixFromAddress() {
     final InterledgerAddress address = InterledgerAddress.of("g.example.bob");
-    assertThat(address.getPrefix().get().value(), is("g.example"));
+    assertThat(address.getPrefix().get().getValue(), is("g.example"));
   }
 
   @Test
   public void testGetPrefixFromShortAddress() {
-    assertThat(InterledgerAddress.of("g.bob.foo").getPrefix().get().value(), is("g.bob"));
-    assertThat(InterledgerAddress.of("g.b.f").getPrefix().get().value(), is("g.b"));
+    assertThat(InterledgerAddress.of("g.bob.foo").getPrefix().get().getValue(), is("g.bob"));
+    assertThat(InterledgerAddress.of("g.b.f").getPrefix().get().getValue(), is("g.b"));
   }
 
   @Test
   public void testGetPrefixFromLongAddress() {
     final InterledgerAddress address = InterledgerAddress.of("g.alpha.beta.charlie.delta.echo");
-    assertThat(address.getPrefix().get().value(), is("g.alpha.beta.charlie.delta"));
+    assertThat(address.getPrefix().get().getValue(), is("g.alpha.beta.charlie.delta"));
   }
 
   @Test

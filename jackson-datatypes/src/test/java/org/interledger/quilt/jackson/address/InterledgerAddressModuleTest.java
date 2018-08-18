@@ -59,7 +59,7 @@ public class InterledgerAddressModuleTest {
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json, is(
         String.format("{\"ledger_prefix\":\"%s\"}",
-            expectedContainer.getInterledgerAddress().value(),
+            expectedContainer.getInterledgerAddress().getValue(),
             HEX_CONDITION_DER_BYTES)
     ));
 

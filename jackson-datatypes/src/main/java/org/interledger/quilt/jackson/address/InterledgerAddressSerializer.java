@@ -45,6 +45,6 @@ public class InterledgerAddressSerializer extends StdScalarSerializer<Interledge
   @Override
   public void serialize(InterledgerAddress value, JsonGenerator gen, SerializerProvider provider)
       throws IOException {
-    gen.writeString(value.value());
+    gen.writeString(value.getValue());
   }
 }
