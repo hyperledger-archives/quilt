@@ -26,7 +26,7 @@ public class AsnUintCodecTest {
    * Construct an instance of this parameterized test with the supplied inputs.
    *
    * @param expectedUint         The expected value, as a {@link BigInteger}, of {@code
-   *                             exptedEncodedBytes}, once encoded.
+   *                             expectedEncodedBytes}, once encoded.
    * @param expectedEncodedBytes The expected encoded value, in bytes, of {@code expectedUint}.
    */
   public AsnUintCodecTest(
