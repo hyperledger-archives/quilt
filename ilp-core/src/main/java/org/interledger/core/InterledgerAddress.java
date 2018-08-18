@@ -118,7 +118,7 @@ public interface InterledgerAddress {
    *
    * @return A {@link AllocationScheme} representing the prefix of this address.
    */
-  AllocationScheme allocationScheme();
+  AllocationScheme getAllocationScheme();
 
   /**
    * <p>Tests if this InterledgerAddress starts with the specified {@code addressSegment}.</p>
@@ -317,7 +317,7 @@ public interface InterledgerAddress {
      */
     @Override
     @Lazy
-    public AllocationScheme allocationScheme() {
+    public AllocationScheme getAllocationScheme() {
       return AllocationScheme.of(getValue().substring(0, getValue().indexOf('.')));
     }
 

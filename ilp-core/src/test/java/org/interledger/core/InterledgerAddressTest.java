@@ -170,7 +170,7 @@ public class InterledgerAddressTest {
   @Test
   public void testAllocationScheme() {
     assertThat(
-        InterledgerAddress.of("g.foo.bob").allocationScheme(),
+        InterledgerAddress.of("g.foo.bob").getAllocationScheme(),
         is(AllocationScheme.builder().value("g").build())
     );
   }
