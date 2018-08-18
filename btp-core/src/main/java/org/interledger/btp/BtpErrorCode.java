@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,11 @@ package org.interledger.btp;
 
 public enum BtpErrorCode {
 
+  // TODO: Add names like "NotAcceptedError"
+
   /**
-   * Temporary error, indicating that the connector cannot process this request at the moment. Try again later.
+   * Temporary error, indicating that the connector cannot process this request at the moment. Try
+   * again later.
    */
   T00_UnreachableError("T00"),
   /**
@@ -31,7 +34,8 @@ public enum BtpErrorCode {
    */
   F00_NotAcceptedError("F00"),
   /**
-   * At least one field contained structurally invalid data, e.g. timestamp full of garbage characters
+   * At least one field contained structurally invalid data, e.g. timestamp full of garbage
+   * characters
    */
   F01_InvalidFieldsError("F01"),
   /**
@@ -69,6 +73,7 @@ public enum BtpErrorCode {
    * Create a {@link BtpErrorCode} from the Sring representation of an error code.
    *
    * @param code The error code
+   *
    * @return a new {@link BtpErrorCode}
    */
   public static BtpErrorCode fromString(String code) {

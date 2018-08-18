@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,19 +21,19 @@ package org.interledger.encoding.asn.codecs;
  */
 
 /**
- * An ASN.1 codec for UInt32 objects that decodes them into {@link Long} values..
+ * An ASN.1 codec for UInt16 objects that decodes them into {@link Integer} values.
  */
-public class AsnUint32Codec extends AsnOctetStringBasedObjectCodec<Long> {
+public class AsnUint16Codec extends AsnOctetStringBasedObjectCodec<Integer> {
 
-  public AsnUint32Codec() {
-    super(new AsnSizeConstraint(4));
+  public AsnUint16Codec() {
+    super(new AsnSizeConstraint(2));
   }
 
   @Override
-  public Long decode() {
+  public Integer decode() {
     byte[] bytes = getBytes();
-    long value = 0;
-    for (int i = 0; i <= 3; i++) {
+    int value = 0;
+    for (int i = 0; i <= 1; i++) {
       value <<= Byte.SIZE;
       value |= (bytes[i] & 0xFF);
     }
@@ -41,23 +41,22 @@ public class AsnUint32Codec extends AsnOctetStringBasedObjectCodec<Long> {
   }
 
   @Override
-  public void encode(Long value) {
-    if (value > 4294967295L || value < 0) {
+  public void encode(Integer value) {
+    if (value > 65535 || value < 0) {
       throw new IllegalArgumentException(
-          "Uint32 only supports values from 0 to 4294967295, value "
-              + value + " is out of range.");
+          "Uint16 only supports values from 0 to 65535, value " + value + " is out of range.");
     }
 
-    byte[] bytes = new byte[4];
-    for (int i = 0; i <= 3; i++) {
-      bytes[i] = ((byte) ((value >> (Byte.SIZE * (3 - i))) & 0xFF));
+    byte[] bytes = new byte[2];
+    for (int i = 0; i <= 1; i++) {
+      bytes[i] = ((byte) ((value >> (Byte.SIZE * (1 - i))) & 0xFF));
     }
     setBytes(bytes);
   }
 
   @Override
   public String toString() {
-    return "AsnUint32Codec{"
+    return "AsnUint16Codec{"
         + "value=" + decode()
         + '}';
   }

@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,25 +20,11 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
-import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
-import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.encoding.asn.framework.CodecContextFactory;
-
 import com.google.common.io.BaseEncoding;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -46,11 +32,7 @@ import java.util.Collection;
  * Parameterized unit tests for encoding an instance of {@link String} as an IA5String.
  */
 @RunWith(Parameterized.class)
-public class IA5StringOerSerializerTest {
-
-  private final String stringValue;
-  private final byte[] asn1ByteValue;
-  private CodecContext codecContext;
+public class IA5StringOerSerializerTest extends AbstractSerializerTest<String> {
 
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
@@ -59,8 +41,7 @@ public class IA5StringOerSerializerTest {
    * @param asn1Bytes   A byte array representing octets to be encoded.
    */
   public IA5StringOerSerializerTest(final String stringValue, final byte[] asn1Bytes) {
-    this.stringValue = stringValue;
-    this.asn1ByteValue = asn1Bytes;
+    super(stringValue, String.class, asn1Bytes);
   }
 
   /**
@@ -127,53 +108,4 @@ public class IA5StringOerSerializerTest {
                 + "41414141414141414141414141414141")},});
   }
 
-  /**
-   * Test setup.
-   */
-  @Before
-  public void setUp() throws Exception {
-    // Register the codec to be tested...
-    codecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
-        .register(String.class, () -> new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED));
-  }
-
-  @Test
-  public void read() throws Exception {
-    // This stream allows the codec to read the asn1Bytes...
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(asn1ByteValue);
-
-    // Assert that the coded read bytes that equal what the harness put into octetBytes.
-    final String actualValue = codecContext.read(String.class, inputStream);
-    MatcherAssert.assertThat(actualValue, CoreMatchers.is(stringValue));
-  }
-
-  @Test
-  public void write() throws Exception {
-    // Allow the AsnObjectCodec to write to 'outputStream'
-    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    codecContext.write(stringValue, outputStream);
-
-    // Assert that the bytes written to 'outputStream' match the contents that the harness put
-    // into asn1ByteValue.
-    Assert.assertArrayEquals(asn1ByteValue, outputStream.toByteArray());
-  }
-
-  @Test
-  public void writeThenRead() throws Exception {
-    // Write octets...
-    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    codecContext.write(stringValue, outputStream);
-
-    // Read octets...
-    final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-    final String actual = codecContext.read(String.class, inputStream);
-    assertThat(actual, CoreMatchers.is(stringValue));
-
-    // Write octets again...
-    final ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
-    codecContext.write(actual, outputStream2);
-
-    // Assert originally written bytes equals newly written bytes.
-    Assert.assertArrayEquals(outputStream.toByteArray(), outputStream2.toByteArray());
-  }
 }

@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ package org.interledger.encoding.asn.serializers.oer;
 
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
-import org.interledger.encoding.asn.codecs.AsnUint8Codec;
+import org.interledger.encoding.asn.codecs.AsnUint16Codec;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 
@@ -37,17 +37,15 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Supplier;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link Integer}.
  */
 @RunWith(Parameterized.class)
-public class SequenceOfSequenceOerSerializerTest {
+public class SequenceOfSequenceIntOerSerializerTest {
 
   private final int[][] inputValue;
   private final byte[] asn1OerBytes;
@@ -60,7 +58,8 @@ public class SequenceOfSequenceOerSerializerTest {
    *                     encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code intValue}.
    */
-  public SequenceOfSequenceOerSerializerTest(final int[][] inputValue, final byte[] asn1OerBytes) {
+  public SequenceOfSequenceIntOerSerializerTest(final int[][] inputValue,
+      final byte[] asn1OerBytes) {
     this.inputValue = inputValue;
     this.asn1OerBytes = asn1OerBytes;
   }
@@ -72,27 +71,28 @@ public class SequenceOfSequenceOerSerializerTest {
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
         {
-          new int[][]{
-            new int[]{0,0,0}
-          },
-          BaseEncoding.base16().decode("0101000000")
+            new int[][] {
+                new int[] {0, 0, 0}
+            },
+            BaseEncoding.base16().decode("0101000000000000")
         },
         {
-          new int[][]{
-            new int[]{1,2,3},
-            new int[]{1,2,3}
-          },
-          BaseEncoding.base16().decode("0102010203010203")
+            new int[][] {
+                new int[] {1, 2, 3},
+                new int[] {1, 2, 3}
+            },
+            BaseEncoding.base16().decode("0102000100020003000100020003")
         },
         {
-          new int[][]{
-            new int[]{0,1,255},
-            new int[]{0,1,255},
-            new int[]{0,1,255},
-            new int[]{0,1,255},
-            new int[]{255,0,1}
-          },
-          BaseEncoding.base16().decode("01050001FF0001FF0001FF0001FFFF0001")
+            new int[][] {
+                new int[] {0, 1, 255},
+                new int[] {0, 1, 255},
+                new int[] {0, 1, 255},
+                new int[] {0, 1, 255},
+                new int[] {255, 0, 1}
+            },
+            BaseEncoding.base16().decode
+                ("01050000000100FF0000000100FF0000000100FF0000000100FF00FF00000001")
         }
     });
   }
@@ -111,7 +111,8 @@ public class SequenceOfSequenceOerSerializerTest {
   @Test
   public void read() throws Exception {
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(asn1OerBytes);
-    final TestSequenceOfSequence actualValue = codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream);
+    final TestSequenceOfSequence actualValue = codecContext
+        .read(TestSequenceOfSequence.class, byteArrayInputStream);
     for (int i = 0; i < inputValue.length; i++) {
       TestSequence sequence = actualValue.get(i);
       for (int j = 0; j < inputValue[i].length; j++) {
@@ -179,9 +180,9 @@ public class SequenceOfSequenceOerSerializerTest {
 
     public TestSequenceCodec() {
       super(
-          new AsnUint8Codec(),
-          new AsnUint8Codec(),
-          new AsnUint8Codec()
+          new AsnUint16Codec(),
+          new AsnUint16Codec(),
+          new AsnUint16Codec()
       );
     }
 
@@ -200,12 +201,9 @@ public class SequenceOfSequenceOerSerializerTest {
 
   private static class TestSequenceOfSequenceCodec
       extends AsnSequenceOfSequenceCodec<TestSequenceOfSequence, TestSequence> {
+
     public TestSequenceOfSequenceCodec() {
       super(TestSequenceOfSequence::new, TestSequenceCodec::new);
     }
   }
-
-
-
-
 }

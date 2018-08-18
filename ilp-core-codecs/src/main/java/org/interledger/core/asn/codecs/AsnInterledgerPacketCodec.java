@@ -92,9 +92,9 @@ public class AsnInterledgerPacketCodec<T extends InterledgerPacket> extends AsnS
 
   private static class InterledgerPacketTypes {
 
-    static final int PREPARE = 12;
-    static final int FULFILL = 13;
-    static final int REJECT = 14;
+    static final short PREPARE = 12;
+    static final short FULFILL = 13;
+    static final short REJECT = 14;
 
   }
 

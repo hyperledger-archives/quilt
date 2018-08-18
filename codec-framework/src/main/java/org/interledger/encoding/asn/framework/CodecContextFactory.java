@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.framework;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,6 +31,7 @@ import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
+import org.interledger.encoding.asn.codecs.AsnUint16Codec;
 import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
@@ -57,13 +58,15 @@ public class CodecContextFactory {
    * encoding rules.
    *
    * @param encodingRules encoding rules to use for serialization
+   *
    * @return a new {@link CodecContext}
    */
   public static CodecContext getContext(String encodingRules) {
 
     AsnObjectCodecRegistry mappings = new AsnObjectCodecRegistry()
         .register(byte[].class, () -> new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED))
-        .register(Integer.class, AsnUint8Codec::new)
+        .register(Short.class, AsnUint8Codec::new)
+        .register(Integer.class, AsnUint16Codec::new)
         .register(Long.class, AsnUint32Codec::new)
         .register(BigInteger.class, AsnUint64Codec::new)
         .register(String.class, () -> new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED));
@@ -81,6 +84,7 @@ public class CodecContextFactory {
           .register(AsnSequenceCodec.class, new AsnSequenceOerSerializer())
           .register(AsnSequenceOfSequenceCodec.class, new AsnSequenceOfSequenceOerSerializer())
           .register(AsnUint8Codec.class, new AsnUint8OerSerializer())
+          .register(AsnUint16Codec.class, new AsnOctetStringOerSerializer())
           .register(AsnUint32Codec.class, new AsnOctetStringOerSerializer())
           .register(AsnUint64Codec.class, new AsnOctetStringOerSerializer())
           .register(AsnUtf8StringCodec.class, new AsnCharStringOerSerializer())
@@ -93,6 +97,4 @@ public class CodecContextFactory {
     return new CodecContext(mappings, serializers);
 
   }
-
-
 }

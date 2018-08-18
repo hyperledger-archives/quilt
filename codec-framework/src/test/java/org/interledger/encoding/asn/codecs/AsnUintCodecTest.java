@@ -30,8 +30,7 @@ public class AsnUintCodecTest {
    * @param expectedEncodedBytes The expected encoded value, in bytes, of {@code expectedUint}.
    */
   public AsnUintCodecTest(
-      final BigInteger expectedUint, final byte[] expectedEncodedBytes
-  ) {
+      final BigInteger expectedUint, final byte[] expectedEncodedBytes) {
     this.expectedUint = Objects.requireNonNull(expectedUint);
     this.expectedEncodedBytes = Objects.requireNonNull(expectedEncodedBytes);
   }
