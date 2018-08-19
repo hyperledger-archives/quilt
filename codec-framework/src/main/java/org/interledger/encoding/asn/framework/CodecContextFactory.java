@@ -42,7 +42,6 @@ import org.interledger.encoding.asn.serializers.oer.AsnOctetStringOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnOpenTypeOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnSequenceOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnSequenceOfSequenceOerSerializer;
-import org.interledger.encoding.asn.serializers.oer.AsnUint8OerSerializer;
 
 import java.math.BigInteger;
 
@@ -83,7 +82,7 @@ public class CodecContextFactory {
           .register(AsnOctetStringBasedObjectCodec.class, new AsnOctetStringOerSerializer())
           .register(AsnSequenceCodec.class, new AsnSequenceOerSerializer())
           .register(AsnSequenceOfSequenceCodec.class, new AsnSequenceOfSequenceOerSerializer())
-          .register(AsnUint8Codec.class, new AsnUint8OerSerializer())
+          .register(AsnUint8Codec.class, new AsnOctetStringOerSerializer())
           .register(AsnUint16Codec.class, new AsnOctetStringOerSerializer())
           .register(AsnUint32Codec.class, new AsnOctetStringOerSerializer())
           .register(AsnUint64Codec.class, new AsnOctetStringOerSerializer())
