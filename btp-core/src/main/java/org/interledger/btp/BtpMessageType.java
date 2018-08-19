@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,43 +23,44 @@ package org.interledger.btp;
 import static java.lang.String.format;
 
 public enum BtpMessageType {
-  RESPONSE(1),
-  ERROR(2),
-  MESSAGE(6),
-  TRANSFER(7);
 
+  RESPONSE((short) 1),
+  ERROR((short) 2),
+  MESSAGE((short) 6),
+  TRANSFER((short) 7);
 
-  private final int code;
+  private final short code;
 
-  BtpMessageType(int code) {
+  BtpMessageType(short code) {
     this.code = code;
-  }
-
-  public int getCode() {
-    return this.code;
   }
 
   /**
    * Get a new {@link BtpMessageType} from the code.
    *
    * @param code the message type code.
+   *
    * @return A new {@link BtpMessageType} from the provided code
    */
-  public static BtpMessageType fromCode(int code) {
+  public static BtpMessageType fromCode(short code) {
 
     switch (code) {
-      case 1:
+      case (short) 1:
         return BtpMessageType.RESPONSE;
-      case 2:
+      case (short) 2:
         return BtpMessageType.ERROR;
-      case 6:
+      case (short) 6:
         return BtpMessageType.MESSAGE;
-      case 7:
+      case (short) 7:
         return BtpMessageType.TRANSFER;
       default:
         throw new IllegalArgumentException(format("Unknown BTP Message Type: %s", code));
     }
 
+  }
+
+  public short getCode() {
+    return this.code;
   }
 }
 

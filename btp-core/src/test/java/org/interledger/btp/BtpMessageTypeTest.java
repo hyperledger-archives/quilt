@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,17 +36,17 @@ public class BtpMessageTypeTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void fromNegativeCode() {
-    BtpMessageType.fromCode(-1);
+    BtpMessageType.fromCode((short) -1);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void fromZeroCode() {
-    BtpMessageType.fromCode(0);
+    BtpMessageType.fromCode((short) 0);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void fromInvalidCode() {
-    BtpMessageType.fromCode(Integer.MAX_VALUE);
+    BtpMessageType.fromCode(Short.MAX_VALUE);
   }
 
 }
