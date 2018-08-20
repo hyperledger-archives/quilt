@@ -37,6 +37,6 @@ public class AsnInterledgerAddressCodec extends AsnIA5StringBasedObjectCodec<Int
 
   @Override
   public void encode(InterledgerAddress value) {
-    setCharString(value.value());
+    setCharString(value.getValue());
   }
 }
