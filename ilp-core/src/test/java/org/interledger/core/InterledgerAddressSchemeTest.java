@@ -142,7 +142,7 @@ public class InterledgerAddressSchemeTest {
   public void test_scheme_with_neighborhood_and_account_as_address() {
     final InterledgerAddress address =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo.bob").build();
-    assertThat(address.value(), is(this.allocationScheme + ".foo.bob"));
+    assertThat(address.getValue(), is(this.allocationScheme + ".foo.bob"));
   }
 
   /**
@@ -152,7 +152,7 @@ public class InterledgerAddressSchemeTest {
   public void test_scheme_with_only_address() {
     final InterledgerAddress address =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo.bar").build();
-    assertThat(address.value(), is(this.allocationScheme + ".foo.bar"));
+    assertThat(address.getValue(), is(this.allocationScheme + ".foo.bar"));
   }
 
   /**
@@ -162,7 +162,7 @@ public class InterledgerAddressSchemeTest {
   public void test_scheme_with_neighborhood_as_prefix() {
     final InterledgerAddress addressPrefix =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo").build();
-    assertThat(addressPrefix.value(), is(this.allocationScheme + ".foo"));
+    assertThat(addressPrefix.getValue(), is(this.allocationScheme + ".foo"));
   }
 
   /**
