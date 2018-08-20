@@ -127,7 +127,7 @@ public class InterledgerModuleTest {
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json, is(
         String.format("{\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\"}",
-            expectedContainer.getInterledgerAddress().value(),
+            expectedContainer.getInterledgerAddress().getValue(),
             expectedEncodedValue)
     ));
 
