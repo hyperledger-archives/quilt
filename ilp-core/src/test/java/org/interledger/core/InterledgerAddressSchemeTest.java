@@ -67,7 +67,7 @@ public class InterledgerAddressSchemeTest {
         .builder()
         .value(this.allocationScheme)
         .build();
-    assertThat(allocationScheme.value(), is(this.allocationScheme));
+    assertThat(allocationScheme.getValue(), is(this.allocationScheme));
   }
 
   /**

@@ -167,8 +167,8 @@ public interface InterledgerAddress {
    *
    * <p>If this address has only a single segment after the allocation scheme, then this method
    * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but excluding
-   * last period.</p>
+   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but
+   * excluding last period.</p>
    *
    * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
    * address containing <tt>g.example</tt>. However, calling this method on an address like
@@ -209,6 +209,16 @@ public interface InterledgerAddress {
    */
   interface AllocationScheme {
 
+    AllocationScheme GLOBAL = AllocationScheme.of("g");
+    AllocationScheme PRIVATE = AllocationScheme.of("private");
+    AllocationScheme EXAMPLE = AllocationScheme.of("example");
+    AllocationScheme PEER = AllocationScheme.of("peer");
+    AllocationScheme SELF = AllocationScheme.of("self");
+    AllocationScheme TEST = AllocationScheme.of("test");
+    AllocationScheme TEST1 = AllocationScheme.of("test1");
+    AllocationScheme TEST2 = AllocationScheme.of("test2");
+    AllocationScheme TEST3 = AllocationScheme.of("test3");
+
     /**
      * Constructor to allow quick construction from a {@link String} representation of an ILP
      * address allocation scheme.
@@ -220,7 +230,7 @@ public interface InterledgerAddress {
      * @throws NullPointerException if {@code value} is <tt>null</tt>.
      */
     static AllocationScheme of(final String value) {
-      Objects.requireNonNull(value, "getValue must not be null!");
+      Objects.requireNonNull(value, "value must not be null!");
       return builder().value(value).build();
     }
 
@@ -233,7 +243,12 @@ public interface InterledgerAddress {
       return new AllocationSchemeBuilder();
     }
 
-    String value();
+    /**
+     * Accessor for the value of this {@link InterledgerAddress}.
+     *
+     * @return A {@link String} with the value of this address.
+     */
+    String getValue();
 
     /**
      * <p>An implementation of {@link AllocationScheme} that enforces allowed
@@ -260,9 +275,9 @@ public interface InterledgerAddress {
        */
       @Value.Check
       void check() {
-        if (!SCHEME_PREFIX_ONLY_PATTERN.matcher(value()).matches()) {
+        if (!SCHEME_PREFIX_ONLY_PATTERN.matcher(getValue()).matches()) {
           throw new IllegalArgumentException(
-              String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), value())
+              String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), getValue())
           );
         }
       }

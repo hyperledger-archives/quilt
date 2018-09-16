@@ -68,8 +68,8 @@ public class InterledgerAddressTest {
     try {
       InterledgerAddress.builder().build();
     } catch (IllegalStateException e) {
-      //Removed message check. This exception is raised by the Immutable generated code.
-      //assertThat(e.getMessage(), is("value must not be null!"));
+      assertThat(e.getMessage(),
+          is("Cannot build InterledgerAddress, some of required attributes are not set [value]"));
       throw e;
     }
   }
