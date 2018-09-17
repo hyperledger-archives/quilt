@@ -38,10 +38,10 @@ public interface InterledgerAddressPrefix {
    *
    * @return an {@link InterledgerAddress} instance.
    *
-   * @throws NullPointerException if {@code getValue} is <tt>null</tt>.
+   * @throws NullPointerException if {@code value} is <tt>null</tt>.
    */
   static InterledgerAddressPrefix of(final String value) {
-    Objects.requireNonNull(value, "getValue must not be null!");
+    Objects.requireNonNull(value, "value must not be null!");
     return builder().value(value).build();
   }
 
@@ -77,7 +77,7 @@ public interface InterledgerAddressPrefix {
   }
 
   /**
-   * <p>Accessor for this address's getValue as a non-null {@link String}. For example:
+   * <p>Accessor for this address's value as a non-null {@link String}. For example:
    * <code>us.usd.bank.account</code></p>
    *
    * @return A {@link String} representation of this Interledger address.
@@ -181,10 +181,10 @@ public interface InterledgerAddressPrefix {
   }
 
   /**
-   * <p>An implementation of {@link InterledgerAddress} that enforces allowed getValue per
+   * <p>An implementation of {@link InterledgerAddress} that enforces allowed value per
    * RFC-15.</p>
    *
-   * <p>This immutable is interned because it only holds a {@link String} getValue, which itself is
+   * <p>This immutable is interned because it only holds a {@link String} value, which itself is
    * interned via the Java String pool.</p>
    */
   @Value.Immutable
@@ -207,7 +207,7 @@ public interface InterledgerAddressPrefix {
     private static final String ADDRESS_LENGTH_BOUNDARIES_REGEX = "(?=^.{1,1021}$)";
 
     /**
-     * Precondition enforcer that ensures the getValue is a valid Interledger Address.
+     * Precondition enforcer that ensures the value is a valid Interledger Address.
      *
      * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses/0015-ilp-addresses.md"
      */
