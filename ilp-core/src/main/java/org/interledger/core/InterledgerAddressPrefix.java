@@ -1,5 +1,9 @@
 package org.interledger.core;
 
+import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.SCHEME_PATTERN;
+import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.SEGMENT_PATTERN;
+import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.SEPARATOR_REGEX;
+
 import org.interledger.core.InterledgerAddress.AllocationScheme;
 
 import org.immutables.value.Value;
@@ -201,10 +205,10 @@ public interface InterledgerAddressPrefix {
         .compile(VALID_ADDRESS_PREFIX_REGEX);
 
     private static final int ADDRESS_MIN_SEGMENTS = 1;
-    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
-    private static final String SEGMENT_REGEX = "[a-zA-Z0-9_~-]+";
-    private static final String SEPARATOR_REGEX = "[.]";
+
     private static final String ADDRESS_LENGTH_BOUNDARIES_REGEX = "(?=^.{1,1021}$)";
+    private static final Pattern ADDRESS_LENGTH_BOUNDARIES_PATTERN = Pattern
+        .compile(ADDRESS_LENGTH_BOUNDARIES_REGEX);
 
     /**
      * Precondition enforcer that ensures the value is a valid Interledger Address.
@@ -238,14 +242,14 @@ public interface InterledgerAddressPrefix {
       );
       // validates scheme prefix format
       final String schemePrefix = schemeAndSegments.get(0);
-      if (!Pattern.compile(SCHEME_REGEX).matcher(schemePrefix).matches()) {
+      if (!SCHEME_PATTERN.matcher(schemePrefix).matches()) {
         return String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), schemePrefix);
       }
 
       // validates each segment format
       final List<String> segments = schemeAndSegments.stream().skip(1).collect(Collectors.toList());
       final int segmentsSize = segments.size();
-      final Matcher segmentMatcher = Pattern.compile(SEGMENT_REGEX).matcher("");
+      final Matcher segmentMatcher = SEGMENT_PATTERN.matcher("");
       final Optional<String> invalidSegment = segments.stream()
           .filter(segment -> {
             segmentMatcher.reset(segment);
@@ -262,8 +266,7 @@ public interface InterledgerAddressPrefix {
       }
 
       // validates max address length
-      if (!Pattern.compile(ADDRESS_LENGTH_BOUNDARIES_REGEX).matcher(invalidAddressString)
-          .matches()) {
+      if (!ADDRESS_LENGTH_BOUNDARIES_PATTERN.matcher(invalidAddressString).matches()) {
         return Error.ADDRESS_OVERFLOW.getMessageFormat();
       }
 
