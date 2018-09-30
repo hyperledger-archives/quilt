@@ -20,74 +20,111 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-public enum BtpErrorCode {
+import java.util.Objects;
 
-  // TODO: Add names like "NotAcceptedError"
+/**
+ * Holds information about BTP Errors.
+ *
+ * @see "https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilat
+ *     eral-transfer-protocol.md#error-codes"
+ */
+public enum BtpErrorCode {
 
   /**
    * Temporary error, indicating that the connector cannot process this request at the moment. Try
    * again later.
    */
-  T00_UnreachableError("T00"),
+  T00_UnreachableError("T00", "UnreachableError",
+      "Temporary error, indicating that the connector cannot process this request at the moment. "
+          + "Try again later."),
+
   /**
    * Data were symantically invalid.
    */
-  F00_NotAcceptedError("F00"),
+  F00_NotAcceptedError("F00", "NotAcceptedError", "Data were symantically invalid."),
+
   /**
    * At least one field contained structurally invalid data, e.g. timestamp full of garbage
    * characters
    */
-  F01_InvalidFieldsError("F01"),
+  F01_InvalidFieldsError("F01", "InvalidFieldsError",
+      "At least one field contained structurally invalid data, e.g. timestamp full of garbage characters."),
+
   /**
    * The transferId included in the packet does not reference an existing transfer.
    */
-  F03_TransferNotFoundError("F03"),
+  F03_TransferNotFoundError("F03", "TransferNotFoundError",
+      "The transferId included in the packet does not reference an existing transfer."),
+
   /**
    * The fulfillment included in the packet does not match the transfer's condition.
    */
-  F04_InvalidFulfillmentError("F04"),
+  F04_InvalidFulfillmentError("F04", "InvalidFulfillmentError",
+      "The fulfillment included in the packet does not match the transfer's condition."),
+
   /**
    * The transferId and method match a previous request, but other data do not.
    */
-  F05_DuplicateIdError("F05"),
+  F05_DuplicateIdError("F05", "DuplicateIdError",
+      "The transferId and method match a previous request, but other data do not."),
+
   /**
    * The transfer cannot be fulfilled because it has already been rejected or expired.
    */
-  F06_AlreadyRolledBackError("F06"),
+  F06_AlreadyRolledBackError("F06", "AlreadyRolledBackError",
+      "The transfer cannot be fulfilled because it has already been rejected or expired."),
+
   /**
    * The transfer cannot be rejected because it has already been fulfilled.
    */
-  F07_AlreadyFulfilledError("F07"),
+  F07_AlreadyFulfilledError("F07", "AlreadyFulfilledError",
+      "The transfer cannot be rejected because it has already been fulfilled."),
+
   /**
    * The transfer cannot be prepared because there is not enough available liquidity.
    */
-  F08_InsufficientBalanceError("F08");
+  F08_InsufficientBalanceError("F08", "InsufficientBalanceError",
+      "The transfer cannot be prepared because there is not enough available liquidity.");
 
-  private final String code;
+  private final String codeIdentifier;
 
-  BtpErrorCode(String code) {
-    this.code = code;
+  private final String codeName;
+
+  private final String codeDescription;
+
+  BtpErrorCode(String codeIdentifier, String codeName, String codeDescription) {
+    this.codeIdentifier = Objects.requireNonNull(codeIdentifier);
+    this.codeName = Objects.requireNonNull(codeName);
+    this.codeDescription = Objects.requireNonNull(codeDescription);
   }
 
   /**
-   * Create a {@link BtpErrorCode} from the Sring representation of an error code.
+   * Create a {@link BtpErrorCode} from the Sring representation of an error codeIdentifier.
    *
-   * @param code The error code
+   * @param code The error codeIdentifier
    *
    * @return a new {@link BtpErrorCode}
    */
-  public static BtpErrorCode fromString(String code) {
+  public static BtpErrorCode fromCodeAsString(String code) {
 
     for (BtpErrorCode errorCode : BtpErrorCode.values()) {
-      if (errorCode.code.equals(code)) {
+      if (errorCode.codeIdentifier.equals(code)) {
         return errorCode;
       }
     }
 
-    throw new IllegalArgumentException("Unknown BTP Error code: " + code);
+    throw new IllegalArgumentException("Unknown BTP Error codeIdentifier: " + code);
   }
 
-  public String getCode() {
-    return code;
+  public String getCodeIdentifier() {
+    return codeIdentifier;
+  }
+
+  public String getCodeName() {
+    return codeName;
+  }
+
+  public String getCodeDescription() {
+    return codeDescription;
   }
 }

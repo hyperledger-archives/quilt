@@ -28,6 +28,7 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Used to encode/decode the body of a BTP Error Response.
@@ -42,8 +43,8 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
   public AsnBtpErrorDataCodec(long requestId) {
     super(
         requestId,
-        new AsnUtf8StringCodec(new AsnSizeConstraint(3)), //Code
-        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), //Name
+        new AsnUtf8StringCodec(new AsnSizeConstraint(3)), //Code (e.g., F00)
+        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), //Name (e.g., NotAcceptedError)
         new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED), //TriggeredAt
         new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED), //Data
         new AsnBtpSubProtocolsCodec() //SubProtocols
@@ -59,8 +60,8 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
   public BtpError decode() {
     return BtpError.builder()
         .requestId(getRequestId())
-        .errorCode(BtpErrorCode.fromString(getValueAt(0)))
-        .errorName(getValueAt(1))
+        .errorCode(BtpErrorCode.fromCodeAsString(getValueAt(0)))
+        //.errorName(getValueAt(1))  // Not set -- standardized via the 3-character code.
         .triggeredAt(Instant.parse(getValueAt(2)))
         .errorData(getValueAt(3))
         .subProtocols(getValueAt(4))
@@ -73,9 +74,11 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
    * @param value the value to encode
    */
   @Override
-  public void encode(BtpError value) {
-    setValueAt(0, value.getErrorCode().getCode());
-    setValueAt(1, value.getErrorName());
+  public void encode(final BtpError value) {
+    Objects.requireNonNull(value);
+
+    setValueAt(0, value.getErrorCode().getCodeIdentifier());
+    setValueAt(1, value.getErrorCode().getCodeName());
     setValueAt(2, value.getTriggeredAt().toString());
     setValueAt(3, value.getErrorData());
     setValueAt(4, value.getSubProtocols());
