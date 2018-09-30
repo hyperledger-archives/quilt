@@ -34,10 +34,6 @@ public interface BtpError extends BtpPacket {
 
   BtpErrorCode getErrorCode();
 
-  default String getErrorName() {
-    return getErrorCode().name();
-  }
-
   default Instant getTriggeredAt() {
     return Instant.now();
   }
@@ -52,12 +48,6 @@ public interface BtpError extends BtpPacket {
     @Override
     public final BtpMessageType getType() {
       return BtpMessageType.ERROR;
-    }
-
-    @Override
-    @Default
-    public String getErrorName() {
-      return getErrorCode().name();
     }
 
     @Override

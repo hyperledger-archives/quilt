@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,33 +20,35 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
+/**
+ * Unit tests for {@link BtpError}.
+ */
 public class BtpErrorTest {
 
   private static final long REQUEST_ID = 1;
-  private static final String ERROR_NAME = "Test Error";
   private static final byte[] ERROR_DATA = new byte[] {0, 1, 2};
   private static final Instant TRIGGERED_AT = Instant.now();
   private static final BtpSubProtocols SUB_PROTOCOLS = new BtpSubProtocols();
 
   static {
     SUB_PROTOCOLS.add(BtpSubProtocol.builder()
-    .protocolName("TEST")
-    .contentType(BtpSubProtocolContentType.MIME_TEXT_PLAIN_UTF8)
-    .data("Test Data".getBytes(StandardCharsets.UTF_8))
-    .build());
+        .protocolName("TEST")
+        .contentType(BtpSubProtocolContentType.MIME_TEXT_PLAIN_UTF8)
+        .data("Test Data".getBytes(StandardCharsets.UTF_8))
+        .build());
   }
 
   private final BtpError error = BtpError.builder()
       .requestId(REQUEST_ID)
       .errorCode(BtpErrorCode.F00_NotAcceptedError)
-      .errorName(ERROR_NAME)
       .errorData(ERROR_DATA)
       .triggeredAt(TRIGGERED_AT)
       .subProtocols(SUB_PROTOCOLS)
@@ -61,11 +63,6 @@ public class BtpErrorTest {
   @Test
   public void getErrorCode() {
     assertEquals(error.getErrorCode(), BtpErrorCode.F00_NotAcceptedError);
-  }
-
-  @Test
-  public void getErrorName() {
-    assertEquals(error.getErrorName(), ERROR_NAME);
   }
 
   @Test

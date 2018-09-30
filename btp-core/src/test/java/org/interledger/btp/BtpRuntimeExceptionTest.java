@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,8 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -28,8 +29,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 public class BtpRuntimeExceptionTest {
+
   private static final long REQUEST_ID = 1;
-  private static final String ERROR_NAME = "Test Error";
+  private static final String ERROR_MESSAGE = "Test Error";
   private static final byte[] ERROR_DATA = new byte[] {0, 1, 2};
   private static final Instant TRIGGERED_AT = Instant.now();
   private static final BtpSubProtocols SUB_PROTOCOLS = new BtpSubProtocols();
@@ -45,12 +47,12 @@ public class BtpRuntimeExceptionTest {
   @Test
   public void toBtpError() {
 
-    BtpRuntimeException exception = new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, ERROR_NAME);
+    BtpRuntimeException exception = new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, ERROR_MESSAGE);
     BtpError error = exception.toBtpError(REQUEST_ID);
 
     assertEquals(error.getErrorCode(), BtpErrorCode.F00_NotAcceptedError);
-    assertEquals(error.getErrorName(), ERROR_NAME);
     assertEquals(error.getTriggeredAt(), exception.getTriggeredAt());
+    assertEquals(error.getErrorData(), ERROR_MESSAGE.getBytes());
 
     assertTrue(new String(error.getErrorData()).startsWith("org.interledger.btp.BtpRuntimeException: Test Error"));
 
@@ -59,12 +61,12 @@ public class BtpRuntimeExceptionTest {
   @Test
   public void toBtpErrorWithSubProtocols() {
 
-    BtpRuntimeException exception = new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, ERROR_NAME);
-    BtpError error = exception.toBtpError(REQUEST_ID, SUB_PROTOCOLS);
+    final BtpRuntimeException exception = new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, ERROR_MESSAGE);
+    final BtpError error = exception.toBtpError(REQUEST_ID, SUB_PROTOCOLS);
 
     assertEquals(error.getErrorCode(), BtpErrorCode.F00_NotAcceptedError);
-    assertEquals(error.getErrorName(), ERROR_NAME);
     assertEquals(error.getTriggeredAt(), exception.getTriggeredAt());
+    assertEquals(error.getErrorData(), ERROR_MESSAGE.getBytes());
 
     assertTrue(new String(error.getErrorData()).startsWith("org.interledger.btp.BtpRuntimeException: Test Error"));
 
