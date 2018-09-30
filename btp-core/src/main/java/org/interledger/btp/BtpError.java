@@ -32,12 +32,21 @@ public interface BtpError extends BtpPacket {
     return new BtpErrorBuilder();
   }
 
+  /**
+   * A standardized {@link BtpErrorCode} for this error.
+   */
   BtpErrorCode getErrorCode();
 
+  /**
+   * The time of emission.
+   */
   default Instant getTriggeredAt() {
     return Instant.now();
   }
 
+  /**
+   * Additional data for this BTP Error.
+   */
   default byte[] getErrorData() {
     return new byte[0];
   }

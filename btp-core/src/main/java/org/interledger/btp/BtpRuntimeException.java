@@ -114,20 +114,9 @@ public class BtpRuntimeException extends RuntimeException {
 
     Objects.requireNonNull(subProtocols, "SubProtocols can be empty but not null.");
 
-    byte[] trace;
-    try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream stream = new PrintStream(baos)) {
-      printStackTrace(stream);
-      stream.flush();
-      trace = baos.toByteArray();
-    } catch (IOException e) {
-      trace = new byte[] {};
-    }
-
     return BtpError.builder()
         .requestId(requestId)
         .errorCode(getCode())
-        .errorData(trace)
         .triggeredAt(getTriggeredAt())
         .subProtocols(subProtocols)
         .build();
