@@ -115,17 +115,14 @@ public class InterledgerPreparePacketTest {
     }
 
     //No amount
-    try {
-      InterledgerPreparePacket.builder()
-          .destination(mock(InterledgerAddress.class))
-          .executionCondition(mock(InterledgerCondition.class))
-          .expiresAt(Instant.now())
-          .build();
-      fail();
-    } catch (IllegalStateException e) {
-      assert (e.getMessage().startsWith("Cannot build InterledgerPreparePacket, "
-          + "some of required attributes are not set"));
-    }
+    final InterledgerPreparePacket preparePacket = InterledgerPreparePacket
+        .builder()
+        .destination(mock(InterledgerAddress.class))
+        .executionCondition(mock(InterledgerCondition.class))
+        .expiresAt(Instant.now())
+        .build();
+    assertThat(preparePacket, is(not(nullValue())));
+    assertThat(preparePacket.getAmount(), is(BigInteger.ZERO));
 
     //No destination
     try {
