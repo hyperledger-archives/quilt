@@ -21,6 +21,7 @@ package org.interledger.core.asn.framework;
  */
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -31,6 +32,7 @@ import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.asn.codecs.AsnConditionCodec;
 import org.interledger.core.asn.codecs.AsnFulfillmentCodec;
 import org.interledger.core.asn.codecs.AsnInterledgerAddressCodec;
+import org.interledger.core.asn.codecs.AsnInterledgerAddressPrefixCodec;
 import org.interledger.core.asn.codecs.AsnInterledgerErrorCodeCodec;
 import org.interledger.core.asn.codecs.AsnInterledgerFulfillPacketCodec;
 import org.interledger.core.asn.codecs.AsnInterledgerPacketCodec;
@@ -65,6 +67,8 @@ public class InterledgerCodecContextFactory {
         .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new,
             new AsnOctetStringOerSerializer())
         .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new,
+            new AsnCharStringOerSerializer())
+        .register(InterledgerAddressPrefix.class, AsnInterledgerAddressPrefixCodec::new,
             new AsnCharStringOerSerializer())
         .register(InterledgerErrorCode.class, AsnInterledgerErrorCodeCodec::new,
             new AsnCharStringOerSerializer())
