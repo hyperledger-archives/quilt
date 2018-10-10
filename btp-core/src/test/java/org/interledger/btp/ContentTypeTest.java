@@ -22,26 +22,28 @@ package org.interledger.btp;
 
 import static org.junit.Assert.assertEquals;
 
+import org.interledger.btp.BtpSubProtocol.ContentType;
+
 import org.junit.Test;
 
-public class BtpSubProtocolContentTypeTest {
+public class ContentTypeTest {
 
   @Test
   public void fromCode() {
 
-    for (BtpSubProtocolContentType code : BtpSubProtocolContentType.values()) {
-      assertEquals(code, BtpSubProtocolContentType.fromCode(code.getCode()));
+    for (ContentType code : ContentType.values()) {
+      assertEquals(code, ContentType.fromCode(code.getCode()));
     }
   }
 
 
   @Test(expected = IllegalArgumentException.class)
   public void fromNegativeCode() {
-    BtpSubProtocolContentType.fromCode((short) -1);
+    ContentType.fromCode((short) -1);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void fromInvalidCode() {
-    BtpSubProtocolContentType.fromCode(Short.MAX_VALUE);
+    ContentType.fromCode(Short.MAX_VALUE);
   }
 }

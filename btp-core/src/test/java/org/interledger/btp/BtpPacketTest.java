@@ -24,6 +24,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.interledger.btp.BtpSubProtocol.ContentType;
+
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -34,13 +36,13 @@ public class BtpPacketTest {
   private static final BtpSubProtocols SUB_PROTOCOLS = new BtpSubProtocols();
   private static final BtpSubProtocol SUB_PROTOCOL_1 = BtpSubProtocol.builder()
       .protocolName("TEST")
-      .contentType(BtpSubProtocolContentType.MIME_TEXT_PLAIN_UTF8)
+      .contentType(ContentType.MIME_TEXT_PLAIN_UTF8)
       .data("Test Data".getBytes(StandardCharsets.UTF_8))
       .build();
 
   private static final BtpSubProtocol SUB_PROTOCOL_2 = BtpSubProtocol.builder()
       .protocolName("TEST2")
-      .contentType(BtpSubProtocolContentType.MIME_TEXT_PLAIN_UTF8)
+      .contentType(ContentType.MIME_TEXT_PLAIN_UTF8)
       .data("Test Data".getBytes(StandardCharsets.UTF_8))
       .build();
 

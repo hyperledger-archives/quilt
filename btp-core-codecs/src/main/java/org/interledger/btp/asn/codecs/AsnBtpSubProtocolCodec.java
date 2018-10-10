@@ -9,9 +9,9 @@ package org.interledger.btp.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ package org.interledger.btp.asn.codecs;
  */
 
 import org.interledger.btp.BtpSubProtocol;
-import org.interledger.btp.BtpSubProtocolContentType;
+import org.interledger.btp.BtpSubProtocol.ContentType;
 import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
@@ -50,7 +50,7 @@ public class AsnBtpSubProtocolCodec extends AsnSequenceCodec<BtpSubProtocol> {
   public BtpSubProtocol decode() {
     return BtpSubProtocol.builder()
         .protocolName(getValueAt(0))
-        .contentType(BtpSubProtocolContentType.fromCode(getValueAt(1)))
+        .contentType(ContentType.fromCode(getValueAt(1)))
         .data(getValueAt(2))
         .build();
   }
