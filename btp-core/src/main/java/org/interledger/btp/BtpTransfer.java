@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,11 @@ import org.interledger.annotations.Immutable;
 
 import java.math.BigInteger;
 
+/**
+ * Used to send proof of payment, payment channel claims, or other settlement information to the
+ * other connector. The amount should indicate the additional value of this settlement state
+ * (compared to the previous settlement state), in a unit that was agreed out-of-band.
+ */
 public interface BtpTransfer extends BtpPacket {
 
   static BtpTransferBuilder builder() {
@@ -31,7 +36,6 @@ public interface BtpTransfer extends BtpPacket {
   }
 
   BigInteger getAmount();
-
 
   @Immutable
   abstract class AbstractBtpTransfer implements BtpTransfer {

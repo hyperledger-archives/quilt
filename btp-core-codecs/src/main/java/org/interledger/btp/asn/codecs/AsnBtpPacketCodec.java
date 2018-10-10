@@ -32,7 +32,6 @@ import org.interledger.encoding.asn.framework.CodecException;
 
 public class AsnBtpPacketCodec<T extends BtpPacket> extends AsnSequenceCodec<T> {
 
-
   /**
    * Default constructor.
    */

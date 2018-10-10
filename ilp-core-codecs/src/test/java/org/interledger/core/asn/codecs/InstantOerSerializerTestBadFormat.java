@@ -39,7 +39,7 @@ public class InstantOerSerializerTestBadFormat {
   public void test_NoTime() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
-    final byte[] encoded = InstantOerSerializerTest.encodeString("20170101");
+    final byte[] encoded = "20170101".getBytes();
     final ByteArrayInputStream bis = new ByteArrayInputStream(encoded);
     context.read(Instant.class, bis);
   }
@@ -48,7 +48,7 @@ public class InstantOerSerializerTestBadFormat {
   public void test_NoMinutes() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
-    final byte[] encoded = InstantOerSerializerTest.encodeString("2017010112");
+    final byte[] encoded = "2017010112".getBytes();
     final ByteArrayInputStream bis = new ByteArrayInputStream(encoded);
     context.read(Instant.class, bis);
   }
@@ -57,7 +57,7 @@ public class InstantOerSerializerTestBadFormat {
   public void test_NoSeconds() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
-    final byte[] encoded = InstantOerSerializerTest.encodeString("201701011213");
+    final byte[] encoded = "201701011213".getBytes();
     final ByteArrayInputStream bis = new ByteArrayInputStream(encoded);
     context.read(Instant.class, bis);
   }
@@ -66,7 +66,7 @@ public class InstantOerSerializerTestBadFormat {
   public void test_NoMillis() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
-    final byte[] encoded = InstantOerSerializerTest.encodeString("20170101121314");
+    final byte[] encoded = "20170101121314".getBytes();
     final ByteArrayInputStream bis = new ByteArrayInputStream(encoded);
     context.read(Instant.class, bis);
   }
@@ -75,7 +75,7 @@ public class InstantOerSerializerTestBadFormat {
   public void test_MillisShort() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
-    final byte[] encoded = InstantOerSerializerTest.encodeString("2017010112131401");
+    final byte[] encoded = "2017010112131401".getBytes();
     final ByteArrayInputStream bis = new ByteArrayInputStream(encoded);
     context.read(Instant.class, bis);
   }

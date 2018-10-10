@@ -32,16 +32,21 @@ public interface BtpError extends BtpPacket {
     return new BtpErrorBuilder();
   }
 
+  /**
+   * A standardized {@link BtpErrorCode} for this error.
+   */
   BtpErrorCode getErrorCode();
 
-  default String getErrorName() {
-    return getErrorCode().name();
-  }
-
+  /**
+   * The time of emission.
+   */
   default Instant getTriggeredAt() {
     return Instant.now();
   }
 
+  /**
+   * Additional data for this BTP Error.
+   */
   default byte[] getErrorData() {
     return new byte[0];
   }
@@ -52,12 +57,6 @@ public interface BtpError extends BtpPacket {
     @Override
     public final BtpMessageType getType() {
       return BtpMessageType.ERROR;
-    }
-
-    @Override
-    @Default
-    public String getErrorName() {
-      return getErrorCode().name();
     }
 
     @Override

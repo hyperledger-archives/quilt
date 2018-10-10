@@ -26,18 +26,30 @@ import org.immutables.value.Value.Default;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Contains information required to process sub-protocols using BTP.
+ */
 public interface BtpSubProtocol {
 
   static BtpSubProtocolBuilder builder() {
     return new BtpSubProtocolBuilder();
   }
 
+  /**
+   * The name of this side protocol. ILP-level information must be named ilp.
+   */
   String getProtocolName();
 
+  /**
+   * The content-type of this sub-protocol.
+   */
   default BtpSubProtocolContentType getContentType() {
     return BtpSubProtocolContentType.MIME_APPLICATION_OCTET_STREAM;
   }
 
+  /**
+   * The actual protocol data for this sub-protocol.
+   */
   default byte[] getData() {
     return new byte[0];
   }
@@ -46,6 +58,9 @@ public interface BtpSubProtocol {
     return new String(getData(), StandardCharsets.UTF_8);
   }
 
+  /**
+   * Abstract implementation to satisfy the Immutables library.
+   */
   @Immutable
   abstract class AbstractBtpSubProtocol implements BtpSubProtocol {
 

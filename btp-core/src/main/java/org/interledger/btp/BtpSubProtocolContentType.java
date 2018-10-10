@@ -22,6 +22,10 @@ package org.interledger.btp;
 
 import static java.lang.String.format;
 
+/**
+ * A content-type descriptor for BTP sub-protocol payloads, mainly used for logging and smart
+ * deserializing.
+ */
 public enum BtpSubProtocolContentType {
   MIME_APPLICATION_OCTET_STREAM((short) 0),
   MIME_TEXT_PLAIN_UTF8((short) 1),
