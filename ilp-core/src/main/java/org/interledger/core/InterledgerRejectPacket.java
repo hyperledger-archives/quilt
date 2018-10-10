@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,6 @@ package org.interledger.core;
 import org.interledger.annotations.Immutable;
 
 import org.immutables.value.Value.Default;
-
-import java.util.Arrays;
 
 public interface InterledgerRejectPacket extends InterledgerPacket {
 
@@ -57,14 +55,6 @@ public interface InterledgerRejectPacket extends InterledgerPacket {
    * @return An {@link InterledgerAddress}.
    */
   String getMessage();
-
-  /**
-   * Machine-readable data. The format is defined for each error code. Implementations MUST follow
-   *     the correct format for the code given in the `code` field.
-   *
-   * @return The optional error data.
-   */
-  byte[] getData();
 
   @Immutable
   abstract class AbstractInterledgerRejectPacket implements InterledgerRejectPacket {

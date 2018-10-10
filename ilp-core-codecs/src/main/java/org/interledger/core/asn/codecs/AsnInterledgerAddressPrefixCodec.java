@@ -1,8 +1,8 @@
-package org.interledger.core;
+package org.interledger.core.asn.codecs;
 
 /*-
  * ========================LICENSE_START=================================
- * Interledger Core
+ * Interledger Core Codecs
  * %%
  * Copyright (C) 2017 - 2018 Hyperledger and its contributors
  * %%
@@ -20,36 +20,24 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
+import org.interledger.core.InterledgerAddressPrefix;
+import org.interledger.encoding.asn.codecs.AsnIA5StringBasedObjectCodec;
+import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 
-import org.immutables.value.Value.Default;
+public class AsnInterledgerAddressPrefixCodec extends
+    AsnIA5StringBasedObjectCodec<InterledgerAddressPrefix> {
 
-public interface InterledgerFulfillPacket extends InterledgerPacket {
-
-  /**
-   * Get the default builder.
-   *
-   * @return a {@link InterledgerFulfillPacketBuilder} instance.
-   */
-  static InterledgerFulfillPacketBuilder builder() {
-    return new InterledgerFulfillPacketBuilder();
+  public AsnInterledgerAddressPrefixCodec() {
+    super(new AsnSizeConstraint(1, 1023));
   }
 
-  /**
-   * Accessor for the fulfillment portion of this packet.
-   *
-   * @return An instance of {@link InterledgerFulfillment}.
-   */
-  InterledgerFulfillment getFulfillment();
-
-  @Immutable
-  abstract class AbstractInterledgerFulfillPacket implements InterledgerFulfillPacket {
-
-    @Override
-    @Default
-    public byte[] getData() {
-      return new byte[0];
-    }
+  @Override
+  public InterledgerAddressPrefix decode() {
+    return InterledgerAddressPrefix.of(getCharString());
   }
 
+  @Override
+  public void encode(InterledgerAddressPrefix value) {
+    setCharString(value.getValue());
+  }
 }

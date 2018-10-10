@@ -167,8 +167,8 @@ public interface InterledgerAddress {
    *
    * <p>If this address has only a single segment after the allocation scheme, then this method
    * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but excluding
-   * last period.</p>
+   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but
+   * excluding last period.</p>
    *
    * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
    * address containing <tt>g.example</tt>. However, calling this method on an address like
@@ -209,6 +209,16 @@ public interface InterledgerAddress {
    */
   interface AllocationScheme {
 
+    AllocationScheme GLOBAL = AllocationScheme.of("g");
+    AllocationScheme PRIVATE = AllocationScheme.of("private");
+    AllocationScheme EXAMPLE = AllocationScheme.of("example");
+    AllocationScheme PEER = AllocationScheme.of("peer");
+    AllocationScheme SELF = AllocationScheme.of("self");
+    AllocationScheme TEST = AllocationScheme.of("test");
+    AllocationScheme TEST1 = AllocationScheme.of("test1");
+    AllocationScheme TEST2 = AllocationScheme.of("test2");
+    AllocationScheme TEST3 = AllocationScheme.of("test3");
+
     /**
      * Constructor to allow quick construction from a {@link String} representation of an ILP
      * address allocation scheme.
@@ -220,7 +230,7 @@ public interface InterledgerAddress {
      * @throws NullPointerException if {@code value} is <tt>null</tt>.
      */
     static AllocationScheme of(final String value) {
-      Objects.requireNonNull(value, "getValue must not be null!");
+      Objects.requireNonNull(value, "value must not be null!");
       return builder().value(value).build();
     }
 
@@ -233,7 +243,12 @@ public interface InterledgerAddress {
       return new AllocationSchemeBuilder();
     }
 
-    String value();
+    /**
+     * Accessor for the value of this {@link InterledgerAddress}.
+     *
+     * @return A {@link String} with the value of this address.
+     */
+    String getValue();
 
     /**
      * <p>An implementation of {@link AllocationScheme} that enforces allowed
@@ -260,9 +275,9 @@ public interface InterledgerAddress {
        */
       @Value.Check
       void check() {
-        if (!SCHEME_PREFIX_ONLY_PATTERN.matcher(value()).matches()) {
+        if (!SCHEME_PREFIX_ONLY_PATTERN.matcher(getValue()).matches()) {
           throw new IllegalArgumentException(
-              String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), value())
+              String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), getValue())
           );
         }
       }
@@ -300,15 +315,23 @@ public interface InterledgerAddress {
       defaults = @Value.Immutable(intern = true))
   abstract class AbstractInterledgerAddress implements InterledgerAddress {
 
+    static final String SEPARATOR_REGEX = "[.]";
+
+    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
+    static final Pattern SCHEME_PATTERN = Pattern.compile(SCHEME_REGEX);
+
     private static final String VALID_ADDRESS_REGEX
         = "(?=^.{1,1023}$)^(g|private|example|peer|self|test[1-3]?|local)([.][a-zA-Z0-9_~-]+)+$";
     private static final Pattern VALID_ADDRESS_PATTERN = Pattern.compile(VALID_ADDRESS_REGEX);
 
     private static final int ADDRESS_MIN_SEGMENTS = 2;
-    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
+
     private static final String SEGMENT_REGEX = "[a-zA-Z0-9_~-]+";
-    private static final String SEPARATOR_REGEX = "[.]";
+    static final Pattern SEGMENT_PATTERN = Pattern.compile(SEGMENT_REGEX);
+
     private static final String ADDRESS_LENGTH_BOUNDARIES_REGEX = "(?=^.{1,1023}$)";
+    private static final Pattern ADDRESS_LENGTH_BOUNDARIES_PATTERN = Pattern
+        .compile(ADDRESS_LENGTH_BOUNDARIES_REGEX);
 
     /**
      * Validation of an ILP address occurs via Regex, so we don't need to aggressivly compute this
@@ -358,14 +381,14 @@ public interface InterledgerAddress {
       );
       // validates scheme prefix format
       final String schemePrefix = schemeAndSegments.get(0);
-      if (!Pattern.compile(SCHEME_REGEX).matcher(schemePrefix).matches()) {
+      if (!SCHEME_PATTERN.matcher(schemePrefix).matches()) {
         return String.format(Error.INVALID_SCHEME_PREFIX.getMessageFormat(), schemePrefix);
       }
 
       // validates each segment format
       final List<String> segments = schemeAndSegments.stream().skip(1).collect(Collectors.toList());
       final int segmentsSize = segments.size();
-      final Matcher segmentMatcher = Pattern.compile(SEGMENT_REGEX).matcher("");
+      final Matcher segmentMatcher = SEGMENT_PATTERN.matcher("");
       final Optional<String> invalidSegment = segments.stream()
           .filter(segment -> {
             segmentMatcher.reset(segment);
@@ -382,8 +405,7 @@ public interface InterledgerAddress {
       }
 
       // validates max address length
-      if (!Pattern.compile(ADDRESS_LENGTH_BOUNDARIES_REGEX).matcher(invalidAddressString)
-          .matches()) {
+      if (!ADDRESS_LENGTH_BOUNDARIES_PATTERN.matcher(invalidAddressString).matches()) {
         return Error.ADDRESS_OVERFLOW.getMessageFormat();
       }
 
