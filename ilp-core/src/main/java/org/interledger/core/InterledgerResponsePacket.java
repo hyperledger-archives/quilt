@@ -26,26 +26,24 @@ import org.immutables.value.Value.Default;
 
 import java.util.Base64;
 
-public interface InterledgerFulfillPacket extends InterledgerResponsePacket {
+/**
+ * An extension of {@link InterledgerPacket} that indicates a response in an Interledger flow. Per RFC-4, an Interledger
+ * prepare packet is sent to a remote counterparty, and the response is either a Reject or a Fulfill. This interface
+ * allows both of those response packets to to be handled as one type.
+ */
+public interface InterledgerResponsePacket extends InterledgerPacket {
 
   /**
    * Get the default builder.
    *
    * @return a {@link InterledgerFulfillPacketBuilder} instance.
    */
-  static InterledgerFulfillPacketBuilder builder() {
-    return new InterledgerFulfillPacketBuilder();
+  static InterledgerResponsePacketBuilder builder() {
+    return new InterledgerResponsePacketBuilder();
   }
 
-  /**
-   * Accessor for the fulfillment portion of this packet.
-   *
-   * @return An instance of {@link InterledgerFulfillment}.
-   */
-  InterledgerFulfillment getFulfillment();
-
   @Immutable
-  abstract class AbstractInterledgerFulfillPacket implements InterledgerFulfillPacket {
+  abstract class AbstractInterledgerResponsePacket implements InterledgerResponsePacket {
 
     @Override
     @Default
@@ -60,8 +58,7 @@ public interface InterledgerFulfillPacket extends InterledgerResponsePacket {
      */
     @Override
     public String toString() {
-      return "InterledgerFulfillPacket{"
-          + ", fulfillment=" + getFulfillment()
+      return "InterledgerResponsePacket{"
           + ", data=" + Base64.getEncoder().encodeToString(getData())
           + "}";
     }

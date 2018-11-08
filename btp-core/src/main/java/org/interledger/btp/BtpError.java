@@ -25,6 +25,7 @@ import org.interledger.annotations.Immutable;
 import org.immutables.value.Value.Default;
 
 import java.time.Instant;
+import java.util.Base64;
 
 public interface BtpError extends BtpPacket {
 
@@ -75,6 +76,22 @@ public interface BtpError extends BtpPacket {
     @Default
     public BtpSubProtocols getSubProtocols() {
       return BtpSubProtocols.empty();
+    }
+
+    /**
+     * Prints the immutable value {@code BtpError} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "BtpError{"
+          + " requestId=" + getRequestId()
+          + ", triggeredAt=" + getTriggeredAt()
+          + ", errorData=" + getErrorData() == null ? null : new String(getErrorData())
+          + ", subProtocols=" + getSubProtocols()
+          + ", errorCode=" + getErrorCode()
+          + "}";
     }
   }
 

@@ -24,7 +24,9 @@ import org.interledger.annotations.Immutable;
 
 import org.immutables.value.Value.Default;
 
-public interface InterledgerRejectPacket extends InterledgerPacket {
+import java.util.Base64;
+
+public interface InterledgerRejectPacket extends InterledgerResponsePacket {
 
   /**
    * Get the default builder.
@@ -63,6 +65,21 @@ public interface InterledgerRejectPacket extends InterledgerPacket {
     @Default
     public byte[] getData() {
       return new byte[0];
+    }
+
+    /**
+     * Prints the immutable value {@code InterledgerRejectPacket} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "InterledgerRejectPacket{"
+          + ", code=" + getCode()
+          + ", triggeredBy=" + getTriggeredBy()
+          + ", message=" + getMessage()
+          + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + "}";
     }
   }
 }

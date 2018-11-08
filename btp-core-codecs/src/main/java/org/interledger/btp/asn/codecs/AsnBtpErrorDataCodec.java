@@ -45,7 +45,7 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
         requestId,
         new AsnUtf8StringCodec(new AsnSizeConstraint(3)), //Code (e.g., F00)
         new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), //Name (e.g., NotAcceptedError)
-        new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED), //TriggeredAt
+        new AsnBtpGeneralizedTimeCodec(),
         new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED), //Data
         new AsnBtpSubProtocolsCodec() //SubProtocols
     );
@@ -62,7 +62,7 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
         .requestId(getRequestId())
         .errorCode(BtpErrorCode.fromCodeAsString(getValueAt(0)))
         //.errorName(getValueAt(1))  // Not set -- standardized via the 3-character code.
-        .triggeredAt(Instant.parse(getValueAt(2)))
+        .triggeredAt(getValueAt(2))
         .errorData(getValueAt(3))
         .subProtocols(getValueAt(4))
         .build();
@@ -79,7 +79,7 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
 
     setValueAt(0, value.getErrorCode().getCodeIdentifier());
     setValueAt(1, value.getErrorCode().getCodeName());
-    setValueAt(2, value.getTriggeredAt().toString());
+    setValueAt(2, value.getTriggeredAt());
     setValueAt(3, value.getErrorData());
     setValueAt(4, value.getSubProtocols());
   }

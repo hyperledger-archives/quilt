@@ -23,15 +23,11 @@ package org.interledger.btp;
 import static java.lang.String.format;
 
 import org.interledger.annotations.Immutable;
-import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.encoding.asn.framework.CodecContext;
 
 import org.immutables.value.Value.Default;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+import java.util.Base64;
 
 /**
  * Contains information required to process sub-protocols using BTP.
@@ -43,7 +39,7 @@ public interface BtpSubProtocol {
   }
 
   /**
-   * The name of this side protocol. ILP-level information must be named ilp.
+   * The name of this side protocol. ILP-level information must be named toBtpSubprotocol.
    */
   String getProtocolName();
 
@@ -123,6 +119,21 @@ public interface BtpSubProtocol {
     public byte[] getData() {
       return new byte[0];
     }
+
+    /**
+     * Prints the immutable value {@code BtpSubProtocol} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "BtpSubProtocol{"
+          + "contentType=" + getContentType()
+          + ", protocolName=" + getProtocolName()
+          + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + "}";
+    }
+
   }
 
 }
