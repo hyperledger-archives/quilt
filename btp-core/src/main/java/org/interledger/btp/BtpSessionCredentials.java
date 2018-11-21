@@ -11,6 +11,13 @@ import java.util.Optional;
 public interface BtpSessionCredentials {
 
   /**
+   * <p>The `auth_username` for a BTP client. Enables multiple accounts over a single BTP WebSocket connection.</p>
+   *
+   * @return
+   */
+  Optional<String> getAuthUsername();
+
+  /**
    * The <tt>auth_token</tt> for a BTP client, as specified in IL-RFC-23.
    *
    * @return
@@ -19,14 +26,5 @@ public interface BtpSessionCredentials {
    *     /0023-bilateral-transfer-protocol.md#authentication"
    */
   String getAuthToken();
-
-  /**
-   * <p>An optionally-present name that identifies this BTP session.</p>
-   *
-   * <p>TODO: Look at JS implementation and determine what this is supposed to be!</p>
-   *
-   * @return
-   */
-  Optional<String> getName();
 
 }
