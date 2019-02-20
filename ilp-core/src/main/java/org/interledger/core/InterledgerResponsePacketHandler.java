@@ -1,7 +1,6 @@
 package org.interledger.core;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * A helper class for mapping an instance {@link InterledgerResponsePacket} according to the actual polymorphic type of
@@ -14,22 +13,16 @@ public abstract class InterledgerResponsePacketHandler {
    *
    * @param responsePacket The generic {@link InterledgerResponsePacket} to be mapped in a type-safe manner.
    */
-  public final void handle(final Optional<InterledgerResponsePacket> responsePacket) {
+  public final void handle(final InterledgerResponsePacket responsePacket) {
     Objects.requireNonNull(responsePacket);
 
-    if (responsePacket.isPresent()) {
-      responsePacket
-          .ifPresent($ -> {
-            if (InterledgerFulfillPacket.class.isAssignableFrom($.getClass())) {
-              handleFulfillPacket((InterledgerFulfillPacket) $);
-            } else if (InterledgerRejectPacket.class.isAssignableFrom($.getClass())) {
-              handleRejectPacket((InterledgerRejectPacket) $);
-            } else {
-              throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", $.getClass()));
-            }
-          });
+    if (InterledgerFulfillPacket.class.isAssignableFrom(responsePacket.getClass())) {
+      handleFulfillPacket((InterledgerFulfillPacket) responsePacket);
+    } else if (InterledgerRejectPacket.class.isAssignableFrom(responsePacket.getClass())) {
+      handleRejectPacket((InterledgerRejectPacket) responsePacket);
     } else {
-      handleExpiredPacket();
+      throw new RuntimeException(
+          String.format("Unsupported InterledgerResponsePacket Type: %s", responsePacket.getClass()));
     }
   }
 
@@ -46,10 +39,5 @@ public abstract class InterledgerResponsePacketHandler {
    * @param interledgerRejectPacket The generic {@link InterledgerPacket} to be mapped in a type-safe manner.
    */
   protected abstract void handleRejectPacket(final InterledgerRejectPacket interledgerRejectPacket);
-
-  /**
-   * Handle the packet as an {@link InterledgerPacket}.
-   */
-  protected abstract void handleExpiredPacket();
 
 }

@@ -7,31 +7,29 @@ import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Optional;
-
 /**
  * Unit test for {@link InterledgerResponsePacketMapper}.
  */
 public class InterledgerResponsePacketMapperTest {
 
-  private Optional<InterledgerResponsePacket> fulfillPacket;
-  private Optional<InterledgerResponsePacket> rejectPacket;
-  private Optional<InterledgerResponsePacket> expiredPacket;
+  private InterledgerResponsePacket fulfillPacket;
+  private InterledgerResponsePacket rejectPacket;
+  private InterledgerResponsePacket expiredPacket;
 
   @Before
   public void setup() {
-    fulfillPacket = Optional.ofNullable(
-        InterledgerFulfillPacket.builder().fulfillment(InterledgerFulfillment.of(new byte[32])).build()
-    );
+    fulfillPacket = InterledgerFulfillPacket.builder().fulfillment(InterledgerFulfillment.of(new byte[32])).build();
 
-    rejectPacket = Optional.ofNullable(
+    rejectPacket =
         InterledgerRejectPacket.builder().triggeredBy(InterledgerAddress.of("test.foo"))
             .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
             .message("rejected!")
-            .build()
-    );
+            .build();
 
-    expiredPacket = Optional.empty();
+    expiredPacket = InterledgerRejectPacket.builder().triggeredBy(InterledgerAddress.of("test.foo"))
+        .code(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT)
+        .message("Timed out!")
+        .build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -45,14 +43,6 @@ public class InterledgerResponsePacketMapperTest {
       @Override
       protected Boolean mapRejectPacket(InterledgerRejectPacket interledgerRejectPacket) {
         throw new RuntimeException("Should not reject!");
-      }
-
-      /**
-       * Handle the packet as an {@link InterledgerPacket}.
-       */
-      @Override
-      protected Boolean mapExpiredPacket() {
-        throw new RuntimeException("Should not fulfill!");
       }
     }.map(null);
     fail();
@@ -70,14 +60,6 @@ public class InterledgerResponsePacketMapperTest {
       protected Boolean mapRejectPacket(InterledgerRejectPacket interledgerRejectPacket) {
         throw new RuntimeException("Should not reject!");
       }
-
-      /**
-       * Handle the packet as an {@link InterledgerPacket}.
-       */
-      @Override
-      protected Boolean mapExpiredPacket() {
-        throw new RuntimeException("Should not expire!");
-      }
     }.map(fulfillPacket);
 
     assertThat(result, is(Boolean.TRUE));
@@ -93,16 +75,10 @@ public class InterledgerResponsePacketMapperTest {
 
       @Override
       protected Boolean mapRejectPacket(InterledgerRejectPacket interledgerRejectPacket) {
+        assertThat(interledgerRejectPacket.getCode(), is(InterledgerErrorCode.T00_INTERNAL_ERROR));
         return Boolean.TRUE;
       }
 
-      /**
-       * Handle the packet as an {@link InterledgerPacket}.
-       */
-      @Override
-      protected Boolean mapExpiredPacket() {
-        throw new RuntimeException("Should not expire!");
-      }
     }.map(rejectPacket);
 
     assertThat(result, is(Boolean.TRUE));
@@ -118,16 +94,10 @@ public class InterledgerResponsePacketMapperTest {
 
       @Override
       protected Boolean mapRejectPacket(InterledgerRejectPacket interledgerRejectPacket) {
-        throw new RuntimeException("Should not reject!");
-      }
-
-      /**
-       * Handle the packet as an {@link InterledgerPacket}.
-       */
-      @Override
-      protected Boolean mapExpiredPacket() {
+        assertThat(interledgerRejectPacket.getCode(), is(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT));
         return Boolean.TRUE;
       }
+
     }.map(expiredPacket);
 
     assertThat(result, is(Boolean.TRUE));

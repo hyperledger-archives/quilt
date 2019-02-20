@@ -1,6 +1,9 @@
 package org.interledger.btp;
 
+import org.interledger.btp.ImmutableBtpSessionCredentials.Builder;
+
 import org.immutables.value.Value;
+import org.immutables.value.Value.Redacted;
 
 import java.util.Optional;
 
@@ -9,6 +12,10 @@ import java.util.Optional;
  */
 @Value.Immutable
 public interface BtpSessionCredentials {
+
+  static Builder builder() {
+    return ImmutableBtpSessionCredentials.builder();
+  }
 
   /**
    * <p>The `auth_username` for a BTP client. Enables multiple accounts over a single BTP WebSocket connection.</p>
@@ -25,6 +32,7 @@ public interface BtpSessionCredentials {
    * @see "https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol
    *     /0023-bilateral-transfer-protocol.md#authentication"
    */
+  @Redacted
   String getAuthToken();
 
 }

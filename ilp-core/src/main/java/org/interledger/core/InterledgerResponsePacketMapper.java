@@ -1,7 +1,6 @@
 package org.interledger.core;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * A helper class for mapping an instance {@link InterledgerResponsePacket} according to the actual polymorphic type of
@@ -18,21 +17,17 @@ public abstract class InterledgerResponsePacketMapper<T> {
    *
    * @return An instance of {@link T}.
    */
-  public final T map(final Optional<InterledgerResponsePacket> responsePacket) {
+  public final T map(final InterledgerResponsePacket responsePacket) {
     Objects.requireNonNull(responsePacket);
 
-    return responsePacket
-        .map($ -> {
-          if (InterledgerFulfillPacket.class.isAssignableFrom($.getClass())) {
-            return mapFulfillPacket((InterledgerFulfillPacket) $);
-          } else if (InterledgerRejectPacket.class.isAssignableFrom($.getClass())) {
-            return mapRejectPacket((InterledgerRejectPacket) $);
-          } else {
-            throw new RuntimeException(
-                String.format("Unsupported InterledgerResponsePacket Type: %s", $.getClass()));
-          }
-        })
-        .orElseGet(this::mapExpiredPacket);
+    if (InterledgerFulfillPacket.class.isAssignableFrom(responsePacket.getClass())) {
+      return mapFulfillPacket((InterledgerFulfillPacket) responsePacket);
+    } else if (InterledgerRejectPacket.class.isAssignableFrom(responsePacket.getClass())) {
+      return mapRejectPacket((InterledgerRejectPacket) responsePacket);
+    } else {
+      throw new RuntimeException(
+          String.format("Unsupported InterledgerResponsePacket Type: %s", responsePacket.getClass()));
+    }
   }
 
   /**
@@ -52,9 +47,4 @@ public abstract class InterledgerResponsePacketMapper<T> {
    * @return An instance of {@link T}.
    */
   protected abstract T mapRejectPacket(final InterledgerRejectPacket interledgerRejectPacket);
-
-  /**
-   * Handle the packet as an {@link InterledgerPacket}.
-   */
-  protected abstract T mapExpiredPacket();
 }

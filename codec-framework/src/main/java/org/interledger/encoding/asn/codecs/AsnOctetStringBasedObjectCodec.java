@@ -25,6 +25,7 @@ import static java.lang.String.format;
 import org.interledger.encoding.asn.framework.CodecException;
 
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -139,7 +140,7 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
   public String toString() {
     return "AsnOctetStringBasedObjectCodec{"
         + "bytes="
-        + Arrays.toString(bytes)
+        + Base64.getEncoder().encodeToString(bytes)
         + '}';
   }
 }
