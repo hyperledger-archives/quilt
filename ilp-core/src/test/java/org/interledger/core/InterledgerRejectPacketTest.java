@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 
-import com.google.common.collect.ImmutableList;
 import org.junit.Test;
-
-import java.time.Instant;
-import java.util.List;
 
 /**
  * Unit tests for {@link InterledgerRejectPacket} and {@link InterledgerRejectPacketBuilder}.
@@ -38,16 +34,12 @@ import java.util.List;
 public class InterledgerRejectPacketTest {
 
   private static final InterledgerAddress FOO = InterledgerAddress.of("test1.foo.foo");
-  private static final InterledgerAddress BAR = InterledgerAddress.of("test1.bar.bar");
-  private static final InterledgerAddress BAZ = InterledgerAddress.of("test1.baz.baz");
 
   @Test
   public void testBuild() {
     final InterledgerErrorCode errorCode = InterledgerErrorCode.T00_INTERNAL_ERROR;
     final String message = "Test Error";
     final InterledgerAddress triggeredBy = FOO;
-    final List<InterledgerAddress> forwardedByAddresses = ImmutableList.of(BAR);
-    final Instant triggeredAt = Instant.now();
     final byte[] data = new byte[] {127};
 
     final InterledgerRejectPacket interledgerProtocolError =
@@ -63,24 +55,26 @@ public class InterledgerRejectPacketTest {
     assertThat(interledgerProtocolError.getData(), is(data));
   }
 
-  //  @Test
-  //  public void testBuildWithoutOptionalData() throws Exception {
-  //    final InterledgerErrorCode errorCode = InterledgerErrorCode.T00_INTERNAL_ERROR;
-  //    final InterledgerAddress triggeredBy = FOO;
-  //
-  //    final InterledgerRejectPacket interledgerProtocolError =
-  //        InterledgerRejectPacket.builder()
-  //            .code(errorCode)
-  //            .triggeredBy(triggeredBy)
-  //            .build();
-  //
-  //    assertThat(interledgerProtocolError.getCode(), is(errorCode));
-  //    assertThat(interledgerProtocolError.getTriggeredBy(), is(triggeredBy));
-  //    assertThat(interledgerProtocolError.getData(), is(nullValue()));
-  //  }
+  @Test
+  public void testBuildWithoutOptionalData() {
+    final InterledgerErrorCode errorCode = InterledgerErrorCode.T00_INTERNAL_ERROR;
+    final InterledgerAddress triggeredBy = FOO;
+
+    final InterledgerRejectPacket interledgerProtocolError =
+        InterledgerRejectPacket.builder()
+            .code(errorCode)
+            .triggeredBy(triggeredBy)
+            .message("foo")
+            .build();
+
+    assertThat(interledgerProtocolError.getCode(), is(errorCode));
+    assertThat(interledgerProtocolError.getTriggeredBy(), is(triggeredBy));
+    assertThat(interledgerProtocolError.getMessage(), is("foo"));
+    assertThat(interledgerProtocolError.getData(), is(new byte[0]));
+  }
 
   @Test
-  public void testBuildWithUnintializedValues() throws Exception {
+  public void testBuildWithUnintializedValues() {
     try {
       InterledgerRejectPacket.builder().build();
       fail("Builder should have thrown an exception but did not!");
@@ -102,8 +96,7 @@ public class InterledgerRejectPacketTest {
   }
 
   @Test
-  public void testBuilderWithNullValues() throws Exception {
-
+  public void testBuilderWithNullValues() {
     final InterledgerRejectPacketBuilder builder = InterledgerRejectPacket.builder();
 
     try {
@@ -131,9 +124,7 @@ public class InterledgerRejectPacketTest {
   }
 
   @Test
-  public void testEqualsHashCode() throws Exception {
-
-    final Instant now = Instant.now();
+  public void testEqualsHashCode() {
     final String message = "Test Message";
     final InterledgerRejectPacket interledgerProtocolError1
         = InterledgerRejectPacket.builder()
@@ -170,7 +161,7 @@ public class InterledgerRejectPacketTest {
   }
 
   @Test
-  public void testCopyBuilder() throws Exception {
+  public void testCopyBuilder() {
     final InterledgerRejectPacket interledgerProtocolError1
         = InterledgerRejectPacket.builder()
         .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
@@ -200,6 +191,19 @@ public class InterledgerRejectPacketTest {
     assertFalse(interledgerProtocolErrorOther.equals(interledgerProtocolError1));
     assertFalse(interledgerProtocolError1.hashCode()
         == interledgerProtocolErrorOther.hashCode());
+  }
+
+  @Test
+  public void testToString() {
+    final InterledgerRejectPacket interledgerProtocolError1
+        = InterledgerRejectPacket.builder()
+        .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
+        .message("TEST")
+        .triggeredBy(FOO)
+        .data(new byte[32])
+        .build();
+    assertThat(interledgerProtocolError1.toString(),
+        is("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=InterledgerAddress{value=test1.foo.foo}, message=TEST, data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"));
   }
 
 }
