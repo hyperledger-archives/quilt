@@ -43,11 +43,11 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
   public AsnBtpErrorDataCodec(long requestId) {
     super(
         requestId,
-        new AsnUtf8StringCodec(new AsnSizeConstraint(3)), //Code (e.g., F00)
-        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), //Name (e.g., NotAcceptedError)
-        new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED), //TriggeredAt
-        new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED), //Data
-        new AsnBtpSubProtocolsCodec() //SubProtocols
+        new AsnUtf8StringCodec(new AsnSizeConstraint(3)), // Error Code (e.g., F00)
+        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), // Erro Name (e.g., NotAcceptedError)
+        new AsnBtpGeneralizedTimeCodec(), // TriggeredAt
+        new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED), // Data
+        new AsnBtpSubProtocolsCodec() // SubProtocols
     );
   }
 
