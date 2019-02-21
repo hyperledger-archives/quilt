@@ -44,4 +44,27 @@ public abstract class AsnPrimitiveCodec<T> extends AsnObjectCodecBase<T> {
     return this.sizeConstraint;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+
+    AsnPrimitiveCodec<?> that = (AsnPrimitiveCodec<?>) o;
+
+    return sizeConstraint.equals(that.sizeConstraint);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + sizeConstraint.hashCode();
+    return result;
+  }
 }

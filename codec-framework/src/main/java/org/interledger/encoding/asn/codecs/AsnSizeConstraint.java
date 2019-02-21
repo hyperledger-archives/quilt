@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,18 @@ package org.interledger.encoding.asn.codecs;
  */
 public class AsnSizeConstraint {
 
+  /**
+   * A {@link AsnSizeConstraint} that represents an unconstrained size.
+   *
+   * <p>The following {@code AsnSizeConstraint.UNCONSTRAINED.isUnconstrained()} always returns true.
+   */
+  public static final AsnSizeConstraint UNCONSTRAINED = new AsnSizeConstraint(0, 0);
   private final int min;
   private final int max;
 
   /**
    * Create a new size constraint for a fixed sized field.
+   *
    * @param fixedSize the size of the field
    */
   public AsnSizeConstraint(int fixedSize) {
@@ -39,6 +46,7 @@ public class AsnSizeConstraint {
 
   /**
    * Create a new size constraint for a variable length field.
+   *
    * @param min The minimum size of the field.
    * @param max The maximum size of the field.
    */
@@ -83,11 +91,27 @@ public class AsnSizeConstraint {
     return min;
   }
 
-  /**
-   * A {@link AsnSizeConstraint} that represents an unconstrained size.
-   *
-   * <p>The following {@code AsnSizeConstraint.UNCONSTRAINED.isUnconstrained()} always returns true.
-   */
-  public static final AsnSizeConstraint UNCONSTRAINED = new AsnSizeConstraint(0, 0);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
+    AsnSizeConstraint that = (AsnSizeConstraint) o;
+
+    if (min != that.min) {
+      return false;
+    }
+    return max == that.max;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = min;
+    result = 31 * result + max;
+    return result;
+  }
 }
