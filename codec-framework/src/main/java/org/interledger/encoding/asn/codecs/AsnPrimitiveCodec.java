@@ -45,18 +45,18 @@ public abstract class AsnPrimitiveCodec<T> extends AsnObjectCodecBase<T> {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
+    if (!super.equals(obj)) {
       return false;
     }
 
-    AsnPrimitiveCodec<?> that = (AsnPrimitiveCodec<?>) o;
+    AsnPrimitiveCodec<?> that = (AsnPrimitiveCodec<?>) obj;
 
     return sizeConstraint.equals(that.sizeConstraint);
   }

@@ -92,15 +92,15 @@ public class AsnSizeConstraint {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
 
-    AsnSizeConstraint that = (AsnSizeConstraint) o;
+    AsnSizeConstraint that = (AsnSizeConstraint) obj;
 
     if (min != that.min) {
       return false;

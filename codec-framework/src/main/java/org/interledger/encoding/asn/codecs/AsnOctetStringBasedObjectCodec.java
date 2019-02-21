@@ -116,18 +116,18 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
+    if (!super.equals(obj)) {
       return false;
     }
 
-    AsnOctetStringBasedObjectCodec<?> that = (AsnOctetStringBasedObjectCodec<?>) o;
+    AsnOctetStringBasedObjectCodec<?> that = (AsnOctetStringBasedObjectCodec<?>) obj;
 
     return Arrays.equals(bytes, that.bytes);
   }
