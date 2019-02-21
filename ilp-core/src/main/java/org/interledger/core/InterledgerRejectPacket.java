@@ -52,9 +52,9 @@ public interface InterledgerRejectPacket extends InterledgerResponsePacket {
   InterledgerAddress getTriggeredBy();
 
   /**
-   * The {@link InterledgerAddress} of the entity that originally emitted the error.
+   * User-readable error message, primarily intended for debugging purposes.
    *
-   * @return An {@link InterledgerAddress}.
+   * @return a String.
    */
   String getMessage();
 

@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
  * MUST be encoded as 000000 on the following day. Leap seconds MUST be encoded using 60 as the value for seconds.</p>
  *
  * <p>Note that BTP times are encoded slightly different from Interledger timestamps. See <tt>AsnTimestampCodec</tt> in
- * <tt>toBtpSubprotocol-core</tt> for more details.</p>
+ * <tt>ilp-core</tt> for more details.</p>
  */
 public class AsnBtpGeneralizedTimeCodec extends AsnPrintableStringBasedObjectCodec<Instant> {
 
