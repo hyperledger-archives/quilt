@@ -23,7 +23,8 @@ package org.interledger.btp;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
+import org.interledger.btp.BtpSubProtocol.ContentType;
 
 import org.junit.Test;
 
@@ -41,7 +42,7 @@ public class BtpRuntimeExceptionTest {
   static {
     SUB_PROTOCOLS.add(BtpSubProtocol.builder()
         .protocolName("TEST")
-        .contentType(BtpSubProtocolContentType.MIME_TEXT_PLAIN_UTF8)
+        .contentType(ContentType.MIME_TEXT_PLAIN_UTF8)
         .data("Test Data".getBytes(StandardCharsets.UTF_8))
         .build());
   }

@@ -21,6 +21,7 @@ package org.interledger.core;
  */
 
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Objects;
 
 /**
@@ -78,8 +79,8 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
   byte[] getHash();
 
   /**
-   * An immutable implementation from InterledgerCondition optimized for efficient operations that
-   * only create copies from the internal data as required.
+   * An immutable implementation from InterledgerCondition optimized for efficient operations that only create copies
+   * from the internal data as required.
    */
   final class ImmutableInterledgerCondition implements InterledgerCondition {
 
@@ -133,7 +134,7 @@ public interface InterledgerCondition extends Comparable<InterledgerCondition> {
     @Override
     public String toString() {
       return "Condition{"
-          + "hash=" + Arrays.toString(hash)
+          + "hash=" + Base64.getEncoder().encodeToString(hash)
           + "}";
     }
 

@@ -21,6 +21,8 @@ package org.interledger.btp;
  */
 
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Optional;
 
 public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
 
@@ -41,8 +43,7 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   }
 
   /**
-   * Create a new {@link BtpSubProtocols} list with the given {@link BtpSubProtocol} as the primary
-   * sub-protocol.
+   * Create a new {@link BtpSubProtocols} list with the given {@link BtpSubProtocol} as the primary sub-protocol.
    *
    * @param protocol the sub-protocol to use as the primary
    *
@@ -80,19 +81,16 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   }
 
   /**
-   * Get the {@link BtpSubProtocol} by name.
+   * Accessor for the {@link BtpSubProtocol} with name of {@code subprtocolName}.
    *
-   * @param protocolName the name of the {@link BtpSubProtocol}
+   * @param subprotocolName the name of the {@link BtpSubProtocol} to retrieve.
    *
    * @return a {@link BtpSubProtocol} or null if none exists with the given name
    */
-  public BtpSubProtocol getSubProtocol(String protocolName) {
-    for (BtpSubProtocol protocol : this) {
-      if (protocol.getProtocolName().equals(protocolName)) {
-        return protocol;
-      }
-    }
-    return null;
+  public Optional<BtpSubProtocol> getSubProtocol(final String subprotocolName) {
+    Objects.requireNonNull(subprotocolName);
+    return this.stream()
+        .filter(btpSubProtocol -> btpSubProtocol.getProtocolName().equals(subprotocolName))
+        .findFirst();
   }
-
 }

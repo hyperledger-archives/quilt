@@ -20,30 +20,10 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
-
-import org.immutables.value.Value.Derived;
-
 /**
- * Returned from a peer if the peer acknowledges a {@link BtpMessage} or {@link BtpTransfer}. If the peer has data to
- * send in reply (e.g. a quote response), it is carried in the protocol data of this response. In addition, if a
- * Response has been returned for a {@link BtpTransfer}, balances MUST have been updated.
+ * The parent interface for all BTP response packets.
  */
-public interface BtpResponse extends BtpResponsePacket {
+public interface BtpResponsePacket extends BtpPacket {
 
-  static BtpResponseBuilder builder() {
-    return new BtpResponseBuilder();
-  }
-
-  @Immutable
-  abstract class AbstractBtpResponse implements BtpResponse {
-
-    @Override
-    @Derived
-    public BtpMessageType getType() {
-      return BtpMessageType.RESPONSE;
-    }
-
-  }
 
 }

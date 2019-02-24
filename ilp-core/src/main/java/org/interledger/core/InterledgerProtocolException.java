@@ -34,8 +34,8 @@ public class InterledgerProtocolException extends InterledgerRuntimeException {
   /**
    * Required-args constructor.
    *
-   * @param interledgerRejectPacket An instance of {@link InterledgerRejectPacket} that is the
-   *                                underlying error encapsulated by this exception.
+   * @param interledgerRejectPacket An instance of {@link InterledgerRejectPacket} that is the underlying error
+   *                                encapsulated by this exception.
    */
   public InterledgerProtocolException(final InterledgerRejectPacket interledgerRejectPacket) {
     super(String.format("Interledger Rejection: %s", interledgerRejectPacket.getMessage()));
@@ -43,16 +43,35 @@ public class InterledgerProtocolException extends InterledgerRuntimeException {
   }
 
   /**
-   * Constructs a new Interledger protocol exception with the specified reject packet and detail
-   * message.
+   * Constructs a new Interledger protocol exception with the specified reject packet and detail message.
    *
-   * @param interledgerRejectPacket An instance of {@link InterledgerRejectPacket} that is the
-   *                                underlying error encapsulated by this exception.
-   * @param message                 The detail message.
+   * @param interledgerRejectPacket An instance of {@link InterledgerRejectPacket} that is the underlying error
+   *                                encapsulated by this exception.
+   * @param message                 the detail message (which is saved for later retrieval by the {@link #getMessage()}
+   *                                method).
    */
-  public InterledgerProtocolException(final InterledgerRejectPacket interledgerRejectPacket,
-      final String message) {
+  public InterledgerProtocolException(final InterledgerRejectPacket interledgerRejectPacket, final String message) {
     super(message);
+    this.interledgerRejectPacket = fillInterledgerRejectPacket(interledgerRejectPacket);
+  }
+
+
+  /**
+   * Constructs a new Interledger runtime exception with the specified detail message and cause.
+   *
+   * <p>Note that the detail message associated with {@code cause} is <i>not</i> automatically
+   * incorporated in this runtime exception's detail message.
+   *
+   * @param interledgerRejectPacket An instance of {@link InterledgerRejectPacket} that is the underlying error
+   *                                encapsulated by this exception.
+   * @param message                 the detail message (which is saved for later retrieval by the {@link #getMessage()}
+   *                                method).
+   * @param cause                   the cause (which is saved for later retrieval by the {@link #getCause()} method). (A
+   *                                <tt>null</tt> value is permitted, and indicates that the cause is nonexistent or
+   */
+  public InterledgerProtocolException(
+      final InterledgerRejectPacket interledgerRejectPacket, final String message, final Throwable cause) {
+    super(message, cause);
     this.interledgerRejectPacket = fillInterledgerRejectPacket(interledgerRejectPacket);
   }
 

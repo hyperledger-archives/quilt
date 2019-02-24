@@ -23,6 +23,8 @@ package org.interledger.btp;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import org.interledger.btp.BtpSubProtocol.ContentType;
+
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -41,7 +43,7 @@ public class BtpErrorTest {
   static {
     SUB_PROTOCOLS.add(BtpSubProtocol.builder()
         .protocolName("TEST")
-        .contentType(BtpSubProtocolContentType.MIME_TEXT_PLAIN_UTF8)
+        .contentType(ContentType.MIME_TEXT_PLAIN_UTF8)
         .data("Test Data".getBytes(StandardCharsets.UTF_8))
         .build());
   }

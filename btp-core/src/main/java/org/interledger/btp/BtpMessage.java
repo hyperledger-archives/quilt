@@ -22,7 +22,9 @@ package org.interledger.btp;
 
 import org.interledger.annotations.Immutable;
 
-public interface BtpMessage extends BtpPacket {
+import org.immutables.value.Value.Derived;
+
+public interface BtpMessage extends BtpRequestPacket {
 
   static BtpMessageBuilder builder() {
     return new BtpMessageBuilder();
@@ -32,7 +34,8 @@ public interface BtpMessage extends BtpPacket {
   abstract class AbstractBtpMessage implements BtpMessage {
 
     @Override
-    public final BtpMessageType getType() {
+    @Derived
+    public BtpMessageType getType() {
       return BtpMessageType.MESSAGE;
     }
 

@@ -24,7 +24,9 @@ import org.interledger.annotations.Immutable;
 
 import org.immutables.value.Value.Default;
 
-public interface InterledgerFulfillPacket extends InterledgerPacket {
+import java.util.Base64;
+
+public interface InterledgerFulfillPacket extends InterledgerResponsePacket {
 
   /**
    * Get the default builder.
@@ -49,6 +51,19 @@ public interface InterledgerFulfillPacket extends InterledgerPacket {
     @Default
     public byte[] getData() {
       return new byte[0];
+    }
+
+    /**
+     * Prints the immutable value {@code InterledgerFulfillPacket} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "InterledgerFulfillPacket{"
+          + ", fulfillment=" + getFulfillment()
+          + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + "}";
     }
   }
 

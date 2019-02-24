@@ -21,6 +21,8 @@ package org.interledger.core;
  */
 
 import static junit.framework.TestCase.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -112,6 +114,20 @@ public class InterledgerConditionTest {
   @Test(expected = IllegalArgumentException.class)
   public void testOverFlow() {
     InterledgerCondition.of(OVERFLOW_BYTES);
+  }
+
+  @Test
+  public void testFrom() {
+    final InterledgerCondition condition1 = InterledgerCondition.of(BYTES_1);
+    final InterledgerCondition condition2 = InterledgerCondition.from(condition1);
+
+    assertThat(condition1, is(condition2));
+  }
+
+  @Test
+  public void testToString() {
+    final InterledgerCondition condition1 = InterledgerCondition.of(BYTES_1);
+    assertThat(condition1.toString(), is("Condition{hash=AAECAwQFBgcICQABAgMEBQYHCAkAAQIDBAUGBwgJAAE=}"));
   }
 
 }

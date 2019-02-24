@@ -194,4 +194,29 @@ public class InterledgerPreparePacketTest {
         == interledgerPreparePacket3.hashCode());
   }
 
+  @Test
+  public void testToString() {
+    final InterledgerAddress destination = InterledgerAddress.of("test.foo");
+    byte[] data = new byte[] {127};
+    BigInteger amount = BigInteger.TEN;
+    InterledgerCondition interledgerCondition = InterledgerCondition.of(
+        new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
+            7, 8, 9, 0, 1, 2}
+    );
+    Instant expiry = Instant.parse("2007-12-03T10:15:30.00Z");
+
+    final InterledgerPreparePacket interledgerPreparePacket = InterledgerPreparePacket.builder()
+        .destination(destination)
+        .amount(amount.add(BigInteger.ONE))
+        .executionCondition(interledgerCondition)
+        .expiresAt(expiry)
+        .data(data)
+        .build();
+
+    assertThat(interledgerPreparePacket.toString(),
+        is("InterledgerPreparePacket{, amount=11, expiresAt=2007-12-03T10:15:30Z, "
+            + "executionCondition=Condition{hash=AAECAwQFBgcICQECAwQFBgcICQABAgMEBQYHCAkAAQI=}, "
+            + "destination=InterledgerAddress{value=test.foo}, data=fw==}"));
+  }
+
 }

@@ -236,8 +236,7 @@ public class InterledgerAddressTest {
   public void testAddressPrefixWithAddressPrefix() {
     final InterledgerAddress destinationAddress = InterledgerAddress.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
-        is("g.foo.bob.boz"));
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(), is("g.foo.bob.boz"));
   }
 
   /**
@@ -257,8 +256,7 @@ public class InterledgerAddressTest {
   public void testDestinationAddressWithDestinationAddress() {
     final InterledgerAddress destinationAddress = InterledgerAddress.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
-        is("g.foo.bob.boz"));
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(), is("g.foo.bob.boz"));
   }
 
   /**
@@ -268,8 +266,7 @@ public class InterledgerAddressTest {
   public void testAddressWithAddress() {
     final InterledgerAddress destinationAddress = InterledgerAddress.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
-        is("g.foo.bob.boz"));
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(), is("g.foo.bob.boz"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -284,13 +281,15 @@ public class InterledgerAddressTest {
 
   @Test
   public void testGetPrefixFromShortPrefix() {
-    assertThat(InterledgerAddress.of("g.1").getPrefix().isPresent(), is(false));
+    assertThat(InterledgerAddress.of("g.1").getPrefix().isPresent(), is(true));
+    assertThat(InterledgerAddress.of("g.1").getPrefix().get(), is(InterledgerAddressPrefix.of("g")));
   }
 
   @Test
   public void testGetPrefixFromPrefix() {
     final InterledgerAddress address = InterledgerAddress.of("g.example");
-    assertThat(address.getPrefix().isPresent(), is(false));
+    assertThat(address.getPrefix().isPresent(), is(true));
+    assertThat(address.getPrefix().get(), is(InterledgerAddressPrefix.of("g")));
   }
 
   @Test
@@ -319,10 +318,10 @@ public class InterledgerAddressTest {
 
   @Test
   public void testHasPrefix() {
-    assertThat(InterledgerAddress.of("g.bob").hasPrefix(), is(false));
+    assertThat(InterledgerAddress.of("g.bob").hasPrefix(), is(true));
     assertThat(InterledgerAddress.of("g.bob.foo").hasPrefix(), is(true));
     assertThat(InterledgerAddress.of("g.bob.foo").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("self.bob").hasPrefix(), is(false));
+    assertThat(InterledgerAddress.of("self.bob").hasPrefix(), is(true));
 
     assertThat(InterledgerAddress.of("g.1.1").hasPrefix(), is(true));
     assertThat(InterledgerAddress.of("private.1.1").hasPrefix(), is(true));
@@ -356,10 +355,8 @@ public class InterledgerAddressTest {
 
   @Test
   public void testToString() {
-    assertThat(InterledgerAddress.of("g.foo.bob").toString(),
-        is("InterledgerAddress{value=g.foo.bob}"));
-    assertThat(InterledgerAddress.of("g.foo").toString(),
-        is("InterledgerAddress{value=g.foo}"));
+    assertThat(InterledgerAddress.of("g.foo.bob").toString(), is("InterledgerAddress{value=g.foo.bob}"));
+    assertThat(InterledgerAddress.of("g.foo").toString(), is("InterledgerAddress{value=g.foo}"));
   }
 
   @Test(expected = NullPointerException.class)

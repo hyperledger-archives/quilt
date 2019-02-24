@@ -20,9 +20,6 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.time.Instant;
 import java.util.Objects;
 

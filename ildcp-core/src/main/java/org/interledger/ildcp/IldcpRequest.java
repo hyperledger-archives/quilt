@@ -1,8 +1,8 @@
-package org.interledger.btp;
+package org.interledger.ildcp;
 
 /*-
  * ========================LICENSE_START=================================
- * Bilateral Transfer Protocol Core Libs
+ * Interledger Dynamic Configuration Protocol Core Libs
  * %%
  * Copyright (C) 2017 - 2018 Hyperledger and its contributors
  * %%
@@ -22,27 +22,24 @@ package org.interledger.btp;
 
 import org.interledger.annotations.Immutable;
 
-import org.immutables.value.Value.Derived;
+import java.time.Instant;
 
 /**
- * Returned from a peer if the peer acknowledges a {@link BtpMessage} or {@link BtpTransfer}. If the peer has data to
- * send in reply (e.g. a quote response), it is carried in the protocol data of this response. In addition, if a
- * Response has been returned for a {@link BtpTransfer}, balances MUST have been updated.
+ * A request to an IL-DCP compliant endpoint (empty for now).
  */
-public interface BtpResponse extends BtpResponsePacket {
+public interface IldcpRequest {
 
-  static BtpResponseBuilder builder() {
-    return new BtpResponseBuilder();
+  static IldcpRequestBuilder builder() {
+    return new IldcpRequestBuilder();
   }
 
-  @Immutable
-  abstract class AbstractBtpResponse implements BtpResponse {
+  /**
+   * An arbitrary expiration date for this packet, as configured by the sender.
+   */
+  Instant getExpiresAt();
 
-    @Override
-    @Derived
-    public BtpMessageType getType() {
-      return BtpMessageType.RESPONSE;
-    }
+  @Immutable
+  abstract class AbstractIldcpRequest implements IldcpRequest {
 
   }
 

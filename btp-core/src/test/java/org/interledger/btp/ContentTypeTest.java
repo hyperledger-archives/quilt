@@ -20,30 +20,30 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
+import static org.junit.Assert.assertEquals;
 
-import org.immutables.value.Value.Derived;
+import org.interledger.btp.BtpSubProtocol.ContentType;
 
-/**
- * Returned from a peer if the peer acknowledges a {@link BtpMessage} or {@link BtpTransfer}. If the peer has data to
- * send in reply (e.g. a quote response), it is carried in the protocol data of this response. In addition, if a
- * Response has been returned for a {@link BtpTransfer}, balances MUST have been updated.
- */
-public interface BtpResponse extends BtpResponsePacket {
+import org.junit.Test;
 
-  static BtpResponseBuilder builder() {
-    return new BtpResponseBuilder();
-  }
+public class ContentTypeTest {
 
-  @Immutable
-  abstract class AbstractBtpResponse implements BtpResponse {
+  @Test
+  public void fromCode() {
 
-    @Override
-    @Derived
-    public BtpMessageType getType() {
-      return BtpMessageType.RESPONSE;
+    for (ContentType code : ContentType.values()) {
+      assertEquals(code, ContentType.fromCode(code.getCode()));
     }
-
   }
 
+
+  @Test(expected = IllegalArgumentException.class)
+  public void fromNegativeCode() {
+    ContentType.fromCode((short) -1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void fromInvalidCode() {
+    ContentType.fromCode(Short.MAX_VALUE);
+  }
 }

@@ -32,30 +32,27 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * <p>Interledger Protocol (ILP) Addresses serve as both an <tt>identifier</tt> and a
- * <tt>locator</tt> for ILP nodes (e.g., connectors, mini-connectors, clients, senders,
- * receivers, listeners, etc.)</p>
+ * <p>Interledger Protocol (ILP) Addresses serve as both an <tt>identifier</tt> and a <tt>locator</tt> for ILP nodes
+ * (e.g., connectors, mini-connectors, clients, senders, receivers, listeners, etc.)</p>
  *
- * <p>Interledger is a graph where <tt>Nodes</tt> are the vertices and <tt>Accounts</tt> are the
- * edges. A fulfilled ILP packet will modify the balances for all accounts along the path between a
- * sending Node and a receiving Node. This is no different for a connector than for an SPSP receiver
- * (both are ILP nodes and in both cases, the accounts whose balances change are all accounts along
- * the path).</p>
+ * <p>Interledger is a graph where <tt>Nodes</tt> are the vertices and <tt>Accounts</tt> are the edges. A fulfilled ILP
+ * packet will modify the balances for all accounts along the path between a sending Node and a receiving Node. This is
+ * no different for a connector than for an SPSP receiver (both are ILP nodes and in both cases, the accounts whose
+ * balances change are all accounts along the path).</p>
  *
- * <p>The identifier+locator primitive defined by an InterledgerAddress also provides a way to
- * route ILP packets to their intended destination through a series of Nodes, including any number
- * of ILP Connectors (this happens after address-lookup using a higher-level protocol such as
+ * <p>The identifier+locator primitive defined by an InterledgerAddress also provides a way to route ILP packets to
+ * their intended destination through a series of Nodes, including any number of ILP Connectors (this happens after
+ * address-lookup using a higher-level protocol such as
  * <tt>SPSP</tt>).</p>
  *
  * <p>Addresses are <tt>not</tt> meant to be user-facing, but allow several ASCII
  * characters for easy debugging.</p>
  *
- * <p>Note that because an InterledgerAddress represents an Interledger <tt>Node</tt>, ILP payments
- * are always addressed to a Node, and _not_ to an account. For example, there will usually be a 1:1
- * relationship between a receiver and the receiver's account (e.g., if a node is running a local
- * moneyd). However, even in these cases, it is important to note that a payment is still addressed
- * to the receiver Node, and not to the account. This is because balances are not always
- * tracked/recorded on every node. In fact, some accounts are limited only by bandwidth, while
+ * <p>Note that because an InterledgerAddress represents an Interledger <tt>Node</tt>, ILP payments are always
+ * addressed to a Node, and _not_ to an account. For example, there will usually be a 1:1 relationship between a
+ * receiver and the receiver's account (e.g., if a node is running a local moneyd). However, even in these cases, it is
+ * important to note that a payment is still addressed to the receiver Node, and not to the account. This is because
+ * balances are not always tracked/recorded on every node. In fact, some accounts are limited only by bandwidth, while
  * others are not limited nor recorded at all.</p>
  *
  * <p>Interledger Addresses have the following requirements:</p>
@@ -63,8 +60,8 @@ import java.util.stream.Collectors;
  * <ol>
  * <li>The address MUST begin with a prefix indicating the allocation scheme.</li>
  * <li>Each "segment" of the address MUST contain one or more of the following characters:
- * Alphanumeric characters, upper or lower case (Addresses are **case-sensitive** so that they can
- * contain data encoded in formats such as base64url.); Underscore (`_`); Tilde (`~`); Hyphen (`-`)
+ * Alphanumeric characters, upper or lower case (Addresses are **case-sensitive** so that they can contain data encoded
+ * in formats such as base64url.); Underscore (`_`); Tilde (`~`); Hyphen (`-`)
  * </li>
  * <li>Each segment MUST be separated from other segments by a period character (`.`).</li>
  * <li>Addresses MUST NOT end in a period (`.`) character, and MUST contain at least one segment
@@ -82,8 +79,7 @@ import java.util.stream.Collectors;
 public interface InterledgerAddress {
 
   /**
-   * Constructor to allow quick construction from a {@link String} representation of an ILP
-   * address.
+   * Constructor to allow quick construction from a {@link String} representation of an ILP address.
    *
    * @param value String representation of an Interledger Address
    *
@@ -137,8 +133,7 @@ public interface InterledgerAddress {
    *
    * @param interledgerAddress An {@link InterledgerAddress} prefix to compare against.
    *
-   * @return {@code true} if the supplied {@code interledgerAddress} begins with the specified
-   *     prefix.
+   * @return {@code true} if the supplied {@code interledgerAddress} begins with the specified prefix.
    */
   default boolean startsWith(final InterledgerAddress interledgerAddress) {
     Objects.requireNonNull(interledgerAddress, "interledgerAddress must not be null!");
@@ -149,8 +144,7 @@ public interface InterledgerAddress {
    * <p>Return a new {@link InterledgerAddress} by suffixing the supplied {@code addressSegment}
    * onto the current address.</p>
    *
-   * @param addressSegment A {@link String} to be appended to this address as an additional
-   *                       segment.
+   * @param addressSegment A {@link String} to be appended to this address as an additional segment.
    *
    * @return A new instance representing the original address with a newly specified final segment.
    */
@@ -166,44 +160,37 @@ public interface InterledgerAddress {
    * <p>Return this address's prefix.</p>
    *
    * <p>If this address has only a single segment after the allocation scheme, then this method
-   * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but
-   * excluding last period.</p>
+   * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link InterledgerAddress} containing the
+   * characters inside of {@link #getValue()}, up-to but excluding last period.</p>
    *
    * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
-   * address containing <tt>g.example</tt>. However, calling this method on an address like
-   * <tt>g.example</tt> would yield {@link Optional#empty()}.</p>
+   * address prefix containing <tt>g.example</tt>. Likewise, calling this method on an address like
+   * <tt>g.example</tt> would yield <tt>g</tt>.</p>
    *
-   * @return An optionally present parent-prefix as an {@link InterledgerAddress}.
+   * @return An optionally present parent-prefix as an {@link InterledgerAddressPrefix}.
    */
-  default Optional<InterledgerAddress> getPrefix() {
-    // An address will always contain at least one period (.), so we can always
+  default Optional<InterledgerAddressPrefix> getPrefix() {
+    // An address will always contain at least one period (.), so we can always return its prefix.
     final String value = getValue();
-    final boolean hasMultipleDots = value.indexOf('.', value.indexOf('.') + 1) != -1;
-    if (hasMultipleDots) {
-      return Optional.of(
-          InterledgerAddress.builder()
-              .value(value.substring(0, value.lastIndexOf(".")))
-              .build()
-      );
-    } else {
-      return Optional.empty();
-    }
+    return Optional.of(
+        InterledgerAddressPrefix.builder()
+            .value(value.substring(0, value.lastIndexOf(".")))
+            .build()
+    );
   }
 
   /**
    * <p>Determines if this ILP Address has a parent-prefix.</p>
    *
-   * @return {@code true} if this address has more than two segments after the allocation scheme.
-   *     Otherwise return {@code false}.
+   * @return {@code true} if this address has more than two segments after the allocation scheme. Otherwise return
+   *     {@code false}.
    */
   default boolean hasPrefix() {
     return getPrefix().isPresent();
   }
 
   /**
-   * The first part of an {@link AllocationScheme}, which indicates to which ILP network the address
-   * belongs to.
+   * The first part of an {@link AllocationScheme}, which indicates to which ILP network the address belongs to.
    *
    * @see "https://github.com/interledger/rfcs/blob/master/0015-ilp-addresses"
    */
@@ -220,8 +207,8 @@ public interface InterledgerAddress {
     AllocationScheme TEST3 = AllocationScheme.of("test3");
 
     /**
-     * Constructor to allow quick construction from a {@link String} representation of an ILP
-     * address allocation scheme.
+     * Constructor to allow quick construction from a {@link String} representation of an ILP address allocation
+     * scheme.
      *
      * @param value String representation of an Interledger Address allocation scheme.
      *
@@ -334,9 +321,8 @@ public interface InterledgerAddress {
         .compile(ADDRESS_LENGTH_BOUNDARIES_REGEX);
 
     /**
-     * Validation of an ILP address occurs via Regex, so we don't need to aggressivly compute this
-     * value. Thus, it is marked <tt>Lazy</tt> so that immutables will not generate this value
-     * unless it is called.
+     * Validation of an ILP address occurs via Regex, so we don't need to aggressivly compute this value. Thus, it is
+     * marked <tt>Lazy</tt> so that immutables will not generate this value unless it is called.
      */
     @Override
     @Lazy

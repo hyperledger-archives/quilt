@@ -20,28 +20,10 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
-public class BtpSubProtocolContentTypeTest {
-
-  @Test
-  public void fromCode() {
-
-    for (BtpSubProtocolContentType code : BtpSubProtocolContentType.values()) {
-      assertEquals(code, BtpSubProtocolContentType.fromCode(code.getCode()));
-    }
-  }
+/**
+ * The parent interface for all BTP Request packets.
+ */
+public interface BtpRequestPacket extends BtpPacket {
 
 
-  @Test(expected = IllegalArgumentException.class)
-  public void fromNegativeCode() {
-    BtpSubProtocolContentType.fromCode((short) -1);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void fromInvalidCode() {
-    BtpSubProtocolContentType.fromCode(Short.MAX_VALUE);
-  }
 }

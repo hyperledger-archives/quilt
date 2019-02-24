@@ -26,6 +26,7 @@ import org.immutables.value.Value.Default;
 
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.Base64;
 
 /**
  * <p>Interledger Payments moves assets of one party to another that consists of one or more ledger
@@ -42,23 +43,21 @@ import java.time.Instant;
  * </ul>
  *
  * <p>When a sender prepares a transfer to start a payment, the sender attaches an ILP Payment to
- * the transfer, in the memo field if possible. If a ledger does not support attaching the entire
- * ILP Payment to a transfer as a memo, users of that ledger can transmit the ILP Payment using
- * another authenticated messaging channel, but MUST be able to correlate transfers and ILP
- * Payments.</p>
+ * the transfer, in the memo field if possible. If a ledger does not support attaching the entire ILP Payment to a
+ * transfer as a memo, users of that ledger can transmit the ILP Payment using another authenticated messaging channel,
+ * but MUST be able to correlate transfers and ILP Payments.</p>
  *
  * <p>When a connector sees an incoming prepared transfer with an ILP Payment, the receiver reads
- * the ILP Payment to confirm the details of the packet. For example, the connector reads the
- * InterledgerAddress of the payment's receiver, and if the connector has a route to the receiver's
- * account, the connector prepares a transfer to continue the payment, and attaches the same ILP
- * Payment to the new transfer. Likewise, the receiver confirms that the amount of the ILP Payment
- * Packet matches the amount actually delivered by the transfer. And finally, the receiver decodes
- * the data portion of the Payment and matches the condition to the payment.</p>
+ * the ILP Payment to confirm the details of the packet. For example, the connector reads the InterledgerAddress of the
+ * payment's receiver, and if the connector has a route to the receiver's account, the connector prepares a transfer to
+ * continue the payment, and attaches the same ILP Payment to the new transfer. Likewise, the receiver confirms that the
+ * amount of the ILP Payment Packet matches the amount actually delivered by the transfer. And finally, the receiver
+ * decodes the data portion of the Payment and matches the condition to the payment.</p>
  *
  * <p>The receiver MUST confirm the integrity of the ILP Payment, for example with a hash-based
- * message authentication code (HMAC). If the receiver finds the transfer acceptable, the receiver
- * releases the fulfillment for the transfer, which can be used to execute all prepared transfers
- * that were established prior to the receiver accepting the payment.</p>
+ * message authentication code (HMAC). If the receiver finds the transfer acceptable, the receiver releases the
+ * fulfillment for the transfer, which can be used to execute all prepared transfers that were established prior to the
+ * receiver accepting the payment.</p>
  */
 public interface InterledgerPreparePacket extends InterledgerPacket {
 
@@ -81,16 +80,15 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
   InterledgerCondition getExecutionCondition();
 
   /**
-   * The Interledger address of the account where the receiver should ultimately receive the
-   * payment.
+   * The Interledger address of the account where the receiver should ultimately receive the payment.
    *
    * @return An instance of {@link InterledgerAddress}.
    */
   InterledgerAddress getDestination();
 
   /**
-   * Arbitrary data for the receiver that is set by the transport layer of a payment (for example,
-   * this may contain PSK data).
+   * Arbitrary data for the receiver that is set by the transport layer of a payment (for example, this may contain PSK
+   * data).
    *
    * @return A byte array.
    */
@@ -103,6 +101,22 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
     @Default
     public byte[] getData() {
       return new byte[0];
+    }
+
+    /**
+     * Prints the immutable value {@code InterledgerPreparePacket} with attribute values.
+     *
+     * @return A string representation of the value
+     */
+    @Override
+    public String toString() {
+      return "InterledgerPreparePacket{"
+          + ", amount=" + getAmount()
+          + ", expiresAt=" + getExpiresAt()
+          + ", executionCondition=" + getExecutionCondition()
+          + ", destination=" + getDestination()
+          + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + "}";
     }
   }
 

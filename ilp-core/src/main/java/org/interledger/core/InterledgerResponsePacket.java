@@ -26,40 +26,24 @@ import org.immutables.value.Value.Default;
 
 import java.util.Base64;
 
-public interface InterledgerRejectPacket extends InterledgerResponsePacket {
+/**
+ * An extension of {@link InterledgerPacket} that indicates a response in an Interledger flow. Per RFC-4, an Interledger
+ * prepare packet is sent to a remote counterparty, and the response is either a Reject or a Fulfill. This interface
+ * allows both of those response packets to to be handled as one type.
+ */
+public interface InterledgerResponsePacket extends InterledgerPacket {
 
   /**
    * Get the default builder.
    *
-   * @return a {@link InterledgerRejectPacketBuilder} instance.
+   * @return a {@link InterledgerFulfillPacketBuilder} instance.
    */
-  static InterledgerRejectPacketBuilder builder() {
-    return new InterledgerRejectPacketBuilder();
+  static InterledgerResponsePacketBuilder builder() {
+    return new InterledgerResponsePacketBuilder();
   }
 
-  /**
-   * The Interledger Error Code for this error.
-   *
-   * @return An {@link InterledgerErrorCode}.
-   */
-  InterledgerErrorCode getCode();
-
-  /**
-   * The {@link InterledgerAddress} of the entity that originally emitted the error.
-   *
-   * @return An {@link InterledgerAddress}.
-   */
-  InterledgerAddress getTriggeredBy();
-
-  /**
-   * User-readable error message, primarily intended for debugging purposes.
-   *
-   * @return a String.
-   */
-  String getMessage();
-
   @Immutable
-  abstract class AbstractInterledgerRejectPacket implements InterledgerRejectPacket {
+  abstract class AbstractInterledgerResponsePacket implements InterledgerResponsePacket {
 
     @Override
     @Default
@@ -68,18 +52,16 @@ public interface InterledgerRejectPacket extends InterledgerResponsePacket {
     }
 
     /**
-     * Prints the immutable value {@code InterledgerRejectPacket} with attribute values.
+     * Prints the immutable value {@code InterledgerFulfillPacket} with attribute values.
      *
      * @return A string representation of the value
      */
     @Override
     public String toString() {
-      return "InterledgerRejectPacket{"
-          + ", code=" + getCode()
-          + ", triggeredBy=" + getTriggeredBy()
-          + ", message=" + getMessage()
+      return "InterledgerResponsePacket{"
           + ", data=" + Base64.getEncoder().encodeToString(getData())
           + "}";
     }
   }
+
 }

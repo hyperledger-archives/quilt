@@ -22,14 +22,16 @@ package org.interledger.btp;
 
 import org.interledger.annotations.Immutable;
 
+import org.immutables.value.Value.Derived;
+
 import java.math.BigInteger;
 
 /**
- * Used to send proof of payment, payment channel claims, or other settlement information to the
- * other connector. The amount should indicate the additional value of this settlement state
- * (compared to the previous settlement state), in a unit that was agreed out-of-band.
+ * Used to send proof of payment, payment channel claims, or other settlement information to the other connector. The
+ * amount should indicate the additional value of this settlement state (compared to the previous settlement state), in
+ * a unit that was agreed out-of-band.
  */
-public interface BtpTransfer extends BtpPacket {
+public interface BtpTransfer extends BtpRequestPacket {
 
   static BtpTransferBuilder builder() {
     return new BtpTransferBuilder();
@@ -41,7 +43,8 @@ public interface BtpTransfer extends BtpPacket {
   abstract class AbstractBtpTransfer implements BtpTransfer {
 
     @Override
-    public final BtpMessageType getType() {
+    @Derived
+    public BtpMessageType getType() {
       return BtpMessageType.TRANSFER;
     }
   }

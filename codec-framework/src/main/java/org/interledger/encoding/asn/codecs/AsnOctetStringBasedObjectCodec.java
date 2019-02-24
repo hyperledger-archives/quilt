@@ -25,6 +25,7 @@ import static java.lang.String.format;
 import org.interledger.encoding.asn.framework.CodecException;
 
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -116,30 +117,33 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
 
   @Override
   public boolean equals(Object obj) {
-
     if (this == obj) {
       return true;
     }
-
     if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
+    if (!super.equals(obj)) {
+      return false;
+    }
 
-    AsnOctetStringBasedObjectCodec that = (AsnOctetStringBasedObjectCodec) obj;
+    AsnOctetStringBasedObjectCodec<?> that = (AsnOctetStringBasedObjectCodec<?>) obj;
 
     return Arrays.equals(bytes, that.bytes);
   }
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(bytes);
+    int result = super.hashCode();
+    result = 31 * result + Arrays.hashCode(bytes);
+    return result;
   }
 
   @Override
   public String toString() {
     return "AsnOctetStringBasedObjectCodec{"
         + "bytes="
-        + Arrays.toString(bytes)
+        + Base64.getEncoder().encodeToString(bytes)
         + '}';
   }
 }
