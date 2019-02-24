@@ -23,7 +23,9 @@ package org.interledger.core;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * <p>Represents an Interledger Fulfillment that can be used in an {@link
@@ -80,9 +82,9 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
   boolean validateCondition(InterledgerCondition condition);
 
   /**
-   * An immutable implementation of InterledgerFulfillment optimized for efficient operations that
-   * only create copies of the internal data as required and only performs late generation of the
-   * hash when required.
+   * An immutable implementation of InterledgerFulfillment optimized for efficient operations that only create copies of
+   * the internal data as required and only performs late generation of the condition hash (i.e., the
+   * `InterledgerCondition`) when required.
    */
   class ImmutableInterledgerFulfillment implements InterledgerFulfillment {
 
@@ -170,10 +172,22 @@ public interface InterledgerFulfillment extends Comparable<InterledgerFulfillmen
           return this.preimage[i] - otherPreimage[i];
         }
       }
-
       return 0;
     }
 
-  }
+    @Override
+    public int hashCode() {
+      int result = Arrays.hashCode(preimage);
+      result = 31 * result + condition.hashCode();
+      return result;
+    }
 
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", ImmutableInterledgerFulfillment.class.getSimpleName() + "[", "]")
+          .add("preimage=" + Base64.getEncoder().encodeToString(preimage))
+          .add("condition=" + condition)
+          .toString();
+    }
+  }
 }
