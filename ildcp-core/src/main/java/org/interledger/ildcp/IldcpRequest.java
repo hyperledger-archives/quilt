@@ -22,10 +22,12 @@ package org.interledger.ildcp;
 
 import org.interledger.annotations.Immutable;
 
+import org.immutables.value.Value.Default;
+
 import java.time.Instant;
 
 /**
- * A request to an IL-DCP compliant endpoint (empty for now).
+ * A request to an IL-DCP compliant endpoint.
  */
 public interface IldcpRequest {
 
@@ -36,10 +38,18 @@ public interface IldcpRequest {
   /**
    * An arbitrary expiration date for this packet, as configured by the sender.
    */
-  Instant getExpiresAt();
+  default Instant getExpiresAt() {
+    return Instant.now().plusSeconds(30);
+  }
 
   @Immutable
   abstract class AbstractIldcpRequest implements IldcpRequest {
+
+    @Override
+    @Default
+    public Instant getExpiresAt() {
+      return Instant.now().plusSeconds(30);
+    }
 
   }
 
