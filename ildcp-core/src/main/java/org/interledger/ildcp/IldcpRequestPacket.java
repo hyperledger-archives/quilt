@@ -37,20 +37,6 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   }
 
   /**
-   * Construct an instance of {@link IldcpRequestPacket} from the supplied {@code ildcpRequest}.
-   *
-   * @param ildcpRequest An instance of {@link IldcpRequest}.
-   *
-   * @return An {@link IldcpRequestPacket}.
-   */
-  static IldcpRequestPacket from(final IldcpRequest ildcpRequest) {
-    Objects.requireNonNull(ildcpRequest);
-    return IldcpRequestPacket.builder()
-        .expiresAt(ildcpRequest.getExpiresAt())
-        .build();
-  }
-
-  /**
    * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
    */
   default BigInteger getAmount() {
