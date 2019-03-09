@@ -22,11 +22,14 @@ package org.interledger.ildcp;
 
 import org.interledger.annotations.Immutable;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerFulfillment;
 
 /**
  * A response to an IL-DCP request.
  */
 public interface IldcpResponse {
+
+  InterledgerFulfillment EXECUTION_FULFILLMENT = InterledgerFulfillment.of(new byte[32]);
 
   static IldcpResponseBuilder builder() {
     return new IldcpResponseBuilder();
@@ -61,7 +64,7 @@ public interface IldcpResponse {
    *
    * @return An {@link Integer} representing the asset scale.
    */
-  Integer getAssetScale();
+  short getAssetScale();
 
   @Immutable
   abstract class AbstractIldcpResponse implements IldcpResponse {

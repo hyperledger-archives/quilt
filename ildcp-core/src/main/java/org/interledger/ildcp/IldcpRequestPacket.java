@@ -11,8 +11,6 @@ import org.immutables.value.Value.Derived;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Objects;
 
 /**
  * An extension of {@link InterledgerPreparePacket} that can be used as an IL-DCP request over Interledger.
@@ -21,9 +19,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
 
   InterledgerAddress PEER_DOT_CONFIG = InterledgerAddress.of(InterledgerAddressPrefix.PEER.with("config").getValue());
 
-  InterledgerCondition EXECUTION_CONDITION = InterledgerCondition.of(
-      Base64.getDecoder().decode("Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=")
-  );
+  InterledgerCondition EXECUTION_CONDITION = IldcpResponsePacket.EXECUTION_FULFILLMENT.getCondition();
 
   byte[] EMPTY_DATA = new byte[0];
 
@@ -39,6 +35,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   /**
    * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
    */
+  @Override
   default BigInteger getAmount() {
     return BigInteger.ZERO;
   }
@@ -48,6 +45,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
    * <tt>Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=</tt> in Base64 format, which is the SHA-256 hash of a 32-byte
    * array with all 0 values.
    */
+  @Override
   default InterledgerCondition getExecutionCondition() {
     return EXECUTION_CONDITION;
   }
@@ -55,18 +53,26 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   /**
    * The destination of an ILP packet for IL-DCP is always <tt>peer.config</tt>.
    */
+  @Override
   default InterledgerAddress getDestination() {
     return PEER_DOT_CONFIG;
   }
 
-
+  /**
+   * The Date and time when the packet expires. Each connector changes the value of this field to set the expiry to an
+   * earlier time, before forwarding the packet.
+   *
+   * @return The {@link Instant} this packet should be considered to be expired.
+   */
+  @Override
   default Instant getExpiresAt() {
     return Instant.now().plusSeconds(30);
   }
 
   /**
-   * The data of an ILP packet for IL-DCP is always empty (size: 0).
+   * The data of an ILP packet for IL-DCP requests is always empty (size: 0).
    */
+  @Override
   default byte[] getData() {
     return EMPTY_DATA;
   }

@@ -37,9 +37,9 @@ public class IldcpRequestPacketTest {
 
   @Test
   public void testEqualsHashcode() {
-
-    final IldcpRequestPacket first = IldcpRequestPacket.builder().build();
-    final IldcpRequestPacket second = IldcpRequestPacket.builder().build();
+    final Instant expiresAt = Instant.parse("2019-12-25T01:02:03.996Z");
+    final IldcpRequestPacket first = IldcpRequestPacket.builder().expiresAt(expiresAt).build();
+    final IldcpRequestPacket second = IldcpRequestPacket.builder().expiresAt(expiresAt).build();
     final IldcpRequestPacket third = IldcpRequestPacket.builder().amount(BigInteger.TEN).build();
 
     assertThat(first.equals(second), is(true));
@@ -58,7 +58,9 @@ public class IldcpRequestPacketTest {
 
     assertThat(
         first.toString().startsWith(
-            "IldcpRequestPacket{destination=InterledgerAddress{value=peer.config}, amount=0, executionCondition=Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}, expiresAt=2019-12-25T01:02:03.996Z, data=[B@"),
+            "IldcpRequestPacket{destination=InterledgerAddress{value=peer.config}, amount=0, executionCondition="
+                + "Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}, expiresAt=2019-12-25T01:02:03.996Z,"
+                + " data=[B@"),
         is(true)
     );
   }

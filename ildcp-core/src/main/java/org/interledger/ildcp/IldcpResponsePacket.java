@@ -4,17 +4,15 @@ import org.interledger.annotations.Immutable;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
 
-import org.immutables.value.Value.Derived;
-
-import java.util.Objects;
+import org.immutables.value.Value.Default;
 
 /**
- * An extension of {@link InterledgerFulfillPacket} that can be used as an IL-DCP response over Interledger.
+ * An extension of {@link InterledgerFulfillPacket} that is also a {@link IldcpResponsePacket} that can be used as an
+ * IL-DCP response over Interledger.
  */
 public interface IldcpResponsePacket extends InterledgerFulfillPacket {
 
-  byte[] EMPTY_DATA = new byte[32];
-  InterledgerFulfillment EXECUTION_FULFILLMENT = InterledgerFulfillment.of(EMPTY_DATA);
+  InterledgerFulfillment EXECUTION_FULFILLMENT = InterledgerFulfillment.of(new byte[32]);
 
   static IldcpResponsePacketBuilder builder() {
     return new IldcpResponsePacketBuilder();
@@ -28,6 +26,13 @@ public interface IldcpResponsePacket extends InterledgerFulfillPacket {
   }
 
   /**
+   * The {@link IldcpResponse} encoded into the <tt>data</tt> field of this packet.
+   *
+   * @return The {@link IldcpResponse}.
+   */
+  IldcpResponse getIldcpResponse();
+
+  /**
    * Exists to satisfy Immutables.
    */
   @Immutable
@@ -36,11 +41,17 @@ public interface IldcpResponsePacket extends InterledgerFulfillPacket {
     /**
      * The fulfillment of an ILP packet for IL-DCP is always a 32-byte octet string all filled with zeros.
      */
-    @Derived
+    @Default
     @Override
     public InterledgerFulfillment getFulfillment() {
       return EXECUTION_FULFILLMENT;
     }
 
+    // Overriden because in the general case, `data` is only used when serialization occurs.
+    @Override
+    @Default
+    public byte[] getData() {
+      return new byte[0];
+    }
   }
 }

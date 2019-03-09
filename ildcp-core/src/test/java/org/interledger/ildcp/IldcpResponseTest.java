@@ -1,9 +1,7 @@
 package org.interledger.ildcp;
 
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerAddress;
 
@@ -14,23 +12,13 @@ import org.junit.Test;
  */
 public class IldcpResponseTest {
 
-  @Test
-  public void testBuilder() {
-    final IldcpResponse actual = IldcpResponse.builder()
-        .assetCode("BTC")
-        .assetScale(9)
-        .clientAddress(InterledgerAddress.of("example.foo"))
-        .build();
-    assertThat(actual.getAssetCode(), is("BTC"));
-    assertThat(actual.getAssetScale(), is(9));
-    assertThat(actual.getClientAddress(), is(InterledgerAddress.of("example.foo")));
-  }
+  private static final InterledgerAddress FOO_ADDRESS = InterledgerAddress.of("example.foo");
+  private static final String BTC = "BTC";
 
   @Test(expected = IllegalStateException.class)
-  public void testEmptyBuilder() {
+  public void testBuilderWhenEmpty() {
     try {
       IldcpResponse.builder().build();
-      fail();
     } catch (IllegalStateException e) {
       assertThat(
           e.getMessage(),
@@ -41,75 +29,15 @@ public class IldcpResponseTest {
   }
 
   @Test
-  public void testEqualsHashcode() {
-
-    final IldcpResponse first = IldcpResponse.builder()
-        .assetCode("BTC")
-        .assetScale(9)
-        .clientAddress(InterledgerAddress.of("example.foo"))
-        .build();
-    final IldcpResponse second = IldcpResponse.builder()
-        .assetCode("BTC")
-        .assetScale(9)
-        .clientAddress(InterledgerAddress.of("example.foo"))
+  public void testBuilder() {
+    final IldcpResponse response = IldcpResponse.builder()
+        .clientAddress(FOO_ADDRESS)
+        .assetScale((short) 9)
+        .assetCode(BTC)
         .build();
 
-    final IldcpResponse third = IldcpResponse.builder()
-        .assetCode("BTC")
-        .assetScale(2)
-        .clientAddress(InterledgerAddress.of("example.foo"))
-        .build();
-
-    assertThat(first.equals(second), is(true));
-    assertThat(second.equals(first), is(true));
-
-    assertThat(
-        IldcpResponse.builder()
-            .assetCode("XRP")
-            .assetScale(9)
-            .clientAddress(InterledgerAddress.of("example.foo"))
-            .build(),
-        is(not(first))
-    );
-
-    assertThat(
-        IldcpResponse.builder()
-            .assetCode("BTC")
-            .assetScale(8)
-            .clientAddress(InterledgerAddress.of("example.foo"))
-            .build(),
-        is(not(first))
-    );
-
-    assertThat(
-        IldcpResponse.builder()
-            .assetCode("BTC")
-            .assetScale(9)
-            .clientAddress(InterledgerAddress.of("example.foo.bar"))
-            .build(),
-        is(not(first))
-    );
-
-    assertThat(first.hashCode(), is(second.hashCode()));
-    assertThat(second.hashCode(), is(first.hashCode()));
-    assertThat(IldcpResponse.builder()
-        .assetCode("BTC")
-        .assetScale(9)
-        .clientAddress(InterledgerAddress.of("example.foo.bar"))
-        .build().hashCode(), is(not(first.hashCode())));
-  }
-
-  @Test
-  public void testToString() {
-    final IldcpResponse first = IldcpResponse.builder()
-        .assetCode("BTC")
-        .assetScale(9)
-        .clientAddress(InterledgerAddress.of("example.foo.bar"))
-        .build();
-
-    assertThat(
-        first.toString(),
-        is("IldcpResponse{clientAddress=InterledgerAddress{value=example.foo.bar}, assetCode=BTC, assetScale=9}")
-    );
+    assertThat(response.getClientAddress(), is(FOO_ADDRESS));
+    assertThat(response.getAssetScale(), is((short) 9));
+    assertThat(response.getAssetCode(), is(BTC));
   }
 }
