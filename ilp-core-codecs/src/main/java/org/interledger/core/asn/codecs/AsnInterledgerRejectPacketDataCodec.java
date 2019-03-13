@@ -46,7 +46,7 @@ public class AsnInterledgerRejectPacketDataCodec extends AsnSequenceCodec<Interl
   public InterledgerRejectPacket decode() {
     return InterledgerRejectPacket.builder()
         .code(getValueAt(0))
-        .triggeredBy((Optional) getValueAt(1))
+        .triggeredBy(Optional.ofNullable(getValueAt(1)))
         .message(getValueAt(2))
         .data(getValueAt(3))
         .build();
@@ -55,7 +55,7 @@ public class AsnInterledgerRejectPacketDataCodec extends AsnSequenceCodec<Interl
   @Override
   public void encode(InterledgerRejectPacket value) {
     setValueAt(0, value.getCode());
-    setValueAt(1, value.getTriggeredBy());
+    setValueAt(1, value.getTriggeredBy().orElse(null));
     setValueAt(2, value.getMessage());
     setValueAt(3, value.getData());
   }

@@ -193,7 +193,7 @@ public class InterledgerRejectPacketTest {
         .data(new byte[32])
         .build();
     assertThat(interledgerProtocolError1.toString(),
-        is("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=Optional[TEST], data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"));
+        is("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=TEST, data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"));
   }
 
 }

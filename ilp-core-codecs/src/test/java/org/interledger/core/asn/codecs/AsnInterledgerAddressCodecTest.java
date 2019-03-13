@@ -31,7 +31,7 @@ public class AsnInterledgerAddressCodecTest {
 
   @Test
   public void encode() {
-    codec.encode(Optional.of(InterledgerAddress.of(G_FOO)));
+    codec.encode(InterledgerAddress.of(G_FOO));
     assertThat(codec.getCharString(), is(G_FOO));
   }
 }
