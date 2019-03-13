@@ -25,6 +25,7 @@ import org.interledger.annotations.Immutable;
 import org.immutables.value.Value.Default;
 
 import java.util.Base64;
+import java.util.Optional;
 
 public interface InterledgerRejectPacket extends InterledgerResponsePacket {
 
@@ -49,7 +50,7 @@ public interface InterledgerRejectPacket extends InterledgerResponsePacket {
    *
    * @return An {@link InterledgerAddress}.
    */
-  InterledgerAddress getTriggeredBy();
+  Optional<InterledgerAddress> getTriggeredBy();
 
   /**
    * User-readable error message, primarily intended for debugging purposes.
@@ -65,6 +66,15 @@ public interface InterledgerRejectPacket extends InterledgerResponsePacket {
     @Default
     public byte[] getData() {
       return new byte[0];
+    }
+
+
+    @Override
+    @Default
+    public String getMessage() {
+      // In OER, an "empty" string is just a single 0 length-indicator byte to indicate no bytes. This maps well to an
+      // empty string, so we don't use optional here
+      return "";
     }
 
     /**

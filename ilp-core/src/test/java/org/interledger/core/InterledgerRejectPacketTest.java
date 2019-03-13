@@ -22,11 +22,14 @@ package org.interledger.core;
 
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
+
+import java.util.Optional;
 
 /**
  * Unit tests for {@link InterledgerRejectPacket} and {@link InterledgerRejectPacketBuilder}.
@@ -51,25 +54,22 @@ public class InterledgerRejectPacketTest {
             .build();
 
     assertThat(interledgerProtocolError.getCode(), is(errorCode));
-    assertThat(interledgerProtocolError.getTriggeredBy(), is(triggeredBy));
+    assertThat(interledgerProtocolError.getTriggeredBy().get(), is(triggeredBy));
     assertThat(interledgerProtocolError.getData(), is(data));
   }
 
   @Test
   public void testBuildWithoutOptionalData() {
     final InterledgerErrorCode errorCode = InterledgerErrorCode.T00_INTERNAL_ERROR;
-    final InterledgerAddress triggeredBy = FOO;
 
     final InterledgerRejectPacket interledgerProtocolError =
         InterledgerRejectPacket.builder()
             .code(errorCode)
-            .triggeredBy(triggeredBy)
-            .message("foo")
             .build();
 
     assertThat(interledgerProtocolError.getCode(), is(errorCode));
-    assertThat(interledgerProtocolError.getTriggeredBy(), is(triggeredBy));
-    assertThat(interledgerProtocolError.getMessage(), is("foo"));
+    assertThat(interledgerProtocolError.getTriggeredBy().isPresent(), is(false));
+    assertThat(interledgerProtocolError.getMessage(), is(""));
     assertThat(interledgerProtocolError.getData(), is(new byte[0]));
   }
 
@@ -83,16 +83,6 @@ public class InterledgerRejectPacketTest {
       assertTrue(e.getMessage().startsWith("Cannot build InterledgerRejectPacket, "
           + "some of required attributes are not set"));
     }
-
-    try {
-      InterledgerRejectPacket.builder().code(InterledgerErrorCode.T00_INTERNAL_ERROR).build();
-      fail("Builder should have thrown an exception but did not!");
-    } catch (Exception e) {
-      assertTrue(e instanceof IllegalStateException);
-      assertTrue(e.getMessage().startsWith("Cannot build InterledgerRejectPacket, "
-          + "some of required attributes are not set"));
-    }
-
   }
 
   @Test
@@ -108,11 +98,11 @@ public class InterledgerRejectPacketTest {
     }
 
     try {
-      builder.triggeredBy(null);
+      builder.triggeredBy((Optional<InterledgerAddress>) null);
       fail();
     } catch (Exception e) {
       assertTrue(e instanceof NullPointerException);
-      assertThat(e.getMessage(), is("triggeredBy"));
+      assertThat(e.getMessage(), is(nullValue()));
     }
 
     try {
@@ -203,7 +193,7 @@ public class InterledgerRejectPacketTest {
         .data(new byte[32])
         .build();
     assertThat(interledgerProtocolError1.toString(),
-        is("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=InterledgerAddress{value=test1.foo.foo}, message=TEST, data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"));
+        is("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=Optional[TEST], data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"));
   }
 
 }

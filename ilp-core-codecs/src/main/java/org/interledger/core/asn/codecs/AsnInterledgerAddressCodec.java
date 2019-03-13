@@ -24,19 +24,23 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.encoding.asn.codecs.AsnIA5StringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 
-public class AsnInterledgerAddressCodec extends AsnIA5StringBasedObjectCodec<InterledgerAddress> {
+import java.util.Optional;
+
+public class AsnInterledgerAddressCodec extends AsnIA5StringBasedObjectCodec<Optional<InterledgerAddress>> {
 
   public AsnInterledgerAddressCodec() {
-    super(new AsnSizeConstraint(1, 1023));
+    super(new AsnSizeConstraint(0, 1023));
   }
 
   @Override
-  public InterledgerAddress decode() {
-    return InterledgerAddress.of(getCharString());
+  public Optional<InterledgerAddress> decode() {
+    return Optional.ofNullable(getCharString())
+        .filter(string -> !string.isEmpty())
+        .map(InterledgerAddress::of);
   }
 
   @Override
-  public void encode(InterledgerAddress value) {
-    setCharString(value.getValue());
+  public void encode(Optional<InterledgerAddress> value) {
+    setCharString(value.map(InterledgerAddress::getValue).orElse(""));
   }
 }

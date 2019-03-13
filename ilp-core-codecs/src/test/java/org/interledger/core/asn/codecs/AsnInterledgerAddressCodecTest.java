@@ -8,6 +8,8 @@ import org.interledger.core.InterledgerAddress;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Optional;
+
 /**
  * Unit tests for {@link AsnInterledgerAddressCodec}.
  */
@@ -29,7 +31,7 @@ public class AsnInterledgerAddressCodecTest {
 
   @Test
   public void encode() {
-    codec.encode(InterledgerAddress.of(G_FOO));
+    codec.encode(Optional.of(InterledgerAddress.of(G_FOO)));
     assertThat(codec.getCharString(), is(G_FOO));
   }
 }
