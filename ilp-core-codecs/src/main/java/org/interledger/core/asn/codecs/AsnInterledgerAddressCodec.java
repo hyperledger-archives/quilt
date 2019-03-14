@@ -21,22 +21,33 @@ package org.interledger.core.asn.codecs;
  */
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.codecs.AsnIA5StringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 
+import java.util.Optional;
+
+/**
+ * Sometimes an ILP Address can be omitted (e.g., a Reject packet) so this Codec overtly accepts null so that this can
+ * be mapped to {@link Optional#empty()} inside of {@link InterledgerRejectPacket#getTriggeredBy()} .
+ */
 public class AsnInterledgerAddressCodec extends AsnIA5StringBasedObjectCodec<InterledgerAddress> {
 
   public AsnInterledgerAddressCodec() {
-    super(new AsnSizeConstraint(1, 1023));
+    super(new AsnSizeConstraint(0, 1023));
   }
 
   @Override
   public InterledgerAddress decode() {
-    return InterledgerAddress.of(getCharString());
+    return Optional.ofNullable(getCharString())
+        // If the internal String is "", then treat this as a non-existent ILP Address
+        .filter(charString -> !"".equals(charString))
+        .map(InterledgerAddress::of)
+        .orElse(null);
   }
 
   @Override
   public void encode(InterledgerAddress value) {
-    setCharString(value.getValue());
+    setCharString(value == null ? "" : value.getValue());
   }
 }
