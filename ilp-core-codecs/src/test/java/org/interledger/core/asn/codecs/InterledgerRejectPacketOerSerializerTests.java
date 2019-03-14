@@ -20,6 +20,9 @@ package org.interledger.core.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPacket;
@@ -27,8 +30,6 @@ import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.asn.framework.InterledgerCodecContextFactory;
 import org.interledger.encoding.asn.framework.CodecContext;
 
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -39,13 +40,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Random;
 import java.util.stream.IntStream;
 
 /**
- * Unit tests to validate the serializer functionality for all {@link InterledgerRejectPacket}
- * packets.
+ * Unit tests to validate the serializer functionality for all {@link InterledgerRejectPacket} packets.
  */
 @RunWith(Parameterized.class)
 public class InterledgerRejectPacketOerSerializerTests {
@@ -57,6 +58,9 @@ public class InterledgerRejectPacketOerSerializerTests {
   // first data value (0) is default
   @Parameter
   public InterledgerPacket packet;
+
+  @Parameter(1)
+  public String expectedB64Bytes;
 
   /**
    * The data for this test...
@@ -84,13 +88,21 @@ public class InterledgerRejectPacketOerSerializerTests {
         .map(r::nextInt)
         .forEach(byteArrayOutputStream3::write);
 
+    // This ByteArrayOutputStream contains a small amount of bytes
+    final ByteArrayOutputStream byteArrayOutputStream4 = new ByteArrayOutputStream();
+    IntStream.range(1, 2)
+        .map(r::nextInt)
+        .forEach(byteArrayOutputStream4::write);
+
     return Arrays.asList(new Object[][] {
-        {InterledgerRejectPacket.builder()
-            .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
-            .triggeredBy(FOO)
-            .message("Internal Error")
-            .data(byteArrayOutputStream1.toByteArray())
-            .build()
+        {
+            InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
+                .triggeredBy(FOO)
+                .message("Internal Error")
+                .data(byteArrayOutputStream1.toByteArray())
+                .build(),
+            "un-checked"
         },
 
         {
@@ -99,7 +111,8 @@ public class InterledgerRejectPacketOerSerializerTests {
                 .triggeredBy(BAR)
                 .message("Ledger Unreachable")
                 .data(byteArrayOutputStream2.toByteArray())
-                .build()
+                .build(),
+            "un-checked"
         },
 
         {
@@ -108,50 +121,103 @@ public class InterledgerRejectPacketOerSerializerTests {
                 .triggeredBy(BAZ)
                 .message("Ledger Busy")
                 .data(byteArrayOutputStream3.toByteArray())
-                .build()
+                .build(),
+            "un-checked"
         },
+
+        {
+            InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .triggeredBy(BAZ)
+                .message("Ledger Busy")
+                .data(byteArrayOutputStream4.toByteArray())
+                .build(),
+            "Dh9UMDINdGVzdDEuYmF6LmJhegtMZWRnZXIgQnVzeQEA"
+        },
+
+        // Missing TriggeredBy
+        {
+            InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .message("Ledger Busy")
+                .build(),
+            "DhFUMDIAC0xlZGdlciBCdXN5AA=="
+        },
+
+        // Missing Message
+        {
+            InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .triggeredBy(BAZ)
+                .build(),
+            "DhNUMDINdGVzdDEuYmF6LmJhegAA"
+        },
+
+        // Missing TriggeredBy & Message
+        {
+            InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .build(),
+            "DgZUMDIAAAA="
+        },
+
+        {
+            InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.F02_UNREACHABLE)
+                .build(),
+            "DgZGMDIAAAA=" // Hex: 0e 06 46 30 32 0 0 0
+        }
 
     });
   }
 
   /**
-   * The primary difference between this test and {@link #testInterledgerErrorCodec()} is that this
-   * context call specifies the type, whereas the test below determines the type from the payload.
+   * The primary difference between this test and {@link #testInterledgerErrorCodec()} is that this context call
+   * specifies the type, whereas the test below determines the type from the payload.
    */
   @Test
   public void testIndividualRead() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
-    final ByteArrayInputStream asn1OerErrorBytes = constructInterledgerRejectPacketAsn1OerBytes();
 
-    final InterledgerRejectPacket error = context
-        .read(InterledgerRejectPacket.class, asn1OerErrorBytes);
-    MatcherAssert.assertThat(error, CoreMatchers.is(packet));
+    final ByteArrayInputStream asn1OerErrorBytesStream = constructInterledgerRejectPacketAsn1OerInputStream();
+    final InterledgerRejectPacket error = context.read(InterledgerRejectPacket.class, asn1OerErrorBytesStream);
+    assertThat(error, is(packet));
+
+    // Only verify small packets...
+    if (packet.getData().length < 2) {
+      final byte[] asn1OerErrorBytes = constructInterledgerRejectPacketAsn1OerBytes();
+      assertThat(Base64.getEncoder().encodeToString(asn1OerErrorBytes), is(expectedB64Bytes));
+    }
+
   }
 
   /**
-   * The primary difference between this test and {@link #testIndividualRead()} is that this context
-   * determines the ipr type from the payload, whereas the test above specifies the type in the
-   * method call.
+   * The primary difference between this test and {@link #testIndividualRead()} is that this context determines the ipr
+   * type from the payload, whereas the test above specifies the type in the method call.
    */
   @Test
   public void testInterledgerErrorCodec() throws Exception {
     final CodecContext context = InterledgerCodecContextFactory.oer();
-    final ByteArrayInputStream asn1OerErrorBytes = constructInterledgerRejectPacketAsn1OerBytes();
+    final ByteArrayInputStream asn1OerErrorBytes = constructInterledgerRejectPacketAsn1OerInputStream();
 
     final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class,
         asn1OerErrorBytes);
-    MatcherAssert.assertThat(decodedPacket.getClass().getName(),
-        CoreMatchers.is(packet.getClass().getName()));
-    MatcherAssert.assertThat(decodedPacket, CoreMatchers.is(packet));
+    assertThat(decodedPacket.getClass().getName(),
+        is(packet.getClass().getName()));
+    assertThat(decodedPacket, is(packet));
   }
 
-  private ByteArrayInputStream constructInterledgerRejectPacketAsn1OerBytes() throws IOException {
+  private byte[] constructInterledgerRejectPacketAsn1OerBytes() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
 
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     context.write(packet, outputStream);
 
-    return new ByteArrayInputStream(outputStream.toByteArray());
+    return outputStream.toByteArray();
+  }
+
+  private ByteArrayInputStream constructInterledgerRejectPacketAsn1OerInputStream() throws IOException {
+    return new ByteArrayInputStream(constructInterledgerRejectPacketAsn1OerBytes());
   }
 
 }
