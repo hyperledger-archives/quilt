@@ -8,8 +8,6 @@ import org.interledger.core.InterledgerAddress;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Optional;
-
 /**
  * Unit tests for {@link AsnInterledgerAddressCodec}.
  */
