@@ -2,6 +2,8 @@ package org.interledger.ildcp;
 
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.encoding.asn.framework.CodecException;
+import org.interledger.ildcp.asn.codecs.IldcpCodecException;
 import org.interledger.ildcp.asn.framework.IldcpCodecContextFactory;
 
 import java.io.ByteArrayInputStream;
@@ -9,17 +11,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 
+/**
+ * Helper class to marshal and unmarshal instances of {@link IldcpResponse} from an Interledger packet.
+ */
 public class IldcpUtils {
 
   /**
-   * Converts an {@link IldcpResponse} to a corresponding ILP Fulfillment packet.
+   * Converts an {@link IldcpResponse} to a corresponding {@link IldcpResponsePacket} packet by encoding the {@code
+   * ildpResponse} into the returned packet's `data` payload.
    *
    * @param ildcpResponse A {@link IldcpResponse} to encode and package into the `data` property of a new Prepare
    *                      packet.
    *
    * @return A {@link InterledgerPreparePacket} that conforms to the IL-DCP RFC.
    */
-  public static InterledgerFulfillPacket fromIldcpResponse(final IldcpResponse ildcpResponse) {
+  public static IldcpResponsePacket fromIldcpResponse(final IldcpResponse ildcpResponse) {
     Objects.requireNonNull(ildcpResponse);
 
     // Convert IldcpResponse to bytes...
@@ -30,8 +36,8 @@ public class IldcpUtils {
       throw new RuntimeException(e.getMessage(), e);
     }
 
-    return InterledgerFulfillPacket.builder()
-        .fulfillment(IldcpResponse.EXECUTION_FULFILLMENT)
+    return IldcpResponsePacket.builder()
+        .ildcpResponse(ildcpResponse)
         .data(os.toByteArray())
         .build();
   }
@@ -50,8 +56,13 @@ public class IldcpUtils {
     try {
       final ByteArrayInputStream is = new ByteArrayInputStream(packet.getData());
       return IldcpCodecContextFactory.oer().read(IldcpResponse.class, is);
+    } catch (CodecException e) {
+      throw new IldcpCodecException(
+          "Packet must have a data payload containing an encoded instance of IldcpResponse", e
+      );
     } catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
+      throw new IldcpCodecException(
+          "Packet must have a data payload containing an encoded instance of IldcpResponse", e);
     }
   }
 

@@ -24,6 +24,7 @@ import org.interledger.core.asn.codecs.AsnFulfillmentCodec;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
+import org.interledger.encoding.asn.framework.CodecException;
 import org.interledger.ildcp.IldcpResponse;
 import org.interledger.ildcp.IldcpResponsePacket;
 import org.interledger.ildcp.asn.framework.IldcpCodecContextFactory;
@@ -51,7 +52,7 @@ public class AsnIldcpResponsePacketDataCodec extends AsnSequenceCodec<IldcpRespo
       ildcpResponse = IldcpCodecContextFactory.oer()
           .read(IldcpResponse.class, new ByteArrayInputStream(getValueAt(1)));
     } catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
+      throw new IldcpCodecException(e.getMessage(), e);
     }
 
     return IldcpResponsePacket.builder()
@@ -67,7 +68,7 @@ public class AsnIldcpResponsePacketDataCodec extends AsnSequenceCodec<IldcpRespo
     try {
       IldcpCodecContextFactory.oer().write(value.getIldcpResponse(), os);
     } catch (IOException e) {
-      throw new RuntimeException(e.getMessage(), e);
+      throw new IldcpCodecException(e.getMessage(), e);
     }
 
     setValueAt(0, value.getFulfillment());
