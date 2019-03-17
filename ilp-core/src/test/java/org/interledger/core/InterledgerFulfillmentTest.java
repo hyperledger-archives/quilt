@@ -113,8 +113,7 @@ public class InterledgerFulfillmentTest {
 
     assertThat(fulfillment.hashCode() == fulfillment.hashCode(), is(true)); //Same object
     assertThat(fulfillment.hashCode() == InterledgerFulfillment.of(BYTES_1).hashCode(), is(true)); //Same array as input
-    assertThat(fulfillment.hashCode() == InterledgerFulfillment.of(copyOfBytes1).hashCode(),
-        is(true)); //Equal arrays as input
+    assertThat(fulfillment.hashCode() == InterledgerFulfillment.of(copyOfBytes1).hashCode(), is(true)); //Equal arrays as input
 
     final InterledgerFulfillment otherFulfillment = InterledgerFulfillment.of(new byte[32]);
     assertThat(otherFulfillment.hashCode() == fulfillment.hashCode(), is(false));
