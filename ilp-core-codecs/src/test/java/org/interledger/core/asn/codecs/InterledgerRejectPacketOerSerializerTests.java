@@ -107,7 +107,7 @@ public class InterledgerRejectPacketOerSerializerTests {
 
         {
             InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.T01_LEDGER_UNREACHABLE)
+                .code(InterledgerErrorCode.T01_PEER_UNREACHABLE)
                 .triggeredBy(BAR)
                 .message("Ledger Unreachable")
                 .data(byteArrayOutputStream2.toByteArray())
@@ -117,7 +117,7 @@ public class InterledgerRejectPacketOerSerializerTests {
 
         {
             InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .code(InterledgerErrorCode.T02_PEER_BUSY)
                 .triggeredBy(BAZ)
                 .message("Ledger Busy")
                 .data(byteArrayOutputStream3.toByteArray())
@@ -127,7 +127,7 @@ public class InterledgerRejectPacketOerSerializerTests {
 
         {
             InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .code(InterledgerErrorCode.T02_PEER_BUSY)
                 .triggeredBy(BAZ)
                 .message("Ledger Busy")
                 .data(byteArrayOutputStream4.toByteArray())
@@ -138,7 +138,7 @@ public class InterledgerRejectPacketOerSerializerTests {
         // Missing TriggeredBy
         {
             InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .code(InterledgerErrorCode.T02_PEER_BUSY)
                 .message("Ledger Busy")
                 .build(),
             "DhFUMDIAC0xlZGdlciBCdXN5AA=="
@@ -147,16 +147,16 @@ public class InterledgerRejectPacketOerSerializerTests {
         // Missing Message
         {
             InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
                 .triggeredBy(BAZ)
                 .build(),
-            "DhNUMDINdGVzdDEuYmF6LmJhegAA"
+            "DhNGMDgNdGVzdDEuYmF6LmJhegAA"
         },
 
         // Missing TriggeredBy & Message
         {
             InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.T02_LEDGER_BUSY)
+                .code(InterledgerErrorCode.T02_PEER_BUSY)
                 .build(),
             "DgZUMDIAAAA="
         },
