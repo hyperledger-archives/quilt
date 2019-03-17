@@ -70,27 +70,46 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
     return new InterledgerPreparePacketBuilder();
   }
 
+  /**
+   * Local amount, denominated in the minimum divisible unit of the asset of the bilateral relationship. This field is
+   * modified by each connector, who applies their exchange rate and adjusts the amount to the appropriate scale and
+   * precision of the outgoing account
+   *
+   * @return A {@link BigInteger} representing the amount of this packet.
+   */
   @Default
   default BigInteger getAmount() {
     return BigInteger.ZERO;
   }
 
+  /**
+   * The Date and time when the packet expires. Each connector changes the value of this field to set the expiry to an
+   * earlier time, before forwarding the packet.
+   *
+   * @return The {@link Instant} this packet should be considered to be expired.
+   */
   Instant getExpiresAt();
 
+  /**
+   * SHA-256 hash digest of the fulfillment that will execute the transfer of value represented by this packet.
+   * Connectors MUST NOT modify this field. The receiver must be able to fulfill this condition to receive the money.
+   *
+   * @return A {@link InterledgerCondition} to be fulfilled or rejected.
+   */
   InterledgerCondition getExecutionCondition();
 
   /**
-   * The Interledger address of the account where the receiver should ultimately receive the payment.
+   * The Interledger address of the receiver of this packet.
    *
    * @return An instance of {@link InterledgerAddress}.
    */
   InterledgerAddress getDestination();
 
   /**
-   * Arbitrary data for the receiver that is set by the transport layer of a payment (for example, this may contain PSK
-   * data).
+   * End-to-end data. Connectors MUST NOT modify this data. Most higher-level protocols will encrypt and authenticate
+   * this data, so receivers will reject packets in which the data is modified
    *
-   * @return A byte array.
+   * @return A byte array of data.
    */
   byte[] getData();
 

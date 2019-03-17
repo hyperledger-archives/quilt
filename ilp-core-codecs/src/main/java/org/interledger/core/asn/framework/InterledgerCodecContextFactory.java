@@ -48,37 +48,29 @@ import org.interledger.encoding.asn.serializers.oer.AsnSequenceOerSerializer;
 import java.time.Instant;
 
 /**
- * A factory class for constructing a CodecContext that can read and write Interledger objects using
- * ASN.1 OER encoding.
+ * A factory class for constructing a CodecContext that can read and write Interledger objects using ASN.1 OER
+ * encoding.
  */
 public class InterledgerCodecContextFactory {
 
   /**
-   * Create an instance of {@link CodecContext} that encodes and decodes Interledger packets using
-   * ASN.1 OER encoding.
+   * Create an instance of {@link CodecContext} that encodes and decodes Interledger packets using ASN.1 OER encoding.
    *
    * @return A new instance of {@link CodecContext}.
    */
   public static CodecContext oer() {
     return CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
         .register(Instant.class, AsnTimestampCodec::new)
-        .register(InterledgerCondition.class, AsnConditionCodec::new,
-            new AsnOctetStringOerSerializer())
-        .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new,
-            new AsnOctetStringOerSerializer())
-        .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new,
-            new AsnCharStringOerSerializer())
-        .register(InterledgerAddressPrefix.class, AsnInterledgerAddressPrefixCodec::new,
-            new AsnCharStringOerSerializer())
-        .register(InterledgerErrorCode.class, AsnInterledgerErrorCodeCodec::new,
-            new AsnCharStringOerSerializer())
-        .register(InterledgerFulfillPacket.class, AsnInterledgerFulfillPacketCodec::new,
-            new AsnSequenceOerSerializer())
-        .register(InterledgerPacket.class, AsnInterledgerPacketCodec::new,
-            new AsnSequenceOerSerializer())
-        .register(InterledgerPreparePacket.class, AsnInterledgerPreparePacketCodec::new,
-            new AsnSequenceOerSerializer())
-        .register(InterledgerRejectPacket.class, AsnInterledgerRejectPacketCodec::new,
-            new AsnSequenceOerSerializer());
+        .register(InterledgerCondition.class, AsnConditionCodec::new, new AsnOctetStringOerSerializer())
+        .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new, new AsnOctetStringOerSerializer())
+        .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new, new AsnCharStringOerSerializer())
+        .register(
+            InterledgerAddressPrefix.class, AsnInterledgerAddressPrefixCodec::new, new AsnCharStringOerSerializer()
+        )
+        .register(InterledgerErrorCode.class, AsnInterledgerErrorCodeCodec::new, new AsnCharStringOerSerializer())
+        .register(InterledgerPacket.class, AsnInterledgerPacketCodec::new, new AsnSequenceOerSerializer())
+        .register(InterledgerPreparePacket.class, AsnInterledgerPreparePacketCodec::new, new AsnSequenceOerSerializer())
+        .register(InterledgerFulfillPacket.class, AsnInterledgerFulfillPacketCodec::new, new AsnSequenceOerSerializer())
+        .register(InterledgerRejectPacket.class, AsnInterledgerRejectPacketCodec::new, new AsnSequenceOerSerializer());
   }
 }

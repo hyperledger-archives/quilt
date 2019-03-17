@@ -1,4 +1,4 @@
-package org.interledger.core.asn.codecs;
+package org.interledger.ildcp.asn.codecs;
 
 /*-
  * ========================LICENSE_START=================================
@@ -20,18 +20,21 @@ package org.interledger.core.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.asn.codecs.AsnConditionCodec;
+import org.interledger.core.asn.codecs.AsnInterledgerAddressCodec;
+import org.interledger.core.asn.codecs.AsnTimestampCodec;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
+import org.interledger.ildcp.IldcpRequestPacket;
 
-public class AsnInterledgerPreparePacketDataCodec extends AsnSequenceCodec<InterledgerPreparePacket> {
+public class AsnIldcpRequestPacketDataCodec extends AsnSequenceCodec<IldcpRequestPacket> {
 
   /**
    * Default constructor.
    */
-  public AsnInterledgerPreparePacketDataCodec() {
+  public AsnIldcpRequestPacketDataCodec() {
     super(
         new AsnUint64Codec(),
         new AsnTimestampCodec(),
@@ -42,18 +45,18 @@ public class AsnInterledgerPreparePacketDataCodec extends AsnSequenceCodec<Inter
   }
 
   @Override
-  public InterledgerPreparePacket decode() {
-    return InterledgerPreparePacket.builder()
+  public IldcpRequestPacket decode() {
+    return IldcpRequestPacket.builder()
         .amount(getValueAt(0))
         .expiresAt(getValueAt(1))
-        .executionCondition(getValueAt(2))
-        .destination(getValueAt(3))
-        .data(getValueAt(4))
+        //.executionCondition(getValueAt(2))
+        //.destination(getValueAt(3))
+        //.data(getValueAt(4))
         .build();
   }
 
   @Override
-  public void encode(InterledgerPreparePacket value) {
+  public void encode(IldcpRequestPacket value) {
     setValueAt(0, value.getAmount());
     setValueAt(1, value.getExpiresAt());
     setValueAt(2, value.getExecutionCondition());

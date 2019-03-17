@@ -2,24 +2,25 @@ package org.interledger.ildcp;
 
 import org.interledger.annotations.Immutable;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPreparePacket;
 
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 import java.math.BigInteger;
-import java.util.Base64;
-import java.util.Objects;
+import java.time.Instant;
 
 /**
- * An extension of {@link InterledgerPreparePacket} that can be used as an IL-DCP request over
- * Interledger.
+ * An extension of {@link InterledgerPreparePacket} that can be used as an IL-DCP request over Interledger.
  */
 public interface IldcpRequestPacket extends InterledgerPreparePacket {
 
-  InterledgerCondition EXECUTION_CONDITION = InterledgerCondition.of(
-      Base64.getDecoder().decode("Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=")
-  );
+  InterledgerAddress PEER_DOT_CONFIG = InterledgerAddress.of(InterledgerAddressPrefix.PEER.with("config").getValue());
+
+  InterledgerCondition EXECUTION_CONDITION = IldcpResponsePacket.EXECUTION_FULFILLMENT.getCondition();
+
   byte[] EMPTY_DATA = new byte[0];
 
   /**
@@ -32,32 +33,19 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   }
 
   /**
-   * Construct an instance of {@link IldcpRequestPacket} from the supplied {@code ildcpRequest}.
-   *
-   * @param ildcpRequest An instance of {@link IldcpRequest}.
-   *
-   * @return An {@link IldcpRequestPacket}.
+   * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
    */
-  static IldcpRequestPacket from(final IldcpRequest ildcpRequest) {
-    Objects.requireNonNull(ildcpRequest);
-    return IldcpRequestPacket.builder()
-        .expiresAt(ildcpRequest.getExpiresAt())
-        .build();
-  }
-
-  /**
-   * The destination of an ILP packet for IL-DCP is always <tt>0</tt>.
-   */
-  @Derived
+  @Override
   default BigInteger getAmount() {
     return BigInteger.ZERO;
   }
 
   /**
    * The execution_condition of an ILP packet for IL-DCP is always
-   * <tt>Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=</tt> in Base64 format.
+   * <tt>Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=</tt> in Base64 format, which is the SHA-256 hash of a 32-byte
+   * array with all 0 values.
    */
-  @Derived
+  @Override
   default InterledgerCondition getExecutionCondition() {
     return EXECUTION_CONDITION;
   }
@@ -65,21 +53,65 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   /**
    * The destination of an ILP packet for IL-DCP is always <tt>peer.config</tt>.
    */
-  @Derived
+  @Override
   default InterledgerAddress getDestination() {
-    return InterledgerAddress.of("peer.config");
+    return PEER_DOT_CONFIG;
   }
 
   /**
-   * The data of an ILP packet for IL-DCP is always empty (size: 0).
+   * The Date and time when the packet expires. Each connector changes the value of this field to set the expiry to an
+   * earlier time, before forwarding the packet.
+   *
+   * @return The {@link Instant} this packet should be considered to be expired.
    */
-  @Derived
+  @Override
+  default Instant getExpiresAt() {
+    return Instant.now().plusSeconds(30);
+  }
+
+  /**
+   * The data of an ILP packet for IL-DCP requests is always empty (size: 0).
+   */
+  @Override
   default byte[] getData() {
     return EMPTY_DATA;
   }
 
+  /**
+   * Exists to satisfy Immutables.
+   */
   @Immutable
   abstract class AbstractIldcpRequestPacket implements IldcpRequestPacket {
+
+    @Override
+    @Derived
+    public InterledgerAddress getDestination() {
+      return PEER_DOT_CONFIG;
+    }
+
+    @Override
+    @Default
+    public BigInteger getAmount() {
+      return BigInteger.ZERO;
+    }
+
+    @Override
+    @Derived
+    public InterledgerCondition getExecutionCondition() {
+      return EXECUTION_CONDITION;
+    }
+
+    @Override
+    @Default
+    public Instant getExpiresAt() {
+      return Instant.now().plusSeconds(30);
+    }
+
+    @Override
+    @Derived
+    public byte[] getData() {
+      return EMPTY_DATA;
+    }
 
   }
 

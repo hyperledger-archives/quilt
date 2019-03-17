@@ -1,17 +1,17 @@
-package org.interledger.ildcp.asn.framework;
+package org.interledger.ildcp.asn.codecs;
 
 /*-
  * ========================LICENSE_START=================================
- * Interledger Dynamic Configuration Protocol Core Codecs
+ * Interledger Core Codecs
  * %%
  * Copyright (C) 2017 - 2018 Hyperledger and its contributors
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,8 @@ package org.interledger.ildcp.asn.framework;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.ildcp.IldcpResponse;
-import org.interledger.ildcp.asn.codecs.AsnIldcpResponseCodec;
+import org.interledger.ildcp.IldcpRequestPacket;
 
-public class IldcpCodecs {
-
-  public static void register(CodecContext context) {
-    context.register(IldcpResponse.class, AsnIldcpResponseCodec::new);
-  }
+public class AsnIldcpRequestPacketCodec extends AsnIldcpPacketCodec<IldcpRequestPacket> {
 
 }

@@ -1,17 +1,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>quilt-parent</artifactId>
     <groupId>org.interledger</groupId>
-    <version>0.15.0-SNAPSHOT</version>
+    <version>0.16.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger Dynamic Configuration Protocol Core Libs</name>
+  <name>Interledger DCP Core</name>
+  <description>Interledger Dynamic Configuration Protocol (IL-DCP) core libraries.</description>
   <artifactId>ildcp-core</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
+    <dependency>
+      <groupId>javax.money</groupId>
+      <artifactId>money-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
       <artifactId>ilp-annotations</artifactId>
@@ -24,14 +34,6 @@
       <groupId>org.immutables</groupId>
       <artifactId>value</artifactId>
     </dependency>
-    <dependency>
-      <groupId>javax.money</groupId>
-      <artifactId>money-api</artifactId>
-    </dependency>
   </dependencies>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
 </project>

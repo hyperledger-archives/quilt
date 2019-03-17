@@ -23,7 +23,8 @@ package org.interledger.core;
 public interface InterledgerPacket {
 
   /**
-   * Arbitrary data that can be attached to a packet.
+   * End-to-end data. Connectors MUST NOT modify this data. Most higher-level protocols will encrypt and authenticate
+   * this data, so receivers will reject packets in which the data is modified
    *
    * @return A byte array.
    */

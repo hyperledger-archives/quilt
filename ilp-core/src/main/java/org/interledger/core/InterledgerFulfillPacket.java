@@ -38,7 +38,8 @@ public interface InterledgerFulfillPacket extends InterledgerResponsePacket {
   }
 
   /**
-   * Accessor for the fulfillment portion of this packet.
+   * 32-byte preimage of the execution-condition from the corresponding ILP Prepare packet (found in {@link
+   * InterledgerPreparePacket#getExecutionCondition()}).
    *
    * @return An instance of {@link InterledgerFulfillment}.
    */
