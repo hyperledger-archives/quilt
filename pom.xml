@@ -282,7 +282,8 @@
           </executions>
         </plugin>
 
-        <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
+        <!-- org.apache.maven.plugins:maven-e
+e-plugin -->
         <plugin>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <!-- Lock down plugin version for build reproducibility -->
@@ -293,7 +294,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.4</version>
+              <version>[8.18,)</version>
             </dependency>
             <!-- Multimodal config -->
             <dependency>
