@@ -1,16 +1,5 @@
-# Hyperledger Quilt [![join the chat][rocketchat-image]][rocketchat-url] [![twitter][twitter-image]][twitter-url]
-[![circle-ci][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url] [![issues][github-issues-image]][github-issues-url]
-
-[rocketchat-url]: https://chat.hyperledger.org/channel/quilt
-[rocketchat-image]: https://open.rocket.chat/images/join-chat.svg
-[circle-image]: https://circleci.com/gh/hyperledger/quilt.svg?style=shield
-[circle-url]: https://circleci.com/gh/hyperledger/quilt
-[codecov-image]: https://codecov.io/gh/hyperledger/quilt/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/hyperledger/quilt
-[twitter-image]: https://img.shields.io/twitter/follow/interledger.svg?style=social
-[twitter-url]: https://twitter.com/intent/follow?screen_name=interledger
-[github-issues-image]: https://img.shields.io/github/issues/hyperledger/quilt.svg
-[github-issues-url]: https://github.com/hyperledger/quilt/issues
+# Hyperledger Quilt [![Discuss][forum-image]][forum-url] [![twitter][twitter-image]][twitter-url]
+[![circle-ci][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url] [![codacy][codacy-image]][codacy-url] [![issues][github-issues-image]][github-issues-url]
 
 Quilt is an implementation of the [Interledger](https://interledger.org) protocol in Java.
 
@@ -121,3 +110,17 @@ The project uses checkstyle to keep code style consistent. All Checkstyle checks
 ```bash
 $ mvn checkstyle:checkstyle
 ```
+
+
+[forum-url]: https://forum.interledger.org/tags/java-ilpv4-connector
+[forum-image]: https://img.shields.io/badge/Discuss-Interledger%20Forum-blue.svg
+[circle-image]: https://circleci.com/gh/hyperledger/quilt.svg?style=shield
+[circle-url]: https://circleci.com/gh/hyperledger/quilt
+[codecov-image]: https://codecov.io/gh/hyperledger/quilt/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/hyperledger/quilt
+[codacy-image]: https://api.codacy.com/project/badge/Grade/02e8d6c0d9d8482e9e8d9725ceb64d9f
+[codacy-url]: https://www.codacy.com/app/sappenin/quilt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hyperledger/quilt&amp;utm_campaign=Badge_Grade
+[twitter-image]: https://img.shields.io/twitter/follow/interledger.svg?style=social
+[twitter-url]: https://twitter.com/intent/follow?screen_name=interledger
+[github-issues-image]: https://img.shields.io/github/issues/hyperledger/quilt.svg
+[github-issues-url]: https://github.com/hyperledger/quilt/issues
