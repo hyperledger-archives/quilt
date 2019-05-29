@@ -26,6 +26,8 @@ import org.interledger.core.InterledgerFulfillment;
 
 import org.immutables.value.Value.Default;
 
+import java.util.Base64;
+
 /**
  * An extension of {@link InterledgerFulfillPacket} that is also a {@link IldcpResponsePacket} that can be used as an
  * IL-DCP response over Interledger.
@@ -73,5 +75,6 @@ public interface IldcpResponsePacket extends InterledgerFulfillPacket {
     public byte[] getData() {
       return new byte[0];
     }
+
   }
 }

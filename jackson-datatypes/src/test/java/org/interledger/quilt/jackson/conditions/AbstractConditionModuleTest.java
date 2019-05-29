@@ -24,11 +24,8 @@ import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;
 
-import java.security.Provider;
-import java.security.Security;
 import java.util.Objects;
 
 /**
@@ -38,14 +35,8 @@ public abstract class AbstractConditionModuleTest {
 
   private static final String PREIMAGE = "roads? where we're going we don'";
 
-  //Add BouncyCastle so we have a provider that supports SHA256withRSA/PSS signatures.
-  static {
-    Provider bc = new BouncyCastleProvider();
-    Security.addProvider(bc);
-  }
-
-  ObjectMapper objectMapper;
-  String expectedEncodedValue;
+  protected ObjectMapper objectMapper;
+  protected String expectedEncodedValue;
   private Encoding encodingToUse;
 
   /**
