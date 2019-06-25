@@ -9,9 +9,9 @@ package org.interledger.ildcp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,12 +87,12 @@ public class IldcpResponsePacketTest {
 
     assertThat(
         first.toString(),
-        is("IldcpResponsePacket{fulfillment=ImmutableInterledgerFulfillment["
+        is("IldcpResponsePacket{"
+            + "ildcpResponse=IldcpResponse{clientAddress=InterledgerAddress{value=example.foo}, assetCode=BTC, assetScale=9}, "
+            + "fulfillment=ImmutableInterledgerFulfillment["
             + "preimage=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=, "
             + "condition=Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}], "
-            + "data=[], "
-            + "ildcpResponse=IldcpResponse{clientAddress=InterledgerAddress{value=example.foo}, assetCode=BTC, assetScale=9}"
-            + "}")
+            + "data=[]}")
     );
   }
 }
