@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  */
 public class InterledgerAddressModule extends SimpleModule {
 
-  private static final String NAME = "InterledgerAddressModule";
+  private static final String NAME = InterledgerAddressModule.class.getName();
 
   /**
    * No-args Constructor.
