@@ -20,8 +20,6 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
-
 import org.immutables.value.Value.Default;
 
 import java.math.BigInteger;

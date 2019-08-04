@@ -1,4 +1,4 @@
-package org.interledger.annotations;
+package org.interledger.core;
 
 /*-
  * ========================LICENSE_START=================================
