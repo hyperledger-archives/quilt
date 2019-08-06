@@ -32,7 +32,7 @@ import java.util.Objects;
  */
 public class InterledgerModule extends SimpleModule {
 
-  private static final String NAME = "org.interledger.quilt.jackson.address.InterledgerAddressModule";
+  private static final String NAME = InterledgerModule.class.getName();
   private static final VersionUtil VERSION_UTIL = new VersionUtil() {
   };
 
