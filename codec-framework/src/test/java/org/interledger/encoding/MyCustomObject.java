@@ -20,7 +20,7 @@ package org.interledger.encoding;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
+import org.immutables.value.Value;
 
 import java.math.BigInteger;
 
@@ -54,7 +54,14 @@ public interface MyCustomObject {
    */
   byte[] getFixedLengthOctetStringProperty();
 
-  @Immutable
+  @Value.Immutable
+  @Value.Style(
+      typeBuilder = "*Builder",
+      visibility = Value.Style.ImplementationVisibility.PRIVATE,
+      builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
+      redactedMask = "********",
+      defaults = @Value.Immutable()
+  )
   abstract class AbstractMyCustomObject implements MyCustomObject {
 
   }

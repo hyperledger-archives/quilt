@@ -22,7 +22,7 @@ package org.interledger.btp;
 
 import static java.lang.String.format;
 
-import org.interledger.annotations.Immutable;
+import org.interledger.core.Immutable;
 
 import org.immutables.value.Value.Default;
 

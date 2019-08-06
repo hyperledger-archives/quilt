@@ -100,7 +100,6 @@
   <modules>
     <module>dev-ops</module>
     <module>codec-framework</module>
-    <module>ilp-annotations</module>
     <module>ilp-core</module>
     <module>ilp-core-codecs</module>
     <module>btp-core</module>
