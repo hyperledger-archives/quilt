@@ -78,6 +78,7 @@ public class CodecContext {
    * @param <U>        The type of ASN.1 codec being registered.
    * @return this for chaining.
    */
+  @SuppressWarnings("unchecked")
   public <T, U extends AsnObjectCodec<T>> CodecContext register(Class<T> type,
                                                                 AsnObjectCodecSupplier<T> supplier,
                                                                 AsnObjectSerializer<U> serializer) {

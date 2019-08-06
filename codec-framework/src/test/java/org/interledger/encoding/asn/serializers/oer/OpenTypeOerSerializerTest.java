@@ -135,7 +135,7 @@ public class OpenTypeOerSerializerTest {
   @Before
   public void setUp() throws Exception {
     // Register the codec to be tested...
-    codecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
+    codecContext = CodecContextFactory.oer();
     codecContext.register(TestType.class, TestOpenTypeCodec::new);
   }
 

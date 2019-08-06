@@ -35,7 +35,7 @@ public class EncodingTests {
   @Test
   public void test1() throws Exception {
 
-    CodecContext context = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
+    CodecContext context = CodecContextFactory.oer()
         .register(MyCustomObject.class, () -> new AsnMyCustomObjectCodec());
 
     MyCustomObject obj = MyCustomObject.builder()
@@ -71,7 +71,7 @@ public class EncodingTests {
   @Test
   public void test2() throws Exception {
 
-    CodecContext context = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
+    CodecContext context = CodecContextFactory.oer()
         .register(MyCustomObject.class, () -> new AsnMyCustomObjectCodec());
 
     MyCustomObject obj = MyCustomObject.builder()

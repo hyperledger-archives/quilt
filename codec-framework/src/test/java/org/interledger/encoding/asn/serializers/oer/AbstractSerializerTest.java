@@ -42,7 +42,7 @@ public abstract class AbstractSerializerTest<T> {
 
   static {
     // Register the codec to be tested...
-    codecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
+    codecContext = CodecContextFactory.oer();
   }
 
   private final T inputValue;

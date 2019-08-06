@@ -46,6 +46,7 @@ import org.interledger.encoding.asn.serializers.oer.AsnOctetStringOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnSequenceOerSerializer;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * A factory class for constructing a CodecContext that can read and write Interledger objects using ASN.1 OER
@@ -59,7 +60,20 @@ public class InterledgerCodecContextFactory {
    * @return A new instance of {@link CodecContext}.
    */
   public static CodecContext oer() {
-    return CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
+    final CodecContext ilpCodecContext = CodecContextFactory.oer();
+    return register(ilpCodecContext);
+  }
+
+  /**
+   * Register the ILP codecs into the provided context.
+   *
+   * @param context the context to register the codecs into
+   * @return The supplied {@code context} with ILP Codecs registered into it.
+   */
+  public static CodecContext register(final CodecContext context) {
+    Objects.requireNonNull(context, "context must not be null");
+
+    return context
         .register(Instant.class, AsnTimestampCodec::new)
         .register(InterledgerCondition.class, AsnConditionCodec::new, new AsnOctetStringOerSerializer())
         .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new, new AsnOctetStringOerSerializer())

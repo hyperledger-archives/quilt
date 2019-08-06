@@ -103,7 +103,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
   @Before
   public void setUp() throws Exception {
     // Register the codec to be tested...
-    codecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
+    codecContext = CodecContextFactory.oer();
     codecContext.register(TestSequence.class, TestSequenceCodec::new);
     codecContext.register(TestSequenceOfSequence.class, TestSequenceOfSequenceCodec::new);
   }
