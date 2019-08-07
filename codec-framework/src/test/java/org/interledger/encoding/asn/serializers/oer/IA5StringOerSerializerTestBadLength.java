@@ -41,7 +41,7 @@ public class IA5StringOerSerializerTestBadLength {
   @Test(expected = IOException.class)
   public void test_BadLengthIndicator() throws IOException {
 
-    CodecContext context = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES)
+    CodecContext context = CodecContextFactory.oer()
         .register(String.class, () -> new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED));
 
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

@@ -22,7 +22,6 @@ package org.interledger.ildcp.asn.framework;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.interledger.encoding.asn.framework.CodecContextFactory.OCTET_ENCODING_RULES;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.encoding.asn.framework.CodecContext;
@@ -86,7 +85,7 @@ public class IldcpCodecContextFactoryTest {
 
   @Test
   public void register() throws IOException {
-    final CodecContext codecContext = CodecContextFactory.getContext(OCTET_ENCODING_RULES);
+    final CodecContext codecContext = CodecContextFactory.oer();
     codecContext.register(IldcpResponse.class, AsnIldcpResponseCodec::new);
 
     final ByteArrayOutputStream os = new ByteArrayOutputStream();

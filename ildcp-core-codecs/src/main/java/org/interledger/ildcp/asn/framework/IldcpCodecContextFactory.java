@@ -31,6 +31,8 @@ import org.interledger.ildcp.asn.codecs.AsnIldcpRequestPacketCodec;
 import org.interledger.ildcp.asn.codecs.AsnIldcpResponseCodec;
 import org.interledger.ildcp.asn.codecs.AsnIldcpResponsePacketDataCodec;
 
+import java.util.Objects;
+
 /**
  * A factory class for constructing a CodecContext that can read and write Interledger Dynamic Configuration Protocol
  * objects using ASN.1 OER encoding.
@@ -45,7 +47,7 @@ public class IldcpCodecContextFactory {
    * @return A new instance of {@link CodecContext}.
    */
   public static CodecContext oer() {
-    final CodecContext btpCodecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
+    final CodecContext btpCodecContext = CodecContextFactory.oer();
     return register(btpCodecContext);
   }
 
@@ -56,15 +58,15 @@ public class IldcpCodecContextFactory {
    *
    * @return The supplied {@code context} with BTP codecs registered into it.
    */
-  public static CodecContext register(CodecContext context) {
+  public static CodecContext register(final CodecContext context) {
+    Objects.requireNonNull(context, "context must not be null");
+
     // For encoding this into a `data` field.
-    context.register(IldcpResponse.class, AsnIldcpResponseCodec::new);
-
-    context.register(InterledgerPacket.class, AsnIldcpPacketCodec::new);
-    context.register(IldcpRequestPacket.class, AsnIldcpRequestPacketCodec::new);
-    context.register(IldcpResponsePacket.class, AsnIldcpResponsePacketDataCodec::new);
-
-    return context;
+    return context
+            .register(IldcpResponse.class, AsnIldcpResponseCodec::new)
+            .register(InterledgerPacket.class, AsnIldcpPacketCodec::new)
+            .register(IldcpRequestPacket.class, AsnIldcpRequestPacketCodec::new)
+            .register(IldcpResponsePacket.class, AsnIldcpResponsePacketDataCodec::new);
   }
 
 }

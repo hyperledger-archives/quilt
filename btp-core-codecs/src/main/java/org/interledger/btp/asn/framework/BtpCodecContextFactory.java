@@ -39,6 +39,7 @@ import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * A factory class for constructing a CodecContext that can read and write Bilateral Transfer Protocl (BTP) 2.0 objects
@@ -54,7 +55,7 @@ public class BtpCodecContextFactory {
    * @return A new instance of {@link CodecContext}.
    */
   public static CodecContext oer() {
-    final CodecContext btpCodecContext = CodecContextFactory.getContext(CodecContextFactory.OCTET_ENCODING_RULES);
+    final CodecContext btpCodecContext = CodecContextFactory.oer();
     return register(btpCodecContext);
   }
 
@@ -65,7 +66,9 @@ public class BtpCodecContextFactory {
    *
    * @return The supplied {@code context} with BTP codecs registered into it.
    */
-  static CodecContext register(CodecContext context) {
+  public static CodecContext register(final CodecContext context) {
+    Objects.requireNonNull(context, "context must not be null");
+
     return context
         .register(BtpError.class, AsnBtpErrorCodec::new)
         .register(BtpMessage.class, AsnBtpMessageCodec::new)
