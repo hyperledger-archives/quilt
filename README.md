@@ -22,13 +22,6 @@ using the Octet Encoding Rules (OER).
 
 [READ MORE](./ilp-core)
 
-
-### dev-ops
-
-Dev-ops is a module for shared build and test tools
-
-[READ MORE](./dev-ops)
-
 ## Usage
 
 ### Requirements
