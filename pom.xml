@@ -88,7 +88,7 @@
     <jacoco.propertyName>argLine</jacoco.propertyName>
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
-    <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
+    <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
     <checkstyle.output.file>
       ${project.build.directory}/checkstyle-reports/checkstyle-result.xml
     </checkstyle.output.file>
@@ -98,7 +98,6 @@
   </properties>
 
   <modules>
-    <module>dev-ops</module>
     <module>codec-framework</module>
     <module>ilp-core</module>
     <module>ilp-core-codecs</module>
@@ -281,12 +280,6 @@
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
               <version>8.21</version>
-            </dependency>
-            <!-- Multimodal config -->
-            <dependency>
-              <groupId>${project.groupId}</groupId>
-              <artifactId>dev-ops</artifactId>
-              <version>${project.version}</version>
             </dependency>
           </dependencies>
           <executions>
