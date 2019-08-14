@@ -141,6 +141,18 @@ public interface InterledgerAddress {
   }
 
   /**
+   * <p>Tests if this InterledgerAddress starts with the specified {@code addressPrefix}.</p>
+   *
+   * @param addressPrefix An {@link InterledgerAddressPrefix} to compare against.
+   *
+   * @return {@code true} if this InterledgerAddress begins with the specified prefix else {@code false}.
+   */
+  default boolean startsWith(final InterledgerAddressPrefix addressPrefix) {
+    Objects.requireNonNull(addressPrefix, "addressPrefix must not be null!");
+    return this.startsWith(addressPrefix.getValue());
+  }
+
+  /**
    * <p>Return a new {@link InterledgerAddress} by suffixing the supplied {@code addressSegment}
    * onto the current address.</p>
    *

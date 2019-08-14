@@ -196,6 +196,47 @@ public class InterledgerAddressTest {
     assertThat(address.startsWith(InterledgerAddress.of("test1.foo.bob")), is(false));
   }
 
+  @Test
+  public void testStartsWithInterledgerAddressPrefix() {
+    final InterledgerAddress address = InterledgerAddress.of("g.foo.bob");
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g")), is(true));
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo")), is(true));
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bob")), is(true));
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bar")), is(false));
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("test.foo")), is(false));
+
+    final InterledgerAddress smallAddress = InterledgerAddress.of("g.foo");
+    assertThat(smallAddress.startsWith(InterledgerAddressPrefix.of("g")), is(true));
+    assertThat(smallAddress.startsWith(InterledgerAddressPrefix.of("g.foo")), is(true));
+    assertThat(smallAddress.startsWith(InterledgerAddressPrefix.of("g.foo.bob")), is(false));
+    assertThat(smallAddress.startsWith(InterledgerAddressPrefix.of("g.foo.bar")), is(false));
+    assertThat(smallAddress.startsWith(InterledgerAddressPrefix.of("test.foo")), is(false));
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testAddressPrefixStartsWithNull() {
+    final InterledgerAddress address = InterledgerAddress.of("g.foo");
+    InterledgerAddressPrefix addressPrefix = null;
+    try {
+      address.startsWith(addressPrefix); // addressPrefix will be null
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(), is("addressPrefix must not be null!"));
+      throw e;
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testAddressPrefixStartsWithEmpty() {
+    final InterledgerAddress address = InterledgerAddress.of("g.foo.bob");
+    InterledgerAddressPrefix addressPrefix = InterledgerAddressPrefix.of("");
+    try {
+      address.startsWith(addressPrefix);
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("addressPrefix must not be empty!"));
+      throw e;
+    }
+  }
+
   @Test(expected = NullPointerException.class)
   public void testAddressWithNull() {
     final InterledgerAddress addressPrefix = InterledgerAddress.of("g.foo");
