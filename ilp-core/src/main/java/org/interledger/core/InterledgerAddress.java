@@ -181,24 +181,12 @@ public interface InterledgerAddress {
    *
    * @return An optionally present parent-prefix as an {@link InterledgerAddressPrefix}.
    */
-  default Optional<InterledgerAddressPrefix> getPrefix() {
+  default InterledgerAddressPrefix getPrefix() {
     // An address will always contain at least one period (.), so we can always return its prefix.
     final String value = getValue();
-    return Optional.of(
-        InterledgerAddressPrefix.builder()
+    return InterledgerAddressPrefix.builder()
             .value(value.substring(0, value.lastIndexOf(".")))
-            .build()
-    );
-  }
-
-  /**
-   * <p>Determines if this ILP Address has a parent-prefix.</p>
-   *
-   * @return {@code true} if this address has more than two segments after the allocation scheme. Otherwise return
-   *     {@code false}.
-   */
-  default boolean hasPrefix() {
-    return getPrefix().isPresent();
+            .build();
   }
 
   /**
