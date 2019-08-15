@@ -271,6 +271,17 @@ public interface InterledgerAddress {
     String getValue();
 
     /**
+     * Create an {@link InterledgerAddress} from this {@link AllocationScheme} by appending the supplied {@code value}.
+     *
+     * @param value The String parameter to create the Interledger address with.
+     * @return A {@link InterledgerAddress} with the value of an address.
+     */
+    default InterledgerAddress with(final String value) {
+      Objects.requireNonNull(value, "value must not be null!");
+      return InterledgerAddress.of(this.getValue() + "." + value);
+    }
+
+    /**
      * <p>An implementation of {@link AllocationScheme} that enforces allowed
      * value per RFC-15.</p>
      *
