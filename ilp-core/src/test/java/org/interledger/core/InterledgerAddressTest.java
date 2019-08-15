@@ -392,57 +392,39 @@ public class InterledgerAddressTest {
 
   @Test
   public void testGetPrefixFromShortPrefix() {
-    assertThat(InterledgerAddress.of("g.1").getPrefix().isPresent(), is(true));
-    assertThat(InterledgerAddress.of("g.1").getPrefix().get(), is(InterledgerAddressPrefix.of("g")));
+    assertThat(!InterledgerAddress.of("g.1").getPrefix().getValue().isEmpty(), is(true));
+    assertThat(InterledgerAddress.of("g.1").getPrefix(), is(InterledgerAddressPrefix.of("g")));
   }
 
   @Test
   public void testGetPrefixFromPrefix() {
     final InterledgerAddress address = InterledgerAddress.of("g.example");
-    assertThat(address.getPrefix().isPresent(), is(true));
-    assertThat(address.getPrefix().get(), is(InterledgerAddressPrefix.of("g")));
+    assertThat(!address.getPrefix().getValue().isEmpty(), is(true));
+    assertThat(address.getPrefix(), is(InterledgerAddressPrefix.of("g")));
   }
 
   @Test
   public void testGetPrefixFromLongPrefix() {
     final InterledgerAddress address = InterledgerAddress.of("g.alpha.beta.charlie.delta.echo");
-    assertThat(address.getPrefix().get().getValue(), is("g.alpha.beta.charlie.delta"));
+    assertThat(address.getPrefix().getValue(), is("g.alpha.beta.charlie.delta"));
   }
 
   @Test
   public void testGetPrefixFromAddress() {
     final InterledgerAddress address = InterledgerAddress.of("g.example.bob");
-    assertThat(address.getPrefix().get().getValue(), is("g.example"));
+    assertThat(address.getPrefix().getValue(), is("g.example"));
   }
 
   @Test
   public void testGetPrefixFromShortAddress() {
-    assertThat(InterledgerAddress.of("g.bob.foo").getPrefix().get().getValue(), is("g.bob"));
-    assertThat(InterledgerAddress.of("g.b.f").getPrefix().get().getValue(), is("g.b"));
+    assertThat(InterledgerAddress.of("g.bob.foo").getPrefix().getValue(), is("g.bob"));
+    assertThat(InterledgerAddress.of("g.b.f").getPrefix().getValue(), is("g.b"));
   }
 
   @Test
   public void testGetPrefixFromLongAddress() {
     final InterledgerAddress address = InterledgerAddress.of("g.alpha.beta.charlie.delta.echo");
-    assertThat(address.getPrefix().get().getValue(), is("g.alpha.beta.charlie.delta"));
-  }
-
-  @Test
-  public void testHasPrefix() {
-    assertThat(InterledgerAddress.of("g.bob").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("g.bob.foo").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("g.bob.foo").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("self.bob").hasPrefix(), is(true));
-
-    assertThat(InterledgerAddress.of("g.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("private.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("example.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("peer.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("self.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("test.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("test1.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("test2.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddress.of("test3.1.1").hasPrefix(), is(true));
+    assertThat(address.getPrefix().getValue(), is("g.alpha.beta.charlie.delta"));
   }
 
   @Test
