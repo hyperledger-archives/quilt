@@ -33,6 +33,8 @@ import org.interledger.core.InterledgerAddress.AllocationScheme;
 
 import org.junit.Test;
 
+import java.util.List;
+
 /**
  * JUnit tests to test {@link InterledgerAddress}.
  */
@@ -398,6 +400,28 @@ public class InterledgerAddressTest {
   public void testToString() {
     assertThat(InterledgerAddress.of("g.foo.bob").toString(), is("InterledgerAddress{value=g.foo.bob}"));
     assertThat(InterledgerAddress.of("g.foo").toString(), is("InterledgerAddress{value=g.foo}"));
+  }
+
+  @Test
+  public void testGetInteractions() {
+    InterledgerAddress destinationAddress = InterledgerAddress.of("g.us-fed.ach.0.acmebank.swx0a0.acmecorp.sales.199.~ipr.cdfa5e16-e759-4ba3-88f6-8b9dc83c1868.2");
+    // @sappenin: Is the final match for "~ipr" or "ipr" as the first interaction?
+    String[] interactionsToMatch = {"ipr", "cdfa5e16-e759-4ba3-88f6-8b9dc83c1868", "2"};
+
+    List<String> interactions = destinationAddress.getInteractions();
+
+    assertThat(interactions.size(), is(interactionsToMatch.length));
+    for (int i=0; i < interactions.size(); i++) {
+      assertThat(interactions.get(i), is(interactionsToMatch[i]));
+    }
+  }
+
+  @Test
+  public void testGetInteractionsWhenThereAreNoInteractions() {
+    InterledgerAddress address = InterledgerAddress.of("g.bob.baz");
+    List<String> interactions = address.getInteractions();
+
+    assertThat(interactions.isEmpty(), is(true));
   }
 
   @Test(expected = NullPointerException.class)

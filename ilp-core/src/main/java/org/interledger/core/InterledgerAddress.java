@@ -23,6 +23,7 @@ package org.interledger.core;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Lazy;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -150,6 +151,26 @@ public interface InterledgerAddress {
   default boolean startsWith(final InterledgerAddressPrefix addressPrefix) {
     Objects.requireNonNull(addressPrefix, "addressPrefix must not be null!");
     return this.startsWith(addressPrefix.getValue());
+  }
+
+  /**
+   * Return the Interactions as a list of segments for a given {@link InterledgerAddress}.
+   *
+   * @return List of segments returned as {@code List<String>}.
+   */
+  default List<String> getInteractions() {
+    List<String> interactions = new ArrayList<>();
+    String addressValue = this.getValue();
+
+    if (addressValue.contains("~")) {
+      // @sappenin: Can there be multiple interactions listed as g.a.b~ipr.x.y~ipr1.z.w ?
+      List<String> segments = Arrays.stream(addressValue.split("~")).skip(1).collect(Collectors.toList());
+      for (String segment : segments) {
+        List<String> details = Arrays.asList(segment.split(AbstractInterledgerAddress.SEPARATOR_REGEX));
+        interactions.addAll(details);
+      }
+    }
+    return interactions;
   }
 
   /**
