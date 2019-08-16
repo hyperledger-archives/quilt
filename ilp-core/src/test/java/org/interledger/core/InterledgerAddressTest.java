@@ -175,6 +175,39 @@ public class InterledgerAddressTest {
     );
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testOfWithNull() {
+    try {
+      InterledgerAddress.of(null);
+      fail("should have thrown an exception but did not!");
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(), is("value must not be null!"));
+      throw e;
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithEmptyString() {
+    try {
+      InterledgerAddress.of("");
+      fail("should have thrown an exception but did not!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("InterledgerAddress does not start with a scheme prefix"));
+      throw e;
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithBlankString() {
+    try {
+      InterledgerAddress.of(" ");
+      fail("should have thrown an exception but did not!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("The ' ' AllocationScheme is invalid!"));
+      throw e;
+    }
+  }
+
   @Test
   public void testStartsWithString() {
     final InterledgerAddress address = InterledgerAddress.of("g.foo.bob");
@@ -314,6 +347,7 @@ public class InterledgerAddressTest {
   public void testDestinationAddressWithoutEnoughSegments() {
     try {
       InterledgerAddress.of("g");
+      fail("Should have failed and been caught as an exception");
     } catch (final IllegalArgumentException e) {
       assertThat(e.getMessage(), is(Error.SEGMENTS_UNDERFLOW.getMessageFormat()));
       throw e;
