@@ -280,11 +280,6 @@ public interface InterledgerAddressPrefix {
         return String.format(Error.INVALID_SEGMENT.getMessageFormat(), invalidSegment.get());
       }
 
-      // validates the minimum number of segments for a destination address
-      if (segmentsSize < ADDRESS_MIN_SEGMENTS) {
-        return Error.SEGMENTS_UNDERFLOW.getMessageFormat();
-      }
-
       // validates max address length
       if (!ADDRESS_LENGTH_BOUNDARIES_PATTERN.matcher(invalidAddressString).matches()) {
         return Error.ADDRESS_OVERFLOW.getMessageFormat();
@@ -292,7 +287,7 @@ public interface InterledgerAddressPrefix {
 
       // fault: should have found an error cause
       throw new IllegalArgumentException(String.format(
-          "Unable to find error for invalid InterledgerAddress: %s", invalidAddressString
+          "Unable to find error for invalid InterledgerAddress: %s. Please report this as a bug!", invalidAddressString
       ));
     }
 
