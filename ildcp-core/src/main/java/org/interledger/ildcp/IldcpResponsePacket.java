@@ -67,7 +67,7 @@ public interface IldcpResponsePacket extends InterledgerFulfillPacket {
       return EXECUTION_FULFILLMENT;
     }
 
-    // Overriden because in the general case, `data` is only used when serialization occurs.
+    // Overridden because in the general case, `data` is only used when serialization occurs.
     @Override
     @Default
     public byte[] getData() {

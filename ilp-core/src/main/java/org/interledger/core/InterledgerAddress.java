@@ -332,7 +332,7 @@ public interface InterledgerAddress {
         .compile(ADDRESS_LENGTH_BOUNDARIES_REGEX);
 
     /**
-     * Validation of an ILP address occurs via Regex, so we don't need to aggressivly compute this value. Thus, it is
+     * Validation of an ILP address occurs via Regex, so we don't need to aggressively compute this value. Thus, it is
      * marked <tt>Lazy</tt> so that immutables will not generate this value unless it is called.
      */
     @Override

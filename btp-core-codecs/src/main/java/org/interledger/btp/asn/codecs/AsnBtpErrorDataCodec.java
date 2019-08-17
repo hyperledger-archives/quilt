@@ -44,7 +44,7 @@ public class AsnBtpErrorDataCodec extends AsnBtpPacketDataCodec<BtpError> {
     super(
         requestId,
         new AsnUtf8StringCodec(new AsnSizeConstraint(3)), // Error Code (e.g., F00)
-        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), // Erro Name (e.g., NotAcceptedError)
+        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED), // Error Name (e.g., NotAcceptedError)
         new AsnBtpGeneralizedTimeCodec(), // TriggeredAt
         new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED), // Data
         new AsnBtpSubProtocolsCodec() // SubProtocols
