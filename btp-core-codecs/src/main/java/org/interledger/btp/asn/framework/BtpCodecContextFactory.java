@@ -42,7 +42,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * A factory class for constructing a CodecContext that can read and write Bilateral Transfer Protocl (BTP) 2.0 objects
+ * A factory class for constructing a CodecContext that can read and write Bilateral Transfer Protocol (BTP) 2.0 objects
  * using ASN.1 OER encoding.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilateral-transfer-protocol.md"

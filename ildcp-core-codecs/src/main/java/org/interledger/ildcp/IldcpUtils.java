@@ -38,7 +38,7 @@ public class IldcpUtils {
 
   /**
    * Converts an {@link IldcpResponse} to a corresponding {@link IldcpResponsePacket} packet by encoding the {@code
-   * ildpResponse} into the returned packet's `data` payload.
+   * ildcpResponse} into the returned packet's `data` payload.
    *
    * @param ildcpResponse A {@link IldcpResponse} to encode and package into the `data` property of a new Prepare
    *                      packet.

@@ -39,9 +39,9 @@ public enum BtpErrorCode {
           + "Try again later."),
 
   /**
-   * Data were symantically invalid.
+   * Data were semantically invalid.
    */
-  F00_NotAcceptedError("F00", "NotAcceptedError", "Data were symantically invalid."),
+  F00_NotAcceptedError("F00", "NotAcceptedError", "Data were semantically invalid."),
 
   /**
    * At least one field contained structurally invalid data, e.g. timestamp full of garbage
@@ -99,7 +99,7 @@ public enum BtpErrorCode {
   }
 
   /**
-   * Create a {@link BtpErrorCode} from the Sring representation of an error codeIdentifier.
+   * Create a {@link BtpErrorCode} from the String representation of an error codeIdentifier.
    *
    * @param code The error codeIdentifier
    *

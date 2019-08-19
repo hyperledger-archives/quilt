@@ -187,7 +187,7 @@ public class AsnBtpInstantSerializationTest {
         },
         // 15
         {
-            Instant.parse("2017-12-24T24:00:00.000Z"), // Wrong representation of midnight, should translate to correct represenation.
+            Instant.parse("2017-12-24T24:00:00.000Z"), // Wrong representation of midnight, should translate to correct representation.
             "20171225000000Z",
             Instant.parse("2017-12-25T00:00:00.000Z")
         }
