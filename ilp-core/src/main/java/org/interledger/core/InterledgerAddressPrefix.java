@@ -60,7 +60,7 @@ public interface InterledgerAddressPrefix {
    *
    * @param value String representation of an Interledger Address
    *
-   * @return an {@link InterledgerAddress} instance.
+   * @return an {@link InterledgerAddressPrefix} instance.
    *
    * @throws NullPointerException if {@code value} is <tt>null</tt>.
    */
@@ -109,11 +109,11 @@ public interface InterledgerAddressPrefix {
   String getValue();
 
   /**
-   * <p>Tests if this InterledgerAddress starts with the specified {@code addressSegment}.</p>
+   * <p>Tests if this {@link InterledgerAddressPrefix} starts with the specified {@code addressSegment}.</p>
    *
    * @param addressSegment An {@link String} prefix to compare against.
    *
-   * @return {@code true} if this InterledgerAddress begins with the specified prefix.
+   * @return {@code true} if this {@link InterledgerAddressPrefix} begins with the specified prefix.
    */
   @SuppressWarnings("unused")
   default boolean startsWith(final String addressSegment) {
@@ -122,9 +122,9 @@ public interface InterledgerAddressPrefix {
   }
 
   /**
-   * <p>Tests if this InterledgerAddress starts with the specified {@code addressPrefix}.</p>
+   * <p>Tests if this {@link InterledgerAddressPrefix} starts with the specified {@code addressPrefix}.</p>
    *
-   * @param addressPrefix An {@link InterledgerAddress} prefix to compare against.
+   * @param addressPrefix An {@link InterledgerAddressPrefix} to compare against.
    *
    * @return {@code true} if the supplied {@code addressPrefix} begins with the specified prefix.
    */
@@ -135,7 +135,7 @@ public interface InterledgerAddressPrefix {
   }
 
   /**
-   * <p>Return a new {@link InterledgerAddress} by suffixing the supplied {@code addressSegment}
+   * <p>Return a new {@link InterledgerAddressPrefix} by suffixing the supplied {@code addressSegment}
    * onto the current address.</p>
    *
    * @param addressSegment A {@link String} to be appended to this address as an additional
@@ -156,14 +156,14 @@ public interface InterledgerAddressPrefix {
    *
    * <p>If this address has only a single segment after the allocation scheme, then this method
    * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link
-   * InterledgerAddress} containing the characters inside of {@link #getValue()}, up-to but
+   * InterledgerAddressPrefix} containing the characters inside of {@link #getValue()}, up-to but
    * excluding last period.</p>
    *
    * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
    * address containing <tt>g.example</tt>. However, calling this method on an address like
    * <tt>g.example</tt> would yield {@link Optional#empty()}.</p>
    *
-   * @return An optionally present parent-prefix as an {@link InterledgerAddress}.
+   * @return An optionally present parent-prefix as an {@link InterledgerAddressPrefix}.
    */
   default Optional<InterledgerAddressPrefix> getPrefix() {
     // An address will always contain at least one period (.), so we can always
@@ -205,7 +205,7 @@ public interface InterledgerAddressPrefix {
   }
 
   /**
-   * <p>An implementation of {@link InterledgerAddress} that enforces allowed value per
+   * <p>An implementation of {@link InterledgerAddressPrefix} that enforces allowed value per
    * RFC-15.</p>
    *
    * <p>This immutable is interned because it only holds a {@link String} value, which itself is
