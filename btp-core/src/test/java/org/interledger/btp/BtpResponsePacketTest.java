@@ -74,7 +74,7 @@ public class BtpResponsePacketTest {
   public void handleAndReturnBtpResponse() {
     final AtomicBoolean handled = new AtomicBoolean();
     assertThat(handled.get(), is(false));
-    BtpPacket response = BTP_RESPONSE.handleAndReturn(
+    BtpResponsePacket response = BTP_RESPONSE.handleAndReturn(
         (btpResponse) -> handled.set(true),
         (btpError) -> fail("btpError handler should not be called.")
     );
@@ -86,11 +86,12 @@ public class BtpResponsePacketTest {
   public void handleAndReturnBtpError() {
     final AtomicBoolean handled = new AtomicBoolean();
     assertThat(handled.get(), is(false));
-    BTP_ERROR.handleAndReturn(
+    BtpResponsePacket response = BTP_ERROR.handleAndReturn(
         (btpResponse) -> fail("btpResponse handler should not be called."),
         (btpError) -> handled.set(true)
     );
     assertThat(handled.get(), is(true));
+    assertThat(response, is(BTP_ERROR));
   }
 
   @Test
