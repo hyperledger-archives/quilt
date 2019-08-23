@@ -72,7 +72,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * this packet is a fulfill packet, then {@code fulfillHandler} will be called. If this packet is a reject packet,
    * then {@code rejectHandler} will be called instead.</p>
    *
-   * <p>This variant allows for a more fluent style due to return this object, but is otherwise equivalent to {@link
+   * <p>This variant allows for a more fluent style due to returning this object, but is otherwise equivalent to {@link
    * #handle(Consumer, Consumer)}.</p>
    *
    * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link

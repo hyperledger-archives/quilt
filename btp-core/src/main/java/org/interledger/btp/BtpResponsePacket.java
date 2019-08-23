@@ -58,7 +58,7 @@ public interface BtpResponsePacket extends BtpPacket {
   /**
    * <p>Handle this BTP packet using one of the supplied functions, depending on this packet's actual type.</p>
    *
-   * <p>This variant allows for a more fluent style due to return this object, but is otherwise equivalent to {@link
+   * <p>This variant allows for a more fluent style due to returning this object, but is otherwise equivalent to {@link
    * #handle(Consumer, Consumer)}.</p>
    *
    * @param btpResponseHandler A {@link Consumer} to call if this packet is an instance of {@link BtpResponse}.
