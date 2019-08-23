@@ -84,7 +84,7 @@
     <project.resources.sourceEncoding>UTF-8</project.resources.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <!-- org.jacoco:jacoc-maven-plugin -->
+    <!-- org.jacoco:jacoco-maven-plugin -->
     <jacoco.propertyName>argLine</jacoco.propertyName>
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
@@ -98,14 +98,11 @@
   </properties>
 
   <modules>
-    <module>codec-framework</module>
     <module>ilp-core</module>
-    <module>ilp-core-codecs</module>
     <module>btp-core</module>
-    <module>btp-core-codecs</module>
     <module>ildcp-core</module>
-    <module>ildcp-core-codecs</module>
     <module>jackson-datatypes</module>
+    <module>codecs</module>
   </modules>
 
   <dependencyManagement>
