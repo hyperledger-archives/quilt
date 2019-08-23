@@ -68,6 +68,27 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
   }
 
   /**
+   * <p>Handle this response packet using one of the two supplied functions, depending on this packet's actual type. If
+   * this packet is a fulfill packet, then {@code fulfillHandler} will be called. If this packet is a reject packet,
+   * then {@code rejectHandler} will be called instead.</p>
+   *
+   * <p>This variant allows for a more fluent style due to return this object, but is otherwise equivalent to {@link
+   * #handle(Consumer, Consumer)}.</p>
+   *
+   * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link
+   *                       InterledgerFulfillPacket}.
+   * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
+   *
+   * @return This instance of {@link InterledgerResponsePacket}.
+   */
+  default InterledgerResponsePacket handleAndReturn(
+      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+  ) {
+    this.handle(fulfillHandler, rejectHandler);
+    return this;
+  }
+
+  /**
    * Map this packet to another class using one of the two supplied functions, depending on the actual type of this
    * response packet. If this packet is a fulfill packet, then {@code fulfillMapper} will be called. If this packet is a
    * reject packet, then  {@code rejectMapper} will be called instead.

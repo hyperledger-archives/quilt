@@ -20,10 +20,86 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 /**
  * The parent interface for all BTP response packets.
  */
 public interface BtpResponsePacket extends BtpPacket {
 
+  /**
+   * Handle this BTP packet using one of the supplied functions, depending on this packet's actual type.
+   *
+   * @param btpResponseHandler A {@link Consumer} to call if this packet is an instance of {@link BtpResponse}.
+   * @param btpErrorHandler    A {@link Consumer} to call if this packet is an instance of {@link BtpError}.
+   */
+  default void handle(final Consumer<BtpResponse> btpResponseHandler, final Consumer<BtpError> btpErrorHandler
+  ) {
+    Objects.requireNonNull(btpResponseHandler);
+    Objects.requireNonNull(btpErrorHandler);
+
+    switch (this.getType()) {
+      case RESPONSE: {
+        btpResponseHandler.accept((BtpResponse) this);
+        return;
+      }
+      case ERROR: {
+        btpErrorHandler.accept((BtpError) this);
+        return;
+      }
+      default: {
+        throw new RuntimeException(String.format("Unsupported BtpPacket Type: %s", this.getType()));
+      }
+    }
+  }
+
+  /**
+   * <p>Handle this BTP packet using one of the supplied functions, depending on this packet's actual type.</p>
+   *
+   * <p>This variant allows for a more fluent style due to return this object, but is otherwise equivalent to {@link
+   * #handle(Consumer, Consumer)}.</p>
+   *
+   * @param btpResponseHandler A {@link Consumer} to call if this packet is an instance of {@link BtpResponse}.
+   * @param btpErrorHandler    A {@link Consumer} to call if this packet is an instance of {@link BtpError}.
+   *
+   * @return This instance of {@link BtpResponsePacket}.
+   */
+  default BtpResponsePacket handleAndReturn(
+      final Consumer<BtpResponse> btpResponseHandler,
+      final Consumer<BtpError> btpErrorHandler
+  ) {
+    this.handle(btpResponseHandler, btpErrorHandler);
+    return this;
+  }
+
+  /**
+   * Map this packet to another class using one of the four supplied functions, depending on the actual type of this
+   * packet.
+   *
+   * @param btpResponseMapper A {@link Function} to call if this packet is an instance of {@link BtpResponse}.
+   * @param btpErrorMapper    A {@link Function} to call if this packet is an instance of {@link BtpError}.
+   * @param <R>               The return type of this mapping function.
+   *
+   * @return An instance of {@link R}.
+   */
+  default <R> R map(final Function<BtpResponse, R> btpResponseMapper, final Function<BtpError, R> btpErrorMapper
+  ) {
+    Objects.requireNonNull(btpResponseMapper);
+    Objects.requireNonNull(btpErrorMapper);
+
+    switch (this.getType()) {
+      case RESPONSE: {
+        return btpResponseMapper.apply((BtpResponse) this);
+      }
+      case ERROR: {
+        return btpErrorMapper.apply((BtpError) this);
+      }
+      default: {
+        throw new RuntimeException(String.format("Unsupported BtpPacket Type: %s", this.getType()));
+      }
+    }
+  }
 
 }

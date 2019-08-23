@@ -67,6 +67,35 @@ public class InterledgerResponsePacketTest {
   }
 
   @Test
+  public void handleAndReturnFulfill() {
+    final AtomicBoolean fulfillCalled = new AtomicBoolean();
+
+    InterledgerResponsePacket response = fulfillPacket.handleAndReturn(
+        (fulfillPacket) -> fulfillCalled.set(true),
+        (rejectPacket) -> fail("Reject handler should be called.")
+    );
+
+    assertThat(fulfillCalled.get(), is(true));
+    assertThat(response, is(fulfillPacket));
+  }
+
+  @Test
+  public void handleAndReturnReject() {
+    final AtomicBoolean rejectCalled = new AtomicBoolean();
+
+    InterledgerResponsePacket response = rejectPacket.handleAndReturn(
+        (fulfillPacket) -> fail("Fulfill handler should be called."),
+        (rejectPacket) -> {
+          rejectCalled.set(true);
+          assertThat(rejectPacket.getCode(), is(InterledgerErrorCode.T00_INTERNAL_ERROR));
+        }
+    );
+
+    assertThat(rejectCalled.get(), is(true));
+    assertThat(response, is(rejectPacket));
+  }
+
+  @Test
   public void testMap() {
     assertThat(fulfillPacket.map((fulfillPacket) -> 1, (rejectPacket) -> 2), is(1));
     assertThat(rejectPacket.map((fulfillPacket) -> 1, (rejectPacket) -> 2), is(2));
