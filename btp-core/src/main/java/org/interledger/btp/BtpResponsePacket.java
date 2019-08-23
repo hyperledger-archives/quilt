@@ -75,8 +75,10 @@ public interface BtpResponsePacket extends BtpPacket {
   }
 
   /**
-   * Map this packet to another class using one of the four supplied functions, depending on the actual type of this
-   * packet.
+   * Map this packet to another class using one of the two supplied functions, depending on the actual type of this
+   * response packet. If this packet is a BTP response packet (i.e., an ILPv4 fulfill packet), then {@code
+   * btpResponseMapper} will be called. If this packet is a BTP error packet (i.e., an ILPv4 reject packet), then
+   * {@code rejectMapper} will be called instead.
    *
    * @param btpResponseMapper A {@link Function} to call if this packet is an instance of {@link BtpResponse}.
    * @param btpErrorMapper    A {@link Function} to call if this packet is an instance of {@link BtpError}.
