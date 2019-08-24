@@ -89,10 +89,6 @@
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
-    <checkstyle.output.file>
-      ${project.build.directory}/checkstyle-reports/checkstyle-result.xml
-    </checkstyle.output.file>
-    <checkstyle.violationSeverity>warning</checkstyle.violationSeverity>
 
     <jackson.version>2.10.0.pr1</jackson.version>
   </properties>
@@ -271,17 +267,25 @@
           <!-- Lock down plugin version for build reproducibility -->
           <version>3.1.0</version>
           <inherited>true</inherited>
+          <configuration>
+            <configLocation>checkstyle.xml</configLocation>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
+            <failsOnError>false</failsOnError>
+            <linkXRef>false</linkXRef>
+          </configuration>
           <dependencies>
             <!-- Update Checkstyle version used -->
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.21</version>
+              <version>8.23</version>
             </dependency>
           </dependencies>
           <executions>
             <execution>
-              <phase>process-sources</phase>
+              <id>verify-style</id>
+              <phase>process-classes</phase>
               <goals>
                 <goal>check</goal>
               </goals>
