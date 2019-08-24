@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
@@ -311,6 +311,24 @@
           </executions>
         </plugin>
 
+        <!-- org.apache.maven.plugins:maven-dependency-plugin -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.1</version>
+          <executions>
+            <execution>
+              <id>analyze</id>
+              <goals>
+                <goal>analyze-only</goal>
+              </goals>
+              <configuration>
+                <failOnWarning>true</failOnWarning>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
         <!-- org.apache.maven.plugins:maven-surefire-plugin -->
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -422,6 +440,11 @@
       <!-- org.apache.maven.plugins:maven-surefire-plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+
+      <!-- org.apache.maven.plugins:maven-dependency-plugin -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
       </plugin>
 
       <!-- org.sonatype.plugins:nexus-staging-maven-plugin -->

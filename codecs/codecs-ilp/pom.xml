@@ -15,6 +15,14 @@
 
     <dependencies>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>codec-framework</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>ilp-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -28,14 +36,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.interledger</groupId>
-            <artifactId>codec-framework</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.interledger</groupId>
-            <artifactId>ilp-core</artifactId>
         </dependency>
     </dependencies>
 
