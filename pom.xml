@@ -89,6 +89,7 @@
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
+    <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
     <jackson.version>2.10.0.pr1</jackson.version>
   </properties>
@@ -268,10 +269,8 @@
           <version>3.1.0</version>
           <inherited>true</inherited>
           <configuration>
-            <configLocation>checkstyle.xml</configLocation>
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
-            <failsOnError>false</failsOnError>
             <linkXRef>false</linkXRef>
           </configuration>
           <dependencies>
