@@ -108,6 +108,7 @@
     <module>ildcp-core</module>
     <module>ildcp-core-codecs</module>
     <module>jackson-datatypes</module>
+    <module>ilp-stream</module>
   </modules>
 
   <dependencyManagement>
