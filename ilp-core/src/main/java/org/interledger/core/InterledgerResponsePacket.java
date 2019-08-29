@@ -23,6 +23,9 @@ package org.interledger.core;
 import org.immutables.value.Value.Default;
 
 import java.util.Base64;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * An extension of {@link InterledgerPacket} that indicates a response in an Interledger flow. Per RFC-4, an Interledger
@@ -38,6 +41,77 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    */
   static InterledgerResponsePacketBuilder builder() {
     return new InterledgerResponsePacketBuilder();
+  }
+
+  /**
+   * Handle this response packet using one of the two supplied functions, depending on this packet's actual type. If
+   * this packet is a fulfill packet, then {@code fulfillHandler} will be called. If this packet is a reject packet,
+   * then {@code rejectHandler} will be called instead.
+   *
+   * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link
+   *                       InterledgerFulfillPacket}.
+   * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
+   */
+  default void handle(
+      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+  ) {
+    Objects.requireNonNull(fulfillHandler);
+    Objects.requireNonNull(rejectHandler);
+
+    if (InterledgerFulfillPacket.class.isAssignableFrom(this.getClass())) {
+      fulfillHandler.accept((InterledgerFulfillPacket) this);
+    } else if (InterledgerRejectPacket.class.isAssignableFrom(this.getClass())) {
+      rejectHandler.accept((InterledgerRejectPacket) this);
+    } else {
+      throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
+    }
+  }
+
+  /**
+   * <p>Handle this response packet using one of the two supplied functions, depending on this packet's actual type. If
+   * this packet is a fulfill packet, then {@code fulfillHandler} will be called. If this packet is a reject packet,
+   * then {@code rejectHandler} will be called instead.</p>
+   *
+   * <p>This variant allows for a more fluent style due to returning this object, but is otherwise equivalent to {@link
+   * #handle(Consumer, Consumer)}.</p>
+   *
+   * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link
+   *                       InterledgerFulfillPacket}.
+   * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
+   *
+   * @return This instance of {@link InterledgerResponsePacket}.
+   */
+  default InterledgerResponsePacket handleAndReturn(
+      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+  ) {
+    this.handle(fulfillHandler, rejectHandler);
+    return this;
+  }
+
+  /**
+   * Map this packet to another class using one of the two supplied functions, depending on the actual type of this
+   * response packet. If this packet is a fulfill packet, then {@code fulfillMapper} will be called. If this packet is a
+   * reject packet, then  {@code rejectMapper} will be called instead.
+   *
+   * @param fulfillMapper A {@link Function} to call if this packet is an instance of {@link InterledgerFulfillPacket}.
+   * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link InterledgerRejectPacket}.
+   * @param <R>           The return type of this mapping function.
+   *
+   * @return An instance of {@link R}.
+   */
+  default <R> R map(
+      final Function<InterledgerFulfillPacket, R> fulfillMapper, final Function<InterledgerRejectPacket, R> rejectMapper
+  ) {
+    Objects.requireNonNull(fulfillMapper);
+    Objects.requireNonNull(rejectMapper);
+
+    if (InterledgerFulfillPacket.class.isAssignableFrom(this.getClass())) {
+      return fulfillMapper.apply((InterledgerFulfillPacket) this);
+    } else if (InterledgerRejectPacket.class.isAssignableFrom(this.getClass())) {
+      return rejectMapper.apply((InterledgerRejectPacket) this);
+    } else {
+      throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
+    }
   }
 
   @Immutable
