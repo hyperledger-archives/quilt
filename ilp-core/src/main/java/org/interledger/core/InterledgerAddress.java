@@ -141,6 +141,18 @@ public interface InterledgerAddress {
   }
 
   /**
+   * <p>Tests if this InterledgerAddress starts with the specified {@code addressPrefix}.</p>
+   *
+   * @param addressPrefix An {@link InterledgerAddressPrefix} to compare against.
+   *
+   * @return {@code true} if this InterledgerAddress begins with the specified prefix else {@code false}.
+   */
+  default boolean startsWith(final InterledgerAddressPrefix addressPrefix) {
+    Objects.requireNonNull(addressPrefix, "addressPrefix must not be null!");
+    return this.startsWith(addressPrefix.getValue());
+  }
+
+  /**
    * <p>Return a new {@link InterledgerAddress} by suffixing the supplied {@code addressSegment}
    * onto the current address.</p>
    *
@@ -169,24 +181,12 @@ public interface InterledgerAddress {
    *
    * @return An optionally present parent-prefix as an {@link InterledgerAddressPrefix}.
    */
-  default Optional<InterledgerAddressPrefix> getPrefix() {
+  default InterledgerAddressPrefix getPrefix() {
     // An address will always contain at least one period (.), so we can always return its prefix.
     final String value = getValue();
-    return Optional.of(
-        InterledgerAddressPrefix.builder()
+    return InterledgerAddressPrefix.builder()
             .value(value.substring(0, value.lastIndexOf(".")))
-            .build()
-    );
-  }
-
-  /**
-   * <p>Determines if this ILP Address has a parent-prefix.</p>
-   *
-   * @return {@code true} if this address has more than two segments after the allocation scheme. Otherwise return
-   *     {@code false}.
-   */
-  default boolean hasPrefix() {
-    return getPrefix().isPresent();
+            .build();
   }
 
   /**
@@ -236,6 +236,17 @@ public interface InterledgerAddress {
      * @return A {@link String} with the value of this address.
      */
     String getValue();
+
+    /**
+     * Create an {@link InterledgerAddress} from this {@link AllocationScheme} by appending the supplied {@code value}.
+     *
+     * @param value The String parameter to create the Interledger address with.
+     * @return A {@link InterledgerAddress} with the value of an address.
+     */
+    default InterledgerAddress with(final String value) {
+      Objects.requireNonNull(value, "value must not be null!");
+      return InterledgerAddress.of(this.getValue() + "." + value);
+    }
 
     /**
      * <p>An implementation of {@link AllocationScheme} that enforces allowed
@@ -321,7 +332,7 @@ public interface InterledgerAddress {
         .compile(ADDRESS_LENGTH_BOUNDARIES_REGEX);
 
     /**
-     * Validation of an ILP address occurs via Regex, so we don't need to aggressivly compute this value. Thus, it is
+     * Validation of an ILP address occurs via Regex, so we don't need to aggressively compute this value. Thus, it is
      * marked <tt>Lazy</tt> so that immutables will not generate this value unless it is called.
      */
     @Override

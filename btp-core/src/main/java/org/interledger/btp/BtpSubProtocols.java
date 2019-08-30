@@ -81,7 +81,7 @@ public class BtpSubProtocols extends ArrayList<BtpSubProtocol> {
   }
 
   /**
-   * Accessor for the {@link BtpSubProtocol} with name of {@code subprtocolName}.
+   * Accessor for the {@link BtpSubProtocol} with name of {@code subprotocolName}.
    *
    * @param subprotocolName the name of the {@link BtpSubProtocol} to retrieve.
    *

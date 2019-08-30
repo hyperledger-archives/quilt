@@ -39,7 +39,7 @@ import java.util.Objects;
 public class InterledgerSerializers extends Serializers.Base {
 
   /**
-   * The type of encoding that should be used to serialize and deserialize crypto-condtions.
+   * The type of encoding that should be used to serialize and deserialize crypto-conditions.
    */
   private final Encoding cryptoConditionEncoding;
 

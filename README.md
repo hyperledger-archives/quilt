@@ -22,13 +22,6 @@ using the Octet Encoding Rules (OER).
 
 [READ MORE](./ilp-core)
 
-
-### dev-ops
-
-Dev-ops is a module for shared build and test tools
-
-[READ MORE](./dev-ops)
-
 ## Usage
 
 ### Requirements
@@ -62,7 +55,7 @@ Next, add the following Maven dependency:
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>java-ilp-core</artifactId>
-    <version>0.13.0-SNAPSHOT</version>
+    <version>0.17.0-SNAPSHOT</version>
   </dependency>
   ...
 </dependencies>
@@ -84,7 +77,7 @@ Next, import this library as a dependency, like this:
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.13.0-SNAPSHOT'
+    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.17.0-SNAPSHOT'
     ...
 }
 ```

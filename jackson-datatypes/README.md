@@ -1,5 +1,5 @@
 # Jackson Datatypes
-This module contains sub-modules to support serialiation and deserialization of common Quilt datatypes
+This module contains sub-modules to support serialization and deserialization of common Quilt datatypes
 to various encodings using the [Jackson Databind](https://github.com/FasterXML/jackson-databind/issues) 
 framework. 
 
@@ -11,7 +11,7 @@ to your project:
 <dependency>
   <groupId>org.interledger.quilt.jackson</groupId>
   <artifactId>jackson-datatypes</artifactId>
-  <version>0.16.0-SNAPSHOT</version>
+  <version>0.17.0-SNAPSHOT</version>
 </dependency>
 ```
 

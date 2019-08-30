@@ -20,7 +20,7 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.annotations.Immutable;
+import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
 

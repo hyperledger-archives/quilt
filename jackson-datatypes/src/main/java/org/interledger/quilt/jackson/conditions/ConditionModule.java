@@ -43,7 +43,7 @@ import java.util.Objects;
  */
 public class ConditionModule extends SimpleModule {
 
-  private static final String NAME = "ConditionModule";
+  private static final String NAME = ConditionModule.class.getName();
 
   private final Encoding encoding;
 

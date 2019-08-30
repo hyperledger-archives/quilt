@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.16.0-SNAPSHOT</version>
+  <version>0.17.0-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
@@ -84,41 +84,27 @@
     <project.resources.sourceEncoding>UTF-8</project.resources.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <!-- org.jacoco:jacoc-maven-plugin -->
+    <!-- org.jacoco:jacoco-maven-plugin -->
     <jacoco.propertyName>argLine</jacoco.propertyName>
 
     <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
-    <checkstyle.config.location>org/interledger/dev-ops/checkstyle.xml</checkstyle.config.location>
-    <checkstyle.output.file>
-      ${project.build.directory}/checkstyle-reports/checkstyle-result.xml
-    </checkstyle.output.file>
-    <checkstyle.violationSeverity>warning</checkstyle.violationSeverity>
+    <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
+    <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
-    <jackson.version>2.9.9</jackson.version>
+    <jackson.version>2.10.0.pr1</jackson.version>
   </properties>
 
   <modules>
-    <module>dev-ops</module>
-    <module>codec-framework</module>
-    <module>ilp-annotations</module>
     <module>ilp-core</module>
-    <module>ilp-core-codecs</module>
     <module>btp-core</module>
-    <module>btp-core-codecs</module>
     <module>ildcp-core</module>
-    <module>ildcp-core-codecs</module>
     <module>jackson-datatypes</module>
+    <module>codecs</module>
     <module>ilp-stream</module>
   </modules>
 
   <dependencyManagement>
     <dependencies>
-
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>ilp-annotations</artifactId>
-        <version>${project.version}</version>
-      </dependency>
 
       <dependency>
         <groupId>${project.groupId}</groupId>
@@ -283,23 +269,21 @@
           <!-- Lock down plugin version for build reproducibility -->
           <version>3.1.0</version>
           <inherited>true</inherited>
+          <configuration>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
+            <linkXRef>false</linkXRef>
+          </configuration>
           <dependencies>
             <!-- Update Checkstyle version used -->
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.21</version>
-            </dependency>
-            <!-- Multimodal config -->
-            <dependency>
-              <groupId>${project.groupId}</groupId>
-              <artifactId>dev-ops</artifactId>
-              <version>${project.version}</version>
+              <version>8.23</version>
             </dependency>
           </dependencies>
           <executions>
             <execution>
-              <phase>process-sources</phase>
               <goals>
                 <goal>check</goal>
               </goals>

@@ -176,6 +176,39 @@ public class InterledgerAddressPrefixTest {
     assertThat(InterledgerAddressPrefix.of("g.foo.bob").getValue(), is("g.foo.bob"));
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testOfWithNull() {
+    try {
+      InterledgerAddressPrefix.of(null);
+      fail("should have thrown an exception but did not!");
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(), is("value must not be null!"));
+      throw e;
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithEmptyString() {
+    try {
+      InterledgerAddressPrefix.of("");
+      fail("should have thrown an exception but did not!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("The '' AllocationScheme is invalid!"));
+      throw e;
+    }
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testOfWithBlankString() {
+    try {
+      InterledgerAddressPrefix.of(" ");
+      fail("should have thrown an exception but did not!");
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage(), is("The ' ' AllocationScheme is invalid!"));
+      throw e;
+    }
+  }
+
   @Test
   public void testStartsWithString() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.of("g.foo.bob");
