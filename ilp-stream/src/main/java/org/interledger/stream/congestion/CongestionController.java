@@ -1,8 +1,11 @@
 package org.interledger.stream.congestion;
 
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.stream.congestion.AimdCongestionController.CongestionState;
 
 import com.google.common.primitives.UnsignedLong;
+
+import java.util.Optional;
 
 /**
  * Allows STREAM clients and servers to adjust payment amounts and frequency depending on various ILPv4 responses (i.e.,
@@ -33,4 +36,10 @@ public interface CongestionController {
    * @param rejectPacket  An {@link InterledgerRejectPacket} containing information about the rejection.
    */
   void reject(final UnsignedLong prepareAmount, final InterledgerRejectPacket rejectPacket);
+
+  UnsignedLong getMaxAmount();
+
+  CongestionState getCongestionState();
+
+  Optional<UnsignedLong> getMaxPacketAmount();
 }

@@ -257,37 +257,4 @@ public class AimdCongestionControllerTest {
     controller.prepare(SIX_HUNDRED);
     assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(1000L - 600L - 100L)));
   }
-
-  @Test(expected = NullPointerException.class)
-  public void minWithNullFirst() {
-    try {
-      controller.min(null, UnsignedLong.ONE);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is(nullValue()));
-      throw e;
-    }
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void minWithNullSecond() {
-    try {
-      controller.min(UnsignedLong.ONE, null);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is(nullValue()));
-      throw e;
-    }
-  }
-
-  @Test
-  public void minTests() {
-    assertThat(controller.min(UnsignedLong.ZERO, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(controller.min(UnsignedLong.ONE, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(controller.min(UnsignedLong.ZERO, UnsignedLong.ONE), is(UnsignedLong.ZERO));
-    assertThat(controller.min(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(controller.min(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE), is(UnsignedLong.ZERO));
-    assertThat(controller.min(UnsignedLong.ONE, UnsignedLong.MAX_VALUE), is(UnsignedLong.ONE));
-    assertThat(controller.min(UnsignedLong.MAX_VALUE, UnsignedLong.ONE), is(UnsignedLong.ONE));
-  }
 }

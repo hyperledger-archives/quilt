@@ -4,6 +4,8 @@ import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.stream.crypto.Random;
 
+import com.google.common.primitives.UnsignedLong;
+
 import java.nio.charset.Charset;
 import java.security.SignatureException;
 import java.util.Objects;
@@ -72,4 +74,14 @@ public class StreamUtils {
     }
   }
 
+  public static UnsignedLong min(final UnsignedLong v1, final UnsignedLong v2) {
+    Objects.requireNonNull(v1);
+    Objects.requireNonNull(v2);
+
+    if (v1.compareTo(v2) < 0) {
+      return v1;
+    } else {
+      return v2;
+    }
+  }
 }

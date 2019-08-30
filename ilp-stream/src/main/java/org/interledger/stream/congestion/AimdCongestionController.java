@@ -2,8 +2,8 @@ package org.interledger.stream.congestion;
 
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.stream.StreamUtils;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
@@ -67,11 +67,12 @@ public class AimdCongestionController implements CongestionController {
    * @return The current max amount for this stream.
    */
   // TODO: Determine if this data needs to be synchronized.
+  @Override
   public UnsignedLong getMaxAmount() {
     final UnsignedLong amountLeftInWindow = maxInFlight.minus(amountInFlight.get());
     return this.maxPacketAmount
         // If maxInFlight is specified, take the min of `amountLeftInWindow` and `maxInFlight`.
-        .map(maxPacketAmount -> min(amountLeftInWindow, maxPacketAmount))
+        .map(maxPacketAmount -> StreamUtils.min(amountLeftInWindow, maxPacketAmount))
         .orElse(amountLeftInWindow);
   }
 
@@ -144,7 +145,7 @@ public class AimdCongestionController implements CongestionController {
 
           this.maxPacketAmount = Optional.ofNullable(this.maxPacketAmount
               // If maxInFlight is specified, take the min of `maxPacketAmount` and `newMaxPacketAmount`.
-              .map(maxPacketAmount -> min(maxPacketAmount, newMaxPacketAmount))
+              .map(maxPacketAmount -> StreamUtils.min(maxPacketAmount, newMaxPacketAmount))
               // Otherwise, just set the maxPacketAmount to be newMaxPacketAmount
               .orElse(newMaxPacketAmount)
           );
@@ -159,23 +160,12 @@ public class AimdCongestionController implements CongestionController {
     }
   }
 
-  @VisibleForTesting
-  protected UnsignedLong min(final UnsignedLong v1, final UnsignedLong v2) {
-    Objects.requireNonNull(v1);
-    Objects.requireNonNull(v2);
-
-    if (v1.compareTo(v2) < 0) {
-      return v1;
-    } else {
-      return v2;
-    }
-  }
-
   /**
    * Accessor for the current congestion state.
    *
    * @return A {@link CongestionState} representing the current state.
    */
+  @Override
   public CongestionState getCongestionState() {
     return this.congestionState.get();
   }
@@ -190,6 +180,7 @@ public class AimdCongestionController implements CongestionController {
     this.congestionState.set(congestionState);
   }
 
+  @Override
   public Optional<UnsignedLong> getMaxPacketAmount() {
     return maxPacketAmount;
   }

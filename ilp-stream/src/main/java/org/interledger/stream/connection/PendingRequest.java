@@ -5,6 +5,7 @@ import org.interledger.core.InterledgerResponsePacket;
 
 import com.google.common.primitives.UnsignedLong;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 /**
@@ -17,5 +18,5 @@ public interface PendingRequest {
 
   UnsignedLong amount();
 
-  Future<InterledgerResponsePacket> request();
+  CompletableFuture<InterledgerResponsePacket> request();
 }

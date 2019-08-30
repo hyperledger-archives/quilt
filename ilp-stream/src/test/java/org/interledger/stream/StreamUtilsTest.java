@@ -2,9 +2,12 @@ package org.interledger.stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerFulfillment;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
 import java.security.SignatureException;
@@ -24,12 +27,14 @@ public class StreamUtilsTest {
       (byte) 229, (byte) 67, (byte) 231, (byte) 49, (byte) 92, (byte) 127, (byte) 254, (byte) 230, (byte) 144,
       (byte) 102, (byte) 103, (byte) 166, (byte) 150, (byte) 36
   };
+
   private static final byte[] DATA = new byte[] {
       (byte) 119, (byte) 248, (byte) 213, (byte) 234, (byte) 63, (byte) 200, (byte) 224, (byte) 140, (byte) 212,
       (byte) 222, (byte) 105, (byte) 159, (byte) 246, (byte) 203, (byte) 66, (byte) 155, (byte) 151, (byte) 172,
       (byte) 68, (byte) 24, (byte) 76, (byte) 232, (byte) 90, (byte) 10, (byte) 237, (byte) 146, (byte) 189, (byte) 73,
       (byte) 248, (byte) 196, (byte) 177, (byte) 108, (byte) 115, (byte) 223
   };
+
   private static final byte[] FULFILLMENT = new byte[] {
       (byte) 24, (byte) 6, (byte) 56, (byte) 73, (byte) 229, (byte) 236, (byte) 88, (byte) 227, (byte) 82, (byte) 112,
       (byte) 152, (byte) 49, (byte) 152, (byte) 73, (byte) 182, (byte) 183, (byte) 198, (byte) 7, (byte) 233,
@@ -43,5 +48,38 @@ public class StreamUtilsTest {
 
     assertThat(fulfillment.getPreimage(), is(FULFILLMENT));
     assertThat(fulfillment, is(InterledgerFulfillment.of(FULFILLMENT)));
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void minWithNullFirst() {
+    try {
+      StreamUtils.min(null, UnsignedLong.ONE);
+      fail();
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(), is(nullValue()));
+      throw e;
+    }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void minWithNullSecond() {
+    try {
+      StreamUtils.min(UnsignedLong.ONE, null);
+      fail();
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage(), is(nullValue()));
+      throw e;
+    }
+  }
+
+  @Test
+  public void minTests() {
+    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
+    assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
+    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.ONE), is(UnsignedLong.ZERO));
+    assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
+    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE), is(UnsignedLong.ZERO));
+    assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.MAX_VALUE), is(UnsignedLong.ONE));
+    assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ONE), is(UnsignedLong.ONE));
   }
 }
