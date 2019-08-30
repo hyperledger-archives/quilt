@@ -64,6 +64,12 @@ public abstract class AbstractLink<LS extends LinkSettings> implements Link<LS> 
     return linkId;
   }
 
+  /**
+   * Allows the linkId to be set after construction. This is important because often times a LinkId is not known until
+   * after it is constructed (i.e., it cannot be discerned from {@link LinkSettings}).
+   *
+   * @param linkId
+   */
   public void setLinkId(final LinkId linkId) {
     if (this.linkId == null) {
       this.linkId = Objects.requireNonNull(linkId);

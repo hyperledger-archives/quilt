@@ -40,9 +40,9 @@ public interface LinkSettings {
       final String linkTypeString = this.getLinkType().value();
       if (!linkTypeString.toUpperCase().equals(linkTypeString)) {
         return ImmutableLinkSettings.builder()
-          .from(this)
-          .linkType(LinkType.of(linkTypeString.toUpperCase()))
-          .build();
+            .from(this)
+            .linkType(LinkType.of(linkTypeString.toUpperCase()))
+            .build();
       } else {
         return this;
       }
