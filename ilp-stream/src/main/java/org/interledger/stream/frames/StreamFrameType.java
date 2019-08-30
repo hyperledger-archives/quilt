@@ -1,4 +1,4 @@
-package org.interledger.stream;
+package org.interledger.stream.frames;
 
 /*-
  * ========================LICENSE_START=================================
@@ -22,66 +22,70 @@ package org.interledger.stream;
 
 import static java.lang.String.format;
 
-public enum StreamFrame {
+import java.util.Objects;
 
-  ConnectionError((short) 1),
+public enum StreamFrameType {
+
+  ConnectionClose((short) 1),
   ConnectionNewAddress((short) 2),
   ConnectionMaxData((short) 3),
   ConnectionDataBlocked((short) 4),
   ConnectionMaxStreamId((short) 5),
   ConnectionStreamIdBlocked((short) 6),
+  ConnectionAssetDetails((short) 7),
 
-
-  StreamClose((short) 16),
-  StreamMoney((short) 17),
-  StreamMaxMoney((short) 18),
-  StreamMoneyBlocked((short) 19),
-  StreamData((short) 20),
-  StreamMaxData((short) 21),
-  StreamDataBlocked((short) 22);
+  StreamClose((short) 10),
+  StreamMoney((short) 11),
+  StreamMaxMoney((short) 12),
+  StreamMoneyBlocked((short) 13),
+  StreamData((short) 14),
+  StreamMaxData((short) 15),
+  StreamDataBlocked((short) 16);
 
   private final short type;
 
-  StreamFrame(short type) {
-    this.type = type;
+  StreamFrameType(short type) {
+    this.type = Objects.requireNonNull(type);
   }
 
   /**
-   * Get a new {@link StreamFrame} from the type.
+   * Get a new {@link StreamFrameType} from the type.
    *
    * @param code the message type type.
    *
-   * @return A new {@link StreamFrame} from the provided type
+   * @return A new {@link StreamFrameType} from the provided type
    */
-  public static StreamFrame fromCode(short code) {
+  public static StreamFrameType fromCode(short code) {
 
     switch (code) {
       case (short) 1:
-        return StreamFrame.ConnectionError;
+        return StreamFrameType.ConnectionClose;
       case (short) 2:
-        return StreamFrame.ConnectionNewAddress;
+        return StreamFrameType.ConnectionNewAddress;
       case (short) 3:
-        return StreamFrame.ConnectionMaxData;
+        return StreamFrameType.ConnectionMaxData;
       case (short) 4:
-        return StreamFrame.ConnectionDataBlocked;
+        return StreamFrameType.ConnectionDataBlocked;
       case (short) 5:
-        return StreamFrame.ConnectionNewAddress;
+        return StreamFrameType.ConnectionMaxStreamId;
       case (short) 6:
-        return StreamFrame.ConnectionNewAddress;
+        return StreamFrameType.ConnectionStreamIdBlocked;
+      case (short) 7:
+        return StreamFrameType.ConnectionAssetDetails;
+      case (short) 10:
+        return StreamFrameType.StreamClose;
+      case (short) 11:
+        return StreamFrameType.StreamMoney;
+      case (short) 12:
+        return StreamFrameType.StreamMaxMoney;
+      case (short) 13:
+        return StreamFrameType.StreamMoneyBlocked;
+      case (short) 14:
+        return StreamFrameType.StreamData;
+      case (short) 15:
+        return StreamFrameType.StreamMaxData;
       case (short) 16:
-        return StreamFrame.ConnectionNewAddress;
-      case (short) 17:
-        return StreamFrame.ConnectionNewAddress;
-      case (short) 18:
-        return StreamFrame.ConnectionNewAddress;
-      case (short) 19:
-        return StreamFrame.ConnectionNewAddress;
-      case (short) 20:
-        return StreamFrame.ConnectionNewAddress;
-      case (short) 21:
-        return StreamFrame.ConnectionNewAddress;
-      case (short) 22:
-        return StreamFrame.ConnectionNewAddress;
+        return StreamFrameType.StreamDataBlocked;
       default:
         throw new IllegalArgumentException(format("Unknown StreamFrame Type: %s", code));
     }
