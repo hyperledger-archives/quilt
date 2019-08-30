@@ -25,29 +25,39 @@ import org.interledger.core.Immutable;
 import org.immutables.value.Value.Derived;
 
 /**
- * Indicates that the connection was closed.
+ * <p>Indicates that the connection was closed.</p>
+ *
+ * <p>If implementations allow half-open connections, an endpoint MAY continue sending packets after receiving a
+ * ConnectionClose frame. Otherwise, the endpoint MUST close the connection immediately.</p>
  */
-public interface ConnectionMaxStreamId extends StreamFrame {
+public interface ConnectionCloseFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionMaxStreamId;
+    return StreamFrameType.ConnectionClose;
   }
 
   /**
-   * The maximum stream ID the endpoint is willing to accept.
+   * Machine-readable {@link ErrorCode} indicating why the connection was closed.
    *
    * @return
    */
-  long maxOffset();
+  ErrorCode errorCode();
+
+  /**
+   * Human-readable string intended to give more information helpful for debugging purposes.
+   *
+   * @return
+   */
+  String errorMessage();
 
   @Immutable
-  abstract class AbstractConnectionMaxStreamId implements ConnectionMaxStreamId {
+  abstract class AbstractConnectionCloseFrame implements ConnectionCloseFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionMaxStreamId;
+      return StreamFrameType.ConnectionClose;
     }
 
   }

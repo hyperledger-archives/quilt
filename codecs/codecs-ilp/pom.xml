@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>Interledger Core Codecs</name>
+    <name>Quilt :: Codecs :: ILP</name>
     <description>Codecs for the Interledger Core classes.</description>
     <artifactId>codecs-ilp</artifactId>
 

@@ -25,44 +25,29 @@ import org.interledger.core.Immutable;
 import org.immutables.value.Value.Derived;
 
 /**
- * <p>Packets may be received out of order so the Offset is used to indicate the correct position of the byte segment
- * in the overall stream. The first StreamData frame sent for a given stream MUST start with an Offset of zero.</p>
+ * Indicates that the connection was closed.
  */
-public interface StreamData extends StreamFrame {
+public interface ConnectionMaxStreamIdFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.StreamData;
+    return StreamFrameType.ConnectionMaxStreamId;
   }
 
   /**
-   * Identifier of the stream this frame refers to.
+   * The maximum stream ID the endpoint is willing to accept.
    *
    * @return
    */
-  long streamId();
-
-  /**
-   * Position of this data in the byte stream.
-   *
-   * @return
-   */
-  long offset();
-
-  /**
-   * Application data.
-   *
-   * @return
-   */
-  byte[] data();
+  long maxOffset();
 
   @Immutable
-  abstract class AbstractStreamData implements StreamData {
+  abstract class AbstractConnectionMaxStreamIdFrame implements ConnectionMaxStreamIdFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamData;
+      return StreamFrameType.ConnectionMaxStreamId;
     }
 
   }

@@ -9,8 +9,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger Codec Framework</name>
-  <description>A framework for writing codecContext.</description>
+  <name>Quilt :: Codecs :: Framework</name>
+  <description>A framework for writing Interledger Codecs.</description>
   <artifactId>codec-framework</artifactId>
   <packaging>jar</packaging>
 

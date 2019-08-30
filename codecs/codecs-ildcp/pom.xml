@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <name>Interledger DCP Core Codecs</name>
+    <name>Quilt :: Codecs :: IL-DCP</name>
     <description>Interledger Dynamic Configuration Protocol (IL-DCP) core codecs.</description>
     <dependencies>
         <dependency>

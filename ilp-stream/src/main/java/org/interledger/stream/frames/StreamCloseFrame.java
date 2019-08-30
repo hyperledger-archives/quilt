@@ -25,19 +25,16 @@ import org.interledger.core.Immutable;
 import org.immutables.value.Value.Derived;
 
 /**
- * <p>Used to advertise to the other stream party that the frame sender has more money to send, but this would exceed
- * the other endpoint's advertised value as found in latest {@link StreamMaxMoney} frame.</p>
+ * <p>Indicates that the Stream was closed.</p>
  *
- * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
- * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
- *
- * <p>Note that this frame is primarily intended for debugging purposes.</p>
+ * <p>If implementations allow half-open streams, an endpoint MAY continue sending money or data for this stream after
+ * receiving a StreamClose frame. Otherwise, the endpoint MUST close the stream immediately.</p>
  */
-public interface StreamMoneyBlocked extends StreamFrame {
+public interface StreamCloseFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.StreamMoneyBlocked;
+    return StreamFrameType.StreamClose;
   }
 
   /**
@@ -48,26 +45,26 @@ public interface StreamMoneyBlocked extends StreamFrame {
   long streamId();
 
   /**
-   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint wants to send.
+   * Machine-readable {@link ErrorCode} indicating why the Stream was closed.
    *
    * @return
    */
-  long sendMax();
+  ErrorCode errorCode();
 
   /**
-   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint has sent already.
+   * Human-readable string intended to give more information helpful for debugging purposes.
    *
    * @return
    */
-  long totalSent();
+  String errorMessage();
 
   @Immutable
-  abstract class AbstractStreamMoneyBlocked implements StreamMoneyBlocked {
+  abstract class AbstractStreamCloseFrame implements StreamCloseFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMoneyBlocked;
+      return StreamFrameType.StreamClose;
     }
 
   }

@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger Jackson Datatypes</name>
+  <name>Quilt :: Jackson Datatypes</name>
   <artifactId>jackson-datatypes</artifactId>
   <description>
     Jackson serialization/deserialization support for Hyperledger Quilt projects.

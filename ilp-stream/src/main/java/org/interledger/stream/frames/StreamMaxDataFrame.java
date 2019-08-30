@@ -28,11 +28,11 @@ import org.immutables.value.Value.Derived;
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
  */
-public interface StreamMaxMoney extends StreamFrame {
+public interface StreamMaxDataFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.StreamMaxMoney;
+    return StreamFrameType.StreamMaxData;
   }
 
   /**
@@ -43,27 +43,19 @@ public interface StreamMaxMoney extends StreamFrame {
   long streamId();
 
   /**
-   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint is willing to receive
-   * on this stream.
+   * The total number of bytes the endpoint is willing to receive on this stream.
    *
    * @return
    */
-  long receiveMax();
-
-  /**
-   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint has received thus far.
-   *
-   * @return
-   */
-  long totalReceived();
+  long maxOffset();
 
   @Immutable
-  abstract class AbstractStreamMaxMoney implements StreamMaxMoney {
+  abstract class AbstractStreamMaxDataFrame implements StreamMaxDataFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMaxMoney;
+      return StreamFrameType.StreamMaxData;
     }
 
   }

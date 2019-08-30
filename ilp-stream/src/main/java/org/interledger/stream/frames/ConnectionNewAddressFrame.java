@@ -21,40 +21,43 @@ package org.interledger.stream.frames;
  */
 
 import org.interledger.core.Immutable;
+import org.interledger.core.InterledgerAddress;
 
 import org.immutables.value.Value.Derived;
 
 /**
- * A STREAM frame for propagating asset details for a Connection.
+ * Indicates that the connection was closed.
  */
-public interface ConnectionAssetDetails extends StreamFrame {
+public interface ConnectionNewAddressFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link ConnectionNewAddressFrameBuilder} instance.
+   */
+  static ConnectionNewAddressFrameBuilder builder() {
+    return new ConnectionNewAddressFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionAssetDetails;
+    return StreamFrameType.ConnectionNewAddress;
   }
 
   /**
-   * Asset code of endpoint that sent the frame.
+   * The new ILP address of the endpoint that sent the frame.
    *
    * @return
    */
-  String sourceAssetCode();
-
-  /**
-   * Asset scale of endpoint that sent the frame.
-   *
-   * @return
-   */
-  long sourceAssetScale();
+  InterledgerAddress sourceAddress();
 
   @Immutable
-  abstract class AbstractConnectionAssetDetails implements ConnectionAssetDetails {
+  abstract class AbstractConnectionNewAddressFrame implements ConnectionNewAddressFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionAssetDetails;
+      return StreamFrameType.ConnectionNewAddress;
     }
 
   }

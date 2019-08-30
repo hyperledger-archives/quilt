@@ -101,6 +101,7 @@
     <module>jackson-datatypes</module>
     <module>codecs</module>
     <module>ilp-stream</module>
+    <module>ilp-link</module>
   </modules>
 
   <dependencyManagement>

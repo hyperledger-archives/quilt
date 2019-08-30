@@ -25,39 +25,36 @@ import org.interledger.core.Immutable;
 import org.immutables.value.Value.Derived;
 
 /**
- * <p>Indicates that the connection was closed.</p>
- *
- * <p>If implementations allow half-open connections, an endpoint MAY continue sending packets after receiving a
- * ConnectionClose frame. Otherwise, the endpoint MUST close the connection immediately.</p>
+ * A STREAM frame for propagating asset details for a Connection.
  */
-public interface ConnectionClose extends StreamFrame {
+public interface ConnectionAssetDetailsFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionClose;
+    return StreamFrameType.ConnectionAssetDetails;
   }
 
   /**
-   * Machine-readable {@link ErrorCode} indicating why the connection was closed.
+   * Asset code of endpoint that sent the frame.
    *
    * @return
    */
-  ErrorCode errorCode();
+  String sourceAssetCode();
 
   /**
-   * Human-readable string intended to give more information helpful for debugging purposes.
+   * Asset scale of endpoint that sent the frame.
    *
    * @return
    */
-  String errorMessage();
+  long sourceAssetScale();
 
   @Immutable
-  abstract class AbstractConnectionClose implements ConnectionClose {
+  abstract class AbstractConnectionAssetDetailsFrame implements ConnectionAssetDetailsFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionClose;
+      return StreamFrameType.ConnectionAssetDetails;
     }
 
   }

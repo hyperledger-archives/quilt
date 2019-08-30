@@ -10,7 +10,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger Core</name>
+  <name>Quilt :: ILP Core</name>
   <artifactId>ilp-core</artifactId>
   <description>Core libraries for implementing the Interledger suite of protocols.</description>
   <packaging>jar</packaging>

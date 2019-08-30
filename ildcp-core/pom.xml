@@ -7,7 +7,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger DCP Core</name>
+  <name>Quilt :: IL-DCP Core</name>
   <description>Interledger Dynamic Configuration Protocol (IL-DCP) core libraries.</description>
   <artifactId>ildcp-core</artifactId>
   <packaging>jar</packaging>

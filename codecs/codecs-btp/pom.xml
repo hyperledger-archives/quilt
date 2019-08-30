@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Bilateral Transfer Protocol Core Codecs</name>
+  <name>Quilt :: Codecs :: BTP</name>
   <url>http://maven.apache.org</url>
   <description>BTP Protocol Core Codecs.</description>
   <artifactId>codecs-btp</artifactId>

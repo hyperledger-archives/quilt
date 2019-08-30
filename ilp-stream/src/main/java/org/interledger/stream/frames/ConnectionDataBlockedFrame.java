@@ -25,29 +25,35 @@ import org.interledger.core.Immutable;
 import org.immutables.value.Value.Derived;
 
 /**
- * Indicates that the connection was closed.
+ * <p>Used to advertise to the other stream party that the frame sender has more data to send, but this would exceed
+ * the other endpoint's advertised value as found in the latest {@link StreamMaxDataFrame} frame.</p>
+ *
+ * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
+ * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
+ *
+ * <p>Note that this frame is primarily intended for debugging purposes.</p>
  */
-public interface ConnectionStreamIdBlocked extends StreamFrame {
+public interface ConnectionDataBlockedFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionStreamIdBlocked;
+    return StreamFrameType.ConnectionDataBlocked;
   }
 
   /**
-   * The maximum stream ID the endpoint wishes to open.
+   * The total number of bytes the endpoint is willing to receive on this connection.
    *
    * @return
    */
   long maxOffset();
 
   @Immutable
-  abstract class AbstractConnectionStreamIdBlocked implements ConnectionStreamIdBlocked {
+  abstract class AbstractConnectionDataBlockedFrame implements ConnectionDataBlockedFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionStreamIdBlocked;
+      return StreamFrameType.ConnectionDataBlocked;
     }
 
   }

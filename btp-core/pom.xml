@@ -10,8 +10,7 @@
   <artifactId>btp-core</artifactId>
   <packaging>jar</packaging>
 
-  <name>Bilateral Transfer Protocol Core Libs</name>
-  <url>http://maven.apache.org</url>
+  <name>Quilt :: BTP Core</name>
 
   <dependencies>
     <dependency>

@@ -62,7 +62,16 @@ import java.util.List;
  */
 public interface StreamPacket {
 
-  public static final int VERSION_1 = 1;
+  int VERSION_1 = 1;
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamPacketBuilder} instance.
+   */
+  static StreamPacketBuilder builder() {
+    return new StreamPacketBuilder();
+  }
 
   /**
    * The version of this packet, currently 1.

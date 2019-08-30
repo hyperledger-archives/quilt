@@ -25,29 +25,45 @@ import org.interledger.core.Immutable;
 import org.immutables.value.Value.Derived;
 
 /**
- * Indicates that the connection was closed.
+ * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
+ * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
  */
-public interface ConnectionMaxData extends StreamFrame {
+public interface StreamMaxMoneyFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionMaxData;
+    return StreamFrameType.StreamMaxMoney;
   }
 
   /**
-   * The total number of bytes the endpoint is willing to receive on this connection.
+   * Identifier of the stream this frame refers to.
    *
    * @return
    */
-  long maxOffset();
+  long streamId();
+
+  /**
+   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint is willing to receive
+   * on this stream.
+   *
+   * @return
+   */
+  long receiveMax();
+
+  /**
+   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint has received thus far.
+   *
+   * @return
+   */
+  long totalReceived();
 
   @Immutable
-  abstract class AbstractConnectionMaxData implements ConnectionMaxData {
+  abstract class AbstractStreamMaxMoneyFrame implements StreamMaxMoneyFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionMaxData;
+      return StreamFrameType.StreamMaxMoney;
     }
 
   }

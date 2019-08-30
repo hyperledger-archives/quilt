@@ -27,7 +27,7 @@ import org.immutables.value.Value.Derived;
 /**
  * A STREAM frame used to indicate that data has been blocked.
  */
-public interface StreamDataBlocked extends StreamFrame {
+public interface StreamDataBlockedFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -49,7 +49,7 @@ public interface StreamDataBlocked extends StreamFrame {
   long maxOffset();
 
   @Immutable
-  abstract class AbstractStreamMoneyBlocked implements StreamDataBlocked {
+  abstract class AbstractStreamDataBlockedFrame implements StreamDataBlockedFrame {
 
     @Derived
     @Override

@@ -9,14 +9,14 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Codecs: Aggregate Codecs</name>
+  <name>Quilt :: Codecs Parent</name>
   <artifactId>codecs</artifactId>
   <packaging>pom</packaging>
 
   <modules>
     <module>codec-framework</module>
-    <module>codecs-btp</module>
-    <module>codecs-ildcp</module>
     <module>codecs-ilp</module>
+    <module>codecs-ildcp</module>
+    <module>codecs-btp</module>
   </modules>
 </project>

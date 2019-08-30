@@ -1,7 +1,7 @@
 package org.interledger.stream;
 
-import org.interledger.stream.frames.ConnectionClose;
-import org.interledger.stream.frames.StreamClose;
+import org.interledger.stream.frames.ConnectionCloseFrame;
+import org.interledger.stream.frames.StreamCloseFrame;
 
 import com.google.common.collect.Maps;
 
@@ -36,7 +36,7 @@ public class ConnectionManager {
   /**
    * <p>Close a connection.</p>
    *
-   * <p>Either endpoint can close the connection using a {@link ConnectionClose} frame. Implementations MAY allow
+   * <p>Either endpoint can close the connection using a {@link ConnectionCloseFrame} frame. Implementations MAY allow
    * half-open connections (where one side has closed the connection and the other is still able to send).</p>
    *
    * <p>ConnectionClose frames are used to communicate both normal connection closes as well as errors.</p>
@@ -69,7 +69,7 @@ public class ConnectionManager {
   }
 
   /**
-   * <p>Allows either endpoint to close a stream using a {@link StreamClose} frame. Implementations MAY allow half-open
+   * <p>Allows either endpoint to close a stream using a {@link StreamCloseFrame} frame. Implementations MAY allow half-open
    * streams (where one side has closed and the other is still able to send).</p>
    *
    * <p>StreamClose frames are used to communicate both normal stream closes as well as errors.</p>

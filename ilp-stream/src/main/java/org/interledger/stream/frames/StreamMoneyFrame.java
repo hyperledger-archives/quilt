@@ -36,7 +36,16 @@ import org.immutables.value.Value.Derived;
  * amounts down. The remainder SHOULD be allocated to the lowest-numbered open stream that has not reached its maximum
  * receive amount.</p>
  */
-public interface StreamMoney extends StreamFrame {
+public interface StreamMoneyFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamMoneyFrameBuilder} instance.
+   */
+  static StreamMoneyFrameBuilder builder() {
+    return new StreamMoneyFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -58,7 +67,7 @@ public interface StreamMoney extends StreamFrame {
   long shares();
 
   @Immutable
-  abstract class AbstractStreamMoney implements StreamMoney {
+  abstract class AbstractStreamMoneyFrame implements StreamMoneyFrame {
 
     @Derived
     @Override

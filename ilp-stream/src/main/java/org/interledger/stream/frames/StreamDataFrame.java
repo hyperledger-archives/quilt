@@ -21,41 +21,48 @@ package org.interledger.stream.frames;
  */
 
 import org.interledger.core.Immutable;
-import org.interledger.core.InterledgerAddress;
 
 import org.immutables.value.Value.Derived;
 
 /**
- * Indicates that the connection was closed.
+ * <p>Packets may be received out of order so the Offset is used to indicate the correct position of the byte segment
+ * in the overall stream. The first StreamData frame sent for a given stream MUST start with an Offset of zero.</p>
  */
-public interface ConnectionNewAddress extends StreamFrame {
+public interface StreamDataFrame extends StreamFrame {
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionNewAddress;
+    return StreamFrameType.StreamData;
   }
 
   /**
-   * The new ILP address of the endpoint that sent the frame.
+   * Identifier of the stream this frame refers to.
    *
    * @return
    */
-  InterledgerAddress sourceAddress();
+  long streamId();
 
   /**
-   * Human-readable string intended to give more information helpful for debugging purposes.
+   * Position of this data in the byte stream.
    *
    * @return
    */
-  String errorMessage();
+  long offset();
+
+  /**
+   * Application data.
+   *
+   * @return
+   */
+  byte[] data();
 
   @Immutable
-  abstract class AbstractConnectionNewAddress implements ConnectionNewAddress {
+  abstract class AbstractStreamDataFrame implements StreamDataFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionNewAddress;
+      return StreamFrameType.StreamData;
     }
 
   }
