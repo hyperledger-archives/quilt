@@ -22,11 +22,13 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 /**
  * <p>Used to advertise to the other stream party that the frame sender has more money to send, but this would exceed
- * the other endpoint's advertised value as found in latest {@link StreamMaxMoneyFrame} frame.</p>
+ * the other endpoint's advertised value as found in latest {@link StreamMoneyMaxFrame} frame.</p>
  *
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
@@ -34,6 +36,15 @@ import org.immutables.value.Value.Derived;
  * <p>Note that this frame is primarily intended for debugging purposes.</p>
  */
 public interface StreamMoneyBlockedFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamMoneyBlockedFrameBuilder} instance.
+   */
+  static StreamMoneyBlockedFrameBuilder builder() {
+    return new StreamMoneyBlockedFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -45,21 +56,23 @@ public interface StreamMoneyBlockedFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
    * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint wants to send.
    *
    * @return
    */
-  long sendMax();
+  UnsignedLong sendMax();
 
   /**
    * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint has sent already.
    *
    * @return
    */
-  long totalSent();
+  default UnsignedLong totalSent() {
+    return UnsignedLong.ZERO;
+  }
 
   @Immutable
   abstract class AbstractStreamMoneyBlockedFrame implements StreamMoneyBlockedFrame {
@@ -70,6 +83,11 @@ public interface StreamMoneyBlockedFrame extends StreamFrame {
       return StreamFrameType.StreamMoneyBlocked;
     }
 
+    @Default
+    @Override
+    public UnsignedLong totalSent() {
+      return UnsignedLong.ZERO;
+    }
   }
 
 }

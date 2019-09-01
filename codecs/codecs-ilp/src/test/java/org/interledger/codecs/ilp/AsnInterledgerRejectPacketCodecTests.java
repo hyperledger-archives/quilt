@@ -23,8 +23,6 @@ package org.interledger.codecs.ilp;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPacket;
@@ -47,10 +45,10 @@ import java.util.Random;
 import java.util.stream.IntStream;
 
 /**
- * Unit tests to validate the serializer functionality for all {@link InterledgerRejectPacket} packets.
+ * Unit tests {@link AsnInterledgerRejectPacketCodec}.
  */
 @RunWith(Parameterized.class)
-public class InterledgerRejectPacketOerSerializerTests {
+public class AsnInterledgerRejectPacketCodecTests {
 
   private static final InterledgerAddress FOO = InterledgerAddress.of("test1.foo.foo");
   private static final InterledgerAddress BAR = InterledgerAddress.of("test1.bar.bar");

@@ -22,6 +22,8 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 /**
@@ -31,6 +33,15 @@ import org.immutables.value.Value.Derived;
  * receiving a StreamClose frame. Otherwise, the endpoint MUST close the stream immediately.</p>
  */
 public interface StreamCloseFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamCloseFrameBuilder} instance.
+   */
+  static StreamCloseFrameBuilder builder() {
+    return new StreamCloseFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -42,7 +53,7 @@ public interface StreamCloseFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
    * Machine-readable {@link ErrorCode} indicating why the Stream was closed.
@@ -56,7 +67,9 @@ public interface StreamCloseFrame extends StreamFrame {
    *
    * @return
    */
-  String errorMessage();
+  default String errorMessage() {
+    return "";
+  }
 
   @Immutable
   abstract class AbstractStreamCloseFrame implements StreamCloseFrame {
@@ -65,6 +78,17 @@ public interface StreamCloseFrame extends StreamFrame {
     @Override
     public StreamFrameType streamFrameType() {
       return StreamFrameType.StreamClose;
+    }
+
+    /**
+     * Human-readable string intended to give more information helpful for debugging purposes.
+     *
+     * @return
+     */
+    @Override
+    @Default
+    public String errorMessage() {
+      return "";
     }
 
   }

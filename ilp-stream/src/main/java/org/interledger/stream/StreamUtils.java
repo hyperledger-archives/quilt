@@ -48,9 +48,9 @@ public class StreamUtils {
    *
    * @return
    */
-  public static final InterledgerFulfillment generatedFulfillableFulfillment(final byte[] sharedSecret,
-      final byte[] data)
-      throws SignatureException {
+  public static final InterledgerFulfillment generatedFulfillableFulfillment(
+      final byte[] sharedSecret, final byte[] data
+  ) throws SignatureException {
     Objects.requireNonNull(sharedSecret);
 
     // hmac_key = hmac_sha256(shared_secret, "ilp_stream_fulfillment");

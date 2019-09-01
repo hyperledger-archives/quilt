@@ -22,17 +22,28 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 /**
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
  */
-public interface StreamMaxDataFrame extends StreamFrame {
+public interface StreamMoneyMaxFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamMoneyMaxFrameBuilder} instance.
+   */
+  static StreamMoneyMaxFrameBuilder builder() {
+    return new StreamMoneyMaxFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.StreamMaxData;
+    return StreamFrameType.StreamMoneyMax;
   }
 
   /**
@@ -40,24 +51,40 @@ public interface StreamMaxDataFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
-   * The total number of bytes the endpoint is willing to receive on this stream.
+   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint is willing to receive
+   * on this stream.
    *
    * @return
    */
-  long maxOffset();
+  UnsignedLong receiveMax();
+
+  /**
+   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint has received thus
+   * far.
+   *
+   * @return
+   */
+  default UnsignedLong totalReceived() {
+    return UnsignedLong.ZERO;
+  }
 
   @Immutable
-  abstract class AbstractStreamMaxDataFrame implements StreamMaxDataFrame {
+  abstract class AbstractStreamMoneyMaxFrame implements StreamMoneyMaxFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMaxData;
+      return StreamFrameType.StreamMoneyMax;
     }
 
+    @Default
+    @Override
+    public UnsignedLong totalReceived() {
+      return UnsignedLong.ZERO;
+    }
   }
 
 }

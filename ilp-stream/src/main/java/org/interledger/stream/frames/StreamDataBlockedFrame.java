@@ -22,6 +22,7 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 /**
@@ -29,9 +30,18 @@ import org.immutables.value.Value.Derived;
  */
 public interface StreamDataBlockedFrame extends StreamFrame {
 
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamDataBlockedFrameBuilder} instance.
+   */
+  static StreamDataBlockedFrameBuilder builder() {
+    return new StreamDataBlockedFrameBuilder();
+  }
+
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.StreamMoneyBlocked;
+    return StreamFrameType.StreamDataBlocked;
   }
 
   /**
@@ -39,14 +49,14 @@ public interface StreamDataBlockedFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
    * The total number of bytes the endpoint wants to send on this stream.
    *
    * @return
    */
-  long maxOffset();
+  UnsignedLong maxOffset();
 
   @Immutable
   abstract class AbstractStreamDataBlockedFrame implements StreamDataBlockedFrame {
@@ -54,7 +64,7 @@ public interface StreamDataBlockedFrame extends StreamFrame {
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMoneyBlocked;
+      return StreamFrameType.StreamDataBlocked;
     }
 
   }

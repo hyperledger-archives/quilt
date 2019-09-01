@@ -22,6 +22,7 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 /**
@@ -57,14 +58,14 @@ public interface StreamMoneyFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
    * Proportion of the ILP Prepare amount destined for the stream specified.
    *
    * @return
    */
-  long shares();
+  UnsignedLong shares();
 
   @Immutable
   abstract class AbstractStreamMoneyFrame implements StreamMoneyFrame {

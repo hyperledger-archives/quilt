@@ -29,6 +29,15 @@ import org.immutables.value.Value.Derived;
  */
 public interface ConnectionAssetDetailsFrame extends StreamFrame {
 
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link ConnectionAssetDetailsFrameBuilder} instance.
+   */
+  static ConnectionAssetDetailsFrameBuilder builder() {
+    return new ConnectionAssetDetailsFrameBuilder();
+  }
+
   @Override
   default StreamFrameType streamFrameType() {
     return StreamFrameType.ConnectionAssetDetails;
@@ -46,7 +55,7 @@ public interface ConnectionAssetDetailsFrame extends StreamFrame {
    *
    * @return
    */
-  long sourceAssetScale();
+  short sourceAssetScale();
 
   @Immutable
   abstract class AbstractConnectionAssetDetailsFrame implements ConnectionAssetDetailsFrame {

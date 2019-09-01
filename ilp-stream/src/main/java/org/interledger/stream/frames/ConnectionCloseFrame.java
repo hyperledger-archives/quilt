@@ -24,6 +24,8 @@ import org.interledger.core.Immutable;
 
 import org.immutables.value.Value.Derived;
 
+import java.util.Optional;
+
 /**
  * <p>Indicates that the connection was closed.</p>
  *
@@ -31,6 +33,15 @@ import org.immutables.value.Value.Derived;
  * ConnectionClose frame. Otherwise, the endpoint MUST close the connection immediately.</p>
  */
 public interface ConnectionCloseFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link ConnectionCloseFrameBuilder} instance.
+   */
+  static ConnectionCloseFrameBuilder builder() {
+    return new ConnectionCloseFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -49,7 +60,7 @@ public interface ConnectionCloseFrame extends StreamFrame {
    *
    * @return
    */
-  String errorMessage();
+  Optional<String> errorMessage();
 
   @Immutable
   abstract class AbstractConnectionCloseFrame implements ConnectionCloseFrame {

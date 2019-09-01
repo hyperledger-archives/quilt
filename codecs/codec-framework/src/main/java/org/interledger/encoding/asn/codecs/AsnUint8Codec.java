@@ -33,7 +33,9 @@ public class AsnUint8Codec extends AsnOctetStringBasedObjectCodec<Short> {
   public Short decode() {
     byte[] bytes = getBytes();
     short value = (short) 0;
-    value |= (bytes[0] & 0xFF);
+    if (bytes.length > 0) {
+      value |= (bytes[0] & 0xFF);
+    }
     return value;
   }
 

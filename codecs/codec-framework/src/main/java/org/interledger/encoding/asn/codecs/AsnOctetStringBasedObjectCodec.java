@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,6 @@ import org.interledger.encoding.asn.framework.CodecException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * ASN.1 object codec that uses a byte array string as an intermediary encoding.
@@ -36,15 +35,15 @@ import java.util.function.Predicate;
  * octet string or integer.
  *
  * <p>Codecs that extend this object can call {@link #getBytes()} and
- * {@link #setBytes(byte[])} in their implementations of {@link #decode()} and
- * {@link #encode(Object)} respectively.
+ * {@link #setBytes(byte[])} in their implementations of {@link #decode()} and {@link #encode(Object)} respectively.
  *
  * <p>The serializers for this object must call {@link #getBytes()} and
- * {@link #setBytes(byte[])} when reading from a stream. The values passed and returned must not
- * contain any length prefixes or tags.
- *
+ * {@link #setBytes(byte[])} when reading from a stream. The values passed and returned must not contain any length
+ * prefixes or tags.
  */
 public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCodec<T> {
+
+  protected static final byte[] EMPTY_BYTES = new byte[0];
 
   private byte[] bytes;
 
@@ -70,7 +69,7 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
    * @return the internal byte array representation of this object.
    */
   public final byte[] getBytes() {
-    return bytes;
+    return bytes == null ? EMPTY_BYTES : bytes;
   }
 
   /**
@@ -83,6 +82,7 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
    * {@link CodecException} will be thrown if it is invalid
    *
    * @param bytes the {@link String} representing the value of this object
+   *
    * @throws CodecException if the provided charString fails validation
    */
   public final void setBytes(byte[] bytes) {

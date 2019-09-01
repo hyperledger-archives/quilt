@@ -21,31 +21,45 @@ package org.interledger.stream.frames;
  */
 
 import static java.lang.String.format;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_ASSET_DETAILS;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_CLOSE;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_DATA_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_DATA_MAX;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_MAX_STREAM_ID;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_NEW_ADDRESS;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_STREAM_ID_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_CLOSE;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA_MAX;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_MAX;
 
 import java.util.Objects;
 
 public enum StreamFrameType {
 
-  ConnectionClose((short) 1),
-  ConnectionNewAddress((short) 2),
-  ConnectionMaxData((short) 3),
-  ConnectionDataBlocked((short) 4),
-  ConnectionMaxStreamId((short) 5),
-  ConnectionStreamIdBlocked((short) 6),
-  ConnectionAssetDetails((short) 7),
+  ConnectionClose(CONNECTION_CLOSE),
+  ConnectionNewAddress(CONNECTION_NEW_ADDRESS),
+  ConnectionDataMax(CONNECTION_DATA_MAX),
+  ConnectionDataBlocked(CONNECTION_DATA_BLOCKED),
+  ConnectionMaxStreamId(CONNECTION_MAX_STREAM_ID),
+  ConnectionStreamIdBlocked(CONNECTION_STREAM_ID_BLOCKED),
+  ConnectionAssetDetails(CONNECTION_ASSET_DETAILS),
 
-  StreamClose((short) 10),
-  StreamMoney((short) 11),
-  StreamMaxMoney((short) 12),
-  StreamMoneyBlocked((short) 13),
-  StreamData((short) 14),
-  StreamMaxData((short) 15),
-  StreamDataBlocked((short) 16);
+  StreamClose(STREAM_CLOSE),
+  StreamMoney(STREAM_MONEY),
+  StreamMoneyMax(STREAM_MONEY_MAX),
+  StreamMoneyBlocked(STREAM_MONEY_BLOCKED),
+  StreamData(STREAM_DATA),
+  StreamDataMax(STREAM_DATA_MAX),
+  StreamDataBlocked(STREAM_DATA_BLOCKED);
 
-  private final short type;
+  private final short code;
 
-  StreamFrameType(short type) {
-    this.type = Objects.requireNonNull(type);
+  StreamFrameType(short code) {
+    this.code = Objects.requireNonNull(code);
   }
 
   /**
@@ -58,33 +72,33 @@ public enum StreamFrameType {
   public static StreamFrameType fromCode(short code) {
 
     switch (code) {
-      case (short) 1:
+      case CONNECTION_CLOSE:
         return StreamFrameType.ConnectionClose;
-      case (short) 2:
+      case CONNECTION_NEW_ADDRESS:
         return StreamFrameType.ConnectionNewAddress;
-      case (short) 3:
-        return StreamFrameType.ConnectionMaxData;
-      case (short) 4:
+      case CONNECTION_DATA_MAX:
+        return StreamFrameType.ConnectionDataMax;
+      case CONNECTION_DATA_BLOCKED:
         return StreamFrameType.ConnectionDataBlocked;
-      case (short) 5:
+      case CONNECTION_MAX_STREAM_ID:
         return StreamFrameType.ConnectionMaxStreamId;
-      case (short) 6:
+      case CONNECTION_STREAM_ID_BLOCKED:
         return StreamFrameType.ConnectionStreamIdBlocked;
-      case (short) 7:
+      case CONNECTION_ASSET_DETAILS:
         return StreamFrameType.ConnectionAssetDetails;
-      case (short) 10:
+      case STREAM_CLOSE:
         return StreamFrameType.StreamClose;
-      case (short) 11:
+      case STREAM_MONEY:
         return StreamFrameType.StreamMoney;
-      case (short) 12:
-        return StreamFrameType.StreamMaxMoney;
-      case (short) 13:
+      case STREAM_MONEY_MAX:
+        return StreamFrameType.StreamMoneyMax;
+      case STREAM_MONEY_BLOCKED:
         return StreamFrameType.StreamMoneyBlocked;
-      case (short) 14:
+      case STREAM_DATA:
         return StreamFrameType.StreamData;
-      case (short) 15:
-        return StreamFrameType.StreamMaxData;
-      case (short) 16:
+      case STREAM_DATA_MAX:
+        return StreamFrameType.StreamDataMax;
+      case STREAM_DATA_BLOCKED:
         return StreamFrameType.StreamDataBlocked;
       default:
         throw new IllegalArgumentException(format("Unknown StreamFrame Type: %s", code));
@@ -92,8 +106,8 @@ public enum StreamFrameType {
 
   }
 
-  public short getType() {
-    return this.type;
+  public short code() {
+    return this.code;
   }
 }
 

@@ -21,6 +21,7 @@ package org.interledger.codecs.ilp;
  */
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
@@ -40,13 +41,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-
 /**
- * Unit tests to validate the functionality for all {@link InterledgerFulfillPacket} packets.
+ * Unit tests {@link AsnInterledgerFulfillPacketCodec}.
  */
 @RunWith(Parameterized.class)
-public class InterledgerFulfillPacketOerSerializerTests {
+public class AsnInterledgerFulfillPacketCodecTests {
 
   // first data value (0) is default
   @Parameter
@@ -91,8 +90,8 @@ public class InterledgerFulfillPacketOerSerializerTests {
   }
 
   /**
-   * The primary difference between this test and {@link #testInterledgerPacketCodec()} is that this
-   * context call specifies the type, whereas the test below determines the type from the payload.
+   * The primary difference between this test and {@link #testInterledgerPacketCodec()} is that this context call
+   * specifies the type, whereas the test below determines the type from the payload.
    */
   @Test
   public void testIndividualRead() throws IOException {
@@ -105,9 +104,8 @@ public class InterledgerFulfillPacketOerSerializerTests {
   }
 
   /**
-   * The primary difference between this test and {@link #testIndividualRead()} is that this context
-   * determines the ipr type from the payload, whereas the test above specifies the type in the
-   * method call.
+   * The primary difference between this test and {@link #testIndividualRead()} is that this context determines the ipr
+   * type from the payload, whereas the test above specifies the type in the method call.
    */
   @Test
   public void testInterledgerPacketCodec() throws Exception {

@@ -32,6 +32,7 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint16Codec;
 import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
+import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
@@ -55,28 +56,31 @@ public class CodecContextFactory {
    */
   public static CodecContext oer() {
     final AsnObjectCodecRegistry mappings = new AsnObjectCodecRegistry()
-            .register(byte[].class, () -> new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED))
-            .register(Short.class, AsnUint8Codec::new)
-            .register(Integer.class, AsnUint16Codec::new)
-            .register(Long.class, AsnUint32Codec::new)
-            .register(BigInteger.class, AsnUint64Codec::new)
-            .register(String.class, () -> new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED));
+        .register(byte[].class, () -> new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED))
+        .register(Short.class, AsnUint8Codec::new) // unsigned!
+        .register(Integer.class, AsnUint16Codec::new)
+        .register(Long.class, AsnUint32Codec::new) // Make this UnsignedInt or just Int
+        .register(BigInteger.class,
+            AsnUint64Codec::new) // Uint64 should be UnsignedLong or just Long, then AsnUint64 can be BigInteger.
+        .register(String.class, () -> new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED));
 
     final AsnObjectSerializationContext serializers = new AsnObjectSerializationContext()
-            .register(AsnCharStringBasedObjectCodec.class, new AsnCharStringOerSerializer())
-            .register(AsnIA5StringCodec.class, new AsnCharStringOerSerializer())
-            .register(AsnIA5StringBasedObjectCodec.class, new AsnCharStringOerSerializer())
-            .register(AsnOctetStringCodec.class, new AsnOctetStringOerSerializer())
-            .register(AsnOpenTypeCodec.class, new AsnOpenTypeOerSerializer())
-            .register(AsnOctetStringBasedObjectCodec.class, new AsnOctetStringOerSerializer())
-            .register(AsnSequenceCodec.class, new AsnSequenceOerSerializer())
-            .register(AsnSequenceOfSequenceCodec.class, new AsnSequenceOfSequenceOerSerializer())
-            .register(AsnUint8Codec.class, new AsnOctetStringOerSerializer())
-            .register(AsnUint16Codec.class, new AsnOctetStringOerSerializer())
-            .register(AsnUint32Codec.class, new AsnOctetStringOerSerializer())
-            .register(AsnUint64Codec.class, new AsnOctetStringOerSerializer())
-            .register(AsnUtf8StringCodec.class, new AsnCharStringOerSerializer())
-            .register(AsnUtf8StringBasedObjectCodec.class, new AsnCharStringOerSerializer());
+        .register(AsnCharStringBasedObjectCodec.class, new AsnCharStringOerSerializer())
+        .register(AsnIA5StringCodec.class, new AsnCharStringOerSerializer())
+        .register(AsnIA5StringBasedObjectCodec.class, new AsnCharStringOerSerializer())
+        .register(AsnOctetStringCodec.class, new AsnOctetStringOerSerializer())
+        .register(AsnOpenTypeCodec.class, new AsnOpenTypeOerSerializer())
+        .register(AsnOctetStringBasedObjectCodec.class, new AsnOctetStringOerSerializer())
+        .register(AsnSequenceCodec.class, new AsnSequenceOerSerializer())
+        .register(AsnSequenceOfSequenceCodec.class, new AsnSequenceOfSequenceOerSerializer())
+        //.register(AsnUintCodec, new AsnOctetStringOerSerializer())
+        .register(AsnUint8Codec.class, new AsnOctetStringOerSerializer())
+        .register(AsnUint16Codec.class, new AsnOctetStringOerSerializer())
+        .register(AsnUint32Codec.class, new AsnOctetStringOerSerializer())
+        .register(AsnUint64Codec.class, new AsnOctetStringOerSerializer())
+        .register(AsnUint64CodecUL.class, new AsnOctetStringOerSerializer())
+        .register(AsnUtf8StringCodec.class, new AsnCharStringOerSerializer())
+        .register(AsnUtf8StringBasedObjectCodec.class, new AsnCharStringOerSerializer());
 
     return new CodecContext(mappings, serializers);
   }

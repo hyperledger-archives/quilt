@@ -22,6 +22,8 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 /**
@@ -29,6 +31,15 @@ import org.immutables.value.Value.Derived;
  * in the overall stream. The first StreamData frame sent for a given stream MUST start with an Offset of zero.</p>
  */
 public interface StreamDataFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamDataFrameBuilder} instance.
+   */
+  static StreamDataFrameBuilder builder() {
+    return new StreamDataFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -40,21 +51,23 @@ public interface StreamDataFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
    * Position of this data in the byte stream.
    *
    * @return
    */
-  long offset();
+  UnsignedLong offset();
 
   /**
    * Application data.
    *
    * @return
    */
-  byte[] data();
+  default byte[] data() {
+    return EMPTY_DATA;
+  }
 
   @Immutable
   abstract class AbstractStreamDataFrame implements StreamDataFrame {
@@ -65,6 +78,11 @@ public interface StreamDataFrame extends StreamFrame {
       return StreamFrameType.StreamData;
     }
 
+    @Override
+    @Default
+    public byte[] data() {
+      return EMPTY_DATA;
+    }
   }
 
 }

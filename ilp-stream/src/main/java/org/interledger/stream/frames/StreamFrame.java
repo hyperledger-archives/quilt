@@ -26,18 +26,13 @@ package org.interledger.stream.frames;
  */
 public interface StreamFrame {
 
+  byte[] EMPTY_DATA = new byte[0];
+
   /**
    * The type of this frame.
    *
    * @return
    */
   StreamFrameType streamFrameType();
-
-  /**
-   * Frame contents.
-   *
-   * @return
-   */
-  byte[] data();
 
 }

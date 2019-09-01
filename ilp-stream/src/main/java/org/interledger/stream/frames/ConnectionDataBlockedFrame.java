@@ -22,11 +22,12 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 /**
  * <p>Used to advertise to the other stream party that the frame sender has more data to send, but this would exceed
- * the other endpoint's advertised value as found in the latest {@link StreamMaxDataFrame} frame.</p>
+ * the other endpoint's advertised value as found in the latest {@link StreamDataMaxFrame} frame.</p>
  *
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
@@ -34,6 +35,15 @@ import org.immutables.value.Value.Derived;
  * <p>Note that this frame is primarily intended for debugging purposes.</p>
  */
 public interface ConnectionDataBlockedFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link ConnectionDataBlockedFrameBuilder} instance.
+   */
+  static ConnectionDataBlockedFrameBuilder builder() {
+    return new ConnectionDataBlockedFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -45,7 +55,7 @@ public interface ConnectionDataBlockedFrame extends StreamFrame {
    *
    * @return
    */
-  long maxOffset();
+  UnsignedLong maxOffset();
 
   @Immutable
   abstract class AbstractConnectionDataBlockedFrame implements ConnectionDataBlockedFrame {

@@ -22,17 +22,27 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 /**
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
  */
-public interface StreamMaxMoneyFrame extends StreamFrame {
+public interface StreamDataMaxFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link StreamDataMaxFrameBuilder} instance.
+   */
+  static StreamDataMaxFrameBuilder builder() {
+    return new StreamDataMaxFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
-    return StreamFrameType.StreamMaxMoney;
+    return StreamFrameType.StreamDataMax;
   }
 
   /**
@@ -40,30 +50,22 @@ public interface StreamMaxMoneyFrame extends StreamFrame {
    *
    * @return
    */
-  long streamId();
+  UnsignedLong streamId();
 
   /**
-   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint is willing to receive
-   * on this stream.
+   * The total number of bytes the endpoint is willing to receive on this stream.
    *
    * @return
    */
-  long receiveMax();
-
-  /**
-   * Total amount, denominated in the units of the endpoint sending this frame, that the endpoint has received thus far.
-   *
-   * @return
-   */
-  long totalReceived();
+  UnsignedLong maxOffset();
 
   @Immutable
-  abstract class AbstractStreamMaxMoneyFrame implements StreamMaxMoneyFrame {
+  abstract class AbstractStreamDataMaxFrame implements StreamDataMaxFrame {
 
     @Derived
     @Override
     public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMaxMoney;
+      return StreamFrameType.StreamDataMax;
     }
 
   }

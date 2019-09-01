@@ -22,12 +22,22 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 /**
  * Indicates that the connection was closed.
  */
 public interface ConnectionMaxStreamIdFrame extends StreamFrame {
+
+  /**
+   * Get the default builder.
+   *
+   * @return a {@link ConnectionMaxStreamIdFrameBuilder} instance.
+   */
+  static ConnectionMaxStreamIdFrameBuilder builder() {
+    return new ConnectionMaxStreamIdFrameBuilder();
+  }
 
   @Override
   default StreamFrameType streamFrameType() {
@@ -39,7 +49,7 @@ public interface ConnectionMaxStreamIdFrame extends StreamFrame {
    *
    * @return
    */
-  long maxOffset();
+  UnsignedLong maxStreamId();
 
   @Immutable
   abstract class AbstractConnectionMaxStreamIdFrame implements ConnectionMaxStreamIdFrame {

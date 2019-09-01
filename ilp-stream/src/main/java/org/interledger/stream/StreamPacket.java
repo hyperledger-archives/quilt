@@ -25,6 +25,7 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 import java.util.List;
@@ -87,7 +88,7 @@ public interface StreamPacket {
    *
    * @return A {@link InterledgerPacketType}
    */
-  InterledgerPacketType type();
+  InterledgerPacketType interledgerPacketType();
 
   /**
    * Identifier for an ILP request / response. Clients and Servers track their own outgoing packet sequence numbers and
@@ -105,7 +106,7 @@ public interface StreamPacket {
    *
    * @return
    */
-  long prepareAmount();
+  UnsignedLong prepareAmount();
 
   /**
    * A list of {@link StreamFrameType}.

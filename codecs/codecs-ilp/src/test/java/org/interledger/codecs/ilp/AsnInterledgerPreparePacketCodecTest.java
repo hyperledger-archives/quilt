@@ -21,6 +21,7 @@ package org.interledger.codecs.ilp;
  */
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
@@ -43,13 +44,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-
 /**
- * Unit tests to validate the functionality for all {@link InterledgerPreparePacket} packets.
+ * Unit tests for {@link AsnInterledgerPreparePacketCodec}.
  */
 @RunWith(Parameterized.class)
-public class InterledgerPreparePacketOerSerializerTests {
+public class AsnInterledgerPreparePacketCodecTest {
 
   // first data value (0) is default
   @Parameter
@@ -96,34 +95,29 @@ public class InterledgerPreparePacketOerSerializerTests {
   }
 
   /**
-   * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that
-   * this context call specifies the type, whereas the test below determines the type from the
-   * payload.
+   * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that this context call
+   * specifies the type, whereas the test below determines the type from the payload.
    */
   @Test
   public void testIndividualRead() throws IOException {
     final CodecContext context = InterledgerCodecContextFactory.oer();
     final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPaymentBytes();
 
-    final InterledgerPreparePacket payment = context.read(InterledgerPreparePacket.class,
-        asn1OerPaymentBytes);
+    final InterledgerPreparePacket payment = context.read(InterledgerPreparePacket.class, asn1OerPaymentBytes);
     assertThat(payment, is(packet));
   }
 
   /**
-   * The primary difference between this test and {@link #testIndividualRead()} is that this context
-   * determines the ipr type from the payload, whereas the test above specifies the type in the
-   * method call.
+   * The primary difference between this test and {@link #testIndividualRead()} is that this context determines the ipr
+   * type from the payload, whereas the test above specifies the type in the method call.
    */
   @Test
   public void testInterledgerPaymentCodec() throws Exception {
     final CodecContext context = InterledgerCodecContextFactory.oer();
     final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPaymentBytes();
 
-    final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class,
-        asn1OerPaymentBytes);
-    assertThat(decodedPacket.getClass().getName(),
-        is(packet.getClass().getName()));
+    final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class, asn1OerPaymentBytes);
+    assertThat(decodedPacket.getClass().getName(), is(packet.getClass().getName()));
     assertThat(decodedPacket, is(packet));
   }
 

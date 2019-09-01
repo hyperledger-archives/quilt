@@ -1,8 +1,8 @@
-package org.interledger.stream.frames;
+package org.interledger.codecs.stream.frame;
 
 /*-
  * ========================LICENSE_START=================================
- * Interledger Core
+ * Bilateral Transfer Protocol Core Codecs
  * %%
  * Copyright (C) 2017 - 2018 Hyperledger and its contributors
  * %%
@@ -20,36 +20,19 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
+import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
+import org.interledger.stream.frames.StreamFrame;
 
-import org.immutables.value.Value.Derived;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Indicates that the connection was closed.
+ * Codec for a List of Frames (i.e., a SEQUENCE-OF Frame).
  */
-public interface ConnectionMaxDataFrame extends StreamFrame {
+public class AsnStreamFramesCodec
+    extends AsnSequenceOfSequenceCodec<List<StreamFrame>, StreamFrame> {
 
-  @Override
-  default StreamFrameType streamFrameType() {
-    return StreamFrameType.ConnectionMaxData;
+  public AsnStreamFramesCodec() {
+    super(ArrayList::new, AsnStreamFrameCodec::new);
   }
-
-  /**
-   * The total number of bytes the endpoint is willing to receive on this connection.
-   *
-   * @return
-   */
-  long maxOffset();
-
-  @Immutable
-  abstract class AbstractConnectionMaxDataFrame implements ConnectionMaxDataFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionMaxData;
-    }
-
-  }
-
 }

@@ -18,5 +18,6 @@
     <module>codecs-ilp</module>
     <module>codecs-ildcp</module>
     <module>codecs-btp</module>
+    <module>codecs-stream</module>
   </modules>
 </project>
