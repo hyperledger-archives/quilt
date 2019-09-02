@@ -34,7 +34,7 @@
 
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>codec-stream</artifactId>
+      <artifactId>codecs-stream</artifactId>
     </dependency>
 
     <dependency>

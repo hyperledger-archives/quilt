@@ -61,7 +61,18 @@ public interface StreamMoneyFrame extends StreamFrame {
   UnsignedLong streamId();
 
   /**
-   * Proportion of the ILP Prepare amount destined for the stream specified.
+   * <p>Proportion of the ILP Prepare amount destined for the stream specified.</p>
+   *
+   * <p>The amount of money that should go to each stream is calculated by dividing the number of shares for the given
+   * stream by the total number of shares in all of the StreamMoney frames in the packet.</p>
+   *
+   * <p>For example, if an ILP Prepare packet has an amount of 100 and three StreamMoney frames with 5, 15, and 30
+   * shares for streams 2, 4, and 6, respectively, that would indicate that stream 2 should get 10 units, stream 4 gets
+   * 30 units, and stream 6 gets 60 units.</p>
+   *
+   * <p>If the Prepare amount is not divisible by the total number of shares, implementations SHOULD round the stream
+   * amounts down. The remainder SHOULD be allocated to the lowest-numbered open stream that has not reached its maximum
+   * receive amount.</p>
    *
    * @return
    */

@@ -1,13 +1,21 @@
 package org.interledger.stream;
 
+import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
+import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
+import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
+
+import org.interledger.codecs.stream.StreamCodecContextFactory;
+import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
+import org.interledger.stream.congestion.AimdCongestionController;
 import org.interledger.stream.congestion.CongestionController;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
@@ -27,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -34,7 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StreamClient implements StreamEndpoint {
@@ -42,19 +51,25 @@ public class StreamClient implements StreamEndpoint {
   // TODO: Executor executor = Executors.newFixedThreadPool(10);
   // Maybe here: https://www.callicoder.com/java-8-completablefuture-tutorial/
 
+  private final StreamEncryptionService streamEncryptionService;
+
+  // TODO: Deal with this?
   private final ConnectionManager connectionManager;
+  private final ExecutorService executorService;
 
-  // TODO: add logging back in from Rust!
-  private Logger logger = LoggerFactory.getLogger(this.getClass());
-
-  public StreamClient() {
-    this(new ConnectionManager());
-  }
-
-  public StreamClient(final ConnectionManager connectionManager) {
+  public StreamClient(
+      final StreamEncryptionService streamEncryptionService,
+      final ConnectionManager connectionManager
+  ) {
+    this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.connectionManager = Objects.requireNonNull(connectionManager);
+
+    // Note that pools with similar properties but different details (for example, timeout parameters) may be
+    // created using {@link ThreadPoolExecutor} constructors.
+    this.executorService = Executors.newCachedThreadPool();
   }
 
+  // TODO: Handle Ping.
 //  /**
 //   * Send a very-small value payment to the destination and expect an ILP fulfillment, which demonstrates this sender
 //   * has send-data ping to the indicated destination address.
@@ -76,30 +91,75 @@ public class StreamClient implements StreamEndpoint {
 //  }
 
   @Override
-  public InterledgerResponsePacket sendMoney(
+  public CompletableFuture<SendMoneyResult> sendMoney(
+      final Link link,
       final byte[] sharedSecret,
+      final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
   ) {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
-    // Fire off requests until the congestion controller tells us to stop or we've sent the total amount
-    boolean sentPackets = false;
-
-//    while (true) {
-//      // Determine the amount to send
-//      amountToSend = StreamUtils.min(sourceAmount, congestionController.getMaxAmount());
-//
-//
-//    }
-
-    return null;
+    final SendMoneyAggregator sendMoneyAggregator = new SendMoneyAggregator(
+        executorService,
+        StreamCodecContextFactory.oer(),
+        link,
+        new AimdCongestionController(),
+        this.streamEncryptionService,
+        sharedSecret,
+        sourceAddress,
+        destinationAddress,
+        amount
+    );
+    return sendMoneyAggregator.send();
   }
 
   @Override
   public void sendData() {
     throw new RuntimeException("Not yet implemented!");
+  }
+
+  @Immutable
+  public interface SendMoneyResult {
+
+    static SendMoneyResultBuilder builder() {
+      return new SendMoneyResultBuilder();
+    }
+
+    UnsignedLong originalAmount();
+
+    UnsignedLong amountDelivered();
+
+    // Implementations MUST close the connection once either endpoint has sent 2^31 packets.
+    int numFulfilledPackets();
+
+    int numRejectPackets();
+
+    default int totalPackets() {
+      return numFulfilledPackets() + numRejectPackets();
+    }
+
+    Duration sendMoneyDuration();
+  }
+
+  @Immutable
+  public interface CloseConnectionResult {
+
+    static CloseConnectionResultBuilder builder() {
+      return new CloseConnectionResultBuilder();
+    }
+
+    // Implementations MUST close the connection once either endpoint has sent 2^31 packets.
+    int numFulfilledPackets();
+
+    int numRejectPackets();
+
+    default int totalPackets() {
+      return numFulfilledPackets() + numRejectPackets();
+    }
+
+    UnsignedLong amountDelivered();
   }
 
   /**
@@ -109,71 +169,65 @@ public class StreamClient implements StreamEndpoint {
    */
   protected static class SendMoneyAggregator {
 
-    // TODO: Consider extracing the Open/Close Connection logic so that multiple payments can be made on the same Connection.
-    // This is not strictly useful in this design, but might be in the future.
-
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ExecutorService executorService;
-
     private final CodecContext streamCodecContext;
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
+    private final Link link;
     private final byte[] sharedSecret;
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
-    private final UnsignedLong originalSourceAmount;
-
-    private final Link link;
-    private AtomicBoolean shouldSendSourceAddress;
-
-    private AtomicReference<UnsignedLong> sourceAmount;
+    // The amount
+    private AtomicReference<UnsignedLong> amountLeftToSend;
     private AtomicReference<UnsignedLong> deliveredAmount;
-    private AtomicLong sequence;
 
-//    public SendMoneyAggregator(
-//        final Link link, final byte[] sharedSecret,
-//        final InterledgerAddress sourceAddress, final InterledgerAddress destinationAddress,
-//        final UnsignedLong sourceAmount,
-//        final boolean shouldSendSourceAccount,
-//        final StreamEncryptionService streamEncryptionService
-//    ) {
-//      this(
-//          link, streamEncryptionService,
-//          sharedSecret, sourceAddress, destinationAddress, sourceAmount, shouldSendSourceAccount,
-//          new AimdCongestionController()
-//      );
-//    }
+    private AtomicBoolean shouldSendSourceAddress;
+    //
+    private AtomicInteger sequence;
+    private AtomicInteger numRejectedPackets;
 
+    /**
+     * @param streamCodecContext      A {@link CodecContext} that can encode and decode ASN.1 OER Stream packets and
+     *                                frames.
+     * @param link                    The {@link Link} used to send ILPv4 packets containing Stream packets.
+     * @param congestionController    A {@link CongestionController} that supports back-pressure for money streams.
+     * @param streamEncryptionService A {@link StreamEncryptionService} that allows for Stream packet encryption and
+     *                                decryption.
+     * @param sharedSecret            The shared secret negotiated between the sender and receiver during payment setup
+     *                                (e.g., using SPSP).
+     * @param sourceAddress           The {@link InterledgerAddress} of the payment sender.
+     * @param destinationAddress      The {@link InterledgerAddress} of the payment receiver.
+     * @param amountLeftToSend        The amount of units (in the senders units) to send to the receiver.
+     */
     public SendMoneyAggregator(
+        final ExecutorService executorService,
         final CodecContext streamCodecContext,
         final Link link,
+        final CongestionController congestionController,
         final StreamEncryptionService streamEncryptionService,
         final byte[] sharedSecret,
         final InterledgerAddress sourceAddress,
         final InterledgerAddress destinationAddress,
-        final UnsignedLong sourceAmount,
-        final CongestionController congestionController,
-        final AtomicBoolean shouldSendSourceAddress
+        final UnsignedLong amountLeftToSend
     ) {
+      this.executorService = Objects.requireNonNull(executorService);
       this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
       this.link = Objects.requireNonNull(link);
       this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
+      this.congestionController = Objects.requireNonNull(congestionController);
+      this.shouldSendSourceAddress = new AtomicBoolean(true);
+
       this.sharedSecret = Objects.requireNonNull(sharedSecret);
       this.sourceAddress = sourceAddress;
       this.destinationAddress = Objects.requireNonNull(destinationAddress);
-      this.originalSourceAmount = Objects.requireNonNull(sourceAmount);
-      this.congestionController = Objects.requireNonNull(congestionController);
-      this.shouldSendSourceAddress = shouldSendSourceAddress;
 
-      this.sourceAmount = new AtomicReference<>(originalSourceAmount);
+      this.amountLeftToSend = new AtomicReference<>(amountLeftToSend);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
-      this.sequence = new AtomicLong(1L);
-
-      // Note that pools with similar properties but different details (for example, timeout parameters) may be
-      // created using {@link ThreadPoolExecutor} constructors.
-      this.executorService = Executors.newCachedThreadPool();
+      this.sequence = new AtomicInteger(1);
+      this.numRejectedPackets = new AtomicInteger(0);
     }
 
     /**
@@ -181,35 +235,39 @@ public class StreamClient implements StreamEndpoint {
      *
      * @return
      */
-    public CompletableFuture<InterledgerResponsePacket> send() {
+    public CompletableFuture<SendMoneyResult> send() {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(destinationAddress);
-      Objects.requireNonNull(sourceAmount);
+      Objects.requireNonNull(amountLeftToSend);
 
       // Fire off requests until the congestion controller tells us to stop or we've sent the total amount
-      boolean sentPackets = false;
-
       final List<CompletableFuture<InterledgerResponsePacket>> allFutures = Lists.newArrayList();
 
-      while (true) {
+      final AtomicInteger totalStreamPackets = new AtomicInteger(0);
+      final Instant start = Instant.now();
+      while (totalStreamPackets.getAndIncrement() > 0) {
         // Determine the amount to send
-        final UnsignedLong amountToSend = StreamUtils.min(sourceAmount.get(), congestionController.getMaxAmount());
+        final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
         if (amountToSend.equals(UnsignedLong.ZERO)) {
           break;
         }
 
-        this.sourceAmount.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
+        this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
 
         // Load up the STREAM packet
         final long sequence = this.sequence.incrementAndGet();
 
-        final List<StreamFrame> frames = Lists.newArrayList();
-        final StreamMoneyFrame streamMoneyFrame = StreamMoneyFrame.builder()
-            .streamId(UnsignedLong.ONE)
-            .shares(UnsignedLong.ONE)
-            .build();
-        frames.add(streamMoneyFrame);
+        final List<StreamFrame> frames = Lists.newArrayList(
+            StreamMoneyFrame.builder()
+                // This aggregator supports only a simple stream-id, which is one.
+                .streamId(UnsignedLong.ONE)
+                .shares(UnsignedLong.ONE)
+                .build()
+        );
 
+        // This isn't perfectly synchronized (it will be true until the first fulfill comes back), but it's OK if
+        // potentially many ILPv4 packets are sent out with this frame because it will always be the same "new" source
+        // address, so the receiver will merely update to the same address a few times, which is fine.
         if (this.shouldSendSourceAddress.get()) {
           frames.add(ConnectionNewAddressFrame.builder()
               .sourceAddress(sourceAddress)
@@ -219,7 +277,8 @@ public class StreamClient implements StreamEndpoint {
 
         final StreamPacket streamPacket = StreamPacket.builder()
             .interledgerPacketType(InterledgerPacketType.PREPARE)
-            // TODO: enforce min exchange rate.
+            // If the STREAM packet is sent on an ILP Prepare, this represents the minimum the receiver should accept.
+            // TODO: enforce min exchange rate?
             .prepareAmount(UnsignedLong.ZERO)
             .sequence(sequence)
             .frames(frames)
@@ -229,8 +288,7 @@ public class StreamClient implements StreamEndpoint {
         final byte[] streamPacketData = this.toEncrypted(sharedSecret, streamPacket);
         final InterledgerCondition executionCondition;
         try {
-          executionCondition = StreamUtils.generatedFulfillableFulfillment(sharedSecret, streamPacketData)
-              .getCondition();
+          executionCondition = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
         } catch (SignatureException e) {
           throw new StreamClientException(e.getMessage(), e);
         }
@@ -244,41 +302,46 @@ public class StreamClient implements StreamEndpoint {
             .build();
 
         // Send it!
-        CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+        final CompletableFuture<InterledgerResponsePacket> sendMoneyFuture = CompletableFuture.supplyAsync(() -> {
           congestionController.prepare(amountToSend);
           return link.sendPacket(preparePacket);
-        }).thenApply(responsePacket -> {
+        }, executorService).thenApply(responsePacket -> {
           // Executed in the same thread as above
           responsePacket.handle(
               (fulfillPacket -> {
                 handleFulfill(sequence, amountToSend, fulfillPacket);
               }),
               (rejectPacket -> {
-                handleReject();
+                handleReject(sequence, amountToSend, rejectPacket);
               })
           );
-          return null;
+          return responsePacket;
         });
 
-
+        allFutures.add(sendMoneyFuture);
       }
 
-      CompletableFuture[] allFuturesArray = allFutures.toArray(new CompletableFuture[0]);
-      CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(allFuturesArray);
+      final CompletableFuture[] allFuturesArray = allFutures.toArray(new CompletableFuture[0]);
+      final CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(allFuturesArray);
 
-      try {
-        combinedFuture.join();
-      } catch (Exception e) {
-        throw new StreamClientException(e.getMessage(), e);
-      }
+      // To track the duration...
+      final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
+      // All futures will run here using the Cached Executor service.
+      return combinedFuture.whenComplete(($, error) -> {
+        if (error != null) {
+          logger.error("SendMoney Stream failed: " + error.getMessage(), error);
+        }
 
-//      String combined = Stream.of(allFuturesArray)
-//          .map(sendPacketFuture -> {
-//
-//          })
-      //.collect(Collectors.joining(" "));
-
-      return null;
+        sendMoneyDuration.set(Duration.between(start, Instant.now()));
+      }).thenApply($ -> closeConnection(sequence.get()))
+          .thenApply(closeConnectionResult -> SendMoneyResult.builder()
+              .amountDelivered(closeConnectionResult.amountDelivered())
+              .originalAmount(amountLeftToSend.get())
+              .numFulfilledPackets(closeConnectionResult.numFulfilledPackets())
+              .numRejectPackets(closeConnectionResult.numRejectPackets())
+              .sendMoneyDuration(sendMoneyDuration.get())
+              .build()
+          );
     }
 
     /**
@@ -351,14 +414,44 @@ public class StreamClient implements StreamEndpoint {
 
       logger.debug(
           "Prepare {} with amount {} was fulfilled ({} left to send)",
-          sequence, amount, this.sourceAmount
+          sequence, amount, this.amountLeftToSend
       );
     }
 
     @VisibleForTesting
-    protected void handleReject() {
-      // TODO: Implement this after F08 and STREAM Codecs.
-      throw new RuntimeException("FIXME!");
+    protected void handleReject(
+        final long sequence,
+        final UnsignedLong amountToSend,
+        final InterledgerRejectPacket rejectPacket
+    ) {
+      this.amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
+      this.congestionController.reject(amountToSend, rejectPacket);
+      this.numRejectedPackets.getAndIncrement();
+
+      logger.debug(
+          "Prepare {} with amount {} was rejected with code: {} ({} left to send)",
+          sequence,
+          amountToSend,
+          rejectPacket.getCode(),
+          this.amountLeftToSend.get()
+      );
+
+      switch (rejectPacket.getCode().getCode()) {
+        case F08_AMOUNT_TOO_LARGE_CODE: {
+          // Handled by the congestion controller
+          break;
+        }
+        case F99_APPLICATION_ERROR_CODE: {
+          // TODO handle STREAM errors
+          break;
+        }
+        default: {
+          throw new StreamClientException(String.format("Packet was rejected by with error: %s %s",
+              rejectPacket.getTriggeredBy().map(InterledgerAddress::getValue).orElse("n/a"),
+              rejectPacket.getCode(), rejectPacket.getMessage()
+          ));
+        }
+      }
     }
 
     /**
@@ -367,9 +460,7 @@ public class StreamClient implements StreamEndpoint {
      * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
      */
     @VisibleForTesting
-    protected UnsignedLong closeConnection(
-        final long sequence
-    ) {
+    protected CloseConnectionResult closeConnection(final long sequence) {
 
       final StreamPacket streamPacket = StreamPacket.builder()
           .interledgerPacketType(InterledgerPacketType.PREPARE)
@@ -385,7 +476,7 @@ public class StreamClient implements StreamEndpoint {
       final byte[] encryptedStreamPacket = this.toEncrypted(sharedSecret, streamPacket);
       final InterledgerCondition executionCondition;
       try {
-        executionCondition = StreamUtils.generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket)
+        executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket)
             .getCondition();
       } catch (SignatureException e) {
         throw new StreamClientException(e.getMessage(), e);
@@ -403,20 +494,23 @@ public class StreamClient implements StreamEndpoint {
 
       link.sendPacket(preparePacket).handle(
           (fulfillPacket -> {
-            handleFulfill(sequence, UnsignedLong.ZERO, fulfillPacket);
+            handleFulfill(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), fulfillPacket);
           }),
           (rejectPacket -> {
-            handleReject();
+            handleReject(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), rejectPacket);
           })
       );
 
-      // TODO: numRejectedPackets should be tracked by handleReject.
       logger.debug(
           "Send money future finished. Delivered: {} ({} packets fulfilled, {} packets rejected)",
-          this.deliveredAmount, this.sequence.decrementAndGet(), -1 //this.numRejectedPackets
+          this.deliveredAmount, this.sequence.decrementAndGet(), -1 //TODO this.numRejectedPackets
       );
-      return this.deliveredAmount.get();
+
+      return CloseConnectionResult.builder()
+          .amountDelivered(this.deliveredAmount.get())
+          .numFulfilledPackets(this.sequence.get() - 1)
+          .numRejectPackets(0) //  TODO: numRejectedPackets
+          .build();
     }
   }
-
 }
