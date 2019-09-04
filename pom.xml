@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.17.0-SNAPSHOT</version>
+  <version>0.18.0-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
@@ -99,9 +99,9 @@
     <module>btp-core</module>
     <module>ildcp-core</module>
     <module>jackson-datatypes</module>
-    <module>codecs</module>
-    <module>ilp-link</module>
-    <module>ilp-stream</module>
+    <module>codecs-parent</module>
+    <module>ilp-link-parent</module>
+    <module>stream-parent</module>
   </modules>
 
   <dependencyManagement>
@@ -115,19 +115,25 @@
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>btp-core-codecs</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>codec-framework</artifactId>
+        <artifactId>codecs-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-ilp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>link-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>link-ilp-over-http</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -157,19 +163,7 @@
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>ildcp-core-codecs</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>${project.groupId}</groupId>
         <artifactId>ilp-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>ilp-core-codecs</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -181,8 +175,38 @@
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>ilp-stream</artifactId>
+        <artifactId>stream-parent</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>3.8.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>jwks-rsa</artifactId>
+        <version>0.8.3</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>4.1.0</version>
       </dependency>
 
       <dependency>

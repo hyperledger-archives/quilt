@@ -4,45 +4,58 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>org.interledger</groupId>
-    <artifactId>quilt-parent</artifactId>
+    <artifactId>stream-parent</artifactId>
     <version>0.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Quilt :: Jackson Datatypes</name>
-  <artifactId>jackson-datatypes</artifactId>
-  <description>
-    Jackson serialization/deserialization support for Hyperledger Quilt projects.
-  </description>
+  <artifactId>stream-core</artifactId>
+
+  <name>Quilt :: STREAM :: Core</name>
+  <description>Core libraries for implementing the STREAM protocol.</description>
+  <packaging>jar</packaging>
 
   <dependencies>
+
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>ilp-core</artifactId>
     </dependency>
+
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>link-core</artifactId>
     </dependency>
+
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <!-- Marking as provided because this dependency is not needed unless Base16 Hex Encoding is used. -->
-      <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>org.immutables</groupId>
       <artifactId>value</artifactId>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>ilp-core</artifactId>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
+
 </project>
