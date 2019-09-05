@@ -2,7 +2,7 @@ package org.interledger.link;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_CONDITION;
 import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_FULFILLMENT;
 import static org.junit.Assert.fail;

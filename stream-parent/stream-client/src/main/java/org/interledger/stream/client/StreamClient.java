@@ -20,8 +20,6 @@ import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.StreamEndpoint;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
-import org.interledger.stream.congestion.AimdCongestionController;
-import org.interledger.stream.congestion.CongestionController;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;

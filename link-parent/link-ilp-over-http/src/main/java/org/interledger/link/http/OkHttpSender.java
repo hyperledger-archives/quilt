@@ -4,7 +4,6 @@ import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static com.google.common.net.HttpHeaders.PRAGMA;
 import static com.google.common.net.MediaType.OCTET_STREAM;
-import static org.interledger.link.http.IlpHttpHeaders.ILP_OPERATOR_ADDRESS_VALUE;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
@@ -24,7 +23,6 @@ import okhttp3.Request;
 import okhttp3.Request.Builder;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.problem.Problem;
@@ -231,7 +229,6 @@ public class OkHttpSender implements HttpSender {
    *
    * @return A newly constructed instance of {@link Headers}.
    */
-  @NotNull
   private Headers constructHttpRequestHeaders() {
     final Headers.Builder headers = new Headers.Builder()
         // Defaults to ILP_OCTET_STREAM, but is replaced by whatever testConnection returns if it's a valid media-type.
@@ -242,8 +239,8 @@ public class OkHttpSender implements HttpSender {
         .add(PRAGMA, "no-cache");
 
     // Set the Operator Address header, if present.
-    operatorAddressSupplier.get()
-        .ifPresent(operatorAddress -> headers.set(ILP_OPERATOR_ADDRESS_VALUE, operatorAddress.getValue()));
+    operatorAddressSupplier.get().ifPresent(
+        operatorAddress -> headers.set(IlpHttpHeaders.ILP_OPERATOR_ADDRESS_VALUE, operatorAddress.getValue()));
 
     headers.add(HttpHeaders.AUTHORIZATION, BEARER + this.authTokenSupplier.get());
 
@@ -285,7 +282,6 @@ public class OkHttpSender implements HttpSender {
    *
    * @return A {@link Request} that can be used with an OkHttp client.
    */
-  @NotNull
   private Request constructSendPacketRequest(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket);
 

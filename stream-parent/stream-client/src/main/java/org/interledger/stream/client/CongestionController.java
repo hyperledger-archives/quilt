@@ -1,7 +1,7 @@
-package org.interledger.stream.congestion;
+package org.interledger.stream.client;
 
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.stream.congestion.AimdCongestionController.CongestionState;
+import org.interledger.stream.client.AimdCongestionController.CongestionState;
 
 import com.google.common.primitives.UnsignedLong;
 

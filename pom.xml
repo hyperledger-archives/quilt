@@ -100,7 +100,7 @@
     <module>ildcp-core</module>
     <module>jackson-datatypes</module>
     <module>codecs-parent</module>
-    <module>ilp-link-parent</module>
+    <module>link-parent</module>
     <module>stream-parent</module>
   </modules>
 
@@ -237,6 +237,12 @@
 
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
         <version>${jackson.version}</version>
       </dependency>
@@ -251,6 +257,23 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>28.1-jre</version>
+        <exclusions>
+          <exclusion>
+            <artifactId>jsr305</artifactId>
+            <groupId>com.google.code.findbugs</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>error_prone_annotations</artifactId>
+            <groupId>com.google.errorprone</groupId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-core</artifactId>
+        <version>1.3</version>
+        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -277,6 +300,12 @@
         <groupId>org.zalando</groupId>
         <artifactId>problem</artifactId>
         <version>0.23.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
     </dependencies>
@@ -322,6 +351,23 @@
           </executions>
         </plugin>
 
+        <!-- org.apache.maven.plugins:maven-dependency-plugin -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.1</version>
+          <executions>
+            <execution>
+              <id>analyze</id>
+              <goals>
+                <goal>analyze-only</goal>
+              </goals>
+              <configuration>
+                <failOnWarning>true</failOnWarning>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
 
         <!--
         ////////////////////////////
@@ -503,6 +549,11 @@
       <!-- org.apache.maven.plugins:maven-surefire-plugin -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+
+      <!-- org.apache.maven.plugins:maven-dependency-plugin -->
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
       </plugin>
 
       <!-- org.sonatype.plugins:nexus-staging-maven-plugin -->

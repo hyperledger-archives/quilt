@@ -9,9 +9,9 @@ package org.interledger.codecs.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,9 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
 import org.interledger.encoding.asn.framework.CodecContext;
@@ -113,23 +111,6 @@ public class AsnBtpErrorDataSerializationTest {
         },
     });
   }
-//
-//  /**
-//   * Convenience method to convert the expected time string into the byte format that would be found on the wire.
-//   *
-//   * @param value The string to convert. Must not be null.
-//   *
-//   * @return A byte[] representing the expected representation of the string as would be found on the wire.
-//   */
-//  public static byte[] encodeString(String value) {
-//    final byte[] lengthByte = new byte[1];
-//    final byte[] stringBytes = value.getBytes(StandardCharsets.US_ASCII);
-//    final byte[] lengthPrefixed = new byte[stringBytes.length + 1];
-//    lengthByte[0] = Byte.valueOf(stringBytes.length + "");
-//    System.arraycopy(lengthByte, 0, lengthPrefixed, 0, lengthByte.length);
-//    System.arraycopy(stringBytes, 0, lengthPrefixed, lengthByte.length, stringBytes.length);
-//    return lengthPrefixed;
-//  }
 
   /**
    * Test setup.

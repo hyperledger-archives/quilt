@@ -82,4 +82,15 @@ public class StreamUtilsTest {
     assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.MAX_VALUE), is(UnsignedLong.ONE));
     assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ONE), is(UnsignedLong.ONE));
   }
+
+  @Test
+  public void maxTests() {
+    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
+    assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.ZERO), is(UnsignedLong.ONE));
+    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.ONE), is(UnsignedLong.ONE));
+    assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO), is(UnsignedLong.MAX_VALUE));
+    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE), is(UnsignedLong.MAX_VALUE));
+    assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.MAX_VALUE), is(UnsignedLong.MAX_VALUE));
+    assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ONE), is(UnsignedLong.MAX_VALUE));
+  }
 }

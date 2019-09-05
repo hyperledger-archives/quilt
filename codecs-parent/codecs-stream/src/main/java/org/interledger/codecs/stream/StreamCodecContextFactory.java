@@ -24,6 +24,7 @@ import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.frame.AsnStreamFrameCodec;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.serializers.oer.AsnSequenceOerSerializer;
+import org.interledger.stream.AmountTooLargeErrorData;
 import org.interledger.stream.frames.StreamFrame;
 
 import java.util.Objects;
@@ -54,7 +55,7 @@ public class StreamCodecContextFactory {
     Objects.requireNonNull(context, "context must not be null");
 
     return context
-        .register(StreamFrame.class, AsnStreamFrameCodec::new, new AsnSequenceOerSerializer());
-    // TODO: Register Packet Codec!
+        .register(StreamFrame.class, AsnStreamFrameCodec::new, new AsnSequenceOerSerializer())
+        .register(AmountTooLargeErrorData.class, AsnAmountTooLargeDataCodec::new);
   }
 }

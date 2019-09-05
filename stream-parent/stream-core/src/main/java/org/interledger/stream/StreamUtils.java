@@ -84,4 +84,15 @@ public class StreamUtils {
       return v2;
     }
   }
+
+  public static UnsignedLong max(final UnsignedLong v1, final UnsignedLong v2) {
+    Objects.requireNonNull(v1);
+    Objects.requireNonNull(v2);
+
+    if (v1.compareTo(v2) > 0) {
+      return v1;
+    } else {
+      return v2;
+    }
+  }
 }

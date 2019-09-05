@@ -19,6 +19,6 @@ public interface BearerTokenSupplier extends Supplier<String> {
    * @return A JWT bearer token, as a {@link String}.
    */
   @Override
-  public String get();
+  String get();
 
 }

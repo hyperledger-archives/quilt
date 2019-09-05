@@ -1,11 +1,12 @@
-package org.interledger.stream;
+package org.interledger.stream.client;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
-import org.interledger.stream.client.StreamClient;
+import org.interledger.stream.ConnectionManager;
+import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 
 import com.google.common.primitives.UnsignedLong;
@@ -51,6 +52,6 @@ public class StreamClientTest {
     assertThat(sendMoneyResult.numFulfilledPackets(), is(10));
     assertThat(sendMoneyResult.numRejectPackets(), is(0));
 
-    logger.info("{}", sendMoneyResult);
+    logger.info("Payment Sent: {}", sendMoneyResult);
   }
 }
