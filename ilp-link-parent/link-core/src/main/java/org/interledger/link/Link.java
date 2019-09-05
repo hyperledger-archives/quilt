@@ -27,6 +27,14 @@ public interface Link<LS extends LinkSettings> extends LinkSender, Connectable {
   LinkId getLinkId();
 
   /**
+   * Allows the linkId to be set after construction. This is important because often times a LinkId is not known until
+   * after it is constructed (i.e., it cannot be discerned from {@link LinkSettings}).
+   *
+   * @param linkId
+   */
+  void setLinkId(LinkId linkId);
+
+  /**
    * A supplier fori the ILP address of this node operator. This value may be empty, for example, in cases where the
    * Link obtains its address from a parent node using IL-DCP.
    *

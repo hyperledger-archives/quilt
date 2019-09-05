@@ -1,6 +1,5 @@
 package org.interledger.link;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
@@ -22,6 +21,7 @@ import java.util.Optional;
 public class PingLoopbackLinkFactoryTest {
 
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.operator");
+  private final LinkId LINK_ID = LinkId.of("foo");
 
   @Mock
   private LinkSettings linkSettingsMock;
@@ -96,6 +96,7 @@ public class PingLoopbackLinkFactoryTest {
         .linkType(PingLoopbackLink.LINK_TYPE)
         .build();
     Link<?> link = pingLoopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
-    assertThat(link.getLinkId(), is(nullValue()));
+    link.setLinkId(LINK_ID);
+    assertThat(link.getLinkId(), is(LINK_ID));
   }
 }
