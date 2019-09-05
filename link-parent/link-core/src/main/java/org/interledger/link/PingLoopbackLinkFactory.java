@@ -1,7 +1,7 @@
 package org.interledger.link;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkException;
 
 import java.util.Objects;
@@ -14,14 +14,14 @@ import java.util.function.Supplier;
  */
 public class PingLoopbackLinkFactory implements LinkFactory {
 
-  private final LinkEventEmitter linkEventEmitter;
-  private PingLoopbackLink lazyPingLoopbackLink;
+  private final LinkConnectionEventEmitter linkConnectionEventEmitter;
+  private PingLoopbackStatefulLink lazyPingLoopbackLink;
 
   /**
    * Required-args Constructor.
    */
-  public PingLoopbackLinkFactory(final LinkEventEmitter linkEventEmitter) {
-    this.linkEventEmitter = Objects.requireNonNull(linkEventEmitter, "linkEventEmitter must not be null");
+  public PingLoopbackLinkFactory(final LinkConnectionEventEmitter linkConnectionEventEmitter) {
+    this.linkConnectionEventEmitter = Objects.requireNonNull(linkConnectionEventEmitter, "linkEventEmitter must not be null");
   }
 
   /**
@@ -47,7 +47,8 @@ public class PingLoopbackLinkFactory implements LinkFactory {
     } else {
       synchronized (this) {
         if (lazyPingLoopbackLink == null) {
-          lazyPingLoopbackLink = new PingLoopbackLink(operatorAddressSupplier, linkSettings, linkEventEmitter);
+          lazyPingLoopbackLink = new PingLoopbackStatefulLink(operatorAddressSupplier, linkSettings,
+              linkConnectionEventEmitter);
         }
         return lazyPingLoopbackLink;
       }
@@ -56,7 +57,7 @@ public class PingLoopbackLinkFactory implements LinkFactory {
 
   @Override
   public boolean supports(LinkType linkType) {
-    return PingLoopbackLink.LINK_TYPE.equals(linkType);
+    return PingLoopbackStatefulLink.LINK_TYPE.equals(linkType);
   }
 
 }

@@ -10,7 +10,7 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Base64;
@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * is a loopback link so that no outbound traffic ever leaves the Connector while processing a Ping request.
  * </p>
  */
-public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link<LinkSettings> {
+public class PingLoopbackStatefulLink extends AbstractStatefulLink<LinkSettings> implements Link<LinkSettings> {
 
   public static final String LINK_TYPE_STRING = "PING";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
@@ -40,12 +40,12 @@ public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link
   /**
    * Required-args constructor.
    */
-  public PingLoopbackLink(
+  public PingLoopbackStatefulLink(
       final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
       final LinkSettings linkSettings,
-      final LinkEventEmitter linkEventEmitter
+      final LinkConnectionEventEmitter linkConnectionEventEmitter
   ) {
-    super(operatorAddressSupplier, linkSettings, linkEventEmitter);
+    super(operatorAddressSupplier, linkSettings, linkConnectionEventEmitter);
   }
 
   @Override

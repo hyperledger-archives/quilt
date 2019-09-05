@@ -5,7 +5,7 @@ import org.interledger.link.Link;
 /**
  * Handler interface that defines how to listen for events emitted by a {@link Link}.
  */
-public interface LinkEventListener {
+public interface LinkConnectionEventListener {
 
   /**
    * Called to handle an {@link LinkConnectedEvent}.
@@ -20,14 +20,5 @@ public interface LinkEventListener {
    * @param event A {@link LinkDisconnectedEvent}.
    */
   void onDisconnect(LinkDisconnectedEvent event);
-
-  /**
-   * Called to handle an {@link LinkErrorEvent}.
-   *
-   * @param event A {@link LinkErrorEvent}.
-   */
-  default void onError(LinkErrorEvent event) {
-    // No-op by default.
-  }
 
 }

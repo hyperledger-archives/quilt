@@ -3,7 +3,7 @@ package org.interledger.link;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.interledger.link.LoopbackLink.SIMULATED_REJECT_ERROR_CODE;
+import static org.interledger.link.LoopbackStatefulLink.SIMULATED_REJECT_ERROR_CODE;
 import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerAddress;
@@ -11,7 +11,7 @@ import org.interledger.core.InterledgerConstants;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 
 import com.google.common.collect.Maps;
 import org.junit.Before;
@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Unit tests for {@link LoopbackLink}.
+ * Unit tests for {@link LoopbackStatefulLink}.
  */
 public class LoopbackLinkTest {
 
@@ -43,21 +43,21 @@ public class LoopbackLinkTest {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   @Mock
-  LinkEventEmitter linkEventEmitterMock;
+  LinkConnectionEventEmitter linkConnectionEventEmitterMock;
 
   private PacketRejector packetRejector;
 
-  private LoopbackLink link;
+  private LoopbackStatefulLink link;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     this.packetRejector = new PacketRejector(() -> Optional.of(OPERATOR_ADDRESS));
 
-    this.link = new LoopbackLink(
+    this.link = new LoopbackStatefulLink(
         () -> Optional.of(OPERATOR_ADDRESS),
-        LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).build(),
-        linkEventEmitterMock,
+        LinkSettings.builder().linkType(LoopbackStatefulLink.LINK_TYPE).build(),
+        linkConnectionEventEmitterMock,
         packetRejector
     );
   }
@@ -97,10 +97,10 @@ public class LoopbackLinkTest {
 
   @Test
   public void sendPacket() {
-    this.link = new LoopbackLink(
+    this.link = new LoopbackStatefulLink(
         () -> Optional.of(OPERATOR_ADDRESS),
-        LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).build(),
-        linkEventEmitterMock,
+        LinkSettings.builder().linkType(LoopbackStatefulLink.LINK_TYPE).build(),
+        linkConnectionEventEmitterMock,
         packetRejector
     );
     link.setLinkId(LinkId.of("foo"));
@@ -108,7 +108,7 @@ public class LoopbackLinkTest {
     final InterledgerPreparePacket preparePacket = preparePacket();
     link.sendPacket(preparePacket()).handle(
         fulfillPacket -> {
-          assertThat(fulfillPacket.getFulfillment(), is(LoopbackLink.LOOPBACK_FULFILLMENT));
+          assertThat(fulfillPacket.getFulfillment(), is(LoopbackStatefulLink.LOOPBACK_FULFILLMENT));
           assertThat(fulfillPacket.getData(), is(preparePacket.getData()));
         },
         rejectPacket -> {
@@ -122,10 +122,10 @@ public class LoopbackLinkTest {
   public void sendT02Packet() {
     final Map<String, String> customSettings = Maps.newHashMap();
     customSettings.put(SIMULATED_REJECT_ERROR_CODE, InterledgerErrorCode.T02_PEER_BUSY_CODE);
-    this.link = new LoopbackLink(
+    this.link = new LoopbackStatefulLink(
         () -> Optional.of(OPERATOR_ADDRESS),
-        LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).customSettings(customSettings).build(),
-        linkEventEmitterMock,
+        LinkSettings.builder().linkType(LoopbackStatefulLink.LINK_TYPE).customSettings(customSettings).build(),
+        linkConnectionEventEmitterMock,
         packetRejector
     );
     link.setLinkId(LinkId.of("foo"));
@@ -145,10 +145,10 @@ public class LoopbackLinkTest {
   public void sendT99Packet() {
     final Map<String, String> customSettings = Maps.newHashMap();
     customSettings.put(SIMULATED_REJECT_ERROR_CODE, InterledgerErrorCode.T99_APPLICATION_ERROR_CODE);
-    this.link = new LoopbackLink(
+    this.link = new LoopbackStatefulLink(
         () -> Optional.of(OPERATOR_ADDRESS),
-        LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).customSettings(customSettings).build(),
-        linkEventEmitterMock,
+        LinkSettings.builder().linkType(LoopbackStatefulLink.LINK_TYPE).customSettings(customSettings).build(),
+        linkConnectionEventEmitterMock,
         packetRejector
     );
     link.setLinkId(LinkId.of("foo"));

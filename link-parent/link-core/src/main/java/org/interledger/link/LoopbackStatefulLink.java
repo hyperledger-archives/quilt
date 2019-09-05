@@ -8,7 +8,7 @@ import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Objects;
@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 /**
  * <p>A {@link Link} that always responds with a Fulfillment that contains the data supplied by the Prepare packet.</p>
  */
-public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<LinkSettings> {
+public class LoopbackStatefulLink extends AbstractStatefulLink<LinkSettings> implements Link<LinkSettings> {
 
   public static final String LINK_TYPE_STRING = "LOOPBACK";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
@@ -34,13 +34,13 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
   /**
    * Required-args constructor.
    */
-  public LoopbackLink(
+  public LoopbackStatefulLink(
       final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
       final LinkSettings linkSettings,
-      final LinkEventEmitter linkEventEmitter,
+      final LinkConnectionEventEmitter linkConnectionEventEmitter,
       final PacketRejector packetRejector
   ) {
-    super(operatorAddressSupplier, linkSettings, linkEventEmitter);
+    super(operatorAddressSupplier, linkSettings, linkConnectionEventEmitter);
     this.packetRejector = Objects.requireNonNull(packetRejector);
   }
 

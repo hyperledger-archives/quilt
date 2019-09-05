@@ -5,7 +5,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkException;
 
 import org.junit.Before;
@@ -30,14 +30,14 @@ public class LoopbackLinkFactoryTest {
   private PacketRejector packetRejectorMock;
 
   @Mock
-  private LinkEventEmitter linkEventEmitterMock;
+  private LinkConnectionEventEmitter linkConnectionEventEmitterMock;
 
   private LoopbackLinkFactory loopbackLinkFactory;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    this.loopbackLinkFactory = new LoopbackLinkFactory(linkEventEmitterMock, packetRejectorMock);
+    this.loopbackLinkFactory = new LoopbackLinkFactory(linkConnectionEventEmitterMock, packetRejectorMock);
   }
 
   @Test(expected = NullPointerException.class)
@@ -54,7 +54,7 @@ public class LoopbackLinkFactoryTest {
   @Test(expected = NullPointerException.class)
   public void constructWithNulPacketRejector() {
     try {
-      new LoopbackLinkFactory(linkEventEmitterMock, null);
+      new LoopbackLinkFactory(linkConnectionEventEmitterMock, null);
       fail();
     } catch (NullPointerException e) {
       assertThat(e.getMessage(), is("packetRejector must not be null"));
@@ -64,7 +64,7 @@ public class LoopbackLinkFactoryTest {
 
   @Test
   public void supports() {
-    assertThat(loopbackLinkFactory.supports(LoopbackLink.LINK_TYPE), is(true));
+    assertThat(loopbackLinkFactory.supports(LoopbackStatefulLink.LINK_TYPE), is(true));
     assertThat(loopbackLinkFactory.supports(LinkType.of("foo")), is(false));
   }
 
@@ -107,7 +107,7 @@ public class LoopbackLinkFactoryTest {
   @Test
   public void constructLink() {
     LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(LoopbackLink.LINK_TYPE)
+        .linkType(LoopbackStatefulLink.LINK_TYPE)
         .build();
     Link<?> link = loopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
     link.setLinkId(LINK_ID);

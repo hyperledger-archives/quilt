@@ -21,7 +21,7 @@ public class HttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
   public void applyCustomSettingsWithFlatDottedNotation() {
     final Map<String, Object> flattenedCustomSettings = this.customSettingsFlat();
 
-    final ImmutableHttpLinkSettings.Builder builder = HttpLinkSettings.builder().linkType(HttpLink.LINK_TYPE);
+    final ImmutableHttpLinkSettings.Builder builder = HttpLinkSettings.builder().linkType(HttpStatefulLink.LINK_TYPE);
     final HttpLinkSettings httpLinkSettings =
         HttpLinkSettings.applyCustomSettings(builder, flattenedCustomSettings).build();
 
@@ -51,7 +51,7 @@ public class HttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
   public void applyCustomSettingsWithMapHeirarchy() {
     final Map<String, Object> customSettings = this.customSettingsHeirarchical();
 
-    final ImmutableHttpLinkSettings.Builder builder = HttpLinkSettings.builder().linkType(HttpLink.LINK_TYPE);
+    final ImmutableHttpLinkSettings.Builder builder = HttpLinkSettings.builder().linkType(HttpStatefulLink.LINK_TYPE);
     final ImmutableHttpLinkSettings httpLinkSettings =
         HttpLinkSettings.applyCustomSettings(builder, customSettings).build();
 
@@ -99,12 +99,12 @@ public class HttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
             .build();
 
     final HttpLinkSettings httpLinkSettings = HttpLinkSettings.builder()
-        .linkType(HttpLink.LINK_TYPE)
+        .linkType(HttpStatefulLink.LINK_TYPE)
         .incomingHttpLinkSettings(incomingLinksettings)
         .outgoingHttpLinkSettings(outgoingLinksettings)
         .build();
 
-    assertThat(httpLinkSettings.getLinkType(), is(HttpLink.LINK_TYPE));
+    assertThat(httpLinkSettings.getLinkType(), is(HttpStatefulLink.LINK_TYPE));
 
     assertThat(httpLinkSettings.incomingHttpLinkSettings().authType(), is(HttpLinkSettings.AuthType.SIMPLE));
     assertThat(httpLinkSettings.incomingHttpLinkSettings().tokenIssuer().get(),

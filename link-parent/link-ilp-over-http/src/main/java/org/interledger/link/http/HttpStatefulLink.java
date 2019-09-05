@@ -3,10 +3,10 @@ package org.interledger.link.http;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.link.AbstractLink;
+import org.interledger.link.AbstractStatefulLink;
 import org.interledger.link.Link;
 import org.interledger.link.LinkType;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -15,11 +15,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
- * An extension of {@link AbstractLink} that handles HTTP (aka, ILP over HTTP) connections, both incoming and outgoing.
+ * An extension of {@link AbstractStatefulLink} that handles HTTP (aka, ILP over HTTP) connections, both incoming and outgoing.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0035-ilp-over-http/0035-ilp-over-http.md"
  */
-public class HttpLink extends AbstractLink<HttpLinkSettings> implements Link<HttpLinkSettings> {
+public class HttpStatefulLink extends AbstractStatefulLink<HttpLinkSettings> implements Link<HttpLinkSettings> {
 
   public static final String LINK_TYPE_STRING = "HTTP";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
@@ -31,17 +31,17 @@ public class HttpLink extends AbstractLink<HttpLinkSettings> implements Link<Htt
    * Required-args Constructor.
    *
    * @param httpLinkSettings A {@link HttpLinkSettings} that specified ledger link options.
-   * @param linkEventEmitter A {@link LinkEventEmitter} that is used to emit events from this link.
+   * @param linkConnectionEventEmitter A {@link LinkConnectionEventEmitter} that is used to emit events from this link.
    * @param httpSender       A {@link HttpSender} used to send messages with the remote HTTP peer.
-   * @param linkEventEmitter A {@link LinkEventEmitter}.
+   * @param linkConnectionEventEmitter A {@link LinkConnectionEventEmitter}.
    */
-  public HttpLink(
+  public HttpStatefulLink(
       final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
       final HttpLinkSettings httpLinkSettings,
       final HttpSender httpSender,
-      final LinkEventEmitter linkEventEmitter
+      final LinkConnectionEventEmitter linkConnectionEventEmitter
   ) {
-    super(operatorAddressSupplier, httpLinkSettings, linkEventEmitter);
+    super(operatorAddressSupplier, httpLinkSettings, linkConnectionEventEmitter);
     this.httpSender = Objects.requireNonNull(httpSender);
   }
 
@@ -85,7 +85,7 @@ public class HttpLink extends AbstractLink<HttpLinkSettings> implements Link<Htt
       return false;
     }
 
-    HttpLink httpLink = (HttpLink) o;
+    HttpStatefulLink httpLink = (HttpStatefulLink) o;
 
     return httpSender.equals(httpLink.httpSender);
   }
@@ -97,7 +97,7 @@ public class HttpLink extends AbstractLink<HttpLinkSettings> implements Link<Htt
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", HttpLink.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", HttpStatefulLink.class.getSimpleName() + "[", "]")
         .add("httpSender=" + httpSender)
         .toString();
   }

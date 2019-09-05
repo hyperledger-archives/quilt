@@ -6,7 +6,7 @@ import org.interledger.link.Link;
 import org.interledger.link.LinkFactory;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.http.auth.BearerTokenSupplier;
 import org.interledger.link.http.auth.Decryptor;
 import org.interledger.link.http.auth.JwtHs256BearerTokenSupplier;
@@ -25,17 +25,17 @@ import java.util.function.Supplier;
  */
 public class HttpLinkFactory implements LinkFactory {
 
-  private final LinkEventEmitter linkEventEmitter;
+  private final LinkConnectionEventEmitter linkConnectionEventEmitter;
   private final OkHttpClient okHttpClient;
   private final Decryptor decryptor;
   private final ObjectMapper objectMapper;
   private final CodecContext ilpCodecContext;
 
   public HttpLinkFactory(
-      final LinkEventEmitter linkEventEmitter, final OkHttpClient okHttpClient, final Decryptor decryptor,
+      final LinkConnectionEventEmitter linkConnectionEventEmitter, final OkHttpClient okHttpClient, final Decryptor decryptor,
       final ObjectMapper objectMapper, final CodecContext ilpCodecContext
   ) {
-    this.linkEventEmitter = Objects.requireNonNull(linkEventEmitter);
+    this.linkConnectionEventEmitter = Objects.requireNonNull(linkConnectionEventEmitter);
     this.okHttpClient = Objects.requireNonNull(okHttpClient);
     this.decryptor = Objects.requireNonNull(decryptor);
     this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -93,11 +93,11 @@ public class HttpLinkFactory implements LinkFactory {
         bearerTokenSupplier
     );
 
-    final HttpLink httpLink = new HttpLink(
+    final HttpStatefulLink httpLink = new HttpStatefulLink(
         operatorAddressSupplier,
         ModifiableHttpLinkSettings.create().from(httpLinkSettings), // Modifiable for testing
         httpSender,
-        linkEventEmitter
+        linkConnectionEventEmitter
     );
 
     return httpLink;
@@ -105,7 +105,7 @@ public class HttpLinkFactory implements LinkFactory {
 
   @Override
   public boolean supports(LinkType linkType) {
-    return HttpLink.LINK_TYPE.equals(linkType);
+    return HttpStatefulLink.LINK_TYPE.equals(linkType);
   }
 
 }

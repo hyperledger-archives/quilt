@@ -41,7 +41,7 @@ public interface HttpLinkSettings extends LinkSettings {
   static ImmutableHttpLinkSettings.Builder fromCustomSettings(final Map<String, Object> customSettings) {
     Objects.requireNonNull(customSettings);
     return applyCustomSettings(HttpLinkSettings.builder(), customSettings)
-        .linkType(HttpLink.LINK_TYPE);
+        .linkType(HttpStatefulLink.LINK_TYPE);
   }
 
   /**

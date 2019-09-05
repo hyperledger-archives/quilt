@@ -5,9 +5,9 @@ import org.interledger.link.Link;
 import org.immutables.value.Value;
 
 /**
- * Emitted after a lpi2 connects to a remote peer.
+ * Emitted after a {@link Link} connects to a remote peer.
  */
-public interface LinkConnectedEvent extends LinkEvent {
+public interface LinkConnectedEvent extends LinkConnectionEvent {
 
   static LinkConnectedEvent of(final Link<?> link) {
     return ImmutableLinkConnectedEvent.builder().link(link).build();
@@ -15,7 +15,7 @@ public interface LinkConnectedEvent extends LinkEvent {
 
   @Value.Immutable
   abstract class AbstractLinkConnectedEvent implements
-    LinkConnectedEvent {
+      LinkConnectedEvent {
 
   }
 

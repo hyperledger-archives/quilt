@@ -3,8 +3,8 @@ package org.interledger.link;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_CONDITION;
-import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_FULFILLMENT;
+import static org.interledger.link.PingLoopbackStatefulLink.PING_PROTOCOL_CONDITION;
+import static org.interledger.link.PingLoopbackStatefulLink.PING_PROTOCOL_FULFILLMENT;
 import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerAddress;
@@ -13,7 +13,7 @@ import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Unit tests for {@link PingLoopbackLink}.
+ * Unit tests for {@link PingLoopbackStatefulLink}.
  */
 public class PingLoopbackLinkTest {
 
@@ -48,14 +48,15 @@ public class PingLoopbackLinkTest {
   LinkSettings linkSettingsMock;
 
   @Mock
-  LinkEventEmitter linkEventEmitterMock;
+  LinkConnectionEventEmitter linkConnectionEventEmitterMock;
 
-  private PingLoopbackLink link;
+  private PingLoopbackStatefulLink link;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    this.link = new PingLoopbackLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettingsMock, linkEventEmitterMock);
+    this.link = new PingLoopbackStatefulLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettingsMock,
+        linkConnectionEventEmitterMock);
   }
 
   @Test

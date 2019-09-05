@@ -3,16 +3,19 @@ package org.interledger.link;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.link.events.LinkEventListener;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * <p>An abstraction for communicating with a remote Interledger peer.</p>
+ * <p>An abstraction for communicating with a remote Interledger peer in a connection-state-less manner, meaning links
+ * do not hold connection state during their lifecyle.</p>
+ *
+ * <p>If you want to make a {@link Link} that can holds connection state (such as for a link protocol using Websockets),
+ * consider {@link StatefulLink} instead.</p>
  */
-public interface Link<LS extends LinkSettings> extends LinkSender, Connectable {
+public interface Link<LS extends LinkSettings> extends LinkSender {
 
   /**
    * <p>A unique identifier for this {@link Link}. This value is generally set only once, (e.g., in a Connector to
@@ -90,25 +93,5 @@ public interface Link<LS extends LinkSettings> extends LinkSender, Connectable {
    * nothing.
    */
   void unregisterLinkHandler();
-
-  /**
-   * Add an event listener to this link.
-   *
-   * Care should be taken when adding multiple listeners to ensure that they perform distinct operations, otherwise
-   * duplicate functionality might be unintentionally introduced.
-   *
-   * @param eventListener A {@link LinkEventListener} that can listen for and response to various types of events
-   *                      emitted by this link.
-   *
-   * @return
-   */
-  void addLinkEventListener(LinkEventListener eventListener);
-
-  /**
-   * Removes an event listener from the collection of listeners registered with this link.
-   *
-   * @param eventListener A {@link LinkEventListener} representing the listener to remove.
-   */
-  void removeLinkEventListener(LinkEventListener eventListener);
 
 }

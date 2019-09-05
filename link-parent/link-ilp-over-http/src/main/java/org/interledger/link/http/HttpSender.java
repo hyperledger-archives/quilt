@@ -1,6 +1,6 @@
 package org.interledger.link.http;
 
-import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_CONDITION;
+import static org.interledger.link.PingLoopbackStatefulLink.PING_PROTOCOL_CONDITION;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerConstants;

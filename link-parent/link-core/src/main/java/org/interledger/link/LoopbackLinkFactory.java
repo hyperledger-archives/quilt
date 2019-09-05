@@ -1,7 +1,7 @@
 package org.interledger.link;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.events.LinkEventEmitter;
+import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkException;
 
 import java.util.Objects;
@@ -13,14 +13,14 @@ import java.util.function.Supplier;
  */
 public class LoopbackLinkFactory implements LinkFactory {
 
-  private final LinkEventEmitter linkEventEmitter;
+  private final LinkConnectionEventEmitter linkConnectionEventEmitter;
   private final PacketRejector packetRejector;
 
   /**
    * Required-args Constructor.
    */
-  public LoopbackLinkFactory(final LinkEventEmitter linkEventEmitter, final PacketRejector packetRejector) {
-    this.linkEventEmitter = Objects.requireNonNull(linkEventEmitter, "linkEventEmitter must not be null");
+  public LoopbackLinkFactory(final LinkConnectionEventEmitter linkConnectionEventEmitter, final PacketRejector packetRejector) {
+    this.linkConnectionEventEmitter = Objects.requireNonNull(linkConnectionEventEmitter, "linkEventEmitter must not be null");
     this.packetRejector = Objects.requireNonNull(packetRejector, "packetRejector must not be null");
   }
 
@@ -42,12 +42,12 @@ public class LoopbackLinkFactory implements LinkFactory {
       );
     }
 
-    return new LoopbackLink(operatorAddressSupplier, linkSettings, linkEventEmitter, packetRejector);
+    return new LoopbackStatefulLink(operatorAddressSupplier, linkSettings, linkConnectionEventEmitter, packetRejector);
   }
 
   @Override
   public boolean supports(LinkType linkType) {
-    return LoopbackLink.LINK_TYPE.equals(linkType);
+    return LoopbackStatefulLink.LINK_TYPE.equals(linkType);
   }
 
 }
