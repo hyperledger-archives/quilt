@@ -37,12 +37,12 @@ public class PacketRejectorTest {
     this.packetRejector = new PacketRejector(() -> Optional.of(OPERATOR_ADDRESS));
   }
 
-  @Test
+  @Test(expected = NullPointerException.class)
   public void nullConstructor() {
     try {
       new PacketRejector(null);
       fail();
-    } catch (NullPointerException e) {
+    } catch (Exception e) {
       assertThat(e.getMessage(), is("operatorAddressSupplier must not be null"));
       throw e;
     }

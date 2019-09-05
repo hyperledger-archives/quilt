@@ -273,6 +273,12 @@
         <version>1.7.28</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.zalando</groupId>
+        <artifactId>problem</artifactId>
+        <version>0.23.0</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 

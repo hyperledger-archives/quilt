@@ -18,13 +18,4 @@
     <module>link-ilp-over-http</module>
   </modules>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.zalando</groupId>
-        <artifactId>problem</artifactId>
-        <version>0.23.0</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 </project>

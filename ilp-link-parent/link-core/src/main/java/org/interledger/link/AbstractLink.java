@@ -61,6 +61,9 @@ public abstract class AbstractLink<LS extends LinkSettings> implements Link<LS> 
 
   @Override
   public LinkId getLinkId() {
+    if (linkId == null) {
+      throw new IllegalStateException("The LinkId must be set before using a Link");
+    }
     return linkId;
   }
 
@@ -74,7 +77,7 @@ public abstract class AbstractLink<LS extends LinkSettings> implements Link<LS> 
     if (this.linkId == null) {
       this.linkId = Objects.requireNonNull(linkId);
     } else {
-      throw new RuntimeException("LinkId may only be set once!");
+      throw new IllegalStateException("LinkId may only be set once");
     }
   }
 

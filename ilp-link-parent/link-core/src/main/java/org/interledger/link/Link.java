@@ -73,7 +73,7 @@ public interface Link<LS extends LinkSettings> extends LinkSender, Connectable {
    */
   default LinkHandler safeGetLinkHandler() {
     return this.getLinkHandler()
-        .orElseThrow(() -> new RuntimeException("You MUST register a LinkHandler before using this link!"));
+        .orElseThrow(() -> new IllegalStateException("You MUST register a LinkHandler before using this link!"));
   }
 
   /**
