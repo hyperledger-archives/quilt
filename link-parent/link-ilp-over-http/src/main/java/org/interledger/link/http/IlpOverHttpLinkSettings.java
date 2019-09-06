@@ -1,14 +1,19 @@
 package org.interledger.link.http;
 
 import org.interledger.link.LinkSettings;
+import org.interledger.link.LinkType;
 
 import org.immutables.value.Value;
+import org.immutables.value.Value.Derived;
 import org.immutables.value.Value.Modifiable;
 
 import java.util.Map;
 import java.util.Objects;
 
-public interface HttpLinkSettings extends LinkSettings {
+/**
+ * An extension of {@link LinkSettings} for ILP-over-HTTP links.
+ */
+public interface IlpOverHttpLinkSettings extends LinkSettings {
 
   String DOT = ".";
   String ILP_OVER_HTTP = "ilpOverHttp";
@@ -27,8 +32,8 @@ public interface HttpLinkSettings extends LinkSettings {
   String SHARED_SECRET = "shared_secret";
   String URL = "url";
 
-  static ImmutableHttpLinkSettings.Builder builder() {
-    return ImmutableHttpLinkSettings.builder();
+  static ImmutableIlpOverHttpLinkSettings.Builder builder() {
+    return ImmutableIlpOverHttpLinkSettings.builder();
   }
 
   /**
@@ -38,10 +43,9 @@ public interface HttpLinkSettings extends LinkSettings {
    *
    * @return
    */
-  static ImmutableHttpLinkSettings.Builder fromCustomSettings(final Map<String, Object> customSettings) {
+  static ImmutableIlpOverHttpLinkSettings.Builder fromCustomSettings(final Map<String, Object> customSettings) {
     Objects.requireNonNull(customSettings);
-    return applyCustomSettings(HttpLinkSettings.builder(), customSettings)
-        .linkType(HttpStatefulLink.LINK_TYPE);
+    return applyCustomSettings(IlpOverHttpLinkSettings.builder(), customSettings);
   }
 
   /**
@@ -52,8 +56,8 @@ public interface HttpLinkSettings extends LinkSettings {
    *
    * @return
    */
-  static ImmutableHttpLinkSettings.Builder applyCustomSettings(
-      final ImmutableHttpLinkSettings.Builder builder, Map<String, Object> customSettings
+  static ImmutableIlpOverHttpLinkSettings.Builder applyCustomSettings(
+      final ImmutableIlpOverHttpLinkSettings.Builder builder, Map<String, Object> customSettings
   ) {
     Objects.requireNonNull(builder);
     Objects.requireNonNull(customSettings);
@@ -69,6 +73,11 @@ public interface HttpLinkSettings extends LinkSettings {
     builder.customSettings(customSettings);
 
     return builder;
+  }
+
+  @Override
+  default LinkType getLinkType() {
+    return IlpOverHttpLink.LINK_TYPE;
   }
 
   /**
@@ -110,7 +119,12 @@ public interface HttpLinkSettings extends LinkSettings {
 
   @Value.Immutable
   @Modifiable
-  abstract class AbstractHttpLinkSettings implements HttpLinkSettings {
+  abstract class AbstractIlpOverHttpLinkSettings implements IlpOverHttpLinkSettings {
+
+    @Derived
+    public LinkType getLinkType() {
+      return IlpOverHttpLink.LINK_TYPE;
+    }
 
   }
 }

@@ -27,7 +27,6 @@
  import org.interledger.stream.AmountTooLargeErrorData;
 
  import com.google.common.primitives.UnsignedLong;
- import org.hamcrest.CoreMatchers;
  import org.junit.Test;
  import org.junit.runner.RunWith;
  import org.junit.runners.Parameterized;
@@ -128,45 +127,21 @@
                  .maximumAmount(UnsignedLong.MAX_VALUE)
                  .build()
          },
-
      });
    }
 
-   /**
-    * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that this context call
-    * specifies the type, whereas the test below determines the type from the payload.
-    */
    @Test
-   public void testIndividualRead() throws IOException {
-     final CodecContext context = StreamCodecContextFactory.oer();
-     final ByteArrayInputStream asn1OererrorDataBytes = constructerrorDataBytes();
-
-     final AmountTooLargeErrorData errorData = context.read(AmountTooLargeErrorData.class, asn1OererrorDataBytes);
-     assertThat(errorData, is(errorData));
-   }
-
-   /**
-    * The primary difference between this test and {@link #testIndividualRead()} is that this context determines the ipr
-    * type from the payload, whereas the test above specifies the type in the method call.
-    */
-   @Test
-   public void testInterledgerPaymentCodec() throws Exception {
-     final CodecContext context = StreamCodecContextFactory.oer();
-     final ByteArrayInputStream asn1OererrorDataBytes = constructerrorDataBytes();
-
-     final AmountTooLargeErrorData decodederrorData = context
-         .read(AmountTooLargeErrorData.class, asn1OererrorDataBytes);
-     assertThat(decodederrorData.getClass().getName(), CoreMatchers.is(errorData.getClass().getName()));
-     assertThat(decodederrorData, CoreMatchers.is(errorData));
-   }
-
-   protected ByteArrayInputStream constructerrorDataBytes() throws IOException {
+   public void testWriteThenRead() throws IOException {
      final CodecContext context = StreamCodecContextFactory.oer();
 
-     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-     context.write(errorData, outputStream);
+     // Encode...
+     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+     context.write(this.errorData, byteArrayOutputStream);
 
-     return new ByteArrayInputStream(outputStream.toByteArray());
+     // Decode...
+     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+     final AmountTooLargeErrorData decodedErrorData = context.read(AmountTooLargeErrorData.class, byteArrayInputStream);
+
+     assertThat(decodedErrorData, is(this.errorData));
    }
-
  }

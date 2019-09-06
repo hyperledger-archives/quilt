@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link OutgoingLinkSettings}.
  */
-public class OutgoingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class OutgoingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   /**
    * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation.
@@ -22,7 +22,7 @@ public class OutgoingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
     final Map<String, Object> customSettings = this.customSettingsFlat();
     final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(outgoingLinksettings.authType(), is(HttpLinkSettings.AuthType.SIMPLE));
+    assertThat(outgoingLinksettings.authType(), is(IlpOverHttpLinkSettings.AuthType.SIMPLE));
     assertThat(outgoingLinksettings.tokenIssuer().get(), is(HttpUrl.parse("https://outgoing-issuer.example.com/")));
     assertThat(outgoingLinksettings.tokenAudience().get(), is(HttpUrl.parse("https://outgoing-audience.example.com/")));
     assertThat(outgoingLinksettings.tokenSubject(), is("outgoing-subject"));
@@ -39,7 +39,7 @@ public class OutgoingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
     final Map<String, Object> customSettings = this.customSettingsHeirarchical();
     final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(outgoingLinksettings.authType(), is(HttpLinkSettings.AuthType.SIMPLE));
+    assertThat(outgoingLinksettings.authType(), is(IlpOverHttpLinkSettings.AuthType.SIMPLE));
     assertThat(outgoingLinksettings.tokenIssuer().get(), is(HttpUrl.parse("https://outgoing-issuer.example.com/")));
     assertThat(outgoingLinksettings.tokenAudience().get(), is(HttpUrl.parse("https://outgoing-audience.example.com/")));
     assertThat(outgoingLinksettings.tokenSubject(), is("outgoing-subject"));
@@ -52,7 +52,7 @@ public class OutgoingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
   public void testWithoutCustomSettings() {
     final OutgoingLinkSettings outgoingLinksettings =
       OutgoingLinkSettings.builder()
-        .authType(HttpLinkSettings.AuthType.SIMPLE)
+        .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
         .tokenIssuer(HttpUrl.parse("https://outgoing-issuer.example.com"))
         .tokenAudience(HttpUrl.parse("https://outgoing-audience.example.com"))
         .tokenSubject("outgoing-subject")
@@ -61,7 +61,7 @@ public class OutgoingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
         .url(HttpUrl.parse("https://outgoing.example.com"))
         .build();
 
-    assertThat(outgoingLinksettings.authType(), is(HttpLinkSettings.AuthType.SIMPLE));
+    assertThat(outgoingLinksettings.authType(), is(IlpOverHttpLinkSettings.AuthType.SIMPLE));
     assertThat(outgoingLinksettings.tokenIssuer().get(), is(HttpUrl.parse("https://outgoing-issuer.example.com")));
     assertThat(outgoingLinksettings.tokenAudience().get(), is(HttpUrl.parse("https://outgoing-audience.example.com")));
     assertThat(outgoingLinksettings.tokenSubject(), is("outgoing-subject"));

@@ -57,15 +57,15 @@ public class StreamClient implements StreamEndpoint {
   private final StreamEncryptionService streamEncryptionService;
 
   // TODO: Deal with this?
-  private final ConnectionManager connectionManager;
+  private final Link link;
   private final ExecutorService executorService;
 
   public StreamClient(
       final StreamEncryptionService streamEncryptionService,
-      final ConnectionManager connectionManager
+      Link link, final ConnectionManager connectionManager
   ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
-    this.connectionManager = Objects.requireNonNull(connectionManager);
+    this.link = link;
 
     // Note that pools with similar properties but different details (for example, timeout parameters) may be
     // created using {@link ThreadPoolExecutor} constructors.
@@ -95,7 +95,6 @@ public class StreamClient implements StreamEndpoint {
 
   @Override
   public CompletableFuture<SendMoneyResult> sendMoney(
-      final Link link,
       final byte[] sharedSecret,
       final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
@@ -105,9 +104,9 @@ public class StreamClient implements StreamEndpoint {
     Objects.requireNonNull(amount);
 
     final SendMoneyAggregator sendMoneyAggregator = new SendMoneyAggregator(
-        executorService,
+        this.executorService,
         StreamCodecContextFactory.oer(),
-        link,
+        this.link,
         new AimdCongestionController(),
         this.streamEncryptionService,
         sharedSecret,
@@ -116,11 +115,6 @@ public class StreamClient implements StreamEndpoint {
         amount
     );
     return sendMoneyAggregator.send();
-  }
-
-  @Override
-  public void sendData() {
-    throw new RuntimeException("Not yet implemented!");
   }
 
   @Immutable
@@ -141,6 +135,11 @@ public class StreamClient implements StreamEndpoint {
 
     UnsignedLong amountDelivered();
   }
+
+  // TODO: Pull Connection-management operations out of the Aggregator? Maybe make the client itself able to do these
+  //  things via an accessor to the connection manager. It's generally not used, but can be if desired.
+
+  // TODO: Also see ConnectionDetails
 
   /**
    * Encapsulates everything needed to send a particular amount of money by breaking up a payment into a bunch of
@@ -427,10 +426,7 @@ public class StreamClient implements StreamEndpoint {
           break;
         }
         default: {
-          throw new StreamClientException(String.format("Packet was rejected by with error: %s %s",
-              rejectPacket.getTriggeredBy().map(InterledgerAddress::getValue).orElse("n/a"),
-              rejectPacket.getCode(), rejectPacket.getMessage()
-          ));
+          throw new StreamClientException(String.format("Packet was rejected. rejectPacket=%s", rejectPacket));
         }
       }
     }

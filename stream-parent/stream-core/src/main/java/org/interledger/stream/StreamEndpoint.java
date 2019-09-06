@@ -1,7 +1,6 @@
 package org.interledger.stream;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.Link;
 
 import com.google.common.primitives.UnsignedLong;
 
@@ -19,13 +18,12 @@ public interface StreamEndpoint {
    * @return A {@link SendMoneyResult}.
    */
   CompletableFuture<SendMoneyResult> sendMoney(
-      final Link link,
       final byte[] sharedSecret,
       final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
   );
 
-  void sendData();
+  // TODO: sendData
 
 }

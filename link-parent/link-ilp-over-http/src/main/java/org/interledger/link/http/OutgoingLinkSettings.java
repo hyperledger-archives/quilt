@@ -1,15 +1,15 @@
 package org.interledger.link.http;
 
-import static org.interledger.link.http.HttpLinkSettings.AUTH_TYPE;
-import static org.interledger.link.http.HttpLinkSettings.DOT;
-import static org.interledger.link.http.HttpLinkSettings.ILP_OVER_HTTP;
-import static org.interledger.link.http.HttpLinkSettings.OUTGOING;
-import static org.interledger.link.http.HttpLinkSettings.SHARED_SECRET;
-import static org.interledger.link.http.HttpLinkSettings.TOKEN_AUDIENCE;
-import static org.interledger.link.http.HttpLinkSettings.TOKEN_EXPIRY;
-import static org.interledger.link.http.HttpLinkSettings.TOKEN_ISSUER;
-import static org.interledger.link.http.HttpLinkSettings.TOKEN_SUBJECT;
-import static org.interledger.link.http.HttpLinkSettings.URL;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TYPE;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.ILP_OVER_HTTP;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.OUTGOING;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.SHARED_SECRET;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_AUDIENCE;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_EXPIRY;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_ISSUER;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_SUBJECT;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.URL;
 
 import okhttp3.HttpUrl;
 import org.immutables.value.Value;
@@ -91,7 +91,7 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
                 Optional.ofNullable(outgoingSettings.get(AUTH_TYPE))
                     .map(Object::toString)
                     .map(String::toUpperCase)
-                    .map(HttpLinkSettings.AuthType::valueOf)
+                    .map(IlpOverHttpLinkSettings.AuthType::valueOf)
                     .ifPresent(builder::authType);
 
                 Optional.ofNullable(outgoingSettings.get(SHARED_SECRET))
@@ -124,7 +124,7 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
     Optional.ofNullable(customSettings.get(HTTP_OUTGOING_AUTH_TYPE))
         .map(Object::toString)
         .map(String::toUpperCase)
-        .map(HttpLinkSettings.AuthType::valueOf)
+        .map(IlpOverHttpLinkSettings.AuthType::valueOf)
         .ifPresent(builder::authType);
 
     Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_SUBJECT))

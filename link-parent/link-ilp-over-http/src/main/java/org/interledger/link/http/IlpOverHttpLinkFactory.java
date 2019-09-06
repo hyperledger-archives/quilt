@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 /**
  * An implementation of {@link LinkFactory} for creating Ilp-over-Http Links.
  */
-public class HttpLinkFactory implements LinkFactory {
+public class IlpOverHttpLinkFactory implements LinkFactory {
 
   private final LinkConnectionEventEmitter linkConnectionEventEmitter;
   private final OkHttpClient okHttpClient;
@@ -31,8 +31,9 @@ public class HttpLinkFactory implements LinkFactory {
   private final ObjectMapper objectMapper;
   private final CodecContext ilpCodecContext;
 
-  public HttpLinkFactory(
-      final LinkConnectionEventEmitter linkConnectionEventEmitter, final OkHttpClient okHttpClient, final Decryptor decryptor,
+  public IlpOverHttpLinkFactory(
+      final LinkConnectionEventEmitter linkConnectionEventEmitter, final OkHttpClient okHttpClient,
+      final Decryptor decryptor,
       final ObjectMapper objectMapper, final CodecContext ilpCodecContext
   ) {
     this.linkConnectionEventEmitter = Objects.requireNonNull(linkConnectionEventEmitter);
@@ -59,16 +60,16 @@ public class HttpLinkFactory implements LinkFactory {
     }
 
     // Translate from Link.customSettings, being sure to apply custom settings from the incoming link.
-    final ImmutableHttpLinkSettings.Builder builder = HttpLinkSettings.builder().from(linkSettings);
-    final HttpLinkSettings httpLinkSettings =
-        HttpLinkSettings.applyCustomSettings(builder, linkSettings.getCustomSettings()).build();
+    final ImmutableIlpOverHttpLinkSettings.Builder builder = IlpOverHttpLinkSettings.builder().from(linkSettings);
+    final IlpOverHttpLinkSettings ilpOverHttpLinkSettings =
+        IlpOverHttpLinkSettings.applyCustomSettings(builder, linkSettings.getCustomSettings()).build();
 
     final BearerTokenSupplier bearerTokenSupplier;
-    if (httpLinkSettings.outgoingHttpLinkSettings().authType().equals(HttpLinkSettings.AuthType.SIMPLE)) {
+    if (ilpOverHttpLinkSettings.outgoingHttpLinkSettings().authType().equals(IlpOverHttpLinkSettings.AuthType.SIMPLE)) {
       // Decrypt whatever is inside of the encryptedTokenSharedSecret. For the SIMPLE profile, this will decrypt to the
       // actual bearer token.
       bearerTokenSupplier = new SimpleBearerTokenSupplier(new String(
-          decryptor.decrypt(httpLinkSettings.outgoingHttpLinkSettings().encryptedTokenSharedSecret().getBytes())
+          decryptor.decrypt(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().encryptedTokenSharedSecret().getBytes())
       ));
     } else {
       // TODO: For now, we assume the bytes are a String that conform to the Crypt CLI. However, this should be made
@@ -77,35 +78,29 @@ public class HttpLinkFactory implements LinkFactory {
 
       // NOTE: This supplier will always create a copy of the decrypted bytes so that the consumer of each call can
       // safely wipe the bytes from memory without affecting other callers.
-      final SharedSecretBytesSupplier sharedSecretSupplier =
-          () -> decryptor.decrypt(httpLinkSettings.outgoingHttpLinkSettings().encryptedTokenSharedSecret().getBytes());
+      final SharedSecretBytesSupplier sharedSecretSupplier = () -> decryptor
+          .decrypt(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().encryptedTokenSharedSecret().getBytes());
+
       bearerTokenSupplier = new JwtHs256BearerTokenSupplier(
-          sharedSecretSupplier, httpLinkSettings.outgoingHttpLinkSettings()
+          sharedSecretSupplier, ilpOverHttpLinkSettings.outgoingHttpLinkSettings()
       );
     }
 
-    final HttpSender httpSender = new OkHttpSender(
+    final IlpOverHttpLink ilpOverHttpLink = new IlpOverHttpLink(
         operatorAddressSupplier,
+        ModifiableIlpOverHttpLinkSettings.create().from(ilpOverHttpLinkSettings), // Modifiable for testing
         okHttpClient,
         objectMapper,
         ilpCodecContext,
-        httpLinkSettings.outgoingHttpLinkSettings(),
         bearerTokenSupplier
     );
 
-    final HttpStatefulLink httpLink = new HttpStatefulLink(
-        operatorAddressSupplier,
-        ModifiableHttpLinkSettings.create().from(httpLinkSettings), // Modifiable for testing
-        httpSender,
-        linkConnectionEventEmitter
-    );
-
-    return httpLink;
+    return ilpOverHttpLink;
   }
 
   @Override
   public boolean supports(LinkType linkType) {
-    return HttpStatefulLink.LINK_TYPE.equals(linkType);
+    return IlpOverHttpLink.LINK_TYPE.equals(linkType);
   }
 
 }

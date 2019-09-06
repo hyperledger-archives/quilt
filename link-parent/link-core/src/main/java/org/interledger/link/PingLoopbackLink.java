@@ -10,13 +10,11 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 /**
@@ -27,7 +25,7 @@ import java.util.function.Supplier;
  * is a loopback link so that no outbound traffic ever leaves the Connector while processing a Ping request.
  * </p>
  */
-public class PingLoopbackStatefulLink extends AbstractStatefulLink<LinkSettings> implements Link<LinkSettings> {
+public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link<LinkSettings> {
 
   public static final String LINK_TYPE_STRING = "PING";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
@@ -40,24 +38,10 @@ public class PingLoopbackStatefulLink extends AbstractStatefulLink<LinkSettings>
   /**
    * Required-args constructor.
    */
-  public PingLoopbackStatefulLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
-      final LinkSettings linkSettings,
-      final LinkConnectionEventEmitter linkConnectionEventEmitter
+  public PingLoopbackLink(
+      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier, final LinkSettings linkSettings
   ) {
-    super(operatorAddressSupplier, linkSettings, linkConnectionEventEmitter);
-  }
-
-  @Override
-  public CompletableFuture<Void> doConnect() {
-    // No-op. Internally-routed links are always connected, so there is no connect/disconnect logic required.
-    return CompletableFuture.completedFuture(null);
-  }
-
-  @Override
-  public CompletableFuture<Void> doDisconnect() {
-    // No-op. Internally-routed links are always connected, so there is no connect/disconnect logic required.
-    return CompletableFuture.completedFuture(null);
+    super(operatorAddressSupplier, linkSettings);
   }
 
   @Override

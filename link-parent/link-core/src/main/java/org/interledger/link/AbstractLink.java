@@ -19,7 +19,11 @@ public abstract class AbstractLink<LS extends LinkSettings> implements Link<LS> 
 
   protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  // Optional to allow for IL-DCP
+  /**
+   * The optionally-present {@link InterledgerAddress} of the operator of this sender. Sometimes the Operator Address is
+   * not yet populated when this client is constructed (e.g, IL-DCP). Thus, the value is optional to accommodate these
+   * cases.
+   */
   private final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier;
 
   /**

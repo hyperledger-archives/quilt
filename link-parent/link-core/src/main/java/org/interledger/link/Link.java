@@ -12,8 +12,8 @@ import java.util.function.Supplier;
  * <p>An abstraction for communicating with a remote Interledger peer in a connection-state-less manner, meaning links
  * do not hold connection state during their lifecyle.</p>
  *
- * <p>If you want to make a {@link Link} that can holds connection state (such as for a link protocol using Websockets),
- * consider {@link StatefulLink} instead.</p>
+ * <p>If you want to make a {@link Link} that can holds connection state (such as for a link protocol using
+ * Websockets), consider {@link StatefulLink} instead.</p>
  */
 public interface Link<LS extends LinkSettings> extends LinkSender {
 
@@ -94,4 +94,13 @@ public interface Link<LS extends LinkSettings> extends LinkSender {
    */
   void unregisterLinkHandler();
 
+  /**
+   * <p>Check the connection's connectivity. to see  for ping by making an HTTP Head request with a ping packet, and
+   * asserting the values returned are one of the supported content-types required for BLAST.</p>
+   *
+   * <p>If the endpoint does not support producing BLAST responses, we expect a 406 NOT_ACCEPTABLE response. If the
+   * endpoint does not support BLAST requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>
+   */
+  default void testConnection() {
+  }
 }

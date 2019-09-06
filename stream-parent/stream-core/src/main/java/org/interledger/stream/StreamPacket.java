@@ -79,7 +79,7 @@ public interface StreamPacket {
    *
    * @return
    */
-  default int version() {
+  default short version() {
     return VERSION_1;
   }
 
@@ -125,11 +125,9 @@ public interface StreamPacket {
      */
     @Derived
     @Override
-    public int version() {
-      return VERSION_1;
+    public short version() {
+      return (short) VERSION_1;
     }
-
-
   }
 
 }

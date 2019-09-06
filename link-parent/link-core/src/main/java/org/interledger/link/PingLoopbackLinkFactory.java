@@ -1,7 +1,6 @@
 package org.interledger.link;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkException;
 
 import java.util.Objects;
@@ -14,15 +13,7 @@ import java.util.function.Supplier;
  */
 public class PingLoopbackLinkFactory implements LinkFactory {
 
-  private final LinkConnectionEventEmitter linkConnectionEventEmitter;
-  private PingLoopbackStatefulLink lazyPingLoopbackLink;
-
-  /**
-   * Required-args Constructor.
-   */
-  public PingLoopbackLinkFactory(final LinkConnectionEventEmitter linkConnectionEventEmitter) {
-    this.linkConnectionEventEmitter = Objects.requireNonNull(linkConnectionEventEmitter, "linkEventEmitter must not be null");
-  }
+  private PingLoopbackLink lazyPingLoopbackLink;
 
   /**
    * Construct a new instance of {@link Link} using the supplied inputs.
@@ -47,8 +38,7 @@ public class PingLoopbackLinkFactory implements LinkFactory {
     } else {
       synchronized (this) {
         if (lazyPingLoopbackLink == null) {
-          lazyPingLoopbackLink = new PingLoopbackStatefulLink(operatorAddressSupplier, linkSettings,
-              linkConnectionEventEmitter);
+          lazyPingLoopbackLink = new PingLoopbackLink(operatorAddressSupplier, linkSettings);
         }
         return lazyPingLoopbackLink;
       }
@@ -57,7 +47,7 @@ public class PingLoopbackLinkFactory implements LinkFactory {
 
   @Override
   public boolean supports(LinkType linkType) {
-    return PingLoopbackStatefulLink.LINK_TYPE.equals(linkType);
+    return PingLoopbackLink.LINK_TYPE.equals(linkType);
   }
 
 }

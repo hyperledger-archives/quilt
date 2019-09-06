@@ -5,7 +5,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkException;
 
 import org.junit.Before;
@@ -26,31 +25,17 @@ public class PingLoopbackLinkFactoryTest {
   @Mock
   private LinkSettings linkSettingsMock;
 
-  @Mock
-  private LinkConnectionEventEmitter linkConnectionEventEmitterMock;
-
   private PingLoopbackLinkFactory pingLoopbackLinkFactory;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    this.pingLoopbackLinkFactory = new PingLoopbackLinkFactory(linkConnectionEventEmitterMock);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void constructWithNullLinkEventEmitter() {
-    try {
-      new PingLoopbackLinkFactory(null);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("linkEventEmitter must not be null"));
-      throw e;
-    }
+    this.pingLoopbackLinkFactory = new PingLoopbackLinkFactory();
   }
 
   @Test
   public void supports() {
-    assertThat(pingLoopbackLinkFactory.supports(PingLoopbackStatefulLink.LINK_TYPE), is(true));
+    assertThat(pingLoopbackLinkFactory.supports(PingLoopbackLink.LINK_TYPE), is(true));
     assertThat(pingLoopbackLinkFactory.supports(LinkType.of("foo")), is(false));
   }
 
@@ -93,7 +78,7 @@ public class PingLoopbackLinkFactoryTest {
   @Test
   public void constructLink() {
     LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(PingLoopbackStatefulLink.LINK_TYPE)
+        .linkType(PingLoopbackLink.LINK_TYPE)
         .build();
     Link<?> link = pingLoopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
     link.setLinkId(LINK_ID);

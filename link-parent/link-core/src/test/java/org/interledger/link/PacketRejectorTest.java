@@ -26,7 +26,7 @@ public class PacketRejectorTest {
       .expiresAt(Instant.now())
       .amount(BigInteger.ONE)
       .destination(InterledgerAddress.of("test.destination"))
-      .executionCondition(PingLoopbackStatefulLink.PING_PROTOCOL_CONDITION)
+      .executionCondition(PingLoopbackLink.PING_PROTOCOL_CONDITION)
       .build();
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.operator");
 

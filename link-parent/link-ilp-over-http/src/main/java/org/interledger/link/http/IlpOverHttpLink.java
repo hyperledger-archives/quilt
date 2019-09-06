@@ -4,20 +4,28 @@ import static com.google.common.net.HttpHeaders.CACHE_CONTROL;
 import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static com.google.common.net.HttpHeaders.PRAGMA;
 import static com.google.common.net.MediaType.OCTET_STREAM;
+import static org.interledger.link.http.IlpOverHttpConstants.APPLICATION_OCTET_STREAM;
+import static org.interledger.link.http.IlpOverHttpConstants.BEARER;
+import static org.interledger.link.http.IlpOverHttpConstants.OCTET_STREAM_STRING;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerConstants;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.encoding.asn.framework.CodecContext;
+import org.interledger.link.AbstractLink;
+import org.interledger.link.Link;
+import org.interledger.link.LinkHandler;
+import org.interledger.link.LinkType;
+import org.interledger.link.exceptions.LinkException;
 import org.interledger.link.http.auth.BearerTokenSupplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import okhttp3.Headers;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
@@ -30,76 +38,71 @@ import org.zalando.problem.ThrowableProblem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * An implementation of {@link HttpSender} for communicating with a remote ILP-over-HTTP endpoint using the OkHttp3
- * library.
+ * <p>An extension of {@link AbstractLink} that handles HTTP (aka, ILP over HTTP) connections, both incoming and
+ * outgoing.</p>
+ *
+ * <p>To handle incoming HTTP requests, use {@link #registerLinkHandler(LinkHandler)}.</p>
+ *
+ * @see "https://github.com/interledger/rfcs/blob/master/0035-ilp-over-http/0035-ilp-over-http.md"
  */
-public class OkHttpSender implements HttpSender {
+public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> implements Link<IlpOverHttpLinkSettings> {
 
-  private static final String BEARER = "Bearer ";
-  private static final String OCTET_STREAM_STRING = OCTET_STREAM.toString();
-  private static final MediaType APPLICATION_OCTET_STREAM = MediaType.parse(OCTET_STREAM_STRING);
+  public static final String LINK_TYPE_STRING = "ILP_OVER_HTTP";
+  public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
 
-  protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private static final InterledgerPreparePacket UNFULFILLABLE_PACKET = InterledgerPreparePacket.builder()
+      .executionCondition(InterledgerConstants.ALL_ZEROS_CONDITION)
+      .expiresAt(Instant.now().plusSeconds(30))
+      .destination(InterledgerAddress.of("peer.ilp_over_http_connection_test_that_should_always_reject"))
+      .build();
 
-  /**
-   * The optionally-present {@link InterledgerAddress} of the operator of this sender. Sometimes the Operator Address is
-   * not yet populated when this client is constructed (e.g, IL-DCP). Thus, the value is optional to accommodate these
-   * cases.
-   */
-  private final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier;
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  // Note: The Http client in this sender is shared between all HTTP links...
   private final OkHttpClient okHttpClient;
   private final ObjectMapper objectMapper;
   private final CodecContext ilpCodecContext;
-  private final OutgoingLinkSettings outgoingLinkSettings;
-
-  // These are fine to be typed as String for two reasons: 1) They will be put into headers as a String (so they'll
-  // hang around in memory) and 2) they have when they're JWTs, they have short expiries (the signing key is not
-  // persisted as a String).
+  /**
+   * These are fine to be typed as String for two reasons: 1) They will be put into headers as a String (so they'll hang
+   * around in memory) and 2) they have when they're JWTs, they have short expiries (the signing key is not persisted as
+   * a String).
+   */
   private final Supplier<String> authTokenSupplier;
 
   /**
    * Required-args Constructor.
    *
-   * @param operatorAddressSupplier A {@link Supplier} for the ILP address of the node operating this ILP-over-HTTP
-   *                                sender.
+   * @param operatorAddressSupplier A {@link Supplier} of an optionally present {@link InterledgerAddress} for the
+   *                                operator of this link.
+   * @param ilpOverHttpLinkSettings A {@link IlpOverHttpLinkSettings} that specified ledger link options.
    * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
    *                                endpoint.
    * @param objectMapper            A {@link ObjectMapper} for reading error responses from the remote ILP-over-HTTP
    *                                endpoint.
-   * @param outgoingLinkSettings    A {@link OutgoingLinkSettings} for communicating with the remote endpoint.
    * @param bearerTokenSupplier     A {@link BearerTokenSupplier} that can be used to get a bearer token to make
    *                                authenticated calls to the remote HTTP endpoint.
    */
-  public OkHttpSender(
+  public IlpOverHttpLink(
       final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
+      final IlpOverHttpLinkSettings ilpOverHttpLinkSettings,
       final OkHttpClient okHttpClient,
       final ObjectMapper objectMapper,
       final CodecContext ilpCodecContext,
-      final OutgoingLinkSettings outgoingLinkSettings,
       final BearerTokenSupplier bearerTokenSupplier
   ) {
-    this.operatorAddressSupplier = Objects.requireNonNull(operatorAddressSupplier);
+    super(operatorAddressSupplier, ilpOverHttpLinkSettings);
     this.okHttpClient = Objects.requireNonNull(okHttpClient);
     this.objectMapper = Objects.requireNonNull(objectMapper);
     this.ilpCodecContext = Objects.requireNonNull(ilpCodecContext);
-    this.outgoingLinkSettings = Objects.requireNonNull(outgoingLinkSettings);
     this.authTokenSupplier = Objects.requireNonNull(bearerTokenSupplier);
   }
 
-  /**
-   * Send an ILP prepare packet to the remote peer.
-   *
-   * @param preparePacket An {@link InterledgerPreparePacket} to send to the remote ILP-over-HTTP endpoint.
-   *
-   * @return An optionally-present {@link InterledgerResponsePacket}. If the request to the remote peer times-out, then
-   *     the ILP reject packet will contain a {@link InterledgerRejectPacket#getTriggeredBy()} address that   that
-   *     matches this node's operator address.
-   */
   @Override
   public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket);
@@ -108,9 +111,9 @@ public class OkHttpSender implements HttpSender {
     try {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       ilpCodecContext.write(preparePacket, byteArrayOutputStream);
-      okHttpRequest = this.constructSendPacketRequest(UNFULFILLABLE_PACKET);
+      okHttpRequest = this.constructSendPacketRequest(preparePacket);
     } catch (IOException e) {
-      throw new IlpOverHttpSenderException(e.getMessage(), e);
+      throw new LinkException(e.getMessage(), e, getLinkId());
     }
 
     try (Response response = okHttpClient.newCall(okHttpRequest).execute()) {
@@ -124,17 +127,23 @@ public class OkHttpSender implements HttpSender {
         final String errorResponseBody = CharStreams.toString(response.body().charStream());
         Optional<ThrowableProblem> problem = parseThrowableProblem(preparePacket, errorResponseBody);
         final InterledgerRejectPacket rejectPacket;
-        if (response.code() >= 400 && response.code() < 500) {
+
+        if (response.code() == 401 || response.code() == 403) {
+          // If this code is returned, we know the Link is misconfigured, so throw a LinkException Exception.
+          throw new LinkException(String.format(
+              "Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer Token. response=%s", response
+          ), this.getLinkId());
+        } else if (response.code() >= 400 && response.code() < 500) {
           // The request was bad for some reason, likely due to whatever is in the packet.
           rejectPacket = InterledgerRejectPacket.builder()
-              .triggeredBy(operatorAddressSupplier().get())
+              .triggeredBy(getOperatorAddressSupplier().get())
               .code(InterledgerErrorCode.F00_BAD_REQUEST)
               .message(problem.map(Problem::getTitle).orElse(errorResponseBody))
               .build();
         } else {
           // Something else went wrong on the server...try again later.
           rejectPacket = InterledgerRejectPacket.builder()
-              .triggeredBy(operatorAddressSupplier().get())
+              .triggeredBy(getOperatorAddressSupplier().get())
               .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
               .message(problem.map(Problem::getTitle).orElse(errorResponseBody))
               .build();
@@ -148,7 +157,7 @@ public class OkHttpSender implements HttpSender {
         return rejectPacket;
       }
     } catch (IOException e) {
-      throw new IlpOverHttpSenderException(e.getMessage(), e);
+      throw new LinkException(e.getMessage(), e, getLinkId());
     }
   }
 
@@ -160,6 +169,7 @@ public class OkHttpSender implements HttpSender {
    * the endpoint does not support ILP-over-HTTP requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>
    */
   public void testConnection() {
+    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingHttpLinkSettings();
     final String tokenSubject = outgoingLinkSettings.tokenSubject();
     try {
 
@@ -187,41 +197,23 @@ public class OkHttpSender implements HttpSender {
           }
         } else {
           if (response.code() == 406 || response.code() == 415) { // NOT_ACCEPTABLE || UNSUPPORTED_MEDIA_TYPE
-            throw new IlpOverHttpSenderException(
+            throw new LinkException(
                 String.format("Remote peer-link DOES NOT support ILP-over-HTTP. tokenSubject=%s url=%s response=%s",
                     tokenSubject, outgoingLinkSettings.url(), response
-                )
+                ), getLinkId()
             );
           } else {
-            throw new IlpOverHttpSenderException(
+            throw new LinkException(
                 String.format("Unable to connect to ILP-over-HTTP. tokenSubject=%s url=%s response=%s",
                     tokenSubject, outgoingLinkSettings.url(), response
-                )
+                ), getLinkId()
             );
           }
         }
       }
     } catch (IOException e) {
-      throw new IlpOverHttpSenderException(e.getMessage(), e);
+      throw new LinkException(e.getMessage(), e, getLinkId());
     }
-  }
-
-  /**
-   * The optionally-present ILP Address of operator running this sender.
-   *
-   * @return A {@link Supplier} that produces an optionally present ILP address.
-   */
-  public Supplier<Optional<InterledgerAddress>> operatorAddressSupplier() {
-    return operatorAddressSupplier;
-  }
-
-  /**
-   * The {@link OutgoingLinkSettings} held by this sender.
-   *
-   * @return The {@link OutgoingLinkSettings} for this sender.
-   */
-  public OutgoingLinkSettings outgoingLinkSettings() {
-    return outgoingLinkSettings;
   }
 
   /**
@@ -239,14 +231,14 @@ public class OkHttpSender implements HttpSender {
         .add(PRAGMA, "no-cache");
 
     // Set the Operator Address header, if present.
-    operatorAddressSupplier.get().ifPresent(
-        operatorAddress -> headers.set(IlpHttpHeaders.ILP_OPERATOR_ADDRESS_VALUE, operatorAddress.getValue()));
+    getOperatorAddressSupplier().get().ifPresent(
+        operatorAddress -> headers
+            .set(IlpOverHttpConstants.ILP_OPERATOR_ADDRESS_VALUE, operatorAddress.getValue()));
 
     headers.add(HttpHeaders.AUTHORIZATION, BEARER + this.authTokenSupplier.get());
 
     return headers.build();
   }
-
 
   /**
    * Helper method that attempts to parse a JSON error response into a {@link ThrowableProblem}.
@@ -291,14 +283,14 @@ public class OkHttpSender implements HttpSender {
 
       return new Builder()
           .headers(constructHttpRequestHeaders())
-          .url(outgoingLinkSettings.url())
+          .url(this.getLinkSettings().outgoingHttpLinkSettings().url())
           .post(
               RequestBody.create(byteArrayOutputStream.toByteArray(), APPLICATION_OCTET_STREAM)
           )
           .build();
 
     } catch (Exception e) {
-      throw new IlpOverHttpSenderException(e.getMessage(), e);
+      throw new LinkException(e.getMessage(), e, getLinkId());
     }
   }
 }

@@ -8,7 +8,6 @@ import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Objects;
@@ -19,7 +18,7 @@ import java.util.function.Supplier;
 /**
  * <p>A {@link Link} that always responds with a Fulfillment that contains the data supplied by the Prepare packet.</p>
  */
-public class LoopbackStatefulLink extends AbstractStatefulLink<LinkSettings> implements Link<LinkSettings> {
+public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<LinkSettings> {
 
   public static final String LINK_TYPE_STRING = "LOOPBACK";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
@@ -34,26 +33,13 @@ public class LoopbackStatefulLink extends AbstractStatefulLink<LinkSettings> imp
   /**
    * Required-args constructor.
    */
-  public LoopbackStatefulLink(
+  public LoopbackLink(
       final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
       final LinkSettings linkSettings,
-      final LinkConnectionEventEmitter linkConnectionEventEmitter,
       final PacketRejector packetRejector
   ) {
-    super(operatorAddressSupplier, linkSettings, linkConnectionEventEmitter);
+    super(operatorAddressSupplier, linkSettings);
     this.packetRejector = Objects.requireNonNull(packetRejector);
-  }
-
-  @Override
-  public CompletableFuture<Void> doConnect() {
-    // No-op. Internally-routed links are always connected, so there is no connect/disconnect logic required.
-    return CompletableFuture.completedFuture(null);
-  }
-
-  @Override
-  public CompletableFuture<Void> doDisconnect() {
-    // No-op. Internally-routed links are always connected, so there is no connect/disconnect logic required.
-    return CompletableFuture.completedFuture(null);
   }
 
   @Override

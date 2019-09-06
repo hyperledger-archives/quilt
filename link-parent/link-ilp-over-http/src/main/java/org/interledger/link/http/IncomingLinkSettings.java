@@ -1,12 +1,12 @@
 package org.interledger.link.http;
 
-import static org.interledger.link.http.HttpLinkSettings.AUTH_TYPE;
-import static org.interledger.link.http.HttpLinkSettings.DOT;
-import static org.interledger.link.http.HttpLinkSettings.ILP_OVER_HTTP;
-import static org.interledger.link.http.HttpLinkSettings.INCOMING;
-import static org.interledger.link.http.HttpLinkSettings.SHARED_SECRET;
-import static org.interledger.link.http.HttpLinkSettings.TOKEN_AUDIENCE;
-import static org.interledger.link.http.HttpLinkSettings.TOKEN_ISSUER;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TYPE;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.ILP_OVER_HTTP;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.INCOMING;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.SHARED_SECRET;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_AUDIENCE;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_ISSUER;
 
 import okhttp3.HttpUrl;
 import org.immutables.value.Value;
@@ -74,7 +74,7 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
               Optional.ofNullable(incomingSettings.get(AUTH_TYPE))
                   .map(Object::toString)
                   .map(String::toUpperCase)
-                  .map(HttpLinkSettings.AuthType::valueOf)
+                  .map(IlpOverHttpLinkSettings.AuthType::valueOf)
                   .ifPresent(builder::authType);
 
               Optional.ofNullable(incomingSettings.get(SHARED_SECRET))
@@ -95,7 +95,7 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
     Optional.ofNullable(customSettings.get(HTTP_INCOMING_AUTH_TYPE))
         .map(Object::toString)
         .map(String::toUpperCase)
-        .map(HttpLinkSettings.AuthType::valueOf)
+        .map(IlpOverHttpLinkSettings.AuthType::valueOf)
         .ifPresent(builder::authType);
 
     Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_ISSUER))
@@ -125,7 +125,7 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
    * @return A {@link Duration}.
    */
   default Duration getMinMessageWindow() {
-    return Duration.of(1000, ChronoUnit.MILLIS);
+    return Duration.of(2500, ChronoUnit.MILLIS);
   }
 
   @Value.Immutable
@@ -135,7 +135,7 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
     @Override
     @Value.Default
     public Duration getMinMessageWindow() {
-      return Duration.of(1000, ChronoUnit.MILLIS);
+      return Duration.of(2500, ChronoUnit.MILLIS);
     }
 
     @Override

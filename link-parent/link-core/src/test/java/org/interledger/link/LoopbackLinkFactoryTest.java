@@ -37,24 +37,13 @@ public class LoopbackLinkFactoryTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    this.loopbackLinkFactory = new LoopbackLinkFactory(linkConnectionEventEmitterMock, packetRejectorMock);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void constructWithNullLinkEventEmitter() {
-    try {
-      new LoopbackLinkFactory(null, packetRejectorMock);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("linkEventEmitter must not be null"));
-      throw e;
-    }
+    this.loopbackLinkFactory = new LoopbackLinkFactory(packetRejectorMock);
   }
 
   @Test(expected = NullPointerException.class)
   public void constructWithNulPacketRejector() {
     try {
-      new LoopbackLinkFactory(linkConnectionEventEmitterMock, null);
+      new LoopbackLinkFactory(null);
       fail();
     } catch (NullPointerException e) {
       assertThat(e.getMessage(), is("packetRejector must not be null"));
@@ -64,7 +53,7 @@ public class LoopbackLinkFactoryTest {
 
   @Test
   public void supports() {
-    assertThat(loopbackLinkFactory.supports(LoopbackStatefulLink.LINK_TYPE), is(true));
+    assertThat(loopbackLinkFactory.supports(LoopbackLink.LINK_TYPE), is(true));
     assertThat(loopbackLinkFactory.supports(LinkType.of("foo")), is(false));
   }
 
@@ -107,7 +96,7 @@ public class LoopbackLinkFactoryTest {
   @Test
   public void constructLink() {
     LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(LoopbackStatefulLink.LINK_TYPE)
+        .linkType(LoopbackLink.LINK_TYPE)
         .build();
     Link<?> link = loopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
     link.setLinkId(LINK_ID);

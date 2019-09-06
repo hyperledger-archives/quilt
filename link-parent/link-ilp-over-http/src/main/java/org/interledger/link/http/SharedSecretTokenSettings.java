@@ -14,7 +14,7 @@ public interface SharedSecretTokenSettings {
    *
    * @return
    */
-  HttpLinkSettings.AuthType authType();
+  IlpOverHttpLinkSettings.AuthType authType();
 
   /**
    * The expected `iss` value of the issuer of a Blast token. This value should always be a URL so that it can be rooted

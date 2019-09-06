@@ -26,7 +26,7 @@ public class AbstractLinkTest {
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.operator");
   private static final LinkId LINK_ID = LinkId.of("foo");
   private static final LinkSettings LINK_SETTINGS = LinkSettings.builder()
-      .linkType(LoopbackStatefulLink.LINK_TYPE)
+      .linkType(LoopbackLink.LINK_TYPE)
       .build();
 
   private AbstractLink<?> link;

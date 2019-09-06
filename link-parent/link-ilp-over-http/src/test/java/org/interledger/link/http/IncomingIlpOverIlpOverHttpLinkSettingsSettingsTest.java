@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link IncomingLinkSettings}.
  */
-public class IncomingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   // This value doesn't _strictly_ need to be encrypted for purposes of this test. It could easily be plain-text, but
   // for completeness we use the encrypted test-variant.
@@ -27,7 +27,7 @@ public class IncomingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
     final Map<String, Object> customSettings = this.customSettingsFlat();
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(incomingLinksettings.authType(), is(HttpLinkSettings.AuthType.JWT_HS_256));
+    assertThat(incomingLinksettings.authType(), is(IlpOverHttpLinkSettings.AuthType.JWT_HS_256));
     assertThat(incomingLinksettings.tokenIssuer().get(), is(HttpUrl.parse("https://incoming-issuer.example.com/")));
     assertThat(incomingLinksettings.tokenAudience().get(), is(HttpUrl.parse("https://incoming-audience.example.com/")));
     assertThat(incomingLinksettings.encryptedTokenSharedSecret(), is("incoming-credential"));
@@ -42,7 +42,7 @@ public class IncomingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
     final Map<String, Object> customSettings = this.customSettingsHeirarchical();
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(incomingLinksettings.authType(), is(HttpLinkSettings.AuthType.JWT_HS_256));
+    assertThat(incomingLinksettings.authType(), is(IlpOverHttpLinkSettings.AuthType.JWT_HS_256));
     assertThat(incomingLinksettings.tokenIssuer().get(), is(HttpUrl.parse("https://incoming-issuer.example.com/")));
     assertThat(incomingLinksettings.tokenAudience().get(), is(HttpUrl.parse("https://incoming-audience.example.com/")));
     assertThat(incomingLinksettings.encryptedTokenSharedSecret(), is("incoming-credential"));
@@ -53,14 +53,14 @@ public class IncomingHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettin
   public void testWithoutCustomSettings() {
     final IncomingLinkSettings incomingLinksettings =
         IncomingLinkSettings.builder()
-            .authType(HttpLinkSettings.AuthType.SIMPLE)
+            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
             .tokenIssuer(HttpUrl.parse("https://incoming-issuer.example.com"))
             .tokenAudience(HttpUrl.parse("https://incoming-audience.example.com/"))
             .encryptedTokenSharedSecret(SHH)
             .minMessageWindow(Duration.ofMillis(30))
             .build();
 
-    assertThat(incomingLinksettings.authType(), is(HttpLinkSettings.AuthType.SIMPLE));
+    assertThat(incomingLinksettings.authType(), is(IlpOverHttpLinkSettings.AuthType.SIMPLE));
     assertThat(incomingLinksettings.tokenIssuer().get(), is(HttpUrl.parse("https://incoming-issuer.example.com/")));
     assertThat(incomingLinksettings.tokenAudience().get(), is(HttpUrl.parse("https://incoming-audience.example.com/")));
     assertThat(incomingLinksettings.encryptedTokenSharedSecret(), is(SHH));
