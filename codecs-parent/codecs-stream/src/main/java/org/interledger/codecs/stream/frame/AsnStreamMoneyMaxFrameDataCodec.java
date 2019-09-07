@@ -23,6 +23,7 @@ package org.interledger.codecs.stream.frame;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
+import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
 
 public class AsnStreamMoneyMaxFrameDataCodec extends AsnSequenceCodec<StreamMoneyMaxFrame> {
@@ -32,9 +33,9 @@ public class AsnStreamMoneyMaxFrameDataCodec extends AsnSequenceCodec<StreamMone
    */
   public AsnStreamMoneyMaxFrameDataCodec() {
     super(
-        new AsnUint64CodecUL(),
-        new AsnUint64CodecUL(),
-        new AsnUint64CodecUL()
+        new AsnUintCodecUL(),
+        new AsnUintCodecUL(),
+        new AsnUintCodecUL()
     );
   }
 

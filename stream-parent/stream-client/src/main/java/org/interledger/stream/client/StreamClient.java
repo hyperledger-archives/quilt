@@ -161,12 +161,14 @@ public class StreamClient implements StreamEndpoint {
     private final InterledgerAddress destinationAddress;
 
     // The amount
+    private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
     private AtomicReference<UnsignedLong> deliveredAmount;
 
     private AtomicBoolean shouldSendSourceAddress;
 
     private AtomicInteger sequence;
+    private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
 
     /**
@@ -180,7 +182,7 @@ public class StreamClient implements StreamEndpoint {
      *                                (e.g., using SPSP).
      * @param sourceAddress           The {@link InterledgerAddress} of the payment sender.
      * @param destinationAddress      The {@link InterledgerAddress} of the payment receiver.
-     * @param amountLeftToSend        The amount of units (in the senders units) to send to the receiver.
+     * @param originalAmountToSend    The amount of units (in the senders units) to send to the receiver.
      */
     public SendMoneyAggregator(
         final ExecutorService executorService,
@@ -191,7 +193,7 @@ public class StreamClient implements StreamEndpoint {
         final byte[] sharedSecret,
         final InterledgerAddress sourceAddress,
         final InterledgerAddress destinationAddress,
-        final UnsignedLong amountLeftToSend
+        final UnsignedLong originalAmountToSend
     ) {
       this.executorService = Objects.requireNonNull(executorService);
       this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
@@ -204,9 +206,12 @@ public class StreamClient implements StreamEndpoint {
       this.sourceAddress = sourceAddress;
       this.destinationAddress = Objects.requireNonNull(destinationAddress);
 
-      this.amountLeftToSend = new AtomicReference<>(amountLeftToSend);
+      this.originalAmountToSend = new AtomicReference<>(originalAmountToSend);
+      this.amountLeftToSend = new AtomicReference<>(originalAmountToSend);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
       this.sequence = new AtomicInteger(1);
+
+      this.numFulfilledPackets = new AtomicInteger(0);
       this.numRejectedPackets = new AtomicInteger(0);
     }
 
@@ -218,24 +223,33 @@ public class StreamClient implements StreamEndpoint {
     public CompletableFuture<SendMoneyResult> send() {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(destinationAddress);
-      Objects.requireNonNull(amountLeftToSend);
+      Objects.requireNonNull(originalAmountToSend);
 
       // Fire off requests until the congestion controller tells us to stop or we've sent the total amount
       final List<CompletableFuture<InterledgerResponsePacket>> allFutures = Lists.newArrayList();
 
       final AtomicInteger totalStreamPackets = new AtomicInteger(0);
       final Instant start = Instant.now();
-      while (totalStreamPackets.getAndIncrement() > 0) {
+      while (totalStreamPackets.getAndIncrement() >= 0) {
+        if (UnsignedLong.ZERO.equals(amountLeftToSend.get())) {
+          break;
+        }
+
         // Determine the amount to send
         final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
         if (amountToSend.equals(UnsignedLong.ZERO)) {
-          break;
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e) {
+            throw new StreamClientException(e.getMessage(), e);
+          }
+          continue;
         }
 
         this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
 
         // Load up the STREAM packet
-        final long sequence = this.sequence.incrementAndGet();
+        final long sequence = this.sequence.getAndIncrement();
 
         final List<StreamFrame> frames = Lists.newArrayList(
             StreamMoneyFrame.builder()
@@ -316,7 +330,7 @@ public class StreamClient implements StreamEndpoint {
       }).thenApply($ -> closeConnection(sequence.get()))
           .thenApply(closeConnectionResult -> SendMoneyResult.builder()
               .amountDelivered(closeConnectionResult.amountDelivered())
-              .originalAmount(amountLeftToSend.get())
+              .originalAmount(originalAmountToSend.get())
               .numFulfilledPackets(closeConnectionResult.numFulfilledPackets())
               .numRejectPackets(closeConnectionResult.numRejectPackets())
               .sendMoneyDuration(sendMoneyDuration.get())
@@ -378,6 +392,8 @@ public class StreamClient implements StreamEndpoint {
       Objects.requireNonNull(amount);
       Objects.requireNonNull(fulfillPacket);
 
+      this.numFulfilledPackets.getAndIncrement();
+
       // TODO should we check the fulfillment and expiry or can we assume the plugin does that?
       this.congestionController.fulfill(amount);
       this.shouldSendSourceAddress.set(false);
@@ -404,9 +420,9 @@ public class StreamClient implements StreamEndpoint {
         final UnsignedLong amountToSend,
         final InterledgerRejectPacket rejectPacket
     ) {
+      this.numRejectedPackets.getAndIncrement();
       this.amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
       this.congestionController.reject(amountToSend, rejectPacket);
-      this.numRejectedPackets.getAndIncrement();
 
       logger.debug(
           "Prepare {} with amount {} was rejected with code: {} ({} left to send)",
@@ -485,8 +501,8 @@ public class StreamClient implements StreamEndpoint {
 
       return CloseConnectionResult.builder()
           .amountDelivered(this.deliveredAmount.get())
-          .numFulfilledPackets(this.sequence.get() - 1)
-          .numRejectPackets(0) //  TODO: numRejectedPackets
+          .numFulfilledPackets(this.numFulfilledPackets.get())
+          .numRejectPackets(this.numRejectedPackets.get())
           .build();
     }
   }

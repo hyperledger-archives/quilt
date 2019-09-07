@@ -31,6 +31,16 @@
       <artifactId>stream-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
@@ -43,6 +53,11 @@
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-core</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.immutables</groupId>
+      <artifactId>value</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

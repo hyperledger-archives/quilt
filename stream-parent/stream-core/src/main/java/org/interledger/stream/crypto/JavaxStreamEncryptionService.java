@@ -62,7 +62,9 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
     // See https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9
     try {
       final Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
-      // 128 is the recommended authentication tag length for GCM. More info can be found in pdf mentioned above
+      // 128 is the recommended authentication tag length for GCM. More info can be found in pdf mentioned above.
+      // After each encryption operation using GCM mode, callers should re-initialize the cipher objects with GCM
+      // parameters using a different IV value.
       final GCMParameterSpec parameterSpec = new GCMParameterSpec(AUTH_TAG_LENGTH_BITS, iv);
       cipher.init(Cipher.ENCRYPT_MODE, typedEncryptionKey, parameterSpec);
       byte[] cipherText = cipher.doFinal(plainText);
@@ -79,14 +81,14 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
       );
 
       // Concatenate to a single message
-      final ByteBuffer byteBuffer = ByteBuffer.allocate(iv.length + cipherText.length);
-      byteBuffer.put(iv);
-      byteBuffer.put(rearrangedCipherText);
-      final byte[] cipherMessage = byteBuffer.array();
+      final ByteBuffer cipherMessageByteBuffer = ByteBuffer.allocate(iv.length + cipherText.length);
+      cipherMessageByteBuffer.put(iv);
+      cipherMessageByteBuffer.put(rearrangedCipherText);
+      final byte[] cipherMessage = cipherMessageByteBuffer.array();
 
       // It is best practice to try to wipe sensible data like a cryptographic key or IV from memory as fast as
       // possible. Since Java is a language with automatic memory management, we don’t have any guarantees that the
-      // following works as intended, but it should in most cases:
+      // following works as intended, but it should in most cases
       Arrays.fill(iv, (byte) 0); //overwrite the content of key with zeros
       Arrays.fill(encryptionKey, (byte) 0);
 

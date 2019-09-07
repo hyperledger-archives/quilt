@@ -23,8 +23,7 @@ package org.interledger.codecs.stream.frame;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
-import org.interledger.encoding.asn.codecs.AsnUint64Codec;
-import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
+import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.stream.frames.StreamDataFrame;
 
 public class AsnStreamDataFrameDataCodec extends AsnSequenceCodec<StreamDataFrame> {
@@ -34,8 +33,8 @@ public class AsnStreamDataFrameDataCodec extends AsnSequenceCodec<StreamDataFram
    */
   public AsnStreamDataFrameDataCodec() {
     super(
-        new AsnUint64CodecUL(),
-        new AsnUint64CodecUL(),
+        new AsnUintCodecUL(),
+        new AsnUintCodecUL(),
         new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED)
     );
   }

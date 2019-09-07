@@ -1,5 +1,6 @@
 package org.interledger.stream.client;
 
+import static okhttp3.CookieJar.NO_COOKIES;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -24,6 +25,8 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.primitives.UnsignedLong;
+import okhttp3.ConnectionPool;
+import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import org.junit.Before;
@@ -32,8 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.problem.ProblemModule;
 
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Integration tests for {@link StreamClient}.
@@ -66,6 +71,16 @@ public class StreamClientTest {
 
   @Before
   public void setUp() {
+    ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
+    builder.connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT));
+    builder.cookieJar(NO_COOKIES);
+    builder.connectTimeout(5000, TimeUnit.MILLISECONDS);
+    builder.readTimeout(30, TimeUnit.SECONDS);
+    builder.writeTimeout(30, TimeUnit.SECONDS);
+    OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
+
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
@@ -82,7 +97,7 @@ public class StreamClientTest {
     this.link = new IlpOverHttpLink(
         () -> Optional.of(SENDER_ADDRESS),
         linkSettings,
-        new OkHttpClient(),
+        httpClient,
         objectMapperForTesting(),
         InterledgerCodecContextFactory.oer(),
         new SimpleBearerTokenSupplier("java_stream_client:password")
@@ -96,7 +111,7 @@ public class StreamClientTest {
 
   @Test
   public void sendMoney() {
-    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000L);
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
     StreamClient streamClient = new StreamClient(
         new JavaxStreamEncryptionService(),
@@ -109,7 +124,7 @@ public class StreamClientTest {
 
     assertThat(sendMoneyResult.amountDelivered(), is(paymentAmount));
     assertThat(sendMoneyResult.originalAmount(), is(paymentAmount));
-    assertThat(sendMoneyResult.numFulfilledPackets(), is(10));
+    assertThat(sendMoneyResult.numFulfilledPackets(), is(2));
     assertThat(sendMoneyResult.numRejectPackets(), is(0));
 
     logger.info("Payment Sent: {}", sendMoneyResult);

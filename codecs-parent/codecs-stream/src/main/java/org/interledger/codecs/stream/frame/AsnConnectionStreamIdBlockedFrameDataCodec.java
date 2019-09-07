@@ -22,6 +22,7 @@ package org.interledger.codecs.stream.frame;
 
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
+import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.stream.frames.ConnectionStreamIdBlockedFrame;
 
 public class AsnConnectionStreamIdBlockedFrameDataCodec extends AsnSequenceCodec<ConnectionStreamIdBlockedFrame> {
@@ -31,7 +32,7 @@ public class AsnConnectionStreamIdBlockedFrameDataCodec extends AsnSequenceCodec
    */
   public AsnConnectionStreamIdBlockedFrameDataCodec() {
     super(
-        new AsnUint64CodecUL()
+        new AsnUintCodecUL()
     );
   }
 

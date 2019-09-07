@@ -26,6 +26,8 @@ import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
+import org.interledger.encoding.asn.codecs.AsnUintCodec;
+import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.stream.StreamPacket;
 
 import java.math.BigInteger;
@@ -39,8 +41,8 @@ public class AsnStreamPacketCodec extends AsnSequenceCodec<StreamPacket> {
     super(
         new AsnUint8Codec(), // version
         new AsnUint8Codec(), // Ilp Packet Type
-        new AsnUint64Codec(), // sequence TODO: Per https://github.com/hyperledger/quilt/issues/201 make this Long
-        new AsnUint64CodecUL(), // PrepareAmount
+        new AsnUintCodec(), // sequence TODO: Per https://github.com/hyperledger/quilt/issues/201 make this Long
+        new AsnUintCodecUL(), // PrepareAmount
         new AsnStreamFramesCodec() // Sequences of Frames
         // JunkData (Ignored)
     );
