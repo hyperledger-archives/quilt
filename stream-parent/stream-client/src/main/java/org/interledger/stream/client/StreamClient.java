@@ -167,7 +167,7 @@ public class StreamClient implements StreamEndpoint {
 
     private AtomicBoolean shouldSendSourceAddress;
 
-    private AtomicInteger sequence;
+    private AtomicReference<UnsignedLong> sequence;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
 
@@ -209,7 +209,7 @@ public class StreamClient implements StreamEndpoint {
       this.originalAmountToSend = new AtomicReference<>(originalAmountToSend);
       this.amountLeftToSend = new AtomicReference<>(originalAmountToSend);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
-      this.sequence = new AtomicInteger(1);
+      this.sequence = new AtomicReference<>(UnsignedLong.ZERO);
 
       this.numFulfilledPackets = new AtomicInteger(0);
       this.numRejectedPackets = new AtomicInteger(0);
@@ -249,7 +249,7 @@ public class StreamClient implements StreamEndpoint {
         this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
 
         // Load up the STREAM packet
-        final long sequence = this.sequence.getAndIncrement();
+        this.sequence.getAndUpdate($ -> $.plus(UnsignedLong.ONE));
 
         final List<StreamFrame> frames = Lists.newArrayList(
             StreamMoneyFrame.builder()
@@ -274,7 +274,7 @@ public class StreamClient implements StreamEndpoint {
             // If the STREAM packet is sent on an ILP Prepare, this represents the minimum the receiver should accept.
             // TODO: enforce min exchange rate?
             .prepareAmount(UnsignedLong.ZERO)
-            .sequence(sequence)
+            .sequence(sequence.get())
             .frames(frames)
             .build();
 
@@ -303,10 +303,10 @@ public class StreamClient implements StreamEndpoint {
           // Executed in the same thread as above
           responsePacket.handle(
               (fulfillPacket -> {
-                handleFulfill(sequence, amountToSend, fulfillPacket);
+                handleFulfill(sequence.get(), amountToSend, fulfillPacket);
               }),
               (rejectPacket -> {
-                handleReject(sequence, amountToSend, rejectPacket);
+                handleReject(sequence.get(), amountToSend, rejectPacket);
               })
           );
           return responsePacket;
@@ -385,7 +385,7 @@ public class StreamClient implements StreamEndpoint {
 
     @VisibleForTesting
     protected void handleFulfill(
-        final long sequence,
+        final UnsignedLong sequence,
         final UnsignedLong amount,
         final InterledgerFulfillPacket fulfillPacket
     ) {
@@ -416,7 +416,7 @@ public class StreamClient implements StreamEndpoint {
 
     @VisibleForTesting
     protected void handleReject(
-        final long sequence,
+        final UnsignedLong sequence,
         final UnsignedLong amountToSend,
         final InterledgerRejectPacket rejectPacket
     ) {
@@ -453,7 +453,7 @@ public class StreamClient implements StreamEndpoint {
      * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
      */
     @VisibleForTesting
-    protected CloseConnectionResult closeConnection(final long sequence) {
+    protected CloseConnectionResult closeConnection(final UnsignedLong sequence) {
 
       final StreamPacket streamPacket = StreamPacket.builder()
           .interledgerPacketType(InterledgerPacketType.PREPARE)
@@ -496,7 +496,7 @@ public class StreamClient implements StreamEndpoint {
 
       logger.debug(
           "Send money future finished. Delivered: {} ({} packets fulfilled, {} packets rejected)",
-          this.deliveredAmount, this.sequence.decrementAndGet(), -1 //TODO this.numRejectedPackets
+          this.deliveredAmount, this.numFulfilledPackets.get(), this.numRejectedPackets.get()
       );
 
       return CloseConnectionResult.builder()

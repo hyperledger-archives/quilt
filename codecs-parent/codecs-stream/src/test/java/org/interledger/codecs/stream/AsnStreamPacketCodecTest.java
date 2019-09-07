@@ -66,7 +66,7 @@
              StreamPacket.builder()
                  .interledgerPacketType(InterledgerPacketType.PREPARE)
                  .prepareAmount(UnsignedLong.ONE)
-                 .sequence(Long.MAX_VALUE)
+                 .sequence(UnsignedLong.MAX_VALUE)
                  .addFrames(
                      StreamMoneyFrame.builder()
                          .streamId(UnsignedLong.ONE)
@@ -80,7 +80,7 @@
              StreamPacket.builder()
                  .interledgerPacketType(InterledgerPacketType.FULFILL)
                  .prepareAmount(UnsignedLong.ONE)
-                 .sequence(Long.MAX_VALUE)
+                 .sequence(UnsignedLong.MAX_VALUE)
                  .addFrames(
                      StreamMoneyFrame.builder()
                          .streamId(UnsignedLong.ONE)
@@ -94,7 +94,7 @@
              StreamPacket.builder()
                  .interledgerPacketType(InterledgerPacketType.REJECT)
                  .prepareAmount(UnsignedLong.ONE)
-                 .sequence(Long.MAX_VALUE)
+                 .sequence(UnsignedLong.MAX_VALUE)
                  .addFrames(
                      StreamMoneyFrame.builder()
                          .streamId(UnsignedLong.ONE)

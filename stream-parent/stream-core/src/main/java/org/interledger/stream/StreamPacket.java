@@ -98,7 +98,7 @@ public interface StreamPacket {
    *
    * @return
    */
-  long sequence();
+  UnsignedLong sequence();
 
   /**
    * If the STREAM packet is sent on an ILP Prepare, this represents the minimum the receiver should accept. If the
