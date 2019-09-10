@@ -272,31 +272,9 @@
       </dependency>
 
       <dependency>
-        <groupId>org.zalando</groupId>
-        <artifactId>jackson-datatype-problem</artifactId>
-        <version>0.23.0</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>jsr305</artifactId>
-            <groupId>com.google.code.findbugs</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>28.1-jre</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>jsr305</artifactId>
-            <groupId>com.google.code.findbugs</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>error_prone_annotations</artifactId>
-            <groupId>com.google.errorprone</groupId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -324,6 +302,12 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>1.7.28</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.zalando</groupId>
+        <artifactId>jackson-datatype-problem</artifactId>
+        <version>0.23.0</version>
       </dependency>
 
       <dependency>
@@ -394,6 +378,11 @@
               </goals>
               <configuration>
                 <failOnWarning>true</failOnWarning>
+                <ignoredDependencies>
+                  <!-- Ignored so that Guava controls the dependency version. -->
+                  <dependency>com.google.code.findbugs:jsr305</dependency>
+                  <dependency>com.google.errorprone:error_prone_annotations</dependency>
+                </ignoredDependencies>
               </configuration>
             </execution>
           </executions>

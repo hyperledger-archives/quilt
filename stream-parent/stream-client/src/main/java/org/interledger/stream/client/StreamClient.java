@@ -37,7 +37,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.SignatureException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -281,11 +280,7 @@ public class StreamClient implements StreamEndpoint {
         // Create the ILP Prepare packet
         final byte[] streamPacketData = this.toEncrypted(sharedSecret, streamPacket);
         final InterledgerCondition executionCondition;
-        try {
-          executionCondition = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
-        } catch (SignatureException e) {
-          throw new StreamClientException(e.getMessage(), e);
-        }
+        executionCondition = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
 
         final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
             .destination(destinationAddress)
@@ -468,12 +463,7 @@ public class StreamClient implements StreamEndpoint {
       // Create the ILP Prepare packet using an encrypted StreamPacket as the encryptedStreamPacket payload...
       final byte[] encryptedStreamPacket = this.toEncrypted(sharedSecret, streamPacket);
       final InterledgerCondition executionCondition;
-      try {
-        executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket)
-            .getCondition();
-      } catch (SignatureException e) {
-        throw new StreamClientException(e.getMessage(), e);
-      }
+      executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket).getCondition();
 
       final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
           .destination(destinationAddress)

@@ -14,10 +14,10 @@ public interface ConnectionDetails {
   UUID conectionId();
 
   /**
-   * <p>When a client connects to a server, they MUST communicate their ILP address to the server using a
+   * <p>When a client connects to a server, the client MUST communicate its ILP address to the server using a
    * ConnectionNewAddress frame.</p>
    *
-   * <p>Either endpoint MAY change their ILP address at any point during a connection by sending a ConnectionNewAddress
+   * <p>Either endpoint MAY change its ILP address at any point during a connection by sending a ConnectionNewAddress
    * frame.</p>
    *
    * @return The {@link InterledgerAddress} of the remote party in this connection.

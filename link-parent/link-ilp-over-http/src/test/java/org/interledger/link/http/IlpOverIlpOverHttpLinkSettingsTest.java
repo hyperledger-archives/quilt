@@ -33,7 +33,7 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
         is(HttpUrl.parse("https://incoming-audience.example.com/")));
     assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().encryptedTokenSharedSecret(),
         is("incoming-credential"));
-    assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow(), is(Duration.ofSeconds(1)));
+    assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow(), is(Duration.ofMillis(2500)));
 
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().authType(),
         is(IlpOverHttpLinkSettings.AuthType.SIMPLE));
@@ -67,7 +67,7 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
         is(HttpUrl.parse("https://incoming-audience.example.com/")));
     assertThat(httpLinkSettings.incomingHttpLinkSettings().encryptedTokenSharedSecret(),
         is("incoming-credential"));
-    assertThat(httpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow(), is(Duration.ofSeconds(1)));
+    assertThat(httpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow(), is(Duration.ofMillis(2500)));
 
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().authType(), is(IlpOverHttpLinkSettings.AuthType.SIMPLE));
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().tokenIssuer().get(),

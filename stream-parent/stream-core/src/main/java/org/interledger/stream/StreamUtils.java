@@ -4,13 +4,12 @@ import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.stream.crypto.Random;
 
+import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
 
 import java.nio.charset.Charset;
-import java.security.SignatureException;
 import java.util.Objects;
 
-import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -50,49 +49,56 @@ public class StreamUtils {
    */
   public static final InterledgerFulfillment generatedFulfillableFulfillment(
       final byte[] sharedSecret, final byte[] data
-  ) throws SignatureException {
+  ) {
     Objects.requireNonNull(sharedSecret);
+    Objects.requireNonNull(data);
 
     // hmac_key = hmac_sha256(shared_secret, "ilp_stream_fulfillment");
-    try {
-      final Mac mac = Mac.getInstance(HMAC_SHA256_ALG_NAME);
-      final SecretKey secretKey = new SecretKeySpec(sharedSecret, HMAC_SHA256_ALG_NAME);
-      mac.init(secretKey);
-      // Per the Javadoc, this `mac` is reset and available to generate another MAC from the same key, if desired, via
-      // new calls to update and doFinal. (In order to reuse this Mac object with a different key, it must be
-      // reinitialized via a call to init(Key) or init(Key, AlgorithmParameterSpec).
-      final byte[] hmacKey = mac.doFinal(ILP_STREAM_FULFILLMENT);
+    final SecretKey secretKey = new SecretKeySpec(sharedSecret, HMAC_SHA256_ALG_NAME);
+    final byte[] hmacKey = Hashing.hmacSha256(secretKey).hashBytes(ILP_STREAM_FULFILLMENT).asBytes();
 
-      // fulfillment = hmac_sha256(hmac_key, data);
-      final SecretKey hmacSecretKey = new SecretKeySpec(hmacKey, HMAC_SHA256_ALG_NAME);
-      mac.init(hmacSecretKey);
-      final byte[] fulfillment = mac.doFinal(data);
+    // fulfillment = hmac_sha256(hmac_key, data);
+    final SecretKey hmacSecretKey = new SecretKeySpec(hmacKey, HMAC_SHA256_ALG_NAME);
+    final byte[] fulfillmentBytes = Hashing.hmacSha256(hmacSecretKey).hashBytes(data).asBytes();
 
-      return InterledgerFulfillment.of(fulfillment);
-    } catch (Exception e) {
-      throw new SignatureException("unable to sign", e);
+    return InterledgerFulfillment.of(fulfillmentBytes);
+  }
+
+  /**
+   * Compute the smaller of {@code value1} and {@code value2}.
+   *
+   * @param value1 The first value.
+   * @param value2 The second value.
+   *
+   * @return The smaller of the two supplied values.
+   */
+  public static UnsignedLong min(final UnsignedLong value1, final UnsignedLong value2) {
+    Objects.requireNonNull(value1);
+    Objects.requireNonNull(value2);
+
+    if (value1.compareTo(value2) < 0) {
+      return value1;
+    } else {
+      return value2;
     }
   }
 
-  public static UnsignedLong min(final UnsignedLong v1, final UnsignedLong v2) {
-    Objects.requireNonNull(v1);
-    Objects.requireNonNull(v2);
+  /**
+   * Compute the larger of {@code value1} and {@code value2}.
+   *
+   * @param value1 The first value.
+   * @param value2 The second value.
+   *
+   * @return The smaller of the two supplied values.
+   */
+  public static UnsignedLong max(final UnsignedLong value1, final UnsignedLong value2) {
+    Objects.requireNonNull(value1);
+    Objects.requireNonNull(value2);
 
-    if (v1.compareTo(v2) < 0) {
-      return v1;
+    if (value1.compareTo(value2) > 0) {
+      return value1;
     } else {
-      return v2;
-    }
-  }
-
-  public static UnsignedLong max(final UnsignedLong v1, final UnsignedLong v2) {
-    Objects.requireNonNull(v1);
-    Objects.requireNonNull(v2);
-
-    if (v1.compareTo(v2) > 0) {
-      return v1;
-    } else {
-      return v2;
+      return value2;
     }
   }
 }

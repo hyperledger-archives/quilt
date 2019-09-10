@@ -35,46 +35,46 @@
     "streamId": 6,
     "errorCode": 7,
     "errorMessage": "I have to tell you something about the future!",
-    "expectedAsn1OerBytes": "CjIBBgcuSSBoYXZlIHRvIHRlbGwgeW91IHNvbWV0aGluZyBhYm91dCB0aGUgZnV0dXJlIQ=="
+    "expectedAsn1OerBytes": "EDIBBgcuSSBoYXZlIHRvIHRlbGwgeW91IHNvbWV0aGluZyBhYm91dCB0aGUgZnV0dXJlIQ=="
   },
   {
     "type": "StreamMoney",
     "streamId": 8,
     "shares": 9,
-    "expectedAsn1OerBytes": "CwQBCAEJ"
+    "expectedAsn1OerBytes": "EQQBCAEJ"
   },
   {
     "type": "StreamMoneyMax",
     "streamId": 10,
     "receiveMax": 11,
     "totalReceived": 12,
-    "expectedAsn1OerBytes": "DAYBCgELAQw="
+    "expectedAsn1OerBytes": "EgYBCgELAQw="
   },
   {
     "type": "StreamMoneyBlocked",
     "streamId": 13,
     "sendMax": 14,
     "totalSent": 15,
-    "expectedAsn1OerBytes": "DQYBDQEOAQ8="
+    "expectedAsn1OerBytes": "EwYBDQEOAQ8="
   },
   {
     "type": "StreamData",
     "streamId": 16,
     "offset": 17,
     "base64Data": "foo",
-    "expectedAsn1OerBytes": "DgcBEAERAn6K"
+    "expectedAsn1OerBytes": "FAcBEAERAn6K"
   },
   {
     "type": "StreamDataMax",
     "streamId": 18,
     "maxOffset": 19,
-    "expectedAsn1OerBytes": "DwQBEgET"
+    "expectedAsn1OerBytes": "FQQBEgET"
   },
   {
     "type": "StreamDataBlocked",
     "streamId": 20,
     "maxOffset": 21,
-    "expectedAsn1OerBytes": "EAQBFAEV"
+    "expectedAsn1OerBytes": "FgQBFAEV"
   },
   {
     "type": "ConnectionAssetDetails",

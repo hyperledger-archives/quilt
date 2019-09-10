@@ -67,29 +67,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * This class tests the Java implementation of crypto-conditions based on a set of pre-computed and validated test
- * vectors found in the crypto-conditions spec repository.
- *
- * <p>Specifically, this harness performs the following validations according to the source of the
- * test 'vectors' file in the crypto-conditions rfc project:</p>
- *
- * <pre>
- * <ul>
- *   <li>Parse condition Binary, serialize as a URI, should match conditionUri.</li>
- *   <li>Parse condition Uri, serialize as binary, should match conditionBinary.</li>
- *   <li>Parse fulfillment binary, serialize fulfillment, should match fulfillment.</li>
- *   <li>Parse fulfillment binary, and verify should return true.</li>
- *   <li>Parse fulfillment binary, and generate the fingerprint contents</li>
- *   <li>Parse fulfillment binary, generate the condition, serialize the condition as a URI, should
- *       match conditionUri.</li>
- *   <li>Create fulfillment from json, serialize fulfillment, should match fulfillment.</li>
- * </ul>
- * </pre>
- *
- * <p>If a message field is provided, the condition should be evaluated against the message.
- * Otherwise, an empty message should be passed to the verification function.</p>
- *
- * @see "https://github.com/rfcs/crypto-conditions/tree/master/test-vectors/valid"
+ * <p>This class tests the Java implementation of STREAM based on a set of pre-computed and validated test
+ * vectors found in the file `ValidStreamFrameVectorsTest.json`.</p>
  */
 @RunWith(Parameterized.class)
 public class ValidStreamFrameVectorsTest {
