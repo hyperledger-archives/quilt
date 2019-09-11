@@ -2,26 +2,34 @@ package org.interledger.stream.server;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.stream.StreamException;
+
+import java.util.function.Supplier;
 
 public interface ConnectionGenerator {
 
   /**
    * Generate new connection details for a STREAM.
    *
-   * @param receiverAddress The {@link InterledgerAddress} of the receiver.
+   * @param serverSecretSupplier A {@link Supplier} for the server's secret.
+   * @param receiverAddress      The {@link InterledgerAddress} of the receiver.
    *
    * @return A {@link StreamConnectionDetails} that is unique on every call.
    */
   StreamConnectionDetails generateConnectionDetails(
       ServerSecretSupplier serverSecretSupplier, InterledgerAddress receiverAddress
-  );
+  ) throws StreamException;
 
   /**
-   * Derive the  `shared_secret` from a `destination_account`, returning an error if the address has been modified in
+   * Derive the  `shared secret` from {@code receiverAddress}, returning an error if the address has been modified in
    * any way or if the packet was not generated with the same server secret.
    *
-   * @param receiverAddress The {@link InterledgerAddress} of the STREAM-compatible receiver.
+   * @param serverSecretSupplier A {@link Supplier} for the server's secret.
+   * @param receiverAddress      The {@link InterledgerAddress} of the STREAM-compatible receiver.
+   *
+   * @return A byte array containing the shared secret used to construct the address.
    */
-  void deriveSecret(InterledgerAddress receiverAddress);
+  byte[] deriveSecretFromAddress(ServerSecretSupplier serverSecretSupplier, InterledgerAddress receiverAddress)
+      throws StreamException;
 
 }
