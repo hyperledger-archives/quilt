@@ -20,7 +20,7 @@ package org.interledger.codecs.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.asn.codecs.AsnInterledgerAddressCodec;
+import org.interledger.codecs.ilp.AsnInterledgerAddressCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
