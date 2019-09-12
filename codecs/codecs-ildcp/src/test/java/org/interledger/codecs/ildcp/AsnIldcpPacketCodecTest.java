@@ -20,10 +20,6 @@ package org.interledger.codecs.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import org.hamcrest.CoreMatchers;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.encoding.asn.framework.CodecException;
 import org.interledger.ildcp.IldcpRequestPacket;
@@ -33,6 +29,8 @@ import org.interledger.ildcp.IldcpResponsePacket;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnIldcpPacketCodec}.
@@ -60,8 +58,8 @@ public class AsnIldcpPacketCodecTest {
   public void encodeDecode() {
     final IldcpRequestPacket packet = IldcpRequestPacket.builder().build();
     codec.encode(packet);
-    assertThat(codec.getCodecAt(0).decode(), is((short) 12));
-    assertThat(codec.getCodecAt(1).decode(), is(packet));
+    assertThat(codec.getCodecAt(0).decode()).isEqualTo((short) 12);
+    assertThat(codec.getCodecAt(1).decode()).isEqualTo(packet);
   }
 
   @Test
@@ -69,8 +67,8 @@ public class AsnIldcpPacketCodecTest {
     final IldcpRequestPacket packet = IldcpRequestPacket.builder().build();
     codec.onTypeIdChanged(AsnIldcpPacketCodec.IldcpPacketTypes.REQUEST);
     codec.encode(packet);
-    assertThat(codec.getCodecAt(0).decode(), is((short) 12));
-    assertThat(codec.getCodecAt(1).decode(), is(packet));
+    assertThat(codec.getCodecAt(0).decode()).isEqualTo((short) 12);
+    assertThat(codec.getCodecAt(1).decode()).isEqualTo(packet);
   }
 
   @Test
@@ -78,8 +76,8 @@ public class AsnIldcpPacketCodecTest {
     final IldcpResponsePacket packet = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).build();
     codec.onTypeIdChanged(AsnIldcpPacketCodec.IldcpPacketTypes.RESPONSE);
     codec.encode(packet);
-    assertThat(codec.getCodecAt(0).decode(), is((short) 13));
-    assertThat(codec.getCodecAt(1).decode(), is(packet));
+    assertThat(codec.getCodecAt(0).decode()).isEqualTo((short) 13);
+    assertThat(codec.getCodecAt(1).decode()).isEqualTo(packet);
   }
 
   @Test(expected = CodecException.class)
@@ -88,7 +86,7 @@ public class AsnIldcpPacketCodecTest {
       codec.onTypeIdChanged((short) 50);
       Assert.fail();
     } catch (CodecException e) {
-      assertThat(e.getMessage(), is("Unknown IL-DCP packet type code: 50"));
+      assertThat(e.getMessage()).isEqualTo("Unknown IL-DCP packet type code: 50");
       throw e;
     }
   }

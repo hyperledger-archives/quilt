@@ -1,13 +1,12 @@
 package org.interledger.core;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Unit tests for {@link InterledgerResponsePacket}.
@@ -35,8 +34,8 @@ public class InterledgerResponsePacketTest {
 
   @Test
   public void validFields() {
-    assertThat(fulfillPacket.getData(), is(EMPTY_DATA));
-    assertThat(rejectPacket.getData(), is(EMPTY_DATA));
+    assertThat(fulfillPacket.getData()).isEqualTo(EMPTY_DATA);
+    assertThat(rejectPacket.getData()).isEqualTo(EMPTY_DATA);
   }
 
   @Test
@@ -48,7 +47,7 @@ public class InterledgerResponsePacketTest {
         (rejectPacket) -> fail("Reject handler should not be called.")
     );
 
-    assertThat(fulfillCalled.get(), is(true));
+    assertThat(fulfillCalled.get()).isTrue();
   }
 
   @Test
@@ -59,11 +58,11 @@ public class InterledgerResponsePacketTest {
         (fulfillPacket) -> fail("Fulfill handler should not be called."),
         (rejectPacket) -> {
           rejectCalled.set(true);
-          assertThat(rejectPacket.getCode(), is(InterledgerErrorCode.T00_INTERNAL_ERROR));
+          assertThat(rejectPacket.getCode()).isEqualTo(InterledgerErrorCode.T00_INTERNAL_ERROR);
         }
     );
 
-    assertThat(rejectCalled.get(), is(true));
+    assertThat(rejectCalled.get()).isTrue();
   }
 
   @Test
@@ -75,8 +74,8 @@ public class InterledgerResponsePacketTest {
         (rejectPacket) -> fail("Reject handler should not be called.")
     );
 
-    assertThat(fulfillCalled.get(), is(true));
-    assertThat(response, is(fulfillPacket));
+    assertThat(fulfillCalled.get()).isTrue();
+    assertThat(response).isEqualTo(fulfillPacket);
   }
 
   @Test
@@ -87,18 +86,18 @@ public class InterledgerResponsePacketTest {
         (fulfillPacket) -> fail("Fulfill handler should not be called."),
         (rejectPacket) -> {
           rejectCalled.set(true);
-          assertThat(rejectPacket.getCode(), is(InterledgerErrorCode.T00_INTERNAL_ERROR));
+          assertThat(rejectPacket.getCode()).isEqualTo(InterledgerErrorCode.T00_INTERNAL_ERROR);
         }
     );
 
-    assertThat(rejectCalled.get(), is(true));
-    assertThat(response, is(rejectPacket));
+    assertThat(rejectCalled.get()).isTrue();
+    assertThat(response).isEqualTo(rejectPacket);
   }
 
   @Test
   public void testMap() {
-    assertThat(fulfillPacket.map((fulfillPacket) -> 1, (rejectPacket) -> 2), is(1));
-    assertThat(rejectPacket.map((fulfillPacket) -> 1, (rejectPacket) -> 2), is(2));
+    assertThat((Integer) fulfillPacket.map((fulfillPacket) -> 1, (rejectPacket) -> 2)).isEqualTo(1);
+    assertThat((Integer) rejectPacket.map((fulfillPacket) -> 1, (rejectPacket) -> 2)).isEqualTo(2);
   }
 
 }

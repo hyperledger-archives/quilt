@@ -20,8 +20,7 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.ILLEGAL_ENDING;
 import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.INVALID_SCHEME_PREFIX;
 import static org.interledger.core.InterledgerAddress.AbstractInterledgerAddress.Error.SEGMENTS_UNDERFLOW;
@@ -67,7 +66,7 @@ public class InterledgerAddressSchemeTest {
         .builder()
         .value(this.allocationScheme)
         .build();
-    assertThat(allocationScheme.getValue(), is(this.allocationScheme));
+    assertThat(allocationScheme.getValue()).isEqualTo(this.allocationScheme);
   }
 
   /**
@@ -78,10 +77,7 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(
-          INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "" + ".foo")
-          )
-      );
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "" + ".foo"));
       throw e;
     }
   }
@@ -94,8 +90,7 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".foo.").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String
-          .format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + ".foo.")));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + ".foo."));
       throw e;
     }
   }
@@ -108,10 +103,7 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".").build();
     } catch (IllegalArgumentException e) {
-      assertThat(
-          e.getMessage(),
-          is(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "."))
-      );
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "."));
       throw e;
     }
   }
@@ -121,12 +113,7 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(
-          e.getMessage(),
-          is(String.format(
-              INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1.foo")
-          )
-      );
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1.foo"));
       throw e;
     }
   }
@@ -142,7 +129,7 @@ public class InterledgerAddressSchemeTest {
   public void test_scheme_with_neighborhood_and_account_as_address() {
     final InterledgerAddress address =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo.bob").build();
-    assertThat(address.getValue(), is(this.allocationScheme + ".foo.bob"));
+    assertThat(address.getValue()).isEqualTo(this.allocationScheme + ".foo.bob");
   }
 
   /**
@@ -152,7 +139,7 @@ public class InterledgerAddressSchemeTest {
   public void test_scheme_with_only_address() {
     final InterledgerAddress address =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo.bar").build();
-    assertThat(address.getValue(), is(this.allocationScheme + ".foo.bar"));
+    assertThat(address.getValue()).isEqualTo(this.allocationScheme + ".foo.bar");
   }
 
   /**
@@ -162,7 +149,7 @@ public class InterledgerAddressSchemeTest {
   public void test_scheme_with_neighborhood_as_prefix() {
     final InterledgerAddress addressPrefix =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo").build();
-    assertThat(addressPrefix.getValue(), is(this.allocationScheme + ".foo"));
+    assertThat(addressPrefix.getValue()).isEqualTo(this.allocationScheme + ".foo");
   }
 
   /**
@@ -173,7 +160,7 @@ public class InterledgerAddressSchemeTest {
     try {
       InterledgerAddress.builder().value(this.allocationScheme + ".").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(ILLEGAL_ENDING.getMessageFormat()));
+      assertThat(e.getMessage()).isEqualTo(ILLEGAL_ENDING.getMessageFormat());
       throw e;
     }
   }
@@ -186,7 +173,7 @@ public class InterledgerAddressSchemeTest {
     try {
       InterledgerAddress.builder().value(this.allocationScheme).build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(SEGMENTS_UNDERFLOW.getMessageFormat()));
+      assertThat(e.getMessage()).isEqualTo(SEGMENTS_UNDERFLOW.getMessageFormat());
       throw e;
     }
   }
@@ -196,10 +183,7 @@ public class InterledgerAddressSchemeTest {
     try {
       InterledgerAddress.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(
-          e.getMessage(),
-          is(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1"))
-      );
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1"));
       throw e;
     }
   }

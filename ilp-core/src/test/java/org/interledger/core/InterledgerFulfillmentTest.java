@@ -20,16 +20,11 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
 import org.junit.Test;
 
 import java.util.Arrays;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class InterledgerFulfillmentTest {
 
@@ -78,7 +73,7 @@ public class InterledgerFulfillmentTest {
 
   @Test
   public void testGetBytes() {
-    assertArrayEquals(InterledgerFulfillment.of(BYTES_1).getPreimage(), BYTES_1);
+    assertThat(InterledgerFulfillment.of(BYTES_1).getPreimage()).isEqualTo(BYTES_1);
   }
 
 
@@ -87,8 +82,8 @@ public class InterledgerFulfillmentTest {
     final InterledgerCondition condition1 = InterledgerFulfillment.of(BYTES_1).getCondition();
     final InterledgerCondition condition2 = InterledgerFulfillment.of(BYTES_2).getCondition();
 
-    assertEquals(condition1, COND_1);
-    assertEquals(condition2, COND_2);
+    assertThat(condition1).isEqualTo(COND_1);
+    assertThat(condition2).isEqualTo(COND_2);
 
   }
 
@@ -96,14 +91,14 @@ public class InterledgerFulfillmentTest {
   public void testEquals() {
     final InterledgerFulfillment fulfillment = InterledgerFulfillment.of(BYTES_1);
     final byte[] copyOfBytes1 = Arrays.copyOf(BYTES_1, 32);
-    assertEquals(fulfillment, fulfillment); //Same object
-    assertEquals(fulfillment, InterledgerFulfillment.of(BYTES_1)); //Same array as input
-    assertEquals(fulfillment, InterledgerFulfillment.of(copyOfBytes1)); //Equal arrays as input
+    assertThat(fulfillment).isEqualTo(fulfillment); //Same object
+    assertThat(fulfillment).isEqualTo(InterledgerFulfillment.of(BYTES_1)); //Same array as input
+    assertThat(fulfillment).isEqualTo(InterledgerFulfillment.of(copyOfBytes1)); //Equal arrays as input
 
     final InterledgerFulfillment otherFulfillment = InterledgerFulfillment.of(new byte[32]);
-    assertNotEquals(otherFulfillment, fulfillment);
-    assertNotEquals(otherFulfillment, InterledgerFulfillment.of(BYTES_1));
-    assertNotEquals(otherFulfillment, InterledgerFulfillment.of(copyOfBytes1));
+    assertThat(otherFulfillment).isNotEqualTo(fulfillment);
+    assertThat(otherFulfillment).isNotEqualTo(InterledgerFulfillment.of(BYTES_1));
+    assertThat(otherFulfillment).isNotEqualTo(InterledgerFulfillment.of(copyOfBytes1));
   }
 
   @Test
@@ -111,26 +106,26 @@ public class InterledgerFulfillmentTest {
     final InterledgerFulfillment fulfillment = InterledgerFulfillment.of(BYTES_1);
     final byte[] copyOfBytes1 = Arrays.copyOf(BYTES_1, 32);
 
-    assertThat(fulfillment.hashCode() == fulfillment.hashCode(), is(true)); //Same object
-    assertThat(fulfillment.hashCode() == InterledgerFulfillment.of(BYTES_1).hashCode(), is(true)); //Same array as input
-    assertThat(fulfillment.hashCode() == InterledgerFulfillment.of(copyOfBytes1).hashCode(), is(true)); //Equal arrays as input
+    assertThat(fulfillment.hashCode()).isEqualTo(fulfillment.hashCode()); //Same object
+    assertThat(fulfillment.hashCode()).isEqualTo(InterledgerFulfillment.of(BYTES_1).hashCode()); //Same array as input
+    assertThat(fulfillment.hashCode()).isEqualTo(InterledgerFulfillment.of(copyOfBytes1).hashCode()); //Equal arrays as input
 
     final InterledgerFulfillment otherFulfillment = InterledgerFulfillment.of(new byte[32]);
-    assertThat(otherFulfillment.hashCode() == fulfillment.hashCode(), is(false));
-    assertThat(otherFulfillment.hashCode() == InterledgerFulfillment.of(BYTES_1).hashCode(), is(false));
-    assertThat(otherFulfillment.hashCode() == InterledgerFulfillment.of(copyOfBytes1).hashCode(), is(false));
+    assertThat(otherFulfillment.hashCode()).isNotEqualTo(fulfillment.hashCode());
+    assertThat(otherFulfillment.hashCode()).isNotEqualTo(InterledgerFulfillment.of(BYTES_1).hashCode());
+    assertThat(otherFulfillment.hashCode()).isNotEqualTo(InterledgerFulfillment.of(copyOfBytes1).hashCode());
   }
 
   @Test
   public void testNotEquals() {
-    assertNotEquals(InterledgerFulfillment.of(BYTES_1), InterledgerFulfillment.of(BYTES_2));
+    assertThat(InterledgerFulfillment.of(BYTES_1)).isNotEqualTo(InterledgerFulfillment.of(BYTES_2));
   }
 
   @Test
   public void testCompare() {
-    assertTrue(InterledgerFulfillment.of(BYTES_1).compareTo(InterledgerFulfillment.of(BYTES_1)) == 0);
-    assertTrue(InterledgerFulfillment.of(BYTES_1).compareTo(InterledgerFulfillment.of(BYTES_2)) < 0);
-    assertTrue(InterledgerFulfillment.of(BYTES_2).compareTo(InterledgerFulfillment.of(BYTES_1)) > 0);
+    assertThat(InterledgerFulfillment.of(BYTES_1).compareTo(InterledgerFulfillment.of(BYTES_1)) == 0).isTrue();
+    assertThat(InterledgerFulfillment.of(BYTES_1).compareTo(InterledgerFulfillment.of(BYTES_2)) < 0).isTrue();
+    assertThat(InterledgerFulfillment.of(BYTES_2).compareTo(InterledgerFulfillment.of(BYTES_1)) > 0).isTrue();
   }
 
   @Test(expected = IllegalArgumentException.class)

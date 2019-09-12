@@ -20,10 +20,6 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
@@ -31,6 +27,9 @@ import org.interledger.core.InterledgerResponsePacket;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 /**
  * Unit test for {@link IldcpResponsePacketHandler}.
@@ -80,7 +79,7 @@ public class IldcpResponsePacketHandlerTest {
       }
 
     }.handle(null);
-    fail();
+    fail("cannot handle null packet");
   }
 
   @Test
@@ -89,7 +88,7 @@ public class IldcpResponsePacketHandlerTest {
 
       @Override
       protected void handleIldcpResponsePacket(IldcpResponsePacket ildcpResponsePacket) {
-        assertThat(ildcpResponsePacket, is(fulfillPacket));
+        assertThat(ildcpResponsePacket).isEqualTo(fulfillPacket);
       }
 
       @Override
@@ -111,7 +110,7 @@ public class IldcpResponsePacketHandlerTest {
 
       @Override
       protected void handleIldcpErrorPacket(InterledgerRejectPacket ildcpErrorPacket) {
-        assertThat(ildcpErrorPacket.getCode(), is(InterledgerErrorCode.T00_INTERNAL_ERROR));
+        assertThat(ildcpErrorPacket.getCode()).isEqualTo(InterledgerErrorCode.T00_INTERNAL_ERROR);
       }
 
     }.handle(rejectPacket);
@@ -128,7 +127,7 @@ public class IldcpResponsePacketHandlerTest {
 
       @Override
       protected void handleIldcpErrorPacket(InterledgerRejectPacket ildcpErrorPacket) {
-        assertThat(ildcpErrorPacket.getCode(), is(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT));
+        assertThat(ildcpErrorPacket.getCode()).isEqualTo(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT);
       }
     }.handle(expiredPacket);
   }

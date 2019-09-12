@@ -20,9 +20,6 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecException;
 
@@ -38,6 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized tests for encoding and decoding {@link AsnBtpGeneralizedTimeCodec} instances.
@@ -171,7 +170,7 @@ public class AsnBtpInstantBadValuesDecodingTest {
       codecContext.read(Instant.class, inputStream);
       Assert.fail();
     } catch (CodecException e) {
-      assertThat(e.getMessage().startsWith("Invalid format:"), is(true));
+      assertThat(e.getMessage()).startsWith("Invalid format:");
       throw e;
     }
   }

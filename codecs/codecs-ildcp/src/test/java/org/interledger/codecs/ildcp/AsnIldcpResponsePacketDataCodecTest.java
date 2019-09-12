@@ -20,9 +20,6 @@ package org.interledger.codecs.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.ildcp.IldcpResponse;
@@ -35,6 +32,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnIldcpResponsePacketDataCodec}.
@@ -62,10 +61,10 @@ public class AsnIldcpResponsePacketDataCodecTest {
   public void encode() {
     codec.encode(packet);
 
-    assertThat(codec.getValueAt(0), is(InterledgerFulfillment.of(new byte[32]))); // fulfillment
+    assertThat((InterledgerFulfillment) codec.getValueAt(0)).isEqualTo(InterledgerFulfillment.of(new byte[32])); // fulfillment
 
     final byte[] encodedIldcpResponseBytes = codec.getValueAt(1);
-    assertThat(Base64.getEncoder().encodeToString(encodedIldcpResponseBytes), is("C2V4YW1wbGUuZm9vCQNCVEM="));
+    assertThat(Base64.getEncoder().encodeToString(encodedIldcpResponseBytes)).isEqualTo("C2V4YW1wbGUuZm9vCQNCVEM=");
   }
 
   @Test
@@ -75,7 +74,7 @@ public class AsnIldcpResponsePacketDataCodecTest {
 
     final IldcpResponsePacket actual = IldcpCodecContextFactory.oer()
         .read(IldcpResponsePacket.class, new ByteArrayInputStream(os.toByteArray()));
-    assertThat(actual, is(packet));
+    assertThat(actual).isEqualTo(packet);
   }
 
 }

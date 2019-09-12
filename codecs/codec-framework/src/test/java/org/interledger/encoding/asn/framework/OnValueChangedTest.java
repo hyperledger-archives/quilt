@@ -24,7 +24,7 @@ import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class OnValueChangedTest {
@@ -41,8 +41,7 @@ public class OnValueChangedTest {
 
     codec.encode((short) 1);
 
-    assertThat("Event was fired.", values[0] == 1);
-
+    assertThat(values[0]).as("Event was fired.").isEqualTo(1);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -64,7 +63,7 @@ public class OnValueChangedTest {
     });
     codec.removeEncodeEventListener();
 
-    assertThat("Listener was removed.", !codec.hasValueChangedEventListener());
+    assertThat(codec.hasValueChangedEventListener()).as("Listener was removed.").isFalse();
 
   }
 

@@ -20,9 +20,6 @@ package org.interledger.codecs.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.core.InterledgerAddress;
 import org.interledger.ildcp.IldcpResponse;
 
@@ -33,6 +30,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnIldcpResponseCodec}.
@@ -58,16 +57,16 @@ public class AsnIldcpResponseCodecTest {
   @Test
   public void decode() {
     codec.encode(RESPONSE);
-    assertThat(codec.getCodecAt(0).decode(), is(FOO_ADDRESS));
-    assertThat(codec.getCodecAt(1).decode(), is((short) 9));
-    assertThat(codec.getCodecAt(2).decode(), is(BTC));
+    assertThat(codec.getCodecAt(0).decode()).isEqualTo(FOO_ADDRESS);
+    assertThat(codec.getCodecAt(1).decode()).isEqualTo((short) 9);
+    assertThat(codec.getCodecAt(2).decode()).isEqualTo(BTC);
   }
 
   @Test
   public void encode() {
     codec.encode(RESPONSE);
     final IldcpResponse actual = codec.decode();
-    assertThat(actual, is(RESPONSE));
+    assertThat(actual).isEqualTo(RESPONSE);
   }
 
   @Test
@@ -75,11 +74,11 @@ public class AsnIldcpResponseCodecTest {
     // Write
     final ByteArrayOutputStream os = new ByteArrayOutputStream();
     IldcpCodecContextFactory.oer().write(RESPONSE, os);
-    assertThat(Base64.getEncoder().encodeToString(os.toByteArray()), is("C2V4YW1wbGUuZm9vCQNCVEM="));
+    assertThat(Base64.getEncoder().encodeToString(os.toByteArray())).isEqualTo("C2V4YW1wbGUuZm9vCQNCVEM=");
 
     // Read
     final ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
     final IldcpResponse decodedValue = IldcpCodecContextFactory.oer().read(IldcpResponse.class, is);
-    assertThat(decodedValue, is(RESPONSE));
+    assertThat(decodedValue).isEqualTo(RESPONSE);
   }
 }

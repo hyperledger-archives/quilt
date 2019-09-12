@@ -20,8 +20,6 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-
 import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,7 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link AsnUint8OerSerializer}.
@@ -110,7 +108,7 @@ public class OerLengthPrefixCodecTest {
     // This stream allows the codec to read the asn1Bytes...
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(this.asn1OerBytes);
     final int actualPayloadLength = OerLengthSerializer.readLength(inputStream);
-    assertThat(actualPayloadLength, is(expectedPayloadLength));
+    assertThat(actualPayloadLength).isEqualTo(expectedPayloadLength);
   }
 
   @Test
@@ -118,7 +116,7 @@ public class OerLengthPrefixCodecTest {
     // Allow the AsnObjectCodec to write to 'outputStream'
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     OerLengthSerializer.writeLength(expectedPayloadLength, outputStream);
-    Assert.assertArrayEquals(this.asn1OerBytes, outputStream.toByteArray());
+    assertThat(this.asn1OerBytes).isEqualTo(outputStream.toByteArray());
   }
 
   @Test
@@ -130,14 +128,14 @@ public class OerLengthPrefixCodecTest {
     // Read octets...
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
     final int actual = OerLengthSerializer.readLength(inputStream);
-    Assert.assertThat(actual, is(expectedPayloadLength));
+    assertThat(actual).isEqualTo(expectedPayloadLength);
 
     // Write octets again...
     final ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
     OerLengthSerializer.writeLength(actual, outputStream2);
 
     // Assert originally written bytes equals newly written bytes.
-    Assert.assertArrayEquals(outputStream.toByteArray(), outputStream2.toByteArray());
+    assertThat(outputStream.toByteArray()).isEqualTo(outputStream2.toByteArray());
   }
 
 }

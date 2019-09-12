@@ -20,16 +20,12 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
+import com.google.common.io.BaseEncoding;
 import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
 import org.interledger.encoding.asn.framework.CodecContext;
-
-import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -151,10 +147,10 @@ public class AsnBtpErrorDataSerializationTest {
      */
     final BtpError actualValue = codecContext.read(BtpError.class, inputStream);
 
-    assertThat(actualValue.getRequestId(), is(this.expectedRequestId));
-    assertThat(actualValue.getErrorCode(), is(this.expectedErrorCode));
-    assertThat(actualValue.getTriggeredAt(), is(this.expectedTriggeredAt));
-    assertThat(actualValue.getErrorData(), is(BaseEncoding.base64().decode(this.expectedErrorDataBase64Bytes)));
+    assertThat(actualValue.getRequestId()).isEqualTo(this.expectedRequestId);
+    assertThat(actualValue.getErrorCode()).isEqualTo(this.expectedErrorCode);
+    assertThat(actualValue.getTriggeredAt()).isEqualTo(this.expectedTriggeredAt);
+    assertThat(actualValue.getErrorData()).isEqualTo(BaseEncoding.base64().decode(this.expectedErrorDataBase64Bytes));
   }
 
   @Test
@@ -173,7 +169,7 @@ public class AsnBtpErrorDataSerializationTest {
     final String actualBytesB64 = BaseEncoding.base64().encode(outputStream.toByteArray());
 
     /* check that the value written matches what we expect */
-    assertThat(actualBytesB64, is(this.btpErrorBase64Bytes));
+    assertThat(actualBytesB64).isEqualTo(this.btpErrorBase64Bytes);
   }
 
   @Test
@@ -192,7 +188,7 @@ public class AsnBtpErrorDataSerializationTest {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
     final BtpError actual = codecContext.read(BtpError.class, inputStream);
 
-    assertThat(actual, is(btpError));
+    assertThat(actual).isEqualTo(btpError);
 
     /* write the data just read back to a stream ... */
     final ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();

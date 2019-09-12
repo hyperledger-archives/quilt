@@ -20,9 +20,6 @@ package org.interledger.encoding.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import com.google.common.io.BaseEncoding;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +30,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
 public class AsnUintCodecTest {
@@ -122,7 +121,7 @@ public class AsnUintCodecTest {
     try {
       codec.encode(BigInteger.valueOf(-1L));
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("value must be positive or zero"));
+      assertThat(e.getMessage()).isEqualTo("value must be positive or zero");
       throw e;
     }
   }
@@ -130,18 +129,18 @@ public class AsnUintCodecTest {
   @Test
   public void decode() {
     codec.setBytes(this.expectedEncodedBytes);
-    assertThat(codec.decode(), is(this.expectedUint));
+    assertThat(codec.decode()).isEqualTo(this.expectedUint);
   }
 
   @Test
   public void encode() {
     codec.encode(expectedUint);
-    assertThat(codec.getBytes(), is(this.expectedEncodedBytes));
+    assertThat(codec.getBytes()).isEqualTo(this.expectedEncodedBytes);
   }
 
   @Test
   public void encodeThenDecode() {
     codec.encode(expectedUint);
-    assertThat(codec.decode(), is(this.expectedUint));
+    assertThat(codec.decode()).isEqualTo(this.expectedUint);
   }
 }

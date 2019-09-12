@@ -20,13 +20,12 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.core.InterledgerAddressPrefix;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnInterledgerAddressPrefixCodec}.
@@ -44,12 +43,12 @@ public class AsnInterledgerAddressPrefixCodecTest {
 
   @Test
   public void decode() {
-    assertThat(codec.decode(), is(InterledgerAddressPrefix.of(G)));
+    assertThat(codec.decode()).isEqualTo(InterledgerAddressPrefix.of(G));
   }
 
   @Test
   public void encode() {
     codec.encode(InterledgerAddressPrefix.of(G));
-    assertThat(codec.getCharString(), is(G));
+    assertThat(codec.getCharString()).isEqualTo(G);
   }
 }

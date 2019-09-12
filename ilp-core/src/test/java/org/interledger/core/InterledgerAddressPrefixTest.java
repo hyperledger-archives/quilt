@@ -20,9 +20,7 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.core.InterledgerAddressPrefix.AbstractInterledgerAddressPrefix.Error.ADDRESS_OVERFLOW;
 import static org.interledger.core.InterledgerAddressPrefix.AbstractInterledgerAddressPrefix.Error.ILLEGAL_ENDING;
 import static org.interledger.core.InterledgerAddressPrefix.AbstractInterledgerAddressPrefix.Error.INVALID_SCHEME_PREFIX;
@@ -70,8 +68,7 @@ public class InterledgerAddressPrefixTest {
       InterledgerAddressPrefix.builder().build();
     } catch (IllegalStateException e) {
       //Removed message check. This exception is raised by the Immutable generated code.
-      assertThat(e.getMessage(),
-          is("Cannot build InterledgerAddressPrefix, some of required attributes are not set [value]"));
+      assertThat(e.getMessage()).isEqualTo("Cannot build InterledgerAddressPrefix, some of required attributes are not set [value]");
       throw e;
     }
   }
@@ -83,7 +80,7 @@ public class InterledgerAddressPrefixTest {
           .value(null)
           .build();
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("value"));
+      assertThat(e.getMessage()).isEqualTo("value");
       throw e;
     }
   }
@@ -92,14 +89,14 @@ public class InterledgerAddressPrefixTest {
   public void testConstruction_DeliverableAddress() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.builder()
         .value(TEST1_US_USD_BOB).build();
-    assertThat(address.getValue(), is(TEST1_US_USD_BOB));
+    assertThat(address.getValue()).isEqualTo(TEST1_US_USD_BOB);
   }
 
   @Test
   public void testConstruction_LedgerPrefix() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.builder().value(TEST1_US_USD)
         .build();
-    assertThat(address.getValue(), is(TEST1_US_USD));
+    assertThat(address.getValue()).isEqualTo(TEST1_US_USD);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -107,7 +104,7 @@ public class InterledgerAddressPrefixTest {
     try {
       InterledgerAddressPrefix.builder().value("").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), "")));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), ""));
       throw e;
     }
   }
@@ -117,13 +114,7 @@ public class InterledgerAddressPrefixTest {
     try {
       InterledgerAddressPrefix.builder().value("  ").build();
     } catch (IllegalArgumentException e) {
-      assertThat(
-          e.getMessage(),
-          is(String.format(
-              INVALID_SCHEME_PREFIX
-                  .getMessageFormat(),
-              "  "))
-      );
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), "  "));
       throw e;
     }
   }
@@ -133,10 +124,7 @@ public class InterledgerAddressPrefixTest {
     try {
       InterledgerAddressPrefix.builder().value(TEST1_US_USD_BOB + " space").build();
     } catch (IllegalArgumentException e) {
-      assertThat(
-          e.getMessage(),
-          is(String.format(INVALID_SEGMENT.getMessageFormat(), "bob space"))
-      );
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SEGMENT.getMessageFormat(), "bob space"));
       throw e;
     }
   }
@@ -146,7 +134,7 @@ public class InterledgerAddressPrefixTest {
     try {
       InterledgerAddressPrefix.builder().value(TOO_LONG).build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(ADDRESS_OVERFLOW.getMessageFormat()));
+      assertThat(e.getMessage()).isEqualTo(ADDRESS_OVERFLOW.getMessageFormat());
       throw e;
     }
   }
@@ -156,7 +144,7 @@ public class InterledgerAddressPrefixTest {
     // This is 1023 characters long...
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.builder().value(JUST_RIGHT)
         .build();
-    assertThat(address.getValue(), is(JUST_RIGHT));
+    assertThat(address.getValue()).isEqualTo(JUST_RIGHT);
   }
 
   @Test
@@ -164,7 +152,7 @@ public class InterledgerAddressPrefixTest {
     final String allValues = "g.0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_~.-";
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.builder().value(allValues)
         .build();
-    assertThat(address.getValue(), is(allValues));
+    assertThat(address.getValue()).isEqualTo(allValues);
   }
 
   ////////////////////////
@@ -173,7 +161,7 @@ public class InterledgerAddressPrefixTest {
 
   @Test
   public void testValue() {
-    assertThat(InterledgerAddressPrefix.of("g.foo.bob").getValue(), is("g.foo.bob"));
+    assertThat(InterledgerAddressPrefix.of("g.foo.bob").getValue()).isEqualTo("g.foo.bob");
   }
 
   @Test(expected = NullPointerException.class)
@@ -182,7 +170,7 @@ public class InterledgerAddressPrefixTest {
       InterledgerAddressPrefix.of(null);
       fail("should have thrown an exception but did not!");
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("value must not be null!"));
+      assertThat(e.getMessage()).isEqualTo("value must not be null!");
       throw e;
     }
   }
@@ -193,7 +181,7 @@ public class InterledgerAddressPrefixTest {
       InterledgerAddressPrefix.of("");
       fail("should have thrown an exception but did not!");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("The '' AllocationScheme is invalid!"));
+      assertThat(e.getMessage()).isEqualTo("The '' AllocationScheme is invalid!");
       throw e;
     }
   }
@@ -204,7 +192,7 @@ public class InterledgerAddressPrefixTest {
       InterledgerAddressPrefix.of(" ");
       fail("should have thrown an exception but did not!");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("The ' ' AllocationScheme is invalid!"));
+      assertThat(e.getMessage()).isEqualTo("The ' ' AllocationScheme is invalid!");
       throw e;
     }
   }
@@ -212,22 +200,20 @@ public class InterledgerAddressPrefixTest {
   @Test
   public void testStartsWithString() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.of("g.foo.bob");
-    assertThat(address.startsWith("g"), is(true));
-    assertThat(address.startsWith("g"), is(true));
-    assertThat(address.startsWith(G_FOO), is(true));
-    assertThat(address.startsWith(G_FOO), is(true));
-    assertThat(address.startsWith("g.foo.bob"), is(true));
-    assertThat(address.startsWith("test.foo.bob"), is(false));
+    assertThat(address.startsWith("g")).isTrue();
+    assertThat(address.startsWith(G_FOO)).isTrue();
+    assertThat(address.startsWith("g.foo.bob")).isTrue();
+    assertThat(address.startsWith("test.foo.bob")).isFalse();
   }
 
   @Test
   public void testStartsWithInterledgerAddressPrefix() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.of("g.foo.bob");
-    assertThat(address.startsWith(InterledgerAddressPrefix.of(G_FOO)), is(true));
-    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bob")), is(true));
-    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bob.bar")), is(false));
-    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bobbar")), is(false));
-    assertThat(address.startsWith(InterledgerAddressPrefix.of("test1.foo.bob")), is(false));
+    assertThat(address.startsWith(InterledgerAddressPrefix.of(G_FOO))).isTrue();
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bob"))).isTrue();
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bob.bar"))).isFalse();
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("g.foo.bobbar"))).isFalse();
+    assertThat(address.startsWith(InterledgerAddressPrefix.of("test1.foo.bob"))).isFalse();
   }
 
   @Test(expected = NullPointerException.class)
@@ -236,7 +222,7 @@ public class InterledgerAddressPrefixTest {
     try {
       addressPrefix.with(null);
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("addressSegment must not be null!"));
+      assertThat(e.getMessage()).isEqualTo("addressSegment must not be null!");
       throw e;
     }
   }
@@ -247,7 +233,7 @@ public class InterledgerAddressPrefixTest {
     try {
       addressPrefix.with("");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(ILLEGAL_ENDING.getMessageFormat()));
+      assertThat(e.getMessage()).isEqualTo(ILLEGAL_ENDING.getMessageFormat());
       throw e;
     }
   }
@@ -258,7 +244,7 @@ public class InterledgerAddressPrefixTest {
     try {
       addressPrefix.with("  ");
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(INVALID_SEGMENT.getMessageFormat(), "  ")));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SEGMENT.getMessageFormat(), "  "));
       throw e;
     }
   }
@@ -270,8 +256,7 @@ public class InterledgerAddressPrefixTest {
   public void testAddressPrefixWithAddressPrefix() {
     final InterledgerAddressPrefix destinationAddress = InterledgerAddressPrefix.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
-        is("g.foo.bob.boz"));
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue()).isEqualTo("g.foo.bob.boz");
   }
 
   /**
@@ -281,7 +266,7 @@ public class InterledgerAddressPrefixTest {
   public void testAddressPrefixWithDestinationAddress() {
     final InterledgerAddressPrefix addressPrefix = InterledgerAddressPrefix.of(G_FOO);
     final String additionalDestinationAddress = "bob";
-    assertThat(addressPrefix.with(additionalDestinationAddress).getValue(), is("g.foo.bob"));
+    assertThat(addressPrefix.with(additionalDestinationAddress).getValue()).isEqualTo("g.foo.bob");
   }
 
   /**
@@ -292,8 +277,7 @@ public class InterledgerAddressPrefixTest {
   public void testDestinationAddressWithDestinationAddress() {
     final InterledgerAddressPrefix destinationAddress = InterledgerAddressPrefix.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
-        is("g.foo.bob.boz"));
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue()).isEqualTo("g.foo.bob.boz");
   }
 
   /**
@@ -303,74 +287,73 @@ public class InterledgerAddressPrefixTest {
   public void testAddressWithAddress() {
     final InterledgerAddressPrefix destinationAddress = InterledgerAddressPrefix.of("g.foo.bob");
     final String additionalDestinationAddress = "boz";
-    assertThat(destinationAddress.with(additionalDestinationAddress).getValue(),
-        is("g.foo.bob.boz"));
+    assertThat(destinationAddress.with(additionalDestinationAddress).getValue()).isEqualTo("g.foo.bob.boz");
   }
 
   @Test
   public void testAllocationScheme() {
     final InterledgerAddressPrefix prefix = InterledgerAddressPrefix.of("g");
-    assertThat(prefix.getValue(), is("g"));
+    assertThat(prefix.getValue()).isEqualTo("g");
   }
 
   @Test
   public void testGetPrefixFromAllocationSchemePrefix() {
-    assertThat(InterledgerAddressPrefix.of("g").getPrefix().isPresent(), is(false));
+    assertThat(InterledgerAddressPrefix.of("g").getPrefix().isPresent()).isFalse();
   }
 
   @Test
   public void testGetPrefixFromShortPrefix() {
-    assertThat(InterledgerAddressPrefix.of("g.1").getPrefix().isPresent(), is(true));
+    assertThat(InterledgerAddressPrefix.of("g.1").getPrefix().isPresent()).isTrue();
   }
 
   @Test
   public void testGetPrefixFromPrefix() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.of("g.example");
-    assertThat(address.getPrefix().isPresent(), is(true));
+    assertThat(address.getPrefix().isPresent()).isTrue();
   }
 
   @Test
   public void testGetPrefixFromLongPrefix() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix
         .of("g.alpha.beta.charlie.delta.echo");
-    assertThat(address.getPrefix().get().getValue(), is("g.alpha.beta.charlie.delta"));
+    assertThat(address.getPrefix().get().getValue()).isEqualTo("g.alpha.beta.charlie.delta");
   }
 
   @Test
   public void testGetPrefixFromAddress() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix.of("g.example.bob");
-    assertThat(address.getPrefix().get().getValue(), is("g.example"));
+    assertThat(address.getPrefix().get().getValue()).isEqualTo("g.example");
   }
 
   @Test
   public void testGetPrefixFromShortAddress() {
-    assertThat(InterledgerAddressPrefix.of("g.bob.foo").getPrefix().get().getValue(), is("g.bob"));
-    assertThat(InterledgerAddressPrefix.of("g.b.f").getPrefix().get().getValue(), is("g.b"));
+    assertThat(InterledgerAddressPrefix.of("g.bob.foo").getPrefix().get().getValue()).isEqualTo("g.bob");
+    assertThat(InterledgerAddressPrefix.of("g.b.f").getPrefix().get().getValue()).isEqualTo("g.b");
   }
 
   @Test
   public void testGetPrefixFromLongAddress() {
     final InterledgerAddressPrefix address = InterledgerAddressPrefix
         .of("g.alpha.beta.charlie.delta.echo");
-    assertThat(address.getPrefix().get().getValue(), is("g.alpha.beta.charlie.delta"));
+    assertThat(address.getPrefix().get().getValue()).isEqualTo("g.alpha.beta.charlie.delta");
   }
 
   @Test
   public void testHasPrefix() {
-    assertThat(InterledgerAddressPrefix.of("g.bob").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("g.bob.foo").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("g.bob.foo").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("self.bob").hasPrefix(), is(true));
+    assertThat(InterledgerAddressPrefix.of("g.bob").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("g.bob.foo").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("g.bob.foo").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("self.bob").hasPrefix()).isTrue();
 
-    assertThat(InterledgerAddressPrefix.of("g.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("private.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("example.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("peer.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("self.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("test.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("test1.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("test2.1.1").hasPrefix(), is(true));
-    assertThat(InterledgerAddressPrefix.of("test3.1.1").hasPrefix(), is(true));
+    assertThat(InterledgerAddressPrefix.of("g.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("private.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("example.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("peer.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("self.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("test.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("test1.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("test2.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("test3.1.1").hasPrefix()).isTrue();
   }
 
   @Test
@@ -379,25 +362,23 @@ public class InterledgerAddressPrefixTest {
     final InterledgerAddressPrefix addressPrefix2 = InterledgerAddressPrefix.of("g.foo.bob");
     final InterledgerAddressPrefix addressPrefix3 = InterledgerAddressPrefix.of("g.foo.bar");
 
-    assertThat(addressPrefix1.hashCode() == addressPrefix2.hashCode(), is(true));
-    assertThat(addressPrefix1 == addressPrefix2, is(true));
-    assertThat(addressPrefix1.equals(addressPrefix2), is(true));
-    assertThat(addressPrefix2.equals(addressPrefix1), is(true));
-    assertThat(addressPrefix1.toString().equals(addressPrefix2.toString()), is(true));
+    assertThat(addressPrefix1.hashCode()).isEqualTo(addressPrefix2.hashCode());
+    assertThat(addressPrefix1 == addressPrefix2).isTrue();
+    assertThat(addressPrefix1).isEqualTo(addressPrefix2);
+    assertThat(addressPrefix2).isEqualTo(addressPrefix1);
+    assertThat(addressPrefix1.toString()).isEqualTo(addressPrefix2.toString());
 
-    assertThat(addressPrefix1.hashCode() == addressPrefix3.hashCode(), is(false));
-    assertThat(addressPrefix1 == addressPrefix3, is(false));
-    assertThat(addressPrefix1.equals(addressPrefix3), is(false));
-    assertThat(addressPrefix3.equals(addressPrefix1), is(false));
-    assertThat(addressPrefix1.toString().equals(addressPrefix3.toString()), is(false));
+    assertThat(addressPrefix1.hashCode()).isNotEqualTo(addressPrefix3.hashCode());
+    assertThat(addressPrefix1 == addressPrefix3).isFalse();
+    assertThat(addressPrefix1).isNotEqualTo(addressPrefix3);
+    assertThat(addressPrefix3).isNotEqualTo(addressPrefix1);
+    assertThat(addressPrefix1.toString()).isNotEqualTo(addressPrefix3.toString());
   }
 
   @Test
   public void testToString() {
-    assertThat(InterledgerAddressPrefix.of("g.foo.bob").toString(),
-        is("InterledgerAddressPrefix{value=g.foo.bob}"));
-    assertThat(InterledgerAddressPrefix.of(G_FOO).toString(),
-        is("InterledgerAddressPrefix{value=g.foo}"));
+    assertThat(InterledgerAddressPrefix.of("g.foo.bob").toString()).isEqualTo("InterledgerAddressPrefix{value=g.foo.bob}");
+    assertThat(InterledgerAddressPrefix.of(G_FOO).toString()).isEqualTo("InterledgerAddressPrefix{value=g.foo}");
   }
 
   @Test(expected = NullPointerException.class)
@@ -524,7 +505,7 @@ public class InterledgerAddressPrefixTest {
       InterledgerAddressPrefix.builder().value(actualAddressString).build();
       fail("Should have thrown an IllegalArgumentException");
     } catch (final IllegalArgumentException e) {
-      assertThat(e.getMessage(), is(String.format(expectedError.getMessageFormat(), errorParams)));
+      assertThat(e.getMessage()).isEqualTo(String.format(expectedError.getMessageFormat(), errorParams));
       throw e;
     } catch (final Exception e) {
       fail("Should have thrown an IllegalArgumentException");
@@ -538,12 +519,11 @@ public class InterledgerAddressPrefixTest {
 
   @Test
   public void getRootPrefix() {
-    assertThat(InterledgerAddressPrefix.of("g.baz").getRootPrefix().getValue(), is("g"));
-    assertThat(InterledgerAddressPrefix.of("g.baz.bool").getRootPrefix().getValue(), is("g"));
-    assertThat(InterledgerAddressPrefix.of("g.baz.bool.foo").getRootPrefix().getValue(), is("g"));
-    assertThat(InterledgerAddressPrefix.of("g.baz.bool.foo.bar.boo").getRootPrefix().getValue(),
-        is("g"));
-    assertThat(InterledgerAddressPrefix.of("g").getRootPrefix().getValue(), is("g"));
+    assertThat(InterledgerAddressPrefix.of("g.baz").getRootPrefix().getValue()).isEqualTo("g");
+    assertThat(InterledgerAddressPrefix.of("g.baz.bool").getRootPrefix().getValue()).isEqualTo("g");
+    assertThat(InterledgerAddressPrefix.of("g.baz.bool.foo").getRootPrefix().getValue()).isEqualTo("g");
+    assertThat(InterledgerAddressPrefix.of("g.baz.bool.foo.bar.boo").getRootPrefix().getValue()).isEqualTo("g");
+    assertThat(InterledgerAddressPrefix.of("g").getRootPrefix().getValue()).isEqualTo("g");
   }
 
   ////////////////////
@@ -555,7 +535,7 @@ public class InterledgerAddressPrefixTest {
     try {
       InterledgerAddressPrefix.from((InterledgerAddress) null);
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is(nullValue()));
+      assertThat(e.getMessage()).isNull();
       throw e;
     }
   }
@@ -564,7 +544,7 @@ public class InterledgerAddressPrefixTest {
   public void testFromAddressWithAddress() {
     final InterledgerAddressPrefix prefix = InterledgerAddressPrefix
         .from(InterledgerAddress.of(G_FOO));
-    assertThat(prefix.getValue(), is(G_FOO));
+    assertThat(prefix.getValue()).isEqualTo(G_FOO);
   }
 
   ////////////////////
@@ -576,7 +556,7 @@ public class InterledgerAddressPrefixTest {
     try {
       InterledgerAddressPrefix.from((AllocationScheme) null);
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is(nullValue()));
+      assertThat(e.getMessage()).isNull();
       throw e;
     }
   }
@@ -585,28 +565,19 @@ public class InterledgerAddressPrefixTest {
   public void testFromAddressWithAllocationScheme() {
     final InterledgerAddressPrefix allocationScheme = InterledgerAddressPrefix
         .from(AllocationScheme.GLOBAL);
-    assertThat(allocationScheme, is(InterledgerAddressPrefix.GLOBAL));
+    assertThat(allocationScheme).isEqualTo(InterledgerAddressPrefix.GLOBAL);
   }
 
   @Test
   public void testPrefixesWithAllocationScheme() {
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.GLOBAL),
-        is(InterledgerAddressPrefix.GLOBAL));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.EXAMPLE),
-        is(InterledgerAddressPrefix.EXAMPLE));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.PRIVATE),
-        is(InterledgerAddressPrefix.PRIVATE));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.PEER),
-        is(InterledgerAddressPrefix.PEER));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.SELF),
-        is(InterledgerAddressPrefix.SELF));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST),
-        is(InterledgerAddressPrefix.TEST));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST1),
-        is(InterledgerAddressPrefix.TEST1));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST2),
-        is(InterledgerAddressPrefix.TEST2));
-    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST3),
-        is(InterledgerAddressPrefix.TEST3));
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.GLOBAL)).isEqualTo(InterledgerAddressPrefix.GLOBAL);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.EXAMPLE)).isEqualTo(InterledgerAddressPrefix.EXAMPLE);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.PRIVATE)).isEqualTo(InterledgerAddressPrefix.PRIVATE);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.PEER)).isEqualTo(InterledgerAddressPrefix.PEER);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.SELF)).isEqualTo(InterledgerAddressPrefix.SELF);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST)).isEqualTo(InterledgerAddressPrefix.TEST);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST1)).isEqualTo(InterledgerAddressPrefix.TEST1);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST2)).isEqualTo(InterledgerAddressPrefix.TEST2);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST3)).isEqualTo(InterledgerAddressPrefix.TEST3);
   }
 }

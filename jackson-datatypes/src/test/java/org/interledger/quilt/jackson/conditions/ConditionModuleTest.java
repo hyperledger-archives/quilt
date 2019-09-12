@@ -20,13 +20,12 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64URL;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64URL_WITHOUT_PADDING;
 import static org.interledger.quilt.jackson.conditions.Encoding.BASE64_WITHOUT_PADDING;
 import static org.interledger.quilt.jackson.conditions.Encoding.HEX;
-import static org.junit.Assert.assertThat;
 
 import org.interledger.core.InterledgerCondition;
 
@@ -97,15 +96,13 @@ public class ConditionModuleTest extends AbstractConditionModuleTest {
     final PreimageConditionContainer expectedContainer = new PreimageConditionContainer(CONDITION);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
-    assertThat(json, is(
-        String.format("{\"condition\":\"%s\"}", expectedEncodedValue)
-    ));
+    assertThat(json).isEqualTo(String.format("{\"condition\":\"%s\"}", expectedEncodedValue));
 
     final PreimageConditionContainer actualAddressContainer = objectMapper
         .readValue(json, PreimageConditionContainer.class);
 
-    assertThat(actualAddressContainer, is(expectedContainer));
-    assertThat(actualAddressContainer.getCondition(), is(CONDITION));
+    assertThat(actualAddressContainer).isEqualTo(expectedContainer);
+    assertThat(actualAddressContainer.getCondition()).isEqualTo(CONDITION);
   }
 
   private static class PreimageConditionContainer {
