@@ -5,12 +5,11 @@
   <parent>
     <artifactId>codecs</artifactId>
     <groupId>org.interledger</groupId>
-    <version>0.17.0-SNAPSHOT</version>
+    <version>0.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Bilateral Transfer Protocol Core Codecs</name>
-  <url>http://maven.apache.org</url>
+  <name>Quilt :: Codecs :: BTP</name>
   <description>BTP Protocol Core Codecs.</description>
   <artifactId>codecs-btp</artifactId>
 

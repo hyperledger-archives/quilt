@@ -44,57 +44,81 @@ import java.util.Objects;
  */
 public interface InterledgerErrorCode {
 
+  String F00_BAD_REQUEST_CODE = "F00";
+  String F01_INVALID_PACKET_CODE = "F01";
+  String F02_UNREACHABLE_CODE = "F02";
+  String F03_INVALID_AMOUNT_CODE = "F03";
+  String F04_INSUFFICIENT_DST_AMOUNT_CODE = "F04";
+  String F05_WRONG_CONDITION_CODE = "F05";
+  String F06_UNEXPECTED_PAYMENT_CODE = "F06";
+  String F07_CANNOT_RECEIVE_CODE = "F07";
+  String F08_AMOUNT_TOO_LARGE_CODE = "F08";
+  String F99_APPLICATION_ERROR_CODE = "F99";
+
+  String T00_INTERNAL_ERROR_CODE = "T00";
+  String T01_PEER_UNREACHABLE_CODE = "T01";
+  String T02_PEER_BUSY_CODE = "T02";
+  String T03_CONNECTOR_BUSY_CODE = "T03";
+  String T04_INSUFFICIENT_LIQUIDITY_CODE = "T04";
+  String T05_RATE_LIMITED_CODE = "T05";
+  String T99_APPLICATION_ERROR_CODE = "T99";
+
+  String R00_TRANSFER_TIMED_OUT_CODE = "R00";
+  String R01_INSUFFICIENT_SOURCE_AMOUNT_CODE = "R01";
+  String R02_INSUFFICIENT_TIMEOUT_CODE = "R02";
+  String R99_APPLICATION_ERROR_CODE = "R99";
+
   /**
    * Generic sender error.
    */
-  InterledgerErrorCode F00_BAD_REQUEST =
-      InterledgerErrorCode.of("F00", "BAD REQUEST");
+  InterledgerErrorCode F00_BAD_REQUEST
+      = InterledgerErrorCode.of(F00_BAD_REQUEST_CODE, "BAD REQUEST");
 
   /**
    * The ILP packet was syntactically invalid.
    */
-  InterledgerErrorCode F01_INVALID_PACKET =
-      InterledgerErrorCode.of("F01", "INVALID PACKET");
+  InterledgerErrorCode F01_INVALID_PACKET
+      = InterledgerErrorCode.of(F01_INVALID_PACKET_CODE, "INVALID PACKET");
 
   /**
    * There was no way to forward the payment, because the destination ILP address was wrong or the connector does not
    * have a route to the destination.
    */
-  InterledgerErrorCode F02_UNREACHABLE =
-      InterledgerErrorCode.of("F02", "UNREACHABLE");
+  InterledgerErrorCode F02_UNREACHABLE
+      = InterledgerErrorCode.of(F02_UNREACHABLE_CODE, "UNREACHABLE");
 
   /**
    * The amount is invalid, for example it contains more digits of precision than are available on the destination
    * ledger or the amount is greater than the total amount of the given asset in existence.
    */
-  InterledgerErrorCode F03_INVALID_AMOUNT =
-      InterledgerErrorCode.of("F03", "INVALID AMOUNT");
+  InterledgerErrorCode F03_INVALID_AMOUNT
+      = InterledgerErrorCode.of(F03_INVALID_AMOUNT_CODE, "INVALID AMOUNT");
 
   /**
    * The receiver deemed the amount insufficient, for example you tried to pay a $100 invoice with $10.
    */
-  InterledgerErrorCode F04_INSUFFICIENT_DST_AMOUNT =
-      InterledgerErrorCode.of("F04", "INSUFFICIENT DESTINATION AMOUNT");
+  InterledgerErrorCode F04_INSUFFICIENT_DST_AMOUNT
+      = InterledgerErrorCode.of(F04_INSUFFICIENT_DST_AMOUNT_CODE, "INSUFFICIENT DESTINATION AMOUNT");
 
   /**
    * The receiver generated a different condition and cannot fulfill the payment.
    */
   InterledgerErrorCode F05_WRONG_CONDITION =
-      InterledgerErrorCode.of("F05", "WRONG CONDITION");
+      InterledgerErrorCode.of(F05_WRONG_CONDITION_CODE, "WRONG CONDITION");
 
   /**
    * The receiver was not expecting a payment like this (the data and destination address don't make sense in that
    * combination, for example if the receiver does not understand the transport protocol used).
    */
   InterledgerErrorCode F06_UNEXPECTED_PAYMENT =
-      InterledgerErrorCode.of("F06", "UNEXPECTED PAYMENT");
+      InterledgerErrorCode.of(F06_UNEXPECTED_PAYMENT_CODE, "UNEXPECTED PAYMENT");
 
   /**
    * The receiver (beneficiary) is unable to accept this payment due to a constraint. For example, the payment would put
    * the receiver above its maximum account balance.
    */
   InterledgerErrorCode F07_CANNOT_RECEIVE
-      = InterledgerErrorCode.of("F07", "CANNOT RECEIVE");
+      = InterledgerErrorCode.of(F07_CANNOT_RECEIVE_CODE, "CANNOT RECEIVE");
 
   /**
    * The packet amount is higher than the maximum a connector is willing to forward. Senders MAY send another packet
@@ -102,46 +126,46 @@ public interface InterledgerErrorCode {
    * the data to help senders determine how much lower the packet amount should be.
    */
   InterledgerErrorCode F08_AMOUNT_TOO_LARGE
-      = InterledgerErrorCode.of("F08", "AMOUNT TOO LARGE");
+      = InterledgerErrorCode.of(F08_AMOUNT_TOO_LARGE_CODE, "AMOUNT TOO LARGE");
 
   /**
    * Reserved for application layer protocols. Applications MAY use names other than Application Error.
    */
   InterledgerErrorCode F99_APPLICATION_ERROR =
-      InterledgerErrorCode.of("F99", "APPLICATION ERROR");
+      InterledgerErrorCode.of(F99_APPLICATION_ERROR_CODE, "APPLICATION ERROR");
 
   /**
    * A generic unexpected exception. This usually indicates a bug or unhandled error case.
    */
   InterledgerErrorCode T00_INTERNAL_ERROR =
-      InterledgerErrorCode.of("T00", "INTERNAL ERROR");
+      InterledgerErrorCode.of(T00_INTERNAL_ERROR_CODE, "INTERNAL ERROR");
 
   /**
    * The connector has a route or partial route to the destination but was unable to reach the next connector. Try again
    * later.
    */
   InterledgerErrorCode T01_PEER_UNREACHABLE =
-      InterledgerErrorCode.of("T01", "PEER UNREACHABLE");
+      InterledgerErrorCode.of(T01_PEER_UNREACHABLE_CODE, "PEER UNREACHABLE");
 
   /**
    * The next connector is rejecting requests due to overloading. If a connector gets this error, they SHOULD retry the
    * payment through a different route or respond to the sender with a T03: Connector Busy error.
    */
   InterledgerErrorCode T02_PEER_BUSY =
-      InterledgerErrorCode.of("T02", "PEER BUSY");
+      InterledgerErrorCode.of(T02_PEER_BUSY_CODE, "PEER BUSY");
 
   /**
    * The connector is rejecting requests due to overloading. Try again later.
    */
   InterledgerErrorCode T03_CONNECTOR_BUSY =
-      InterledgerErrorCode.of("T03", "CONNECTOR BUSY");
+      InterledgerErrorCode.of(T03_CONNECTOR_BUSY_CODE, "CONNECTOR BUSY");
 
   /**
    * The connector would like to fulfill your request, but either the sender or a connector does not currently have
    * sufficient balance or bandwidth. Try again later.
    */
   InterledgerErrorCode T04_INSUFFICIENT_LIQUIDITY =
-      InterledgerErrorCode.of("T04", "INSUFFICIENT LIQUIDITY");
+      InterledgerErrorCode.of(T04_INSUFFICIENT_LIQUIDITY_CODE, "INSUFFICIENT LIQUIDITY");
 
   /**
    * The sender is sending too many payments and is being rate-limited by a ledger or connector. If a connector gets
@@ -149,13 +173,13 @@ public interface InterledgerErrorCode {
    * to the sender with a T03: Connector Busy error.
    */
   InterledgerErrorCode T05_RATE_LIMITED =
-      InterledgerErrorCode.of("T05", "RATE LIMITED");
+      InterledgerErrorCode.of(T05_RATE_LIMITED_CODE, "RATE LIMITED");
 
   /**
    * Reserved for application layer protocols. Applications MAY use names other than Application Error.
    */
   InterledgerErrorCode T99_APPLICATION_ERROR =
-      InterledgerErrorCode.of("T99", "APPLICATION ERROR");
+      InterledgerErrorCode.of(T99_APPLICATION_ERROR_CODE, "APPLICATION ERROR");
 
   /**
    * The transfer timed out, meaning the next party in the chain did not respond. This could be because you set your
@@ -164,7 +188,7 @@ public interface InterledgerErrorCode {
    * unreasonably long time.
    */
   InterledgerErrorCode R00_TRANSFER_TIMED_OUT =
-      InterledgerErrorCode.of("R00", "TRANSFER TIMED OUT");
+      InterledgerErrorCode.of(R00_TRANSFER_TIMED_OUT_CODE, "TRANSFER TIMED OUT");
 
   /**
    * The amount received by a connector in the path was too little to forward (zero or less). Either the sender did not
@@ -172,7 +196,7 @@ public interface InterledgerErrorCode {
    * do this indefinitely or a malicious connector could steal money from them.
    */
   InterledgerErrorCode R01_INSUFFICIENT_SOURCE_AMOUNT =
-      InterledgerErrorCode.of("R01", "INSUFFICIENT SOURCE AMOUNT");
+      InterledgerErrorCode.of(R01_INSUFFICIENT_SOURCE_AMOUNT_CODE, "INSUFFICIENT SOURCE AMOUNT");
 
   /**
    * The connector could not forward the payment, because the timeout was too low to subtract its safety margin. The
@@ -180,13 +204,13 @@ public interface InterledgerErrorCode {
    * cause them to tie up their money for an unreasonably long time.
    */
   InterledgerErrorCode R02_INSUFFICIENT_TIMEOUT =
-      InterledgerErrorCode.of("R02", "INSUFFICIENT TIMEOUT");
+      InterledgerErrorCode.of(R02_INSUFFICIENT_TIMEOUT_CODE, "INSUFFICIENT TIMEOUT");
 
   /**
    * Reserved for application layer protocols. Applications MAY use names other than Application Error.
    */
   InterledgerErrorCode R99_APPLICATION_ERROR =
-      InterledgerErrorCode.of("R99", "APPLICATION ERROR");
+      InterledgerErrorCode.of(R99_APPLICATION_ERROR_CODE, "APPLICATION ERROR");
 
   /**
    * Helper method to construct an instance of {@link InterledgerErrorCode}.
@@ -462,8 +486,6 @@ public interface InterledgerErrorCode {
             + ", errorFamily=" + errorFamily
             + '}';
       }
-
-
     }
   }
 

@@ -3,11 +3,11 @@
   <parent>
     <artifactId>quilt-parent</artifactId>
     <groupId>org.interledger</groupId>
-    <version>0.17.0-SNAPSHOT</version>
+    <version>0.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger DCP Core</name>
+  <name>Quilt :: IL-DCP Core</name>
   <description>Interledger Dynamic Configuration Protocol (IL-DCP) core libraries.</description>
   <artifactId>ildcp-core</artifactId>
   <packaging>jar</packaging>

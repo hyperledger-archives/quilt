@@ -5,11 +5,11 @@
   <parent>
     <artifactId>codecs</artifactId>
     <groupId>org.interledger</groupId>
-    <version>0.17.0-SNAPSHOT</version>
+    <version>0.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger Codec Framework</name>
+  <name>Quilt :: Codecs :: Framework</name>
   <description>A framework for writing codecContext.</description>
   <artifactId>codec-framework</artifactId>
   <packaging>jar</packaging>
