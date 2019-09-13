@@ -20,14 +20,12 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
-
 import org.interledger.core.InterledgerAddress;
 
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Unit tests for {@link IldcpResponsePacket}.
@@ -47,20 +45,17 @@ public class IldcpResponsePacketTest {
   public void testBuilder() {
     final IldcpResponsePacket actual = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[32]).build();
 
-    assertThat(actual.getFulfillment(), is(IldcpResponsePacket.EXECUTION_FULFILLMENT));
-    assertThat(actual.getData(), is(new byte[32]));
+    assertThat(actual.getFulfillment()).isEqualTo(IldcpResponsePacket.EXECUTION_FULFILLMENT);
+    assertThat(actual.getData()).isEqualTo(new byte[32]);
   }
 
   @Test(expected = IllegalStateException.class)
   public void testEmptyBuilder() {
     try {
       IldcpResponsePacket.builder().build();
-      fail();
+      fail("cannot build packet");
     } catch (IllegalStateException e) {
-      assertThat(
-          e.getMessage(),
-          is("Cannot build IldcpResponsePacket, some of required attributes are not set [ildcpResponse]")
-      );
+      assertThat(e.getMessage()).isEqualTo("Cannot build IldcpResponsePacket, some of required attributes are not set [ildcpResponse]");
       throw e;
     }
   }
@@ -72,13 +67,13 @@ public class IldcpResponsePacketTest {
     final IldcpResponsePacket second = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[32]).build();
     final IldcpResponsePacket third = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[64]).build();
 
-    assertThat(first.equals(second), is(true));
-    assertThat(second.equals(first), is(true));
-    assertThat(third, is(not(first)));
+    assertThat(first).isEqualTo(second);
+    assertThat(second).isEqualTo(first);
+    assertThat(third).isNotEqualTo(first);
 
-    assertThat(first.hashCode(), is(second.hashCode()));
-    assertThat(second.hashCode(), is(first.hashCode()));
-    assertThat(third, is(not(first.hashCode())));
+    assertThat(first.hashCode()).isEqualTo(second.hashCode());
+    assertThat(second.hashCode()).isEqualTo(first.hashCode());
+    assertThat(third).isNotEqualTo(first.hashCode());
   }
 
   @Test
@@ -86,13 +81,12 @@ public class IldcpResponsePacketTest {
     final IldcpResponsePacket first = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[0]).build();
 
     assertThat(
-        first.toString(),
-        is("IldcpResponsePacket{"
+        first.toString())
+        .isEqualTo("IldcpResponsePacket{"
             + "ildcpResponse=IldcpResponse{clientAddress=InterledgerAddress{value=example.foo}, assetCode=BTC, assetScale=9}, "
             + "fulfillment=ImmutableInterledgerFulfillment["
             + "preimage=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=, "
             + "condition=Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}], "
-            + "data=[]}")
-    );
+            + "data=[]}");
   }
 }

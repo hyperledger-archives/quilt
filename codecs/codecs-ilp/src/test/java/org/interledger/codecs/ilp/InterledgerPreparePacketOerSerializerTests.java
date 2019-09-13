@@ -20,8 +20,6 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPacket;
@@ -43,7 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests to validate the functionality for all {@link InterledgerPreparePacket} packets.
@@ -107,7 +105,7 @@ public class InterledgerPreparePacketOerSerializerTests {
 
     final InterledgerPreparePacket payment = context.read(InterledgerPreparePacket.class,
         asn1OerPaymentBytes);
-    assertThat(payment, is(packet));
+    assertThat(payment).isEqualTo(packet);
   }
 
   /**
@@ -122,9 +120,8 @@ public class InterledgerPreparePacketOerSerializerTests {
 
     final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class,
         asn1OerPaymentBytes);
-    assertThat(decodedPacket.getClass().getName(),
-        is(packet.getClass().getName()));
-    assertThat(decodedPacket, is(packet));
+    assertThat(decodedPacket.getClass().getName()).isEqualTo(packet.getClass().getName());
+    assertThat(decodedPacket).isEqualTo(packet);
   }
 
   private ByteArrayInputStream constructAsn1OerPaymentBytes() throws IOException {

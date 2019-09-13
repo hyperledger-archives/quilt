@@ -20,8 +20,6 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-
 import org.interledger.core.InterledgerAddress;
 import org.interledger.encoding.asn.framework.CodecContext;
 
@@ -36,7 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
 public class InterledgerAddressOerSerializerTests {
@@ -93,8 +91,7 @@ public class InterledgerAddressOerSerializerTests {
 
     final InterledgerAddress decodedInterledgerAddress =
         context.read(InterledgerAddress.class, byteArrayInputStream);
-    assertThat(decodedInterledgerAddress.getClass().getName(),
-        is(interledgerAddress.getClass().getName()));
-    assertThat(decodedInterledgerAddress, is(interledgerAddress));
+    assertThat(decodedInterledgerAddress.getClass().getName()).isEqualTo(interledgerAddress.getClass().getName());
+    assertThat(decodedInterledgerAddress).isEqualTo(interledgerAddress);
   }
 }

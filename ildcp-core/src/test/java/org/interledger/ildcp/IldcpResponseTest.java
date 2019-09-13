@@ -20,12 +20,11 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import org.interledger.core.InterledgerAddress;
 
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link IldcpResponse}.
@@ -40,10 +39,7 @@ public class IldcpResponseTest {
     try {
       IldcpResponse.builder().build();
     } catch (IllegalStateException e) {
-      assertThat(
-          e.getMessage(),
-          is("Cannot build IldcpResponse, some of required attributes are not set [clientAddress, assetCode, assetScale]")
-      );
+      assertThat(e.getMessage()).isEqualTo("Cannot build IldcpResponse, some of required attributes are not set [clientAddress, assetCode, assetScale]");
       throw e;
     }
   }
@@ -56,8 +52,8 @@ public class IldcpResponseTest {
         .assetCode(BTC)
         .build();
 
-    assertThat(response.getClientAddress(), is(FOO_ADDRESS));
-    assertThat(response.getAssetScale(), is((short) 9));
-    assertThat(response.getAssetCode(), is(BTC));
+    assertThat(response.getClientAddress()).isEqualTo(FOO_ADDRESS);
+    assertThat(response.getAssetScale()).isEqualTo((short) 9);
+    assertThat(response.getAssetCode()).isEqualTo(BTC);
   }
 }

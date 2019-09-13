@@ -20,8 +20,6 @@ package org.interledger.codecs.ildcp.framework;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-
 import org.interledger.codecs.ildcp.AsnIldcpResponseCodec;
 import org.interledger.codecs.ildcp.IldcpCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
@@ -39,7 +37,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Base64;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link IldcpCodecContextFactory}.
@@ -64,12 +62,11 @@ public class IldcpCodecContextFactoryTest {
     IldcpCodecContextFactory.oer().write(requestPacket, os);
 
     final String base64Bytes = Base64.getEncoder().encodeToString(os.toByteArray());
-    assertThat(base64Bytes,
-        is("DEYAAAAAAAAAADIwMTkxMjI1MDEwMjAzOTk2Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSULcGVlci5jb25maWcA"));
+    assertThat(base64Bytes).isEqualTo("DEYAAAAAAAAAADIwMTkxMjI1MDEwMjAzOTk2Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSULcGVlci5jb25maWcA");
 
     final IldcpRequestPacket decodedPacket = IldcpCodecContextFactory.oer()
         .read(IldcpRequestPacket.class, new ByteArrayInputStream(os.toByteArray()));
-    assertThat(decodedPacket, is(requestPacket));
+    assertThat(decodedPacket).isEqualTo(requestPacket);
   }
 
 
@@ -82,7 +79,7 @@ public class IldcpCodecContextFactoryTest {
     final IldcpResponsePacket decodedResponsePacket = IldcpCodecContextFactory.oer()
         .read(IldcpResponsePacket.class, new ByteArrayInputStream(os.toByteArray()));
 
-    assertThat(decodedResponsePacket, is(responsePacket));
+    assertThat(decodedResponsePacket).isEqualTo(responsePacket);
   }
 
   @Test
@@ -94,6 +91,6 @@ public class IldcpCodecContextFactoryTest {
     IldcpCodecContextFactory.oer().write(TEST_RESPONSE, os);
 
     final String base64Bytes = Base64.getEncoder().encodeToString(os.toByteArray());
-    assertThat(base64Bytes, is("C2V4YW1wbGUuZm9vCQNCVEM="));
+    assertThat(base64Bytes).isEqualTo("C2V4YW1wbGUuZm9vCQNCVEM=");
   }
 }

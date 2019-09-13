@@ -20,8 +20,6 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,8 +30,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link Short}.
@@ -83,9 +80,8 @@ public class ShortOerSerializerTest extends AbstractSerializerTest<Short> {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       codecContext.write((short)256, byteArrayOutputStream);
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(),
-          is("Uint8 only supports values from 0 to 255, "
-              + "value 256 is out of range."));
+      assertThat(e.getMessage()).isEqualTo("Uint8 only supports values from 0 to 255, "
+              + "value 256 is out of range.");
       throw e;
     }
   }

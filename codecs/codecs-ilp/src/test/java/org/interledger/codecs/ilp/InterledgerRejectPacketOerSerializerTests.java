@@ -20,11 +20,6 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPacket;
@@ -45,6 +40,8 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Random;
 import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests to validate the serializer functionality for all {@link InterledgerRejectPacket} packets.
@@ -182,12 +179,12 @@ public class InterledgerRejectPacketOerSerializerTests {
 
     final ByteArrayInputStream asn1OerErrorBytesStream = constructInterledgerRejectPacketAsn1OerInputStream();
     final InterledgerRejectPacket error = context.read(InterledgerRejectPacket.class, asn1OerErrorBytesStream);
-    assertThat(error, is(packet));
+    assertThat(error).isEqualTo(packet);
 
     // Only verify small packets...
     if (packet.getData().length < 2) {
       final byte[] asn1OerErrorBytes = constructInterledgerRejectPacketAsn1OerBytes();
-      assertThat(Base64.getEncoder().encodeToString(asn1OerErrorBytes), is(expectedB64Bytes));
+      assertThat(Base64.getEncoder().encodeToString(asn1OerErrorBytes)).isEqualTo(expectedB64Bytes);
     }
 
   }
@@ -203,9 +200,8 @@ public class InterledgerRejectPacketOerSerializerTests {
 
     final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class,
         asn1OerErrorBytes);
-    assertThat(decodedPacket.getClass().getName(),
-        is(packet.getClass().getName()));
-    assertThat(decodedPacket, is(packet));
+    assertThat(decodedPacket.getClass().getName()).isEqualTo(packet.getClass().getName());
+    assertThat(decodedPacket).isEqualTo(packet);
   }
 
   private byte[] constructInterledgerRejectPacketAsn1OerBytes() throws IOException {

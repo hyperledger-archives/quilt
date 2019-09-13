@@ -20,16 +20,12 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import static junit.framework.TestCase.assertTrue;
-import static junit.framework.TestCase.fail;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-
 import org.junit.Test;
 
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Unit tests for {@link InterledgerRejectPacket} and {@link InterledgerRejectPacketBuilder}.
@@ -53,9 +49,9 @@ public class InterledgerRejectPacketTest {
             .data(data)
             .build();
 
-    assertThat(interledgerProtocolError.getCode(), is(errorCode));
-    assertThat(interledgerProtocolError.getTriggeredBy().get(), is(triggeredBy));
-    assertThat(interledgerProtocolError.getData(), is(data));
+    assertThat(interledgerProtocolError.getCode()).isEqualTo(errorCode);
+    assertThat(interledgerProtocolError.getTriggeredBy().get()).isEqualTo(triggeredBy);
+    assertThat(interledgerProtocolError.getData()).isEqualTo(data);
   }
 
   @Test
@@ -67,10 +63,10 @@ public class InterledgerRejectPacketTest {
             .code(errorCode)
             .build();
 
-    assertThat(interledgerProtocolError.getCode(), is(errorCode));
-    assertThat(interledgerProtocolError.getTriggeredBy().isPresent(), is(false));
-    assertThat(interledgerProtocolError.getMessage(), is(""));
-    assertThat(interledgerProtocolError.getData(), is(new byte[0]));
+    assertThat(interledgerProtocolError.getCode()).isEqualTo(errorCode);
+    assertThat(interledgerProtocolError.getTriggeredBy().isPresent()).isFalse();
+    assertThat(interledgerProtocolError.getMessage()).isEqualTo("");
+    assertThat(interledgerProtocolError.getData()).isEqualTo(new byte[0]);
   }
 
   @Test
@@ -79,9 +75,9 @@ public class InterledgerRejectPacketTest {
       InterledgerRejectPacket.builder().build();
       fail("Builder should have thrown an exception but did not!");
     } catch (Exception e) {
-      assertTrue(e instanceof IllegalStateException);
-      assertTrue(e.getMessage().startsWith("Cannot build InterledgerRejectPacket, "
-          + "some of required attributes are not set"));
+      assertThat(e instanceof IllegalStateException).isTrue();
+      assertThat(e.getMessage()).startsWith("Cannot build InterledgerRejectPacket, "
+          + "some of required attributes are not set");
     }
   }
 
@@ -91,25 +87,25 @@ public class InterledgerRejectPacketTest {
 
     try {
       builder.code(null);
-      fail();
+      fail("cannot build");
     } catch (Exception e) {
-      assertTrue(e instanceof NullPointerException);
-      assertThat(e.getMessage(), is("code"));
+      assertThat(e instanceof NullPointerException).isTrue();
+      assertThat(e.getMessage()).isEqualTo("code");
     }
 
     try {
       builder.triggeredBy((Optional<InterledgerAddress>) null);
-      fail();
+      fail("cannot build");
     } catch (Exception e) {
-      assertTrue(e instanceof NullPointerException);
-      assertThat(e.getMessage(), is(nullValue()));
+      assertThat(e instanceof NullPointerException).isTrue();
+      assertThat(e.getMessage()).isNull();
     }
 
     try {
       builder.data((byte[]) null);
-      fail();
+      fail("cannot build");
     } catch (Exception e) {
-      assertTrue(e instanceof NullPointerException);
+      assertThat(e instanceof NullPointerException).isTrue();
     }
   }
 
@@ -130,12 +126,9 @@ public class InterledgerRejectPacketTest {
         .triggeredBy(FOO)
         .build();
 
-    assertThat(interledgerProtocolError1, is(interledgerProtocolError2));
-    assertThat(interledgerProtocolError2, is(interledgerProtocolError1));
-    assertTrue(interledgerProtocolError1.equals(interledgerProtocolError2));
-    assertTrue(interledgerProtocolError2.equals(interledgerProtocolError1));
-    assertTrue(interledgerProtocolError1.hashCode()
-        == interledgerProtocolError2.hashCode());
+    assertThat(interledgerProtocolError1).isEqualTo(interledgerProtocolError2);
+    assertThat(interledgerProtocolError2).isEqualTo(interledgerProtocolError1);
+    assertThat(interledgerProtocolError1.hashCode()).isEqualTo(interledgerProtocolError2.hashCode());
 
     final InterledgerRejectPacket interledgerProtocolErrorOther
         = InterledgerRejectPacket.builder()
@@ -144,10 +137,9 @@ public class InterledgerRejectPacketTest {
         .triggeredBy(FOO)
         .build();
 
-    assertFalse(interledgerProtocolError1.equals(interledgerProtocolErrorOther));
-    assertFalse(interledgerProtocolErrorOther.equals(interledgerProtocolError1));
-    assertFalse(interledgerProtocolError1.hashCode()
-        == interledgerProtocolErrorOther.hashCode());
+    assertThat(interledgerProtocolError1).isNotEqualTo(interledgerProtocolErrorOther);
+    assertThat(interledgerProtocolErrorOther).isNotEqualTo(interledgerProtocolError1);
+    assertThat(interledgerProtocolError1.hashCode()).isNotEqualTo(interledgerProtocolErrorOther.hashCode());
   }
 
   @Test
@@ -164,10 +156,9 @@ public class InterledgerRejectPacketTest {
         = InterledgerRejectPacket.builder().from(
         interledgerProtocolError1).build();
 
-    assertTrue(interledgerProtocolError1.equals(interledgerProtocolError2));
-    assertTrue(interledgerProtocolError2.equals(interledgerProtocolError1));
-    assertTrue(interledgerProtocolError1.hashCode()
-        == interledgerProtocolError2.hashCode());
+    assertThat(interledgerProtocolError1).isEqualTo(interledgerProtocolError2);
+    assertThat(interledgerProtocolError2).isEqualTo(interledgerProtocolError1);
+    assertThat(interledgerProtocolError1.hashCode()).isEqualTo(interledgerProtocolError2.hashCode());
 
     final InterledgerRejectPacket interledgerProtocolErrorOther
         = InterledgerRejectPacket.builder()
@@ -177,10 +168,9 @@ public class InterledgerRejectPacketTest {
         .data(new byte[32])
         .build();
 
-    assertFalse(interledgerProtocolError1.equals(interledgerProtocolErrorOther));
-    assertFalse(interledgerProtocolErrorOther.equals(interledgerProtocolError1));
-    assertFalse(interledgerProtocolError1.hashCode()
-        == interledgerProtocolErrorOther.hashCode());
+    assertThat(interledgerProtocolError1).isNotEqualTo(interledgerProtocolErrorOther);
+    assertThat(interledgerProtocolErrorOther).isNotEqualTo(interledgerProtocolError1);
+    assertThat(interledgerProtocolError1.hashCode()).isNotEqualTo(interledgerProtocolErrorOther.hashCode());
   }
 
   @Test
@@ -192,8 +182,8 @@ public class InterledgerRejectPacketTest {
         .triggeredBy(FOO)
         .data(new byte[32])
         .build();
-    assertThat(interledgerProtocolError1.toString(),
-        is("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=TEST, data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}"));
+    assertThat(interledgerProtocolError1.toString())
+            .isEqualTo("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=TEST, data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}");
   }
 
 }

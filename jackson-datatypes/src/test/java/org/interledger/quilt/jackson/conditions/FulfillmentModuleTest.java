@@ -20,9 +20,6 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -36,6 +33,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Validates the functionality of {@link ConditionModule}.
@@ -92,15 +91,13 @@ public class FulfillmentModuleTest extends AbstractConditionModuleTest {
     final FulfillmentContainer expectedContainer = new FulfillmentContainer(FULFILLMENT);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
-    assertThat(json, is(
-        String.format("{\"fulfillment\":\"%s\"}", expectedEncodedValue)
-    ));
+    assertThat(json).isEqualTo(String.format("{\"fulfillment\":\"%s\"}", expectedEncodedValue));
 
     final FulfillmentContainer actualAddressContainer = objectMapper
         .readValue(json, FulfillmentContainer.class);
 
-    assertThat(actualAddressContainer, is(expectedContainer));
-    assertThat(actualAddressContainer.getFulfillment(), is(FULFILLMENT));
+    assertThat(actualAddressContainer).isEqualTo(expectedContainer);
+    assertThat(actualAddressContainer.getFulfillment()).isEqualTo(FULFILLMENT);
   }
 
   private static class FulfillmentContainer {

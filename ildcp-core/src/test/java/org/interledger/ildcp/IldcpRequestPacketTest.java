@@ -20,14 +20,12 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.junit.Test;
 
 import java.math.BigInteger;
 import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link IldcpRequestPacket}.
@@ -37,10 +35,10 @@ public class IldcpRequestPacketTest {
   @Test
   public void testBuilder() {
     final IldcpRequestPacket actual = IldcpRequestPacket.builder().build();
-    assertThat(actual.getAmount(), is(BigInteger.ZERO));
-    assertThat(actual.getDestination(), is(IldcpRequestPacket.PEER_DOT_CONFIG));
-    assertThat(actual.getExecutionCondition(), is(IldcpRequestPacket.EXECUTION_CONDITION));
-    assertThat(actual.getData(), is(new byte[0]));
+    assertThat(actual.getAmount()).isEqualTo(BigInteger.ZERO);
+    assertThat(actual.getDestination()).isEqualTo(IldcpRequestPacket.PEER_DOT_CONFIG);
+    assertThat(actual.getExecutionCondition()).isEqualTo(IldcpRequestPacket.EXECUTION_CONDITION);
+    assertThat(actual.getData()).isEqualTo(new byte[0]);
   }
 
   @Test
@@ -48,11 +46,11 @@ public class IldcpRequestPacketTest {
     final Instant expiresAt = Instant.parse("2019-12-25T01:02:03.996Z");
     final IldcpRequestPacket actual = IldcpRequestPacket.builder().expiresAt(expiresAt).build();
 
-    assertThat(actual.getDestination(), is(IldcpRequestPacket.PEER_DOT_CONFIG));
-    assertThat(actual.getExpiresAt(), is(expiresAt));
-    assertThat(actual.getAmount(), is(BigInteger.ZERO));
-    assertThat(actual.getExecutionCondition(), is(IldcpRequestPacket.EXECUTION_CONDITION));
-    assertThat(actual.getData(), is(new byte[0]));
+    assertThat(actual.getDestination()).isEqualTo(IldcpRequestPacket.PEER_DOT_CONFIG);
+    assertThat(actual.getExpiresAt()).isEqualTo(expiresAt);
+    assertThat(actual.getAmount()).isEqualTo(BigInteger.ZERO);
+    assertThat(actual.getExecutionCondition()).isEqualTo(IldcpRequestPacket.EXECUTION_CONDITION);
+    assertThat(actual.getData()).isEqualTo(new byte[0]);
   }
 
   @Test
@@ -62,13 +60,13 @@ public class IldcpRequestPacketTest {
     final IldcpRequestPacket second = IldcpRequestPacket.builder().expiresAt(expiresAt).build();
     final IldcpRequestPacket third = IldcpRequestPacket.builder().amount(BigInteger.TEN).build();
 
-    assertThat(first.equals(second), is(true));
-    assertThat(second.equals(first), is(true));
-    assertThat(third, is(not(first)));
+    assertThat(first).isEqualTo(second);
+    assertThat(second).isEqualTo(first);
+    assertThat(third).isNotEqualTo(first);
 
-    assertThat(first.hashCode(), is(second.hashCode()));
-    assertThat(second.hashCode(), is(first.hashCode()));
-    assertThat(third, is(not(first.hashCode())));
+    assertThat(first.hashCode()).isEqualTo(second.hashCode());
+    assertThat(second.hashCode()).isEqualTo(first.hashCode());
+    assertThat(third).isNotEqualTo(first.hashCode());
   }
 
   @Test
@@ -77,11 +75,9 @@ public class IldcpRequestPacketTest {
     final IldcpRequestPacket first = IldcpRequestPacket.builder().expiresAt(expiresAt).build();
 
     assertThat(
-        first.toString().startsWith(
+        first.toString()).startsWith(
             "IldcpRequestPacket{destination=InterledgerAddress{value=peer.config}, amount=0, executionCondition="
                 + "Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}, expiresAt=2019-12-25T01:02:03.996Z,"
-                + " data=[B@"),
-        is(true)
-    );
+                + " data=[B@");
   }
 }

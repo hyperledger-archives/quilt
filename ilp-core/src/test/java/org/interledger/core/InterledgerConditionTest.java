@@ -20,17 +20,11 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-
 import org.junit.Test;
 
 import java.util.Arrays;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class InterledgerConditionTest {
 
@@ -65,7 +59,7 @@ public class InterledgerConditionTest {
 
   @Test
   public void testGetHash() {
-    assertArrayEquals(InterledgerCondition.of(BYTES_1).getHash(), BYTES_1);
+    assertThat(InterledgerCondition.of(BYTES_1).getHash()).isEqualTo(BYTES_1);
   }
 
   @Test
@@ -73,37 +67,28 @@ public class InterledgerConditionTest {
     InterledgerCondition condition = InterledgerCondition.of(BYTES_1);
     byte[] copyOfBytes1 = Arrays.copyOf(BYTES_1, 32);
 
-    assertEquals(condition, condition); //Same object
-    assertEquals(condition, InterledgerCondition.of(BYTES_1)); //Same array as input
-    assertEquals(condition, InterledgerCondition.of(copyOfBytes1)); //Equal arrays as input
+    assertThat(condition).isEqualTo(condition); //Same object
+    assertThat(condition).isEqualTo(InterledgerCondition.of(BYTES_1)); //Same array as input
+    assertThat(condition).isEqualTo(InterledgerCondition.of(copyOfBytes1)); //Equal arrays as input
   }
 
   @Test
   public void testNotEquals() {
-    assertNotEquals(InterledgerCondition.of(BYTES_1), InterledgerCondition.of(BYTES_2));
+    assertThat(InterledgerCondition.of(BYTES_1)).isNotEqualTo(InterledgerCondition.of(BYTES_2));
   }
 
   @Test
   public void testCompare() {
-    assertTrue(
-        InterledgerCondition.of(BYTES_1).compareTo(InterledgerCondition.of(BYTES_1)) == 0
-    );
-    assertTrue(
-        InterledgerCondition.of(BYTES_1).compareTo(InterledgerCondition.of(BYTES_2)) < 0
-    );
-    assertTrue(
-        InterledgerCondition.of(BYTES_2).compareTo(InterledgerCondition.of(BYTES_1)) > 0
-    );
+    assertThat(InterledgerCondition.of(BYTES_1).compareTo(InterledgerCondition.of(BYTES_1)) == 0).isTrue();
+    assertThat(InterledgerCondition.of(BYTES_1).compareTo(InterledgerCondition.of(BYTES_2)) < 0).isTrue();
+    assertThat(InterledgerCondition.of(BYTES_2).compareTo(InterledgerCondition.of(BYTES_1)) > 0).isTrue();
   }
 
   @Test
   public void testHashCode() {
-    assertTrue(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition
-        .of(BYTES_1).hashCode());
-    assertFalse(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition
-        .of(BYTES_2).hashCode());
-    assertFalse(InterledgerCondition.of(BYTES_2).hashCode() == InterledgerCondition
-        .of(BYTES_1).hashCode());
+    assertThat(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition.of(BYTES_1).hashCode()).isTrue();
+    assertThat(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition.of(BYTES_2).hashCode()).isFalse();
+    assertThat(InterledgerCondition.of(BYTES_2).hashCode() == InterledgerCondition.of(BYTES_1).hashCode()).isFalse();
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -121,13 +106,13 @@ public class InterledgerConditionTest {
     final InterledgerCondition condition1 = InterledgerCondition.of(BYTES_1);
     final InterledgerCondition condition2 = InterledgerCondition.from(condition1);
 
-    assertThat(condition1, is(condition2));
+    assertThat(condition1).isEqualTo(condition2);
   }
 
   @Test
   public void testToString() {
     final InterledgerCondition condition1 = InterledgerCondition.of(BYTES_1);
-    assertThat(condition1.toString(), is("Condition{hash=AAECAwQFBgcICQABAgMEBQYHCAkAAQIDBAUGBwgJAAE=}"));
+    assertThat(condition1.toString()).isEqualTo("Condition{hash=AAECAwQFBgcICQABAgMEBQYHCAkAAQIDBAUGBwgJAAE=}");
   }
 
 }

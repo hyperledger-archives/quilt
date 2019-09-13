@@ -20,9 +20,6 @@ package org.interledger.codecs.ildcp.utils;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.codecs.ildcp.IldcpCodecException;
 import org.interledger.codecs.ildcp.IldcpUtils;
 import org.interledger.core.InterledgerAddress;
@@ -33,6 +30,8 @@ import org.interledger.ildcp.IldcpResponse;
 import org.interledger.ildcp.IldcpResponsePacket;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link IldcpUtils}.
@@ -55,8 +54,8 @@ public class IldcpUtilsTest {
         .build();
 
     final IldcpResponsePacket packet = IldcpUtils.fromIldcpResponse(ILDCP_RESPONSE);
-    assertThat(packet.getFulfillment(), is(expectedResponse.getFulfillment()));
-    assertThat(packet.getIldcpResponse(), is(ILDCP_RESPONSE));
+    assertThat(packet.getFulfillment()).isEqualTo(expectedResponse.getFulfillment());
+    assertThat(packet.getIldcpResponse()).isEqualTo(ILDCP_RESPONSE);
   }
 
   @Test
@@ -67,7 +66,7 @@ public class IldcpUtilsTest {
         .data(responsePacket.getData())
         .build();
     final IldcpResponse actualResponse = IldcpUtils.toIldcpResponse(fulfillPacket);
-    assertThat(actualResponse, is(ILDCP_RESPONSE));
+    assertThat(actualResponse).isEqualTo(ILDCP_RESPONSE);
   }
 
   @Test(expected = IldcpCodecException.class)
@@ -78,7 +77,7 @@ public class IldcpUtilsTest {
       IldcpUtils.toIldcpResponse(packet);
       Assert.fail();
     } catch (IldcpCodecException e) {
-      assertThat(e.getMessage(), is("Packet must have a data payload containing an encoded instance of IldcpResponse"));
+      assertThat(e.getMessage()).isEqualTo("Packet must have a data payload containing an encoded instance of IldcpResponse");
       throw e;
     }
   }
@@ -91,7 +90,7 @@ public class IldcpUtilsTest {
           .build();
       IldcpUtils.toIldcpResponse(fulfillmentWithoutData);
     } catch (IldcpCodecException e) {
-      assertThat(e.getMessage(), is("Packet must have a data payload containing an encoded instance of IldcpResponse"));
+      assertThat(e.getMessage()).isEqualTo("Packet must have a data payload containing an encoded instance of IldcpResponse");
       throw e;
     }
   }

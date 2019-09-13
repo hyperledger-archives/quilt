@@ -20,8 +20,6 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,7 +30,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link Integer}.
@@ -91,9 +89,8 @@ public class IntegerOerSerializerTest extends AbstractSerializerTest<Integer> {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       codecContext.write(65536, byteArrayOutputStream);
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(),
-          is("Uint16 only supports values from 0 to 65535, "
-              + "value 65536 is out of range."));
+      assertThat(e.getMessage()).isEqualTo("Uint16 only supports values from 0 to 65535, "
+              + "value 65536 is out of range.");
       throw e;
     }
   }

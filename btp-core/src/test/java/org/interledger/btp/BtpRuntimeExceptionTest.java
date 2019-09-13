@@ -20,15 +20,13 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-
 import org.interledger.btp.BtpSubProtocol.ContentType;
 
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link BtpRuntimeException}.
@@ -52,9 +50,9 @@ public class BtpRuntimeExceptionTest {
     final BtpRuntimeException exception = new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, ERROR_MESSAGE);
     final BtpError error = exception.toBtpError(REQUEST_ID);
 
-    assertThat(error.getErrorCode(), is(BtpErrorCode.F00_NotAcceptedError));
-    assertThat(error.getTriggeredAt(), is(exception.getTriggeredAt()));
-    assertThat(error.getErrorData().length, is(0));
+    assertThat(error.getErrorCode()).isEqualTo(BtpErrorCode.F00_NotAcceptedError);
+    assertThat(error.getTriggeredAt()).isEqualTo(exception.getTriggeredAt());
+    assertThat(error.getErrorData().length).isEqualTo(0);
   }
 
   @Test
@@ -62,9 +60,9 @@ public class BtpRuntimeExceptionTest {
     final BtpRuntimeException exception = new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, ERROR_MESSAGE);
     final BtpError error = exception.toBtpError(REQUEST_ID, SUB_PROTOCOLS);
 
-    assertThat(error.getErrorCode(), is(BtpErrorCode.F00_NotAcceptedError));
-    assertThat(error.getTriggeredAt(), is(exception.getTriggeredAt()));
-    assertThat(error.getErrorData().length, is(0));
-    assertEquals(error.getSubProtocols(), SUB_PROTOCOLS);
+    assertThat(error.getErrorCode()).isEqualTo(BtpErrorCode.F00_NotAcceptedError);
+    assertThat(error.getTriggeredAt()).isEqualTo(exception.getTriggeredAt());
+    assertThat(error.getErrorData().length).isEqualTo(0);
+    assertThat(error.getSubProtocols()).isEqualTo(SUB_PROTOCOLS);
   }
 }

@@ -20,9 +20,6 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import org.interledger.encoding.asn.codecs.AsnOctetStringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
@@ -30,8 +27,6 @@ import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 
 import com.google.common.io.BaseEncoding;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +38,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link AsnOctetStringOerSerializer}.
@@ -147,7 +144,7 @@ public class OpenTypeOerSerializerTest {
 
     // Assert that the coded read bytes that equal what the harness put into octetBytes.
     final TestType actualValue = codecContext.read(TestType.class, inputStream);
-    assertThat(actualValue.bytes, is(octetBytes));
+    assertThat(actualValue.bytes).isEqualTo(octetBytes);
   }
 
   @Test
@@ -170,7 +167,7 @@ public class OpenTypeOerSerializerTest {
     // Read octets...
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
     final TestType actual = codecContext.read(TestType.class, inputStream);
-    assertThat(actual.bytes, is(octetBytes));
+    assertThat(actual.bytes).isEqualTo(octetBytes);
 
     // Write octets again...
     final ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();

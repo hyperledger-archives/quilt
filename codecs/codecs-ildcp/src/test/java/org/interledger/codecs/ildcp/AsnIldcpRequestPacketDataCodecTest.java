@@ -20,9 +20,8 @@ package org.interledger.codecs.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
+import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerCondition;
 import org.interledger.ildcp.IldcpRequestPacket;
 
 import org.junit.Before;
@@ -33,6 +32,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnIldcpRequestPacketDataCodec}.
@@ -52,12 +53,11 @@ public class AsnIldcpRequestPacketDataCodecTest {
   @Test
   public void encode() {
     codec.encode(packet);
-
-    assertThat(codec.getValueAt(0), is(BigInteger.ZERO)); // Amount
-    assertThat(codec.getValueAt(1), is(NOW)); // Expiry
-    assertThat(codec.getValueAt(2), is(IldcpRequestPacket.EXECUTION_CONDITION)); // Condition
-    assertThat(codec.getValueAt(3), is(IldcpRequestPacket.PEER_DOT_CONFIG)); // Dest Address
-    assertThat(codec.getValueAt(4), is(new byte[0])); // Data
+    assertThat((BigInteger) codec.getValueAt(0)).isEqualTo(BigInteger.ZERO); // Amount
+    assertThat((Instant) codec.getValueAt(1)).isEqualTo(NOW); // Expiry
+    assertThat((InterledgerCondition) codec.getValueAt(2)).isEqualTo(IldcpRequestPacket.EXECUTION_CONDITION); // Condition
+    assertThat((InterledgerAddress) codec.getValueAt(3)).isEqualTo(IldcpRequestPacket.PEER_DOT_CONFIG); // Dest Address
+    assertThat((byte[]) codec.getValueAt(4)).isEqualTo(new byte[0]); // Data
   }
 
   @Test
@@ -67,6 +67,6 @@ public class AsnIldcpRequestPacketDataCodecTest {
 
     final IldcpRequestPacket actual = IldcpCodecContextFactory.oer()
         .read(IldcpRequestPacket.class, new ByteArrayInputStream(os.toByteArray()));
-    assertThat(actual, is(packet));
+    assertThat(actual).isEqualTo(packet);
   }
 }

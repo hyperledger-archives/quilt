@@ -20,13 +20,8 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import static junit.framework.TestCase.assertTrue;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
 import org.junit.Test;
@@ -59,18 +54,18 @@ public class InterledgerPreparePacketTest {
             .data(data)
             .build();
 
-    assertThat(interledgerPreparePacket.getDestination(), is(destination));
-    assertThat(interledgerPreparePacket.getAmount(), is(amount));
-    assertThat(interledgerPreparePacket.getExecutionCondition(), is(interledgerCondition));
-    assertThat(interledgerPreparePacket.getExpiresAt(), is(expiry));
-    assertThat(interledgerPreparePacket.getData(), is(data));
+    assertThat(interledgerPreparePacket.getDestination()).isEqualTo(destination);
+    assertThat(interledgerPreparePacket.getAmount()).isEqualTo(amount);
+    assertThat(interledgerPreparePacket.getExecutionCondition()).isEqualTo(interledgerCondition);
+    assertThat(interledgerPreparePacket.getExpiresAt()).isEqualTo(expiry);
+    assertThat(interledgerPreparePacket.getData()).isEqualTo(data);
   }
 
   @Test
   public void testBuildWithNullValues() throws Exception {
     try {
       InterledgerPreparePacket.builder().build();
-      fail();
+      fail("cannot build packet");
     } catch (IllegalStateException e) {
       assert (e.getMessage().startsWith("Cannot build InterledgerPreparePacket, "
           + "some of required attributes are not set"));
@@ -85,7 +80,7 @@ public class InterledgerPreparePacketTest {
           .expiresAt(Instant.now())
           .build();
     } catch (IllegalStateException e) {
-      fail();
+      fail("cannot build packet");
     }
 
     //No expiry
@@ -95,7 +90,7 @@ public class InterledgerPreparePacketTest {
           .amount(mock(BigInteger.class))
           .executionCondition(mock(InterledgerCondition.class))
           .build();
-      fail();
+      fail("cannot build packet");
     } catch (IllegalStateException e) {
       assert (e.getMessage().startsWith("Cannot build InterledgerPreparePacket, "
           + "some of required attributes are not set"));
@@ -108,7 +103,7 @@ public class InterledgerPreparePacketTest {
           .amount(mock(BigInteger.class))
           .expiresAt(Instant.now())
           .build();
-      fail();
+      fail("cannot build packet");
     } catch (IllegalStateException e) {
       assert (e.getMessage().startsWith("Cannot build InterledgerPreparePacket, "
           + "some of required attributes are not set"));
@@ -121,8 +116,8 @@ public class InterledgerPreparePacketTest {
         .executionCondition(mock(InterledgerCondition.class))
         .expiresAt(Instant.now())
         .build();
-    assertThat(preparePacket, is(not(nullValue())));
-    assertThat(preparePacket.getAmount(), is(BigInteger.ZERO));
+    assertThat(preparePacket).isNotNull();
+    assertThat(preparePacket.getAmount()).isEqualTo(BigInteger.ZERO);
 
     //No destination
     try {
@@ -131,7 +126,7 @@ public class InterledgerPreparePacketTest {
           .executionCondition(mock(InterledgerCondition.class))
           .expiresAt(Instant.now())
           .build();
-      fail();
+      fail("cannot build packet");
     } catch (IllegalStateException e) {
       assert (e.getMessage().startsWith("Cannot build InterledgerPreparePacket, "
           + "some of required attributes are not set"));
@@ -144,7 +139,7 @@ public class InterledgerPreparePacketTest {
             .executionCondition(mock(InterledgerCondition.class))
             .expiresAt(Instant.now())
             .build();
-    assertThat(interledgerPreparePacket, is(not(nullValue())));
+    assertThat(interledgerPreparePacket).isNotNull();
   }
 
   @Test
@@ -176,9 +171,9 @@ public class InterledgerPreparePacketTest {
             .data(data)
             .build();
 
-    assertTrue(interledgerPreparePacket1.equals(interledgerPreparePacket2));
-    assertTrue(interledgerPreparePacket2.equals(interledgerPreparePacket1));
-    assertTrue(interledgerPreparePacket1.hashCode() == interledgerPreparePacket2.hashCode());
+    assertThat(interledgerPreparePacket1).isEqualTo(interledgerPreparePacket2);
+    assertThat(interledgerPreparePacket2).isEqualTo(interledgerPreparePacket1);
+    assertThat(interledgerPreparePacket1.hashCode()).isEqualTo(interledgerPreparePacket2.hashCode());
 
     final InterledgerPreparePacket interledgerPreparePacket3 = InterledgerPreparePacket.builder()
         .destination(destination)
@@ -188,10 +183,9 @@ public class InterledgerPreparePacketTest {
         .data(data)
         .build();
 
-    assertFalse(interledgerPreparePacket1.equals(interledgerPreparePacket3));
-    assertFalse(interledgerPreparePacket3.equals(interledgerPreparePacket1));
-    assertFalse(interledgerPreparePacket1.hashCode()
-        == interledgerPreparePacket3.hashCode());
+    assertThat(interledgerPreparePacket1).isNotEqualTo(interledgerPreparePacket3);
+    assertThat(interledgerPreparePacket3).isNotEqualTo(interledgerPreparePacket1);
+    assertThat(interledgerPreparePacket1.hashCode()).isNotEqualTo(interledgerPreparePacket3.hashCode());
   }
 
   @Test
@@ -213,10 +207,10 @@ public class InterledgerPreparePacketTest {
         .data(data)
         .build();
 
-    assertThat(interledgerPreparePacket.toString(),
-        is("InterledgerPreparePacket{, amount=11, expiresAt=2007-12-03T10:15:30Z, "
+    assertThat(interledgerPreparePacket.toString())
+        .isEqualTo("InterledgerPreparePacket{, amount=11, expiresAt=2007-12-03T10:15:30Z, "
             + "executionCondition=Condition{hash=AAECAwQFBgcICQECAwQFBgcICQABAgMEBQYHCAkAAQI=}, "
-            + "destination=InterledgerAddress{value=test.foo}, data=fw==}"));
+            + "destination=InterledgerAddress{value=test.foo}, data=fw==}");
   }
 
 }

@@ -20,13 +20,12 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnBtpGeneralizedTimeCodec}.
@@ -44,8 +43,8 @@ public class AsnBtpGeneralizedTimeCodecTest {
   public void encodeDecode() {
     final Instant initial = Instant.parse("2018-12-24T11:59:23Z");
     codec.encode(initial);
-    assertThat(codec.getCharString(), is("20181224115923Z"));
+    assertThat(codec.getCharString()).isEqualTo("20181224115923Z");
     final Instant actual = codec.decode();
-    assertThat(actual, is(initial));
+    assertThat(actual).isEqualTo(initial);
   }
 }

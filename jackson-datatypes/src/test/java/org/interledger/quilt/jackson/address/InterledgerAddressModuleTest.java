@@ -20,9 +20,6 @@ package org.interledger.quilt.jackson.address;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.core.InterledgerAddress;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,6 +30,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Validates the functionality of {@link InterledgerAddressModule}.
@@ -57,17 +56,17 @@ public class InterledgerAddressModuleTest {
     final InterledgerContainer expectedContainer = new InterledgerContainer(expectedAddress);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
-    assertThat(json, is(
+    assertThat(json).isEqualTo(
         String.format("{\"ledger_prefix\":\"%s\"}",
             expectedContainer.getInterledgerAddress().getValue(),
             HEX_CONDITION_DER_BYTES)
-    ));
+    );
 
     final InterledgerContainer actualAddressContainer = objectMapper
         .readValue(json, InterledgerContainer.class);
 
-    assertThat(actualAddressContainer, is(expectedContainer));
-    assertThat(actualAddressContainer.getInterledgerAddress(), is(expectedAddress));
+    assertThat(actualAddressContainer).isEqualTo(expectedContainer);
+    assertThat(actualAddressContainer.getInterledgerAddress()).isEqualTo(expectedAddress);
   }
 
 
