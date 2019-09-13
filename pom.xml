@@ -98,9 +98,9 @@
     <module>ilp-core</module>
     <module>btp-core</module>
     <module>ildcp-core</module>
-    <module>jackson-datatypes</module>
-    <module>codecs</module>
     <module>stream-parent</module>
+    <module>jackson-datatypes</module>
+    <module>codecs-parent</module>
   </modules>
 
   <dependencyManagement>
@@ -108,7 +108,7 @@
 
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>codec-framework</artifactId>
+        <artifactId>codecs-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -127,6 +127,18 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-ilp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>codecs-stream</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-core</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -173,6 +185,13 @@
       </dependency>
 
       <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
         <groupId>javax.money</groupId>
         <artifactId>money-api</artifactId>
         <version>1.0.3</version>
@@ -211,9 +230,15 @@
       </dependency>
 
       <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>27.1-jre</version>
+        <version>28.1-jre</version>
       </dependency>
 
       <dependency>
@@ -235,9 +260,7 @@
 
   <build>
 
-    <!-- All plugin versions and default config is defined
-          in the pluginManagement section.
-     -->
+    <!-- All plugin versions and default config is defined in the pluginManagement section. -->
 
     <pluginManagement>
       <plugins>

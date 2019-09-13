@@ -23,7 +23,7 @@
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
-      <artifactId>codec-framework</artifactId>
+      <artifactId>codecs-framework</artifactId>
     </dependency>
     <dependency>
       <groupId>org.immutables</groupId>
