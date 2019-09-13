@@ -64,7 +64,7 @@ public class StreamClientTest {
   private String interledgerNodeBaseURI;
 
   @Rule
-  public GenericContainer interledgerNode = new GenericContainer<>("nhartner:interledger-rs") // FIXME use official interledger-rs image
+  public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledger-rs") // FIXME use official interledger-rs image
       .withExposedPorts(7770)
       .withCommand("--admin_auth_token " + AUTH_TOKEN + " " +
           "--ilp_address " + ILP_ADDRESS + " " +
