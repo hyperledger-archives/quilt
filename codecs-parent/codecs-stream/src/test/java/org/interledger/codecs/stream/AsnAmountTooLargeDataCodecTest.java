@@ -20,8 +20,7 @@
 
  package org.interledger.codecs.stream;
 
- import static org.hamcrest.MatcherAssert.assertThat;
- import static org.hamcrest.core.Is.is;
+ import static org.assertj.core.api.Assertions.assertThat;
 
  import org.interledger.encoding.asn.framework.CodecContext;
  import org.interledger.stream.AmountTooLargeErrorData;
@@ -142,6 +141,6 @@
      ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
      final AmountTooLargeErrorData decodedErrorData = context.read(AmountTooLargeErrorData.class, byteArrayInputStream);
 
-     assertThat(decodedErrorData, is(this.errorData));
+     assertThat(decodedErrorData).isEqualTo(this.errorData);
    }
  }

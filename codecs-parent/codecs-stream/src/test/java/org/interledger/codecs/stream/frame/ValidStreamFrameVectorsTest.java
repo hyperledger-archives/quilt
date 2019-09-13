@@ -20,8 +20,7 @@ package org.interledger.codecs.stream.frame;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.codecs.stream.frame.helpers.StreamFrameTestVector;
@@ -214,14 +213,13 @@ public class ValidStreamFrameVectorsTest {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     StreamCodecContextFactory.oer().write(frameFromTestVectorFile, byteArrayOutputStream);
 
-    assertThat(Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray()),
-        is(streamFrameTestVector.expectedAsn1OerBytes()));
+    assertThat(Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray()))
+        .isEqualTo(streamFrameTestVector.expectedAsn1OerBytes());
 
     // Read the bytes, and ensure they match.
-
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
     final StreamFrame decodedStreamFrame = StreamCodecContextFactory.oer()
         .read(StreamFrame.class, byteArrayInputStream);
-    assertThat(decodedStreamFrame, is(frameFromTestVectorFile));
+    assertThat(decodedStreamFrame).isEqualTo(frameFromTestVectorFile);
   }
 }

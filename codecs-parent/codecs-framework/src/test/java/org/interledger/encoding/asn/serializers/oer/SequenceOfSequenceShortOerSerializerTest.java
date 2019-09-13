@@ -20,8 +20,6 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
@@ -41,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link Short}.
@@ -118,7 +116,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
     for (short i = 0; i < inputValue.length; i++) {
       TestSequence sequence = actualValue.get(i);
       for (short j = 0; j < inputValue[i].length; j++) {
-        assertThat(sequence.getNumbers()[j], is(inputValue[i][j]));
+        assertThat(sequence.getNumbers()[j]).isEqualTo(inputValue[i][j]);
       }
     }
 
@@ -132,7 +130,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
       sequences.add(i, new TestSequence(inputValue[i]));
     }
     codecContext.write(sequences, byteArrayOutputStream);
-    assertThat(byteArrayOutputStream.toByteArray(), is(asn1OerBytes));
+    assertThat(byteArrayOutputStream.toByteArray()).isEqualTo(asn1OerBytes);
   }
 
   @Test
@@ -144,7 +142,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
       sequences.add(i, new TestSequence(inputValue[i]));
     }
     codecContext.write(sequences, byteArrayOutputStream);
-    assertThat(byteArrayOutputStream.toByteArray(), is(asn1OerBytes));
+    assertThat(byteArrayOutputStream.toByteArray()).isEqualTo(asn1OerBytes);
 
     // Read...
     final ByteArrayInputStream byteArrayInputStream =
@@ -155,7 +153,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
     // Write...
     final ByteArrayOutputStream byteArrayOutputStream2 = new ByteArrayOutputStream();
     codecContext.write(decodedValue, byteArrayOutputStream2);
-    assertThat(byteArrayOutputStream2.toByteArray(), is(asn1OerBytes));
+    assertThat(byteArrayOutputStream2.toByteArray()).isEqualTo(asn1OerBytes);
   }
 
   /**

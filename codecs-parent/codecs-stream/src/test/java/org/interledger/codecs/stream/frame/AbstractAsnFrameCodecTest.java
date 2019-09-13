@@ -20,12 +20,11 @@
 
  package org.interledger.codecs.stream.frame;
 
- import static org.hamcrest.CoreMatchers.is;
- import static org.hamcrest.MatcherAssert.assertThat;
+ import static org.assertj.core.api.Assertions.assertThat;
 
  import org.interledger.codecs.stream.StreamCodecContextFactory;
  import org.interledger.encoding.asn.framework.CodecContext;
- import org.interledger.stream.frames.ConnectionNewAddressFrame;
+ import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
  import org.interledger.stream.frames.StreamFrame;
 
  import org.junit.Test;
@@ -34,21 +33,25 @@
  import java.io.ByteArrayInputStream;
  import java.io.ByteArrayOutputStream;
  import java.io.IOException;
+ import java.util.Objects;
 
  /**
   * Abstract helper class for all StreamFrame Codec tests.
   */
  public abstract class AbstractAsnFrameCodecTest<T extends StreamFrame> {
 
+   private final Class<T> clazz;
    // first data value (0) is default
    @Parameter
    public T frame;
 
    /**
-    * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that this context call
-    * specifies the type, whereas the test below determines the type from the payload.
+    * Required-args Constructor.
+    * @param clazz A {@link Class} of type `T` that can be used to read from the codec.
     */
-   public abstract void testIndividualRead() throws IOException;
+   protected AbstractAsnFrameCodecTest(final Class<T> clazz) {
+     this.clazz = Objects.requireNonNull(clazz);
+   }
 
    /**
     * The primary difference between this test and {@link #testIndividualRead()} is that this context determines the ipr
@@ -60,8 +63,8 @@
      final ByteArrayInputStream asn1OerFrameBytes = constructFrameBytes();
 
      final StreamFrame decodedFrame = context.read(StreamFrame.class, asn1OerFrameBytes);
-     assertThat(decodedFrame.getClass().getName(), is(frame.getClass().getName()));
-     assertThat(decodedFrame, is(frame));
+     assertThat(decodedFrame.getClass().getName()).isEqualTo(frame.getClass().getName());
+     assertThat(decodedFrame).isEqualTo(frame);
    }
 
    protected ByteArrayInputStream constructFrameBytes() throws IOException {
@@ -71,6 +74,19 @@
      context.write(frame, outputStream);
 
      return new ByteArrayInputStream(outputStream.toByteArray());
+   }
+
+   /**
+    * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that this context call
+    * specifies the type, whereas the test below determines the type from the payload.
+    */
+   @Test
+   public void testIndividualRead() throws IOException {
+     final CodecContext context = StreamCodecContextFactory.oer();
+     final ByteArrayInputStream asn1OerFrameBytes = constructFrameBytes();
+
+     final T frame = context.read(clazz, asn1OerFrameBytes);
+     assertThat(frame).isEqualTo(frame);
    }
 
  }

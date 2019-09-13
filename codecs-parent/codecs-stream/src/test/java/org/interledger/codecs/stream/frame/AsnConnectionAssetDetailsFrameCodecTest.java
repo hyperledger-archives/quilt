@@ -20,20 +20,12 @@
 
  package org.interledger.codecs.stream.frame;
 
- import static org.hamcrest.MatcherAssert.assertThat;
- import static org.hamcrest.core.Is.is;
-
- import org.interledger.codecs.stream.StreamCodecContextFactory;
- import org.interledger.encoding.asn.framework.CodecContext;
  import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 
- import org.junit.Test;
  import org.junit.runner.RunWith;
  import org.junit.runners.Parameterized;
  import org.junit.runners.Parameterized.Parameters;
 
- import java.io.ByteArrayInputStream;
- import java.io.IOException;
  import java.util.Arrays;
  import java.util.Collection;
 
@@ -42,6 +34,10 @@
   */
  @RunWith(Parameterized.class)
  public class AsnConnectionAssetDetailsFrameCodecTest extends AbstractAsnFrameCodecTest<ConnectionAssetDetailsFrame> {
+
+   public AsnConnectionAssetDetailsFrameCodecTest() {
+     super(ConnectionAssetDetailsFrame.class);
+   }
 
    /**
     * The data for this test...
@@ -142,20 +138,6 @@
                  .build()
          },
      });
-   }
-
-   /**
-    * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that this context call
-    * specifies the type, whereas the test below determines the type from the payload.
-    */
-   @Test
-   @Override
-   public void testIndividualRead() throws IOException {
-     final CodecContext context = StreamCodecContextFactory.oer();
-     final ByteArrayInputStream asn1OerFrameBytes = constructFrameBytes();
-
-     final ConnectionAssetDetailsFrame frame = context.read(ConnectionAssetDetailsFrame.class, asn1OerFrameBytes);
-     assertThat(frame, is(frame));
    }
 
  }
