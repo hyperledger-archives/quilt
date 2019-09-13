@@ -34,6 +34,8 @@ import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
+import org.interledger.encoding.asn.codecs.AsnUintCodec;
+import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
 import org.interledger.encoding.asn.serializers.oer.AsnCharStringOerSerializer;
@@ -73,7 +75,8 @@ public class CodecContextFactory {
         .register(AsnOctetStringBasedObjectCodec.class, new AsnOctetStringOerSerializer())
         .register(AsnSequenceCodec.class, new AsnSequenceOerSerializer())
         .register(AsnSequenceOfSequenceCodec.class, new AsnSequenceOfSequenceOerSerializer())
-        //.register(AsnUintCodec, new AsnOctetStringOerSerializer())
+        .register(AsnUintCodec.class, new AsnOctetStringOerSerializer())
+        .register(AsnUintCodecUL.class, new AsnOctetStringOerSerializer())
         .register(AsnUint8Codec.class, new AsnOctetStringOerSerializer())
         .register(AsnUint16Codec.class, new AsnOctetStringOerSerializer())
         .register(AsnUint32Codec.class, new AsnOctetStringOerSerializer())

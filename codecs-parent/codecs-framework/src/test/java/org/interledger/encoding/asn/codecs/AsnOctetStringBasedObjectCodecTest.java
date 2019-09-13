@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ package org.interledger.encoding.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.encoding.asn.framework.CodecException;
 
@@ -37,7 +36,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     final AsnOctetStringBasedObjectCodec codec = createCodec(AsnSizeConstraint.UNCONSTRAINED);
     final byte[] bytes = new byte[1];
     codec.setBytes(bytes);
-    assertThat(codec.getBytes(), is(bytes));
+    assertThat(codec.getBytes()).isEqualTo(bytes);
   }
 
   @Test
@@ -45,7 +44,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     final AsnOctetStringBasedObjectCodec codec = createCodec(new AsnSizeConstraint(0));
     final byte[] bytes = new byte[0];
     codec.setBytes(bytes);
-    assertThat(codec.getBytes(), is(bytes));
+    assertThat(codec.getBytes()).isEqualTo(bytes);
   }
 
   @Test(expected = CodecException.class)
@@ -55,7 +54,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     try {
       codec.setBytes(bytes);
     } catch (CodecException e) {
-      assertThat(e.getMessage(), is("Invalid octet string length. Expected < 1, got 2"));
+      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected < 1, got 2");
       throw e;
     }
   }
@@ -67,7 +66,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     try {
       codec.setBytes(bytes);
     } catch (CodecException e) {
-      assertThat(e.getMessage(), is("Invalid octet string length. Expected 1, got 2"));
+      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected 1, got 2");
       throw e;
     }
   }
@@ -79,7 +78,8 @@ public class AsnOctetStringBasedObjectCodecTest {
     try {
       codec.setBytes(bytes);
     } catch (CodecException e) {
-      assertThat(e.getMessage(), is("Invalid octet string length. Expected > 1, got 0"));
+
+      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected > 1, got 0");
       throw e;
     }
   }
@@ -91,7 +91,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     try {
       codec.setBytes(bytes);
     } catch (CodecException e) {
-      assertThat(e.getMessage(), is("Invalid octet string length. Expected 1, got 0"));
+      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected 1, got 0");
       throw e;
     }
   }
@@ -102,12 +102,11 @@ public class AsnOctetStringBasedObjectCodecTest {
     final AsnOctetStringBasedObjectCodec codec2 = createCodec(new AsnSizeConstraint(1));
     final AsnOctetStringBasedObjectCodec codec3 = createCodec(new AsnSizeConstraint(0));
 
-    assertThat(codec1, is(codec2));
-    assertThat(codec1.equals(codec2), is(true));
-    assertThat(codec2.equals(codec1), is(true));
-    assertThat(codec1.equals(codec3), is(false));
-    assertThat(codec2.equals(codec3), is(false));
-    assertThat(codec3.equals(codec1), is(false));
+    assertThat(codec1).isEqualTo(codec2);
+    assertThat(codec3).isNotEqualTo(codec1);
+    assertThat(codec1).isNotEqualTo(codec3);
+    assertThat(codec2).isNotEqualTo(codec3);
+    assertThat(codec3).isNotEqualTo(codec2);
   }
 
   private AsnOctetStringBasedObjectCodec createCodec(AsnSizeConstraint constraint) {

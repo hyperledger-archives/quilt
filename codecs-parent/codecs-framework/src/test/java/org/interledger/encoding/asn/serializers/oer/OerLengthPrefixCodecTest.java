@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.io.BaseEncoding;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,10 +46,9 @@ public class OerLengthPrefixCodecTest {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param expectedPayloadLength An integer representing the length of a payload that should be
-   *                              encoded as a length-prefix.
-   * @param asn1OerBytes          The expected value, in binary, of the supplied {@code
-   *                              expectedPayloadLength}.
+   * @param expectedPayloadLength An integer representing the length of a payload that should be encoded as a
+   *                              length-prefix.
+   * @param asn1OerBytes          The expected value, in binary, of the supplied {@code expectedPayloadLength}.
    */
   public OerLengthPrefixCodecTest(final int expectedPayloadLength, final byte[] asn1OerBytes) {
     this.expectedPayloadLength = expectedPayloadLength;
@@ -109,7 +106,7 @@ public class OerLengthPrefixCodecTest {
     // This stream allows the codec to read the asn1Bytes...
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(this.asn1OerBytes);
     final int actualPayloadLength = OerLengthSerializer.readLength(inputStream);
-    assertThat(actualPayloadLength, is(expectedPayloadLength));
+    assertThat(actualPayloadLength).isEqualTo(expectedPayloadLength);
   }
 
   @Test
@@ -117,7 +114,7 @@ public class OerLengthPrefixCodecTest {
     // Allow the AsnObjectCodec to write to 'outputStream'
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     OerLengthSerializer.writeLength(expectedPayloadLength, outputStream);
-    Assert.assertArrayEquals(this.asn1OerBytes, outputStream.toByteArray());
+    assertThat(this.asn1OerBytes).isEqualTo(outputStream.toByteArray());
   }
 
   @Test
@@ -129,14 +126,14 @@ public class OerLengthPrefixCodecTest {
     // Read octets...
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
     final int actual = OerLengthSerializer.readLength(inputStream);
-    Assert.assertThat(actual, is(expectedPayloadLength));
+    assertThat(actual).isEqualTo(expectedPayloadLength);
 
     // Write octets again...
     final ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
     OerLengthSerializer.writeLength(actual, outputStream2);
 
     // Assert originally written bytes equals newly written bytes.
-    Assert.assertArrayEquals(outputStream.toByteArray(), outputStream2.toByteArray());
+    assertThat(outputStream.toByteArray()).isEqualTo(outputStream2.toByteArray());
   }
 
 }

@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,7 @@ package org.interledger.encoding.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.io.BaseEncoding;
 import org.junit.Before;
@@ -45,8 +44,8 @@ public class AsnUintCodecTest {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param expectedUint         The expected value, as a {@link BigInteger}, of {@code
-   *                             expectedEncodedBytes}, once encoded.
+   * @param expectedUint         The expected value, as a {@link BigInteger}, of {@code expectedEncodedBytes}, once
+   *                             encoded.
    * @param expectedEncodedBytes The expected encoded value, in bytes, of {@code expectedUint}.
    */
   public AsnUintCodecTest(
@@ -122,7 +121,7 @@ public class AsnUintCodecTest {
     try {
       codec.encode(BigInteger.valueOf(-1L));
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(), is("value must be positive or zero"));
+      assertThat(e.getMessage()).isEqualTo("value must be positive or zero");
       throw e;
     }
   }
@@ -130,18 +129,18 @@ public class AsnUintCodecTest {
   @Test
   public void decode() {
     codec.setBytes(this.expectedEncodedBytes);
-    assertThat(codec.decode(), is(this.expectedUint));
+    assertThat(codec.decode()).isEqualTo(this.expectedUint);
   }
 
   @Test
   public void encode() {
     codec.encode(expectedUint);
-    assertThat(codec.getBytes(), is(this.expectedEncodedBytes));
+    assertThat(codec.getBytes()).isEqualTo(this.expectedEncodedBytes);
   }
 
   @Test
   public void encodeThenDecode() {
     codec.encode(expectedUint);
-    assertThat(codec.decode(), is(this.expectedUint));
+    assertThat(codec.decode()).isEqualTo(this.expectedUint);
   }
 }

@@ -20,8 +20,7 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,8 +41,7 @@ public class ShortOerSerializerTest extends AbstractSerializerTest<Short> {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER
-   *                     encoding.
+   * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code intValue}.
    */
   public ShortOerSerializerTest(final short inputValue, final byte[] asn1OerBytes) {
@@ -79,11 +77,9 @@ public class ShortOerSerializerTest extends AbstractSerializerTest<Short> {
   public void write8BitUInt_Overflow() throws IOException {
     try {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      codecContext.write((short)256, byteArrayOutputStream);
+      codecContext.write((short) 256, byteArrayOutputStream);
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(),
-          is("Uint8 only supports values from 0 to 255, "
-              + "value 256 is out of range."));
+      assertThat(e.getMessage()).isEqualTo("Uint8 only supports values from 0 to 255, value 256 is out of range.");
       throw e;
     }
   }

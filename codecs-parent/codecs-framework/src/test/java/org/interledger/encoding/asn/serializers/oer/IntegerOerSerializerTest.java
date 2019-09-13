@@ -20,8 +20,7 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,8 +41,7 @@ public class IntegerOerSerializerTest extends AbstractSerializerTest<Integer> {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER
-   *                     encoding.
+   * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code intValue}.
    */
   public IntegerOerSerializerTest(final int inputValue, final byte[] asn1OerBytes) {
@@ -90,9 +88,8 @@ public class IntegerOerSerializerTest extends AbstractSerializerTest<Integer> {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       codecContext.write(65536, byteArrayOutputStream);
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage(),
-          is("Uint16 only supports values from 0 to 65535, "
-              + "value 65536 is out of range."));
+      assertThat(e.getMessage()).isEqualTo("Uint16 only supports values from 0 to 65535, "
+          + "value 65536 is out of range.");
       throw e;
     }
   }

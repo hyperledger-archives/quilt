@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,7 @@ package org.interledger.encoding.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
@@ -35,20 +33,20 @@ public class AsnSizeConstraintTest {
   public void testUnconstrained() {
     final AsnSizeConstraint constraint = AsnSizeConstraint.UNCONSTRAINED;
 
-    assertThat(constraint.isUnconstrained(), is(true));
-    assertThat(constraint.isFixedSize(), is(false));
-    assertThat(constraint.getMin(), is(0));
-    assertThat(constraint.getMax(), is(0));
+    assertThat(constraint.isUnconstrained()).isTrue();
+    assertThat(constraint.isFixedSize()).isFalse();
+    assertThat(constraint.getMin()).isEqualTo(0);
+    assertThat(constraint.getMax()).isEqualTo(0);
   }
 
   @Test
   public void isFixedSize() {
     final AsnSizeConstraint constraint = new AsnSizeConstraint(1);
 
-    assertThat(constraint.isUnconstrained(), is(false));
-    assertThat(constraint.isFixedSize(), is(true));
-    assertThat(constraint.getMin(), is(1));
-    assertThat(constraint.getMax(), is(1));
+    assertThat(constraint.isUnconstrained()).isFalse();
+    assertThat(constraint.isFixedSize()).isTrue();
+    assertThat(constraint.getMin()).isEqualTo(1);
+    assertThat(constraint.getMax()).isEqualTo(1);
   }
 
 
@@ -56,29 +54,29 @@ public class AsnSizeConstraintTest {
   public void isFixedSizeOther() {
     final AsnSizeConstraint constraint = new AsnSizeConstraint(1, 1);
 
-    assertThat(constraint.isUnconstrained(), is(false));
-    assertThat(constraint.isFixedSize(), is(true));
-    assertThat(constraint.getMin(), is(1));
-    assertThat(constraint.getMax(), is(1));
+    assertThat(constraint.isUnconstrained()).isFalse();
+    assertThat(constraint.isFixedSize()).isTrue();
+    assertThat(constraint.getMin()).isEqualTo(1);
+    assertThat(constraint.getMax()).isEqualTo(1);
   }
 
   @Test
   public void isNotFixedSize() {
     final AsnSizeConstraint constraint = new AsnSizeConstraint(1, 2);
 
-    assertThat(constraint.isUnconstrained(), is(false));
-    assertThat(constraint.isFixedSize(), is(false));
-    assertThat(constraint.getMin(), is(1));
-    assertThat(constraint.getMax(), is(2));
+    assertThat(constraint.isUnconstrained()).isFalse();
+    assertThat(constraint.isFixedSize()).isFalse();
+    assertThat(constraint.getMin()).isEqualTo(1);
+    assertThat(constraint.getMax()).isEqualTo(2);
   }
 
   @Test
   public void equalsHashCode() {
-    assertThat(AsnSizeConstraint.UNCONSTRAINED, is(AsnSizeConstraint.UNCONSTRAINED));
-    assertThat(AsnSizeConstraint.UNCONSTRAINED, is(not(new AsnSizeConstraint(1))));
+    assertThat(AsnSizeConstraint.UNCONSTRAINED).isEqualTo(AsnSizeConstraint.UNCONSTRAINED);
+    assertThat(AsnSizeConstraint.UNCONSTRAINED).isNotEqualTo(new AsnSizeConstraint(1));
 
-    assertThat(AsnSizeConstraint.UNCONSTRAINED.hashCode(), is(AsnSizeConstraint.UNCONSTRAINED.hashCode()));
-    assertThat(AsnSizeConstraint.UNCONSTRAINED.hashCode(), is(not(new AsnSizeConstraint(1).hashCode())));
+    assertThat(AsnSizeConstraint.UNCONSTRAINED.hashCode()).isEqualTo(AsnSizeConstraint.UNCONSTRAINED.hashCode());
+    assertThat(AsnSizeConstraint.UNCONSTRAINED.hashCode()).isNotEqualTo(new AsnSizeConstraint(1).hashCode());
   }
 
 }

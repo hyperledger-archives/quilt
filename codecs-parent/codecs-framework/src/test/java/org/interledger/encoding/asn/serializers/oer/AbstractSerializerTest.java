@@ -20,8 +20,7 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
@@ -67,7 +66,7 @@ public abstract class AbstractSerializerTest<T> {
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(asn1OerBytes);
     final T actualValue = codecContext.read(tClass, byteArrayInputStream);
 
-    assertThat(actualValue, is(inputValue));
+    assertThat(actualValue).isEqualTo(inputValue);
   }
 
   @Test
@@ -76,7 +75,7 @@ public abstract class AbstractSerializerTest<T> {
     codecContext.write(inputValue, byteArrayOutputStream);
 
     final byte[] actual = byteArrayOutputStream.toByteArray();
-    assertThat(actual, is(this.asn1OerBytes));
+    assertThat(actual).isEqualTo(this.asn1OerBytes);
   }
 
   @Test
@@ -84,7 +83,7 @@ public abstract class AbstractSerializerTest<T> {
     // Write...
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     codecContext.write(inputValue, byteArrayOutputStream);
-    assertThat(byteArrayOutputStream.toByteArray(), is(asn1OerBytes));
+    assertThat(byteArrayOutputStream.toByteArray()).isEqualTo(asn1OerBytes);
 
     // Read...
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
@@ -96,6 +95,6 @@ public abstract class AbstractSerializerTest<T> {
     final ByteArrayOutputStream byteArrayOutputStream2 = new ByteArrayOutputStream();
     codecContext.write(decodedValue, byteArrayOutputStream2);
 
-    assertThat(byteArrayOutputStream2.toByteArray(), is(asn1OerBytes));
+    assertThat(byteArrayOutputStream2.toByteArray()).isEqualTo(asn1OerBytes);
   }
 }

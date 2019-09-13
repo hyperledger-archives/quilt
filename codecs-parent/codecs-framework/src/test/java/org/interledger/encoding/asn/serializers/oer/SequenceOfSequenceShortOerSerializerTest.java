@@ -21,7 +21,6 @@ package org.interledger.encoding.asn.serializers.oer;
  */
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
@@ -41,6 +40,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link Short}.
