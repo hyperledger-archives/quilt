@@ -3,7 +3,9 @@ package org.interledger.stream.client;
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertEquals;
 
+import okhttp3.*;
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -24,17 +26,18 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.UnsignedLong;
-import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
 import org.zalando.problem.ProblemModule;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
@@ -45,14 +48,28 @@ import java.util.concurrent.TimeUnit;
  */
 public class StreamClientTest {
 
+  public static final String ILP_ADDRESS = "test.xpring-dev.rs1";
   private static final InterledgerAddress SENDER_ADDRESS
-      = InterledgerAddress.of("test.xpring-dev.rs1.java_stream_client");
+      = InterledgerAddress.of(ILP_ADDRESS + ".java_stream_client");
+
+  public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+
+  public static final String AUTH_TOKEN = "password";
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private Link link;
   private byte[] sharedSecret;
   private InterledgerAddress destinationAddress;
+  private String interledgerNodeBaseURI;
+
+  @Rule
+  public GenericContainer interledgerNode = new GenericContainer<>("nhartner:interledger-rs") // FIXME use official interledger-rs image
+      .withExposedPorts(7770)
+      .withCommand("--admin_auth_token " + AUTH_TOKEN + " " +
+          "--ilp_address " + ILP_ADDRESS + " " +
+          "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d " +
+          "--http_bind_address 0.0.0.0:7770");
 
   private static ObjectMapper objectMapperForTesting() {
     final ObjectMapper objectMapper = new ObjectMapper()
@@ -70,27 +87,31 @@ public class StreamClientTest {
   }
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException {
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
-    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+    logging.level(HttpLoggingInterceptor.Level.BASIC);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
-    builder.connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT));
-    builder.cookieJar(NO_COOKIES);
-    builder.connectTimeout(5000, TimeUnit.MILLISECONDS);
-    builder.readTimeout(30, TimeUnit.SECONDS);
-    builder.writeTimeout(30, TimeUnit.SECONDS);
+    OkHttpClient.Builder builder = new OkHttpClient.Builder()
+      .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
+      .cookieJar(NO_COOKIES)
+      .connectTimeout(5000, TimeUnit.MILLISECONDS)
+      .addInterceptor(logging)
+      .readTimeout(30, TimeUnit.SECONDS)
+      .writeTimeout(30, TimeUnit.SECONDS);
     OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
+    interledgerNodeBaseURI = "http://localhost:" + interledgerNode.getFirstMappedPort();
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
-            .encryptedTokenSharedSecret("password")
+            .encryptedTokenSharedSecret(AUTH_TOKEN)
             .build())
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
             .tokenSubject("java_stream_client")
-            .url(HttpUrl.parse("http://localhost:7770/ilp"))
-            .encryptedTokenSharedSecret("password")
+            .url(HttpUrl.parse(interledgerNodeBaseURI + "/ilp"))
+            .encryptedTokenSharedSecret(AUTH_TOKEN)
             .build())
         .build();
 
@@ -106,7 +127,10 @@ public class StreamClientTest {
 
     this.sharedSecret = Base64.getDecoder().decode("R5FMgJ1fOSg3SztrMwKAS9KaGJuVYAUeLstWt8ZP6mk=");
     this.destinationAddress = InterledgerAddress
-        .of("test.xpring-dev.rs1.java_stream_receiver.Khml7p2S2JrKWsOSJBTlQDWK5Wz7xiHHvKA8hqS-zHU"); // TODO: Get from SPSP
+        .of(ILP_ADDRESS + ".java_stream_receiver.Khml7p2S2JrKWsOSJBTlQDWK5Wz7xiHHvKA8hqS-zHU"); // TODO: Get from SPSP
+
+    createAccount(httpClient, "java_stream_client");
+    createAccount(httpClient, "java_stream_receiver");
   }
 
   @Test
@@ -168,4 +192,31 @@ public class StreamClientTest {
 //
 //    logger.info("Payment Sent: {}", sendMoneyResult);
  // }
+
+  private void createAccount(OkHttpClient httpClient, String accountName) throws IOException {
+    ImmutableMap<Object, Object> newAccountPayload = ImmutableMap.builder()
+      .put("ilp_address", ILP_ADDRESS + "." + accountName)
+      .put("username", accountName)
+      .put("asset_code", "XRP")
+      .put("asset_scale", 6)
+      .put("http_endpoint", "https://peer-ilp-over-http-endpoint.example/ilp")
+      .put("http_incoming_token", AUTH_TOKEN)
+      .put("http_outgoing_)token", AUTH_TOKEN)
+      .put("is_admin", false)
+      .put("min_balance", -1000000000L)
+      .put("receive_routes", false)
+      .put("send_routes", false)
+      .put("round_trip_times", 500)
+      .put("routing_relation", "Peer")
+      .build();
+
+    Request request = new Request.Builder()
+      .url(HttpUrl.parse(interledgerNodeBaseURI + "/accounts"))
+      .post(RequestBody.create(new ObjectMapper().writeValueAsString(newAccountPayload), JSON))
+      .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + AUTH_TOKEN)))
+      .build();
+    Response response = httpClient.newCall(request).execute();
+    // FIXME switch to assertj once hamcrest->assertj refactoring merged
+    assertEquals(200, response.code());
+  }
 }
