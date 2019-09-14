@@ -80,11 +80,6 @@ public interface StreamCloseFrame extends StreamFrame {
       return StreamFrameType.StreamClose;
     }
 
-    /**
-     * Human-readable string intended to give more information helpful for debugging purposes.
-     *
-     * @return
-     */
     @Override
     @Default
     public String errorMessage() {

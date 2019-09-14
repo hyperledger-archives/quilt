@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>quilt-parent</artifactId>
+    <groupId>org.interledger</groupId>
+    <version>0.18.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <name>Quilt :: Link Parent</name>
+  <artifactId>link-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>link-core</module>
+    <module>link-ilp-over-http</module>
+  </modules>
+
+</project>
