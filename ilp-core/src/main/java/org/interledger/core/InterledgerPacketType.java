@@ -23,7 +23,7 @@ public enum InterledgerPacketType {
   private final short type;
 
   InterledgerPacketType(short type) {
-    this.type = Objects.requireNonNull(type);
+    this.type = type;
   }
 
   /**
