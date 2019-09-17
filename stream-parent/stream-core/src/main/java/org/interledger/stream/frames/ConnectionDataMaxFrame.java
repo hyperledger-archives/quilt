@@ -20,16 +20,13 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
-
-import java.math.BigInteger;
+import org.interledger.core.Immutable;
 
 /**
  * Indicates that the connection was closed.
  */
+@Immutable
 public interface ConnectionDataMaxFrame extends StreamFrame {
 
   /**
@@ -52,16 +49,5 @@ public interface ConnectionDataMaxFrame extends StreamFrame {
    * @return An {@link UnsignedLong} containing the max offset.
    */
   UnsignedLong maxOffset();
-
-  @Immutable
-  abstract class AbstractConnectionDataMaxFrame implements ConnectionDataMaxFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionDataMax;
-    }
-
-  }
 
 }

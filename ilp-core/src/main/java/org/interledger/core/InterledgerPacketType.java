@@ -2,8 +2,6 @@ package org.interledger.core;
 
 import static java.lang.String.format;
 
-import java.util.Objects;
-
 /**
  * Per the IL-RFC-27, ILPv4 packets have three types: 12 for Prepare, 13 for Fulfill, and 14 for Reject. This enum
  * provides some type safety for code that might need this information.
@@ -23,7 +21,7 @@ public enum InterledgerPacketType {
   private final short type;
 
   InterledgerPacketType(short type) {
-    this.type = Objects.requireNonNull(type);
+    this.type = type;
   }
 
   /**

@@ -20,16 +20,15 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Derived;
+import org.immutables.value.Value;
+import org.interledger.core.Immutable;
 
 /**
  * <p>Packets may be received out of order so the Offset is used to indicate the correct position of the byte segment
  * in the overall stream. The first StreamData frame sent for a given stream MUST start with an Offset of zero.</p>
  */
+@Immutable
 public interface StreamDataFrame extends StreamFrame {
 
   /**
@@ -65,24 +64,9 @@ public interface StreamDataFrame extends StreamFrame {
    *
    * @return A byte array with STREAM data.
    */
+  @Value.Default
   default byte[] data() {
     return EMPTY_DATA;
-  }
-
-  @Immutable
-  abstract class AbstractStreamDataFrame implements StreamDataFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamData;
-    }
-
-    @Override
-    @Default
-    public byte[] data() {
-      return EMPTY_DATA;
-    }
   }
 
 }
