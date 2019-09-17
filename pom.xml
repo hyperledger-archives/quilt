@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.17.0-SNAPSHOT</version>
+  <version>0.18.0-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
@@ -91,7 +91,7 @@
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
-    <jackson.version>2.10.0.pr1</jackson.version>
+    <jackson.version>2.10.0.pr2</jackson.version>
   </properties>
 
   <modules>
@@ -100,6 +100,7 @@
     <module>ildcp-core</module>
     <module>jackson-datatypes</module>
     <module>codecs</module>
+    <module>stream-parent</module>
   </modules>
 
   <dependencyManagement>
@@ -108,6 +109,24 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codec-framework</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>codecs-btp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>codecs-ildcp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>codecs-ilp</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -145,6 +164,12 @@
         <groupId>${project.groupId}</groupId>
         <artifactId>ildcp-core-codecs</artifactId>
         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
       </dependency>
 
       <dependency>

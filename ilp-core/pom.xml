@@ -6,13 +6,13 @@
   <parent>
     <groupId>org.interledger</groupId>
     <artifactId>quilt-parent</artifactId>
-    <version>0.17.0-SNAPSHOT</version>
+    <version>0.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Interledger Core</name>
-  <artifactId>ilp-core</artifactId>
+  <name>Quilt :: IL-DCP Core</name>
   <description>Core libraries for implementing the Interledger suite of protocols.</description>
+  <artifactId>ilp-core</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
