@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,10 +41,10 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Integration tests for {@link SimpleStreamClient} that connects to a running ILP Connector using the information
+ * Integration tests for {@link SimpleStreamSender} that connects to a running ILP Connector using the information
  * supplied in this link, and initiates a STREAM payment.
  */
-public class SimpleStreamClientIT {
+public class SimpleStreamSenderIT {
 
   private static final InterledgerAddress SENDER_ADDRESS
       = InterledgerAddress.of("test.xpring-dev.rs1.java_stream_client");
@@ -115,11 +115,11 @@ public class SimpleStreamClientIT {
   public void sendMoney() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    StreamClient streamClient = new SimpleStreamClient(
+    StreamSender streamSender = new SimpleStreamSender(
         new JavaxStreamEncryptionService(), link
     );
 
-    final SendMoneyResult sendMoneyResult = streamClient
+    final SendMoneyResult sendMoneyResult = streamSender
         .sendMoney(sharedSecret, SENDER_ADDRESS, destinationAddress, paymentAmount).join();
 
     assertThat(sendMoneyResult.amountDelivered(), is(paymentAmount));
@@ -168,4 +168,7 @@ public class SimpleStreamClientIT {
 //
 //    logger.info("Payment Sent: {}", sendMoneyResult);
   // }
+
+  // TODO: Send too much
+  // TODO: Send too little.
 }
