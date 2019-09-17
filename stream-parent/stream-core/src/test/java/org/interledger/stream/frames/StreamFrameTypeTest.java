@@ -3,7 +3,9 @@ package org.interledger.stream.frames;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.InterledgerAddress;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,10 +34,24 @@ public class StreamFrameTypeTest {
     STREAM_DATA_BLOCKED
   );
 
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
   @Test
   public void fromCode() {
     assertThat(expected.stream().map(StreamFrameType::fromCode).collect(Collectors.toList()))
         .isEqualTo(Arrays.asList(StreamFrameType.values()));
+  }
+
+  @Test
+  public void getCode() {
+    assertThat(Arrays.stream(StreamFrameType.values()).map(StreamFrameType::code).collect(Collectors.toList())).isEqualTo(expected);
+  }
+
+  @Test
+  public void fromCodeGetSad() {
+    expectedException.expect(IllegalArgumentException.class);
+    StreamFrameType.fromCode((short) 0x17);
   }
 
   @Test
