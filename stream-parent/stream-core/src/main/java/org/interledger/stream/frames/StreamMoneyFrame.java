@@ -20,10 +20,8 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
+import org.interledger.core.Immutable;
 
 /**
  * <p>The amount of money that should go to each stream is calculated by dividing the number of shares for the given
@@ -37,6 +35,7 @@ import org.immutables.value.Value.Derived;
  * amounts down. The remainder SHOULD be allocated to the lowest-numbered open stream that has not reached its maximum
  * receive amount.</p>
  */
+@Immutable
 public interface StreamMoneyFrame extends StreamFrame {
 
   /**
@@ -77,16 +76,5 @@ public interface StreamMoneyFrame extends StreamFrame {
    * @return An {@link UnsignedLong} with the number of shares.
    */
   UnsignedLong shares();
-
-  @Immutable
-  abstract class AbstractStreamMoneyFrame implements StreamMoneyFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMoney;
-    }
-
-  }
 
 }

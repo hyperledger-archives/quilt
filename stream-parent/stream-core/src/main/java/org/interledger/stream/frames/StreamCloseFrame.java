@@ -20,11 +20,9 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Derived;
+import org.immutables.value.Value;
+import org.interledger.core.Immutable;
 
 /**
  * <p>Indicates that the Stream was closed.</p>
@@ -32,6 +30,7 @@ import org.immutables.value.Value.Derived;
  * <p>If implementations allow half-open streams, an endpoint MAY continue sending money or data for this stream after
  * receiving a StreamClose frame. Otherwise, the endpoint MUST close the stream immediately.</p>
  */
+@Immutable
 public interface StreamCloseFrame extends StreamFrame {
 
   /**
@@ -67,30 +66,9 @@ public interface StreamCloseFrame extends StreamFrame {
    *
    * @return A {@link String} with the error message.
    */
+  @Value.Default
   default String errorMessage() {
     return "";
-  }
-
-  @Immutable
-  abstract class AbstractStreamCloseFrame implements StreamCloseFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamClose;
-    }
-
-    /**
-     * Human-readable string intended to give more information helpful for debugging purposes.
-     *
-     * @return
-     */
-    @Override
-    @Default
-    public String errorMessage() {
-      return "";
-    }
-
   }
 
 }

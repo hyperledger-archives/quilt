@@ -20,10 +20,8 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
+import org.interledger.core.Immutable;
 
 /**
  * <p>Used to advertise to the other stream party that the frame sender has more data to send, but this would exceed
@@ -34,6 +32,7 @@ import org.immutables.value.Value.Derived;
  *
  * <p>Note that this frame is primarily intended for debugging purposes.</p>
  */
+@Immutable
 public interface ConnectionDataBlockedFrame extends StreamFrame {
 
   /**
@@ -56,16 +55,5 @@ public interface ConnectionDataBlockedFrame extends StreamFrame {
    * @return An {@link UnsignedLong} containing the max offset.
    */
   UnsignedLong maxOffset();
-
-  @Immutable
-  abstract class AbstractConnectionDataBlockedFrame implements ConnectionDataBlockedFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionDataBlocked;
-    }
-
-  }
 
 }

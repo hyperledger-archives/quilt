@@ -20,14 +20,13 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
+import org.interledger.core.Immutable;
 
 /**
  * Indicates that the connection was closed.
  */
+@Immutable
 public interface ConnectionStreamIdBlockedFrame extends StreamFrame {
 
   /**
@@ -51,16 +50,5 @@ public interface ConnectionStreamIdBlockedFrame extends StreamFrame {
    * @return An {@link UnsignedLong} containing the max stream id.
    */
   UnsignedLong maxStreamId();
-
-  @Immutable
-  abstract class AbstractConnectionStreamIdBlockedFrame implements ConnectionStreamIdBlockedFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionStreamIdBlocked;
-    }
-
-  }
 
 }

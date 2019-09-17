@@ -23,11 +23,10 @@ package org.interledger.stream.frames;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 
-import org.immutables.value.Value.Derived;
-
 /**
  * Indicates that the connection was closed.
  */
+@Immutable
 public interface ConnectionNewAddressFrame extends StreamFrame {
 
   /**
@@ -50,16 +49,5 @@ public interface ConnectionNewAddressFrame extends StreamFrame {
    * @return A {@link InterledgerAddress} representing the source address of the receiver.
    */
   InterledgerAddress sourceAddress();
-
-  @Immutable
-  abstract class AbstractConnectionNewAddressFrame implements ConnectionNewAddressFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionNewAddress;
-    }
-
-  }
 
 }

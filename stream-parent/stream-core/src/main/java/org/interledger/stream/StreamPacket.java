@@ -20,13 +20,11 @@ package org.interledger.stream;
  * =========================LICENSE_END==================================
  */
 
+import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
-
-import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
 
 import java.util.List;
 
@@ -61,9 +59,10 @@ import java.util.List;
  * fulfillment for the transfer, which can be used to execute all prepared transfers that were established prior to the
  * receiver accepting the payment.</p>
  */
+@Immutable
 public interface StreamPacket {
 
-  int VERSION_1 = 1;
+  short VERSION_1 = 1;
 
   /**
    * Get the default builder.
@@ -116,15 +115,5 @@ public interface StreamPacket {
    * @return A {@link List} of Stream Frames that this packet contains.
    */
   List<StreamFrame> frames();
-
-  @Immutable
-  abstract class AbstractStreamPacket implements StreamPacket {
-
-    @Derived
-    @Override
-    public short version() {
-      return (short) VERSION_1;
-    }
-  }
 
 }
