@@ -1,16 +1,12 @@
 package org.interledger.stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNull.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerFulfillment;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
-
-import java.security.SignatureException;
 
 /**
  * Unit tests for {@link StreamUtils}.
@@ -43,11 +39,11 @@ public class StreamUtilsTest {
   };
 
   @Test
-  public void generatedFulfillableFulfillment() throws SignatureException {
+  public void generatedFulfillableFulfillment() {
     InterledgerFulfillment fulfillment = StreamUtils.generatedFulfillableFulfillment(SHARED_SECRET, DATA);
 
-    assertThat(fulfillment.getPreimage(), is(FULFILLMENT));
-    assertThat(fulfillment, is(InterledgerFulfillment.of(FULFILLMENT)));
+    assertThat(fulfillment.getPreimage()).isEqualTo(FULFILLMENT);
+    assertThat(fulfillment).isEqualTo(InterledgerFulfillment.of(FULFILLMENT));
   }
 
   @Test(expected = NullPointerException.class)
@@ -56,7 +52,7 @@ public class StreamUtilsTest {
       StreamUtils.min(null, UnsignedLong.ONE);
       fail();
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is(nullValue()));
+      assertThat(e.getMessage()).isNull();
       throw e;
     }
   }
@@ -67,30 +63,30 @@ public class StreamUtilsTest {
       StreamUtils.min(UnsignedLong.ONE, null);
       fail();
     } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is(nullValue()));
+      assertThat(e.getMessage()).isNull();
       throw e;
     }
   }
 
   @Test
   public void minTests() {
-    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.ONE), is(UnsignedLong.ZERO));
-    assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE), is(UnsignedLong.ZERO));
-    assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.MAX_VALUE), is(UnsignedLong.ONE));
-    assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ONE), is(UnsignedLong.ONE));
+    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.ZERO)).isEqualTo(UnsignedLong.ZERO);
+    assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.ZERO)).isEqualTo(UnsignedLong.ZERO);
+    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.ONE)).isEqualTo(UnsignedLong.ZERO);
+    assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO)).isEqualTo(UnsignedLong.ZERO);
+    assertThat(StreamUtils.min(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE)).isEqualTo(UnsignedLong.ZERO);
+    assertThat(StreamUtils.min(UnsignedLong.ONE, UnsignedLong.MAX_VALUE)).isEqualTo(UnsignedLong.ONE);
+    assertThat(StreamUtils.min(UnsignedLong.MAX_VALUE, UnsignedLong.ONE)).isEqualTo(UnsignedLong.ONE);
   }
 
   @Test
   public void maxTests() {
-    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.ZERO), is(UnsignedLong.ZERO));
-    assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.ZERO), is(UnsignedLong.ONE));
-    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.ONE), is(UnsignedLong.ONE));
-    assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO), is(UnsignedLong.MAX_VALUE));
-    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE), is(UnsignedLong.MAX_VALUE));
-    assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.MAX_VALUE), is(UnsignedLong.MAX_VALUE));
-    assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ONE), is(UnsignedLong.MAX_VALUE));
+    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.ZERO)).isEqualTo(UnsignedLong.ZERO);
+    assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.ZERO)).isEqualTo(UnsignedLong.ONE);
+    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.ONE)).isEqualTo(UnsignedLong.ONE);
+    assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ZERO)).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE)).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.MAX_VALUE)).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ONE)).isEqualTo(UnsignedLong.MAX_VALUE);
   }
 }

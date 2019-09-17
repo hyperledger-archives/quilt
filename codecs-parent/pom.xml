@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>org.interledger</groupId>
+    <artifactId>quilt-parent</artifactId>
+    <version>0.18.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <name>Quilt :: Codecs :: Parent</name>
+  <artifactId>codecs-parent</artifactId>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>codecs-framework</module>
+    <module>codecs-btp</module>
+    <module>codecs-ildcp</module>
+    <module>codecs-ilp</module>
+    <module>codecs-stream</module>
+  </modules>
+</project>

@@ -1,7 +1,6 @@
 package org.interledger.stream.crypto;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -44,19 +43,19 @@ public class JavaxStreamEncryptionServiceTest {
   @Test
   public void testEncryptToSameRustJs() {
     byte[] encryptedValue = streamEncryptionService.encryptWithIv(SHARED_SECRET, PLAINTEXT, NONCE_IV);
-    assertThat(encryptedValue, is(CIPHERTEXT));
+    assertThat(encryptedValue).isEqualTo(CIPHERTEXT);
   }
 
   @Test
   public void testDecryptToSameAsRustJs() {
     byte[] decryptedValue = streamEncryptionService.decrypt(SHARED_SECRET, CIPHERTEXT);
-    assertThat(decryptedValue, is(PLAINTEXT));
+    assertThat(decryptedValue).isEqualTo(PLAINTEXT);
   }
 
   @Test
   public void losslesslyEncryptAndDecrypts() {
     byte[] cipherMessage = streamEncryptionService.encrypt(SHARED_SECRET, PLAINTEXT);
     byte[] decryptedValue = streamEncryptionService.decrypt(SHARED_SECRET, cipherMessage);
-    assertThat(decryptedValue, is(PLAINTEXT));
+    assertThat(decryptedValue).isEqualTo(PLAINTEXT);
   }
 }

@@ -62,7 +62,7 @@ import java.util.List;
 @Immutable
 public interface StreamPacket {
 
-  int VERSION_1 = 1;
+  short VERSION_1 = 1;
 
   /**
    * Get the default builder.
