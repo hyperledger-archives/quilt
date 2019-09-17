@@ -133,11 +133,6 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>stream-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
         <artifactId>ilp-core</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -174,6 +169,21 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>link-ilp-over-http</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-receiver</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

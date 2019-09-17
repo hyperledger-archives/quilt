@@ -16,5 +16,6 @@
   <modules>
     <module>stream-core</module>
     <module>stream-client</module>
+    <module>stream-receiver</module>
   </modules>
 </project>

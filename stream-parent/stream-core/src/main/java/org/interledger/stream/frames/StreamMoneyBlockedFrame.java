@@ -53,6 +53,8 @@ public interface StreamMoneyBlockedFrame extends StreamFrame {
 
   /**
    * Identifier of the stream this frame refers to.
+   *
+   * @return An {@link UnsignedLong} representing the stream id.
    */
   UnsignedLong streamId();
 
