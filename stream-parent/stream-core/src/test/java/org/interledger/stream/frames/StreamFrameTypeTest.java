@@ -39,6 +39,26 @@ public class StreamFrameTypeTest {
   }
 
   @Test
+  public void enforceHexValues() {
+    assertThat(expected).containsExactly(
+        (short) 0x01,
+        (short) 0x02,
+        (short) 0x03,
+        (short) 0x04,
+        (short) 0x05,
+        (short) 0x06,
+        (short) 0x07,
+        (short) 0x10,
+        (short) 0x11,
+        (short) 0x12,
+        (short) 0x13,
+        (short) 0x14,
+        (short) 0x15,
+        (short) 0x16
+    );
+  }
+
+  @Test
   public void connectionAssetDetailsFrame() throws Exception {
     ConnectionAssetDetailsFrame frame = ConnectionAssetDetailsFrame.builder()
         .sourceAssetCode("dave and busters dollars")
