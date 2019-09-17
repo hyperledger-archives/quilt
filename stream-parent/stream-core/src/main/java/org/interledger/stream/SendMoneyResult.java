@@ -1,7 +1,8 @@
 package org.interledger.stream;
 
+import org.interledger.core.Immutable;
+
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Immutable;
 
 import java.time.Duration;
 
