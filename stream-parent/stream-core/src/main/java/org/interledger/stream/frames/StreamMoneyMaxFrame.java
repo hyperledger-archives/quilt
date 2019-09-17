@@ -20,16 +20,15 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Derived;
+import org.immutables.value.Value;
+import org.interledger.core.Immutable;
 
 /**
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
  */
+@Immutable
 public interface StreamMoneyMaxFrame extends StreamFrame {
 
   /**
@@ -67,24 +66,9 @@ public interface StreamMoneyMaxFrame extends StreamFrame {
    *
    * @return An {@link UnsignedLong} with the total amount received.
    */
+  @Value.Default
   default UnsignedLong totalReceived() {
     return UnsignedLong.ZERO;
-  }
-
-  @Immutable
-  abstract class AbstractStreamMoneyMaxFrame implements StreamMoneyMaxFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamMoneyMax;
-    }
-
-    @Default
-    @Override
-    public UnsignedLong totalReceived() {
-      return UnsignedLong.ZERO;
-    }
   }
 
 }
