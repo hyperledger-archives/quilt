@@ -42,7 +42,7 @@ public class ErrorCodeTest {
   }
 
   @Test
-  public void description() {
+  public void codeAndDescription() {
     assertThat(ErrorCode.NoError.getCode()).isEqualTo((short) 0x01);
     assertThat(ErrorCode.NoError.getDescription()).isEqualTo("The stream or connection closed normally.");
     assertThat(ErrorCode.InternalError.getCode()).isEqualTo((short) 0x02);
@@ -62,4 +62,10 @@ public class ErrorCodeTest {
     assertThat(ErrorCode.ApplicationError.getCode()).isEqualTo((short) 0x09);
     assertThat(ErrorCode.ApplicationError.getDescription()).isEqualTo("The application using STREAM closed the stream or connection with an error.");
   }
+
+  @Test
+  public void testToStringFormatting() {
+    assertThat(ErrorCode.NoError.toString()).isEqualTo("ErrorCode[code=1, description='The stream or connection closed normally.']");
+  }
+
 }

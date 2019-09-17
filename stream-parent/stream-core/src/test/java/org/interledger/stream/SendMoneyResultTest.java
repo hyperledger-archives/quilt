@@ -1,0 +1,23 @@
+package org.interledger.stream;
+
+import com.google.common.primitives.UnsignedLong;
+import org.junit.Test;
+
+import java.time.Duration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class SendMoneyResultTest {
+
+  @Test
+  public void totalPackets() {
+    SendMoneyResult result = SendMoneyResult.builder()
+        .originalAmount(UnsignedLong.ZERO)
+        .amountDelivered(UnsignedLong.ZERO)
+        .numFulfilledPackets(10)
+        .numRejectPackets(5)
+        .sendMoneyDuration(Duration.ZERO)
+        .build();
+    assertThat(result.totalPackets()).isEqualTo(15);
+  }
+}
