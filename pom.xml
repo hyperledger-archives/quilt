@@ -92,6 +92,7 @@
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
     <jackson.version>2.10.0.pr2</jackson.version>
+    <okhttp.version>4.2.0</okhttp.version>
   </properties>
 
   <modules>
@@ -210,7 +211,12 @@
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp</artifactId>
-        <version>4.1.0</version>
+        <version>${okhttp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>logging-interceptor</artifactId>
+        <version>${okhttp.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.money</groupId>

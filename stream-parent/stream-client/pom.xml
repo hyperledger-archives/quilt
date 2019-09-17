@@ -74,6 +74,10 @@
       <artifactId>okhttp</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.zalando</groupId>
       <artifactId>jackson-datatype-problem</artifactId>
     </dependency>
@@ -104,6 +108,12 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.12.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
