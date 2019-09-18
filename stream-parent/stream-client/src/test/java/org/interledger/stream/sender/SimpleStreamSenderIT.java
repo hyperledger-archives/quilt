@@ -12,6 +12,8 @@ import org.interledger.link.http.IlpOverHttpLinkSettings.AuthType;
 import org.interledger.link.http.IncomingLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
+import org.interledger.quilt.jackson.InterledgerModule;
+import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.StreamConnectionDetails;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
@@ -82,7 +84,8 @@ public class SimpleStreamSenderIT {
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
         .registerModule(new GuavaModule())
-        .registerModule(new ProblemModule()
+        .registerModule(new ProblemModule())
+        .registerModule(new InterledgerModule(Encoding.BASE64)
         );
 
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
