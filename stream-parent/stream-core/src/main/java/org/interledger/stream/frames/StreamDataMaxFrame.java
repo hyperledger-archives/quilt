@@ -20,15 +20,14 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
+import org.interledger.core.Immutable;
 
 /**
  * <p>The amounts in this frame are denominated in the units of the endpoint sending the frame, so the other endpoint
  * must use their calculated exchange rate to determine how much more they can send for this stream.</p>
  */
+@Immutable
 public interface StreamDataMaxFrame extends StreamFrame {
 
   /**
@@ -58,16 +57,5 @@ public interface StreamDataMaxFrame extends StreamFrame {
    * @return An {@link UnsignedLong} containing the max offset for this frame.
    */
   UnsignedLong maxOffset();
-
-  @Immutable
-  abstract class AbstractStreamDataMaxFrame implements StreamDataMaxFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamDataMax;
-    }
-
-  }
 
 }

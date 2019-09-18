@@ -22,8 +22,6 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
-import org.immutables.value.Value.Derived;
-
 import java.util.Optional;
 
 /**
@@ -32,6 +30,7 @@ import java.util.Optional;
  * <p>If implementations allow half-open connections, an endpoint MAY continue sending packets after receiving a
  * ConnectionClose frame. Otherwise, the endpoint MUST close the connection immediately.</p>
  */
+@Immutable
 public interface ConnectionCloseFrame extends StreamFrame {
 
   /**
@@ -61,16 +60,5 @@ public interface ConnectionCloseFrame extends StreamFrame {
    * @return An optionally present error message as a {@link String}.
    */
   Optional<String> errorMessage();
-
-  @Immutable
-  abstract class AbstractConnectionCloseFrame implements ConnectionCloseFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionClose;
-    }
-
-  }
 
 }
