@@ -91,7 +91,7 @@
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
-    <jackson.version>2.10.0.pr2</jackson.version>
+    <jackson.version>2.9.9</jackson.version>
   </properties>
 
   <modules>
@@ -99,9 +99,9 @@
     <module>btp-core</module>
     <module>ildcp-core</module>
     <module>link-parent</module>
-    <module>stream-parent</module>
-    <module>jackson-datatypes</module>
     <module>codecs-parent</module>
+    <module>jackson-datatypes</module>
+    <module>stream-parent</module>
   </modules>
 
   <dependencyManagement>
@@ -149,6 +149,16 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>stream-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-receiver</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
