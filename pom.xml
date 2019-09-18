@@ -346,7 +346,9 @@
             <consoleOutput>true</consoleOutput>
             <linkXRef>false</linkXRef>
             <excludes>**/generated-sources/**/*</excludes>
-            <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
+            <sourceDirectories>
+              <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+            </sourceDirectories>
           </configuration>
           <dependencies>
             <!-- Update Checkstyle version used -->
