@@ -18,8 +18,7 @@ import java.util.function.Supplier;
 public interface Link<L extends LinkSettings> extends LinkSender {
 
   /**
-   * <p>A unique identifier for this {@link Link}. This value is generally set only once, (e.g., in a Connector to
-   * correlate a Link to an account identifier) so that the same link can be referenced across requests.</p>
+   * <p>A unique identifier for this {@link Link} so that the same link can be referenced across requests.</p>
    *
    * <p>Note that this value is non-optional because even though an account operating on a Link may lazily load its
    * Interledger address, a Link will always have an Id because it always corresponds to a single account, which always
