@@ -38,7 +38,7 @@ public interface Link<L extends LinkSettings> extends LinkSender {
   void setLinkId(LinkId linkId);
 
   /**
-   * A supplier fori the ILP address of this node operator. This value may be empty, for example, in cases where the
+   * A supplier for the ILP address of this node operator. This value may be empty, for example, in cases where the
    * Link obtains its address from a parent node using IL-DCP.
    *
    * @return A {@link Supplier} of an optioanally-present {@link InterledgerAddress}.
