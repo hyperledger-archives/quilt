@@ -82,7 +82,7 @@ public class SimpleStreamSender implements StreamSender {
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    * @param executorService         executorService to run the payments
    */
-  public SimpleStreamClient(
+  public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
   ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);

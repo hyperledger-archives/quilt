@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,8 +25,10 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -45,10 +47,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.zalando.problem.ProblemModule;
 
 /**
- * Integration tests for {@link SimpleStreamClient} that connects to a running ILP Connector using the information
+ * Integration tests for {@link org.interledger.stream.sender.SimpleStreamSender} that connects to a running ILP Connector using the information
  * supplied in this link, and initiates a STREAM payment.
  */
-public class SimpleStreamClientIT {
+public class SimpleStreamSenderIT {
 
   public static final String ILP_ADDRESS = "test.xpring-dev.rs1";
   private static final String RECEIVER_ACCOUNT = "java_stream_receiver";
@@ -74,7 +76,9 @@ public class SimpleStreamClientIT {
   private InterledgerRustNodeClient nodeClient;
 
   private static ObjectMapper objectMapperForTesting() {
-    final ObjectMapper objectMapper = new ObjectMapper()
+    final ObjectMapper objectMapper = JsonMapper.builder()
+        .enable(JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS)
+        .build()
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
         .registerModule(new GuavaModule())
@@ -82,7 +86,6 @@ public class SimpleStreamClientIT {
         );
 
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    objectMapper.configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, true);
     objectMapper.configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true);
 
     return objectMapper;
@@ -139,11 +142,11 @@ public class SimpleStreamClientIT {
   public void sendMoney() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    StreamClient streamClient = new SimpleStreamClient(
+    StreamSender streamSender = new SimpleStreamSender(
         new JavaxStreamEncryptionService(), link
     );
 
-    final SendMoneyResult sendMoneyResult = streamClient
+    final SendMoneyResult sendMoneyResult = streamSender
         .sendMoney(Base64.getDecoder().decode(streamConnectionDetails.sharedSecret()),
             SENDER_ADDRESS,
             streamConnectionDetails.destinationAddress(),
@@ -162,13 +165,13 @@ public class SimpleStreamClientIT {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
     int parallelism = 20;
     int sendCount = 100;
-    StreamClient streamClient = new SimpleStreamClient(new JavaxStreamEncryptionService(), link);
+    StreamSender streamSender = new SimpleStreamSender(new JavaxStreamEncryptionService(), link);
     BigDecimal initialBalance = nodeClient.getBalance(RECEIVER_ACCOUNT);
 
     new ForkJoinPool(parallelism).submit(() -> {
       IntStream.range(0, sendCount).parallel().forEach((taskId) -> {
         logger.info("Running task " + taskId);
-        final SendMoneyResult sendMoneyResult = streamClient
+        final SendMoneyResult sendMoneyResult = streamSender
             .sendMoney(Base64.getDecoder().decode(streamConnectionDetails.sharedSecret()),
                 SENDER_ADDRESS,
                 streamConnectionDetails.destinationAddress(),

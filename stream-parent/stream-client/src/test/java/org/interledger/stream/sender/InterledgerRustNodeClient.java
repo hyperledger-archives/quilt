@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import org.interledger.stream.ImmutableStreamConnectionDetails;
