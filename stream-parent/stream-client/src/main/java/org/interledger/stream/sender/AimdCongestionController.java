@@ -41,7 +41,7 @@ public class AimdCongestionController implements CongestionController {
   private AtomicReference<UnsignedLong> amountInFlight;
 
   /**
-   * The current maximum packet size that will be used
+   * The current maximum packet size that will be used.
    */
   private Optional<UnsignedLong> maxPacketAmount;
 
