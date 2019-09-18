@@ -20,6 +20,7 @@
 
  package org.interledger.codecs.stream.frame;
 
+ import org.interledger.stream.crypto.Random;
  import org.interledger.stream.frames.StreamDataFrame;
 
  import com.google.common.primitives.UnsignedLong;
@@ -132,36 +133,9 @@
              StreamDataFrame.builder()
                  .streamId(UnsignedLong.ONE)
                  .offset(UnsignedLong.MAX_VALUE)
-                 .data((byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9,
-                     (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1,
-                     (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2,
-                     (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3,
-                     (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4,
-                     (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5,
-                     (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6,
-                     (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7,
-                     (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8,
-                     (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9,
-                     (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1,
-                     (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2,
-                     (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3,
-                     (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4,
-                     (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5,
-                     (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6,
-                     (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7,
-                     (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8,
-                     (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9,
-                     (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1,
-                     (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2,
-                     (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3,
-                     (byte) 4, (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4,
-                     (byte) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5,
-                     (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6,
-                     (byte) 7, (byte) 8, (byte) 9, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6, (byte) 7)
+                 .data(Random.randBytes(512))
                  .build()
          },
-
-
      });
    }
 

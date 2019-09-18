@@ -9,10 +9,10 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>stream-client</artifactId>
 
   <name>Quilt :: STREAM :: Client</name>
   <description>Libraries for the STREAM client.</description>
+  <artifactId>stream-client</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>

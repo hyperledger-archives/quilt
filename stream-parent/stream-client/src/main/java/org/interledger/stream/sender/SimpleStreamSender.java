@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
 import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
@@ -47,13 +47,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * <p>A simple implementation of {@link StreamClient} that opens a STREAM connection, sends money, and then closes the
+ * <p>A simple implementation of {@link StreamSender} that opens a STREAM connection, sends money, and then closes the
  * connection, yielding a response.</p>
  *
  * <p>Note that this implementation does not currently support sending data, which is defined in the STREAM
  * protocol.</p>
  */
-public class SimpleStreamClient implements StreamClient {
+public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
@@ -67,7 +67,7 @@ public class SimpleStreamClient implements StreamClient {
    *                                sender and receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    */
-  public SimpleStreamClient(
+  public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService, final Link link
   ) {
     this(streamEncryptionService, link, Executors.newCachedThreadPool());
@@ -242,7 +242,7 @@ public class SimpleStreamClient implements StreamClient {
           try {
             Thread.sleep(100);
           } catch (InterruptedException e) {
-            throw new StreamClientException(e.getMessage(), e);
+            throw new StreamSenderException(e.getMessage(), e);
           }
           continue;
         }
@@ -357,7 +357,7 @@ public class SimpleStreamClient implements StreamClient {
         final byte[] streamPacketBytes = baos.toByteArray();
         return streamEncryptionService.encrypt(sharedSecret, streamPacketBytes);
       } catch (IOException e) {
-        throw new StreamClientException(e.getMessage(), e);
+        throw new StreamSenderException(e.getMessage(), e);
       }
     }
 
@@ -382,7 +382,7 @@ public class SimpleStreamClient implements StreamClient {
       try {
         return streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
       } catch (IOException e) {
-        throw new StreamClientException(e.getMessage(), e);
+        throw new StreamSenderException(e.getMessage(), e);
       }
     }
 
@@ -458,7 +458,7 @@ public class SimpleStreamClient implements StreamClient {
           break;
         }
         default: {
-          throw new StreamClientException(String.format("Packet was rejected. rejectPacket=%s", rejectPacket));
+          throw new StreamSenderException(String.format("Packet was rejected. rejectPacket=%s", rejectPacket));
         }
       }
     }

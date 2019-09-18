@@ -22,11 +22,10 @@ package org.interledger.stream.frames;
 
 import org.interledger.core.Immutable;
 
-import org.immutables.value.Value.Derived;
-
 /**
  * A STREAM frame for propagating asset details for a Connection.
  */
+@Immutable
 public interface ConnectionAssetDetailsFrame extends StreamFrame {
 
   /**
@@ -56,16 +55,5 @@ public interface ConnectionAssetDetailsFrame extends StreamFrame {
    * @return A {@link Short}.
    */
   short sourceAssetScale();
-
-  @Immutable
-  abstract class AbstractConnectionAssetDetailsFrame implements ConnectionAssetDetailsFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.ConnectionAssetDetails;
-    }
-
-  }
 
 }

@@ -51,9 +51,8 @@ public class AsnStreamPacketCodec extends AsnSequenceCodec<StreamPacket> {
   @Override
   public StreamPacket decode() {
     return StreamPacket.builder()
-        // ignore version
+        // ignore version at index 0.
         .interledgerPacketType(InterledgerPacketType.fromCode(getValueAt(1)))
-        // TODO: Remove this cast once https://github.com/hyperledger/quilt/issues/201 is fixed.
         .sequence(getValueAt(2))
         .prepareAmount(getValueAt(3))
         .frames(getValueAt(4))

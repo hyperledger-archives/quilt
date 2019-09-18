@@ -8,6 +8,7 @@ import com.google.common.primitives.UnsignedLong;
  * An error returned by a Connector when a packet amount is too large.  Each of the following should be included as the
  * `data` field in an ILP Reject packet.
  */
+@Immutable
 public interface AmountTooLargeErrorData {
 
   static AmountTooLargeErrorDataBuilder builder() {
@@ -28,8 +29,4 @@ public interface AmountTooLargeErrorData {
    */
   UnsignedLong maximumAmount();
 
-  @Immutable
-  abstract class AbstractAmountTooLargeErrorData implements AmountTooLargeErrorData {
-
-  }
 }

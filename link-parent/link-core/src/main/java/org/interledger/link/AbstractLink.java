@@ -33,7 +33,7 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
   private final AtomicReference<LinkHandler> linkHandlerAtomicReference = new AtomicReference<>();
 
   // Non-final for late-binding...
-  private LinkId linkId;
+  private final AtomicReference<LinkId> linkId = new AtomicReference<>();
 
   /**
    * Required-args Constructor.
@@ -52,17 +52,15 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
 
   @Override
   public LinkId getLinkId() {
-    if (linkId == null) {
+    if (linkId.get() == null) {
       throw new IllegalStateException("The LinkId must be set before using a Link");
     }
-    return linkId;
+    return linkId.get();
   }
 
   @Override
   public void setLinkId(final LinkId linkId) {
-    if (this.linkId == null) {
-      this.linkId = Objects.requireNonNull(linkId);
-    } else {
+    if (!this.linkId.compareAndSet(null, Objects.requireNonNull(linkId))) {
       throw new IllegalStateException("LinkId may only be set once");
     }
   }

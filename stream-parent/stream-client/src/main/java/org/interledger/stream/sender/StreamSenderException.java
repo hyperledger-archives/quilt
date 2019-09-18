@@ -1,14 +1,14 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import org.interledger.stream.StreamException;
 
-public class StreamClientException extends StreamException {
+public class StreamSenderException extends StreamException {
 
   /**
    * Constructs a new runtime exception with {@code null} as its detail message.  The cause is not initialized, and may
    * subsequently be initialized by a call to {@link #initCause}.
    */
-  public StreamClientException() {
+  public StreamSenderException() {
     super();
   }
 
@@ -19,7 +19,7 @@ public class StreamClientException extends StreamException {
    * @param message the detail message. The detail message is saved for later retrieval by the {@link #getMessage()}
    *                method.
    */
-  public StreamClientException(String message) {
+  public StreamSenderException(String message) {
     super(message);
   }
 
@@ -34,7 +34,7 @@ public class StreamClientException extends StreamException {
    *
    * @since 1.4
    */
-  public StreamClientException(String message, Throwable cause) {
+  public StreamSenderException(String message, Throwable cause) {
     super(message, cause);
   }
 
@@ -49,7 +49,7 @@ public class StreamClientException extends StreamException {
    *
    * @since 1.4
    */
-  public StreamClientException(Throwable cause) {
+  public StreamSenderException(Throwable cause) {
     super(cause);
   }
 
@@ -65,7 +65,7 @@ public class StreamClientException extends StreamException {
    *
    * @since 1.7
    */
-  protected StreamClientException(String message, Throwable cause, boolean enableSuppression,
+  protected StreamSenderException(String message, Throwable cause, boolean enableSuppression,
       boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }

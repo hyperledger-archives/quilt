@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -11,7 +11,7 @@ import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 import org.interledger.stream.AmountTooLargeErrorData;
-import org.interledger.stream.client.AimdCongestionController.CongestionState;
+import org.interledger.stream.sender.AimdCongestionController.CongestionState;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
