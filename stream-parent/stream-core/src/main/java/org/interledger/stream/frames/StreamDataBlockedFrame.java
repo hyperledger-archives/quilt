@@ -20,14 +20,13 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Derived;
+import org.interledger.core.Immutable;
 
 /**
  * A STREAM frame used to indicate that data has been blocked.
  */
+@Immutable
 public interface StreamDataBlockedFrame extends StreamFrame {
 
   /**
@@ -57,16 +56,5 @@ public interface StreamDataBlockedFrame extends StreamFrame {
    * @return An {@link UnsignedLong} containing the max offset.
    */
   UnsignedLong maxOffset();
-
-  @Immutable
-  abstract class AbstractStreamDataBlockedFrame implements StreamDataBlockedFrame {
-
-    @Derived
-    @Override
-    public StreamFrameType streamFrameType() {
-      return StreamFrameType.StreamDataBlocked;
-    }
-
-  }
 
 }

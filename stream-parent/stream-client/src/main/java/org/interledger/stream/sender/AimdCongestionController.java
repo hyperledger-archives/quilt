@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerErrorCode;

@@ -1,4 +1,4 @@
-package org.interledger.stream.client;
+package org.interledger.stream.sender;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.SendMoneyResult;
@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md"
  */
-public interface StreamClient {
+public interface StreamSender {
 
   /**
    * Send "money" (i.e., some unit of value) from a source ILP address to a destination address.
