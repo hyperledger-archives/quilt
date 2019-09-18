@@ -70,12 +70,27 @@ public class SimpleStreamClient implements StreamClient {
   public SimpleStreamClient(
       final StreamEncryptionService streamEncryptionService, final Link link
   ) {
+    this(streamEncryptionService, link, Executors.newCachedThreadPool());
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
+   *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
+   *                                sender and receiver).
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param executorService         executorService to run the payments
+   */
+  public SimpleStreamClient(
+      final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
+  ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
 
     // Note that pools with similar properties but different details (for example, timeout parameters) may be
     // created using {@link ThreadPoolExecutor} constructors.
-    this.executorService = Executors.newCachedThreadPool();
+    this.executorService = executorService;
   }
 
   @Override

@@ -1,6 +1,7 @@
 package org.interledger.stream;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressBuilder;
 import org.interledger.stream.ImmutableStreamConnectionDetails.Builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,6 +34,8 @@ public interface StreamConnectionDetails {
    * @return An {@link InterledgerAddress} that can receive and fulfill ILPv4 packets.
    */
   @JsonProperty("destination_account")
+  @JsonSerialize(as = InterledgerAddressBuilder.ImmutableInterledgerAddress.class)
+  @JsonDeserialize(as = InterledgerAddressBuilder.ImmutableInterledgerAddress.class)
   InterledgerAddress destinationAddress();
 
   /**

@@ -308,7 +308,8 @@ public interface InterledgerAddress {
   @Value.Immutable
   @Value.Style(
       typeBuilder = "*Builder",
-      visibility = Value.Style.ImplementationVisibility.PRIVATE,
+      implementationNestedInBuilder = true,
+      visibility = Value.Style.ImplementationVisibility.PUBLIC, // needs to be visible for jackson to use
       builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
       defaults = @Value.Immutable(intern = true))
   abstract class AbstractInterledgerAddress implements InterledgerAddress {

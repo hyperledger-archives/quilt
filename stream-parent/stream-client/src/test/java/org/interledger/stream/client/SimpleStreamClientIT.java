@@ -2,8 +2,6 @@ package org.interledger.stream.client;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -15,40 +13,36 @@ import org.interledger.link.http.IncomingLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.stream.SendMoneyResult;
+import org.interledger.stream.StreamConnectionDetails;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.UnsignedLong;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
-import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.zalando.problem.ProblemModule;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Integration tests for {@link SimpleStreamClient} that connects to a running ILP Connector using the information
@@ -57,10 +51,10 @@ import java.util.concurrent.TimeUnit;
 public class SimpleStreamClientIT {
 
   public static final String ILP_ADDRESS = "test.xpring-dev.rs1";
+  private static final String RECEIVER_ACCOUNT = "java_stream_receiver";
+  private static final String SENDER_ACCOUNT = "java_stream_client";
   private static final InterledgerAddress SENDER_ADDRESS
-      = InterledgerAddress.of(ILP_ADDRESS + ".java_stream_client");
-
-  public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+      = InterledgerAddress.of(ILP_ADDRESS + "." + SENDER_ACCOUNT);
 
   public static final String AUTH_TOKEN = "password";
 
@@ -75,9 +69,9 @@ public class SimpleStreamClientIT {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private Link link;
-  private byte[] sharedSecret;
-  private InterledgerAddress destinationAddress;
+  private StreamConnectionDetails streamConnectionDetails;
   private String interledgerNodeBaseURI;
+  private InterledgerRustNodeClient nodeClient;
 
   private static ObjectMapper objectMapperForTesting() {
     final ObjectMapper objectMapper = new ObjectMapper()
@@ -110,6 +104,9 @@ public class SimpleStreamClientIT {
         .writeTimeout(30, TimeUnit.SECONDS);
     OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
 
+    this.nodeClient = new InterledgerRustNodeClient(httpClient, AUTH_TOKEN,
+        objectMapperForTesting(), interledgerNodeBaseURI);
+
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
@@ -133,11 +130,9 @@ public class SimpleStreamClientIT {
     );
     link.setLinkId(LinkId.of("ilpHttpLink"));
 
-    this.sharedSecret = Base64.getDecoder().decode("R5FMgJ1fOSg3SztrMwKAS9KaGJuVYAUeLstWt8ZP6mk=");
-    this.destinationAddress = InterledgerAddress
-        .of(ILP_ADDRESS + ".java_stream_receiver.Khml7p2S2JrKWsOSJBTlQDWK5Wz7xiHHvKA8hqS-zHU"); // TODO: Get from SPSP
-    createAccount(httpClient, "java_stream_client");
-    createAccount(httpClient, "java_stream_receiver");
+    nodeClient.createAccount(ILP_ADDRESS, SENDER_ACCOUNT);
+    nodeClient.createAccount(ILP_ADDRESS, RECEIVER_ACCOUNT);
+    streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_ACCOUNT);
   }
 
   @Test
@@ -149,7 +144,10 @@ public class SimpleStreamClientIT {
     );
 
     final SendMoneyResult sendMoneyResult = streamClient
-        .sendMoney(sharedSecret, SENDER_ADDRESS, destinationAddress, paymentAmount).join();
+        .sendMoney(Base64.getDecoder().decode(streamConnectionDetails.sharedSecret()),
+            SENDER_ADDRESS,
+            streamConnectionDetails.destinationAddress(),
+            paymentAmount).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
@@ -159,30 +157,34 @@ public class SimpleStreamClientIT {
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
-  private void createAccount(OkHttpClient httpClient, String accountName) throws IOException {
-    ImmutableMap<Object, Object> newAccountPayload = ImmutableMap.builder()
-        .put("ilp_address", ILP_ADDRESS + "." + accountName)
-        .put("username", accountName)
-        .put("asset_code", "XRP")
-        .put("asset_scale", 6)
-        .put("http_endpoint", "https://peer-ilp-over-http-endpoint.example/ilp")
-        .put("http_incoming_token", AUTH_TOKEN)
-        .put("http_outgoing_)token", AUTH_TOKEN)
-        .put("is_admin", false)
-        .put("min_balance", -1000000000L)
-        .put("receive_routes", false)
-        .put("send_routes", false)
-        .put("round_trip_times", 500)
-        .put("routing_relation", "Peer")
-        .build();
+  @Test
+  public void sendMoneyMultiThreaded() throws ExecutionException, InterruptedException, IOException {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
+    int parallelism = 20;
+    int sendCount = 100;
+    StreamClient streamClient = new SimpleStreamClient(new JavaxStreamEncryptionService(), link);
+    BigDecimal initialBalance = nodeClient.getBalance(RECEIVER_ACCOUNT);
 
-    Request request = new Request.Builder()
-        .url(HttpUrl.parse(interledgerNodeBaseURI + "/accounts"))
-        .post(RequestBody.create(new ObjectMapper().writeValueAsString(newAccountPayload), JSON))
-        .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + AUTH_TOKEN)))
-        .build();
-    Response response = httpClient.newCall(request).execute();
-    assertThat(response.code()).isEqualTo(200);
+    new ForkJoinPool(parallelism).submit(() -> {
+      IntStream.range(0, sendCount).parallel().forEach((taskId) -> {
+        logger.info("Running task " + taskId);
+        final SendMoneyResult sendMoneyResult = streamClient
+            .sendMoney(Base64.getDecoder().decode(streamConnectionDetails.sharedSecret()),
+                SENDER_ADDRESS,
+                streamConnectionDetails.destinationAddress(),
+                paymentAmount).join();
+
+        assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+        assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+        assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
+
+        logger.info("Task " + taskId + ", Payment Sent: {}", sendMoneyResult);
+      });
+    }).get();
+
+    BigDecimal finalBalance = nodeClient.getBalance(RECEIVER_ACCOUNT);
+    assertThat(finalBalance.subtract(initialBalance)).isEqualTo(
+        new BigDecimal(paymentAmount.longValue() * sendCount));
   }
 
 //  @Test

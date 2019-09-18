@@ -6,12 +6,14 @@ import org.interledger.stream.SendMoneyResult;
 import com.google.common.primitives.UnsignedLong;
 
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Defines a STREAM Client according to IL-RFC-29.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md"
  */
+@ThreadSafe
 public interface StreamClient {
 
   /**
