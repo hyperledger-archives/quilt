@@ -5,6 +5,7 @@ import com.google.common.hash.Hashing;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -26,7 +27,7 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
 
   private static final String CIPHER_ALGO = "AES/GCM/NoPadding";
 
-  private static final byte[] ENCRYPTION_KEY_STRING = "ilp_stream_encryption".getBytes(Charset.forName("US-ASCII"));
+  private static final byte[] ENCRYPTION_KEY_STRING = "ilp_stream_encryption".getBytes(StandardCharsets.US_ASCII);
 
   /**
    * For GCM a 12 byte random byte-array is recommend by NIST because it's faster and more secure (See page 8 in the PDF
