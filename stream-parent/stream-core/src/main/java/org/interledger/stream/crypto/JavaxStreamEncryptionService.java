@@ -119,7 +119,7 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
       byte[] cipherText = new byte[byteBuffer.remaining()];
       byteBuffer.get(cipherText);
 
-      // TODO: Fix this in JS and Rust so that the typical ordering is not wonky, and avoids this copy.
+      // TODO: See https://github.com/hyperledger/quilt/issues/237
       byte[] rearrangedCipherText = new byte[cipherText.length];
       // Rearrange the bytes so that the tag goes last (should have put it first in the JS implementation, but oh well)
       System.arraycopy(
