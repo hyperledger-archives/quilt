@@ -1,6 +1,8 @@
 package org.interledger.stream.sender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.ImmutableStreamConnectionDetails;
 import org.interledger.stream.StreamConnectionDetails;
 import java.io.IOException;
@@ -34,9 +36,9 @@ public class InterledgerRustNodeClient {
     this.baseUri = baseUri;
   }
 
-  public void createAccount(String ilpAddress, String accountName) throws IOException {
+  public void createAccount(InterledgerAddress hostIlpAddress, String accountName) throws IOException {
     ImmutableMap<Object, Object> newAccountPayload = ImmutableMap.builder()
-        .put("ilp_address", ilpAddress + "." + accountName)
+        .put("ilp_address", hostIlpAddress.with(accountName).getValue())
         .put("username", accountName)
         .put("asset_code", "XRP")
         .put("asset_scale", 6)

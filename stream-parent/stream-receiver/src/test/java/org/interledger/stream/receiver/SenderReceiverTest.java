@@ -27,10 +27,9 @@ import java.util.Base64;
  */
 public class SenderReceiverTest {
 
-  private static final InterledgerAddress SENDER_ADDRESS
-      = InterledgerAddress.of("test.xpring-dev.rs1.java_stream_client");
-  private static final InterledgerAddress RECEIVER_ADDRESS
-      = InterledgerAddress.of("test.xpring-dev.rs1.java_stream_receiver");
+  private static final InterledgerAddress ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
+  private static final InterledgerAddress SENDER_ADDRESS = ILP_ADDRESS.with("java_stream_client");
+  private static final InterledgerAddress RECEIVER_ADDRESS = ILP_ADDRESS.with("java_stream_receiver");
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -68,9 +67,9 @@ public class SenderReceiverTest {
         rightStreamReceiver.receiveMoney(incomingPreparePacket, RECEIVER_ADDRESS)
     );
 
-    this.sharedSecret = Base64.getDecoder().decode("R5FMgJ1fOSg3SztrMwKAS9KaGJuVYAUeLstWt8ZP6mk=");
-    this.destinationAddress = InterledgerAddress
-        .of("test.xpring-dev.rs1.java_stream_receiver.Khml7p2S2JrKWsOSJBTlQDWK5Wz7xiHHvKA8hqS-zHU"); // TODO: Get from SPSP
+    // TODO: Get from SPSP
+    this.sharedSecret = Base64.getDecoder().decode("uWgjtuKipUQ+kzx8aS/xUveXnHGjOT9Hw6ELPqZtMSc=");
+    this.destinationAddress = RECEIVER_ADDRESS.with("715SC6gpa4WKR0qUHSzBW2O7bon0CM7jc5o_QD5ISUg");
   }
 
   @Test
