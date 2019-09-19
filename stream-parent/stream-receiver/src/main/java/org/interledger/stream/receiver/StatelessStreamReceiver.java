@@ -76,16 +76,11 @@ public class StatelessStreamReceiver implements StreamReceiver {
     Objects.requireNonNull(receiverAddress);
 
     // Will throw if there's an error...
-    this.streamConnectionGenerator.deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
-
-    // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
-    final InterledgerFulfillment fulfillment = StreamUtils
-        .generatedFulfillableFulfillment(serverSecretSupplier.get(), preparePacket.getData());
-    final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
+    byte[] sharedSecret = this.streamConnectionGenerator.deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
 
     // Try to parse the STREAM data from the payload.
     final byte[] streamPacketBytes = streamEncryptionService
-        .decrypt(serverSecretSupplier.get(), preparePacket.getData());
+        .decrypt(sharedSecret, preparePacket.getData());
     final StreamPacket streamPacket;
     try {
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
@@ -117,6 +112,10 @@ public class StatelessStreamReceiver implements StreamReceiver {
             .build()
         ));
 
+    // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
+    final InterledgerFulfillment fulfillment = StreamUtils
+      .generatedFulfillableFulfillment(sharedSecret, preparePacket.getData());
+    final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
     // Return Fulfill or Reject Packet
     if (isFulfillable && preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) >= 0) {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
@@ -136,7 +135,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
         final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-            .encrypt(serverSecretSupplier.get(), returnableStreamPacketBytes);
+            .encrypt(sharedSecret, returnableStreamPacketBytes);
 
         return InterledgerFulfillPacket.builder()
             .fulfillment(fulfillment)
@@ -174,7 +173,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
         final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-            .encrypt(serverSecretSupplier.get(), returnableStreamPacketBytes);
+            .encrypt(sharedSecret, returnableStreamPacketBytes);
 
         return InterledgerRejectPacket.builder()
             .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
