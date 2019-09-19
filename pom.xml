@@ -91,7 +91,10 @@
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
-    <jackson.version>2.9.9</jackson.version>
+    <jackson.version>2.10.0.pr3</jackson.version>
+    <okhttp.version>4.2.0</okhttp.version>
+    <slf4j.version>1.7.28</slf4j.version>
+    <skipITs>false</skipITs>
   </properties>
 
   <modules>
@@ -104,6 +107,15 @@
     <module>stream-parent</module>
   </modules>
 
+  <dependencies>
+    <!-- Enable concrete logging in all tests -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -113,12 +125,12 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>codecs-framework</artifactId>
+        <artifactId>codecs-btp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>codecs-btp</artifactId>
+        <artifactId>codecs-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -132,8 +144,23 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.interledger</groupId>
+        <artifactId>jackson-datatypes</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-stream</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>ilp-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>ildcp-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -162,16 +189,6 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>ilp-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>ildcp-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
         <groupId>com.auth0</groupId>
         <artifactId>java-jwt</artifactId>
         <version>3.8.2</version>
@@ -180,6 +197,16 @@
         <groupId>com.auth0</groupId>
         <artifactId>jwks-rsa</artifactId>
         <version>0.8.3</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>${okhttp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>logging-interceptor</artifactId>
+        <version>${okhttp.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -198,12 +225,12 @@
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
+        <artifactId>jackson-datatype-guava</artifactId>
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-guava</artifactId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
@@ -215,16 +242,6 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>28.1-jre</version>
-      </dependency>
-      <dependency>
-        <groupId>com.squareup.okhttp3</groupId>
-        <artifactId>okhttp</artifactId>
-        <version>4.1.0</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.money</groupId>
-        <artifactId>money-api</artifactId>
-        <version>1.0.3</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -253,7 +270,13 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.28</version>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.zalando</groupId>
@@ -290,6 +313,24 @@
             <source>${maven.compiler.source}</source>
             <target>${maven.compiler.target}</target>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.20.1</version>
+          <configuration>
+            <skipITs>${skipITs}</skipITs>
+          </configuration>
+          <executions>
+            <execution>
+              <id>integration-tests</id>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
 
         <!-- org.apache.maven.plugins:maven-source-plugin -->
@@ -461,6 +502,11 @@
       <!-- org.apache.maven.plugins:maven-compiler-plugin -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
 
       <!-- org.apache.maven.plugins:maven-source-plugin -->

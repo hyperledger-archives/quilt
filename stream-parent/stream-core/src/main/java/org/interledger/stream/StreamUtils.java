@@ -8,6 +8,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import javax.crypto.SecretKey;
@@ -22,7 +23,7 @@ public class StreamUtils {
    * The string "ilp_stream_fulfillment" is encoded as UTF-8 or ASCII (the byte representation is the same with both
    * encodings).
    */
-  private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment".getBytes(Charset.forName("UTF-8"));
+  private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment".getBytes(StandardCharsets.UTF_8);
 
   private static final String HMAC_SHA256_ALG_NAME = "HmacSHA256";
 
