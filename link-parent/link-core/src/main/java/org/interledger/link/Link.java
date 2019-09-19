@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  */
 public interface Link<L extends LinkSettings> extends LinkSender {
 
-  InterledgerAddress SELF = InterledgerAddress.of("self");
+  InterledgerAddress SELF = InterledgerAddress.of("self.node");
 
   /**
    * <p>A unique identifier for this {@link Link} so that the same link can be referenced across requests.</p>
