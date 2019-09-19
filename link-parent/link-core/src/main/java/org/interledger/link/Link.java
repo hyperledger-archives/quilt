@@ -10,12 +10,14 @@ import java.util.function.Supplier;
 
 /**
  * <p>An abstraction for communicating with a remote Interledger peer in a connection-state-less manner, meaning links
- * do not hold connection state during their lifecyle.</p>
+ * do not hold connection state during their lifecycle.</p>
  *
  * <p>If you want to make a {@link Link} that can holds connection state (such as for a link protocol using
  * Websockets), consider {@link StatefulLink} instead.</p>
  */
 public interface Link<L extends LinkSettings> extends LinkSender {
+
+  InterledgerAddress LOCAL_HOST = InterledgerAddress.of("local.host");
 
   /**
    * <p>A unique identifier for this {@link Link}. This value is generally set only once, (e.g., in a Connector to

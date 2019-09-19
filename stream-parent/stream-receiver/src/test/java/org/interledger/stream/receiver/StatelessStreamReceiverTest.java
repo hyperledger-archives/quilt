@@ -1,4 +1,4 @@
-package org.interledger.stream.server;
+package org.interledger.stream.receiver;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -61,7 +61,8 @@ public class StatelessStreamReceiverTest {
 
     this.serverSecretSupplier = () -> new byte[32];
     this.streamReceiver = new StatelessStreamReceiver(
-        serverSecretSupplier, streamConnectionGeneratorMock, streamEncryptionServiceMock, StreamCodecContextFactory.oer()
+        serverSecretSupplier, streamConnectionGeneratorMock, streamEncryptionServiceMock,
+        StreamCodecContextFactory.oer()
     );
   }
 
@@ -90,7 +91,8 @@ public class StatelessStreamReceiverTest {
   @Test(expected = NullPointerException.class)
   public void generateConnectionDetailsWithNullStreamEncryptionService() {
     try {
-      new StatelessStreamReceiver(serverSecretSupplier, streamConnectionGeneratorMock, null, StreamCodecContextFactory.oer());
+      new StatelessStreamReceiver(serverSecretSupplier, streamConnectionGeneratorMock, null,
+          StreamCodecContextFactory.oer());
     } catch (NullPointerException e) {
       assertThat(e.getMessage(), is("streamEncryptionService must not be null"));
       throw e;
@@ -122,10 +124,10 @@ public class StatelessStreamReceiverTest {
     streamReceiver = new StatelessStreamReceiver(
         serverSecretSupplier, streamConnectionGenerator, streamEncryptionService, StreamCodecContextFactory.oer()
     );
-    final InterledgerAddress clientAddress = InterledgerAddress.of("example.destination");
+    final InterledgerAddress receiverAddress = InterledgerAddress.of("example.receiver");
 
     final StreamConnectionDetails connectionDetails = streamConnectionGenerator
-        .generateConnectionDetails(serverSecretSupplier, clientAddress);
+        .generateConnectionDetails(serverSecretSupplier, receiverAddress);
 
     final StreamPacket testStreamPacket = StreamPacket.builder()
         .interledgerPacketType(InterledgerPacketType.PREPARE)
@@ -153,7 +155,7 @@ public class StatelessStreamReceiverTest {
         .executionCondition(executionCondition)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, clientAddress)
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress)
         .handle((fulfillPacket -> {
           assertThat(fulfillPacket.getFulfillment().getCondition(), is(executionCondition));
         }), rejectPacket -> {

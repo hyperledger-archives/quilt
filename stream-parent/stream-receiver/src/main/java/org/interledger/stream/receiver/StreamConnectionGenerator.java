@@ -1,4 +1,4 @@
-package org.interledger.stream.server;
+package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.StreamConnectionDetails;

@@ -1,4 +1,4 @@
-package org.interledger.stream.server;
+package org.interledger.stream.receiver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
