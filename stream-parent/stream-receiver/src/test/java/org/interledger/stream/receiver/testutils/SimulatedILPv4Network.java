@@ -61,7 +61,7 @@ public class SimulatedILPv4Network {
     this.leftToRightNetworkConditions = Objects.requireNonNull(leftToRightNetworkConditions);
     this.rightToLeftNetworkConditions = Objects.requireNonNull(rightToLeftNetworkConditions);
 
-    this.leftLink = new AbstractLink<LinkSettings>(() -> Optional.of(Link.LOCAL_HOST), LinkSettings.builder().linkType(
+    this.leftLink = new AbstractLink<LinkSettings>(() -> Optional.of(Link.SELF), LinkSettings.builder().linkType(
         LinkType.of("leftLink")).build()) {
       @Override
       public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
@@ -70,7 +70,7 @@ public class SimulatedILPv4Network {
     };
     leftLink.setLinkId(LinkId.of("left"));
 
-    this.rightLink = new AbstractLink<LinkSettings>(() -> Optional.of(Link.LOCAL_HOST),
+    this.rightLink = new AbstractLink<LinkSettings>(() -> Optional.of(Link.SELF),
         LinkSettings.builder().linkType(LinkType.of("rightLink")).build()) {
       @Override
       public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {

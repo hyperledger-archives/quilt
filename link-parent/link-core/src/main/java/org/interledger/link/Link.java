@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  */
 public interface Link<L extends LinkSettings> extends LinkSender {
 
-  InterledgerAddress LOCAL_HOST = InterledgerAddress.of("local.host");
+  InterledgerAddress SELF = InterledgerAddress.of("self");
 
   /**
    * <p>A unique identifier for this {@link Link} so that the same link can be referenced across requests.</p>
