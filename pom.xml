@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.18-SNAPSHOT</version>
+  <version>0.18.0-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
@@ -92,6 +92,8 @@
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
     <jackson.version>2.10.0.pr2</jackson.version>
+    <okhttp.version>4.2.0</okhttp.version>
+    <skipITs>false</skipITs>
   </properties>
 
   <modules>
@@ -106,59 +108,88 @@
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>btp-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-framework</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-btp</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-ildcp</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-ilp</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-stream</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>link-core</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>link-ilp-over-http</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>stream-core</artifactId>
         <version>${project.version}</version>
       </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>ilp-core</artifactId>
         <version>${project.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>ilp-core-codecs</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>btp-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>btp-core-codecs</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>ildcp-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>ildcp-core-codecs</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -166,101 +197,138 @@
         <artifactId>java-jwt</artifactId>
         <version>3.8.2</version>
       </dependency>
+
       <dependency>
         <groupId>com.auth0</groupId>
         <artifactId>jwks-rsa</artifactId>
         <version>0.8.3</version>
       </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-guava</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>28.1-jre</version>
-      </dependency>
+
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp</artifactId>
         <version>4.1.0</version>
       </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson.version}</version>
+        <scope>test</scope>
+      </dependency>
+
       <dependency>
         <groupId>javax.money</groupId>
         <artifactId>money-api</artifactId>
         <version>1.0.3</version>
       </dependency>
+
+      <dependency>
+        <groupId>net.i2p.crypto</groupId>
+        <artifactId>eddsa</artifactId>
+        <version>0.3.0</version>
+      </dependency>
+
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.12</version>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>net.i2p.crypto</groupId>
-        <artifactId>eddsa</artifactId>
-        <version>0.3.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.assertj</groupId>
-        <artifactId>assertj-core</artifactId>
-        <version>3.13.2</version>
-        <scope>test</scope>
-      </dependency>
+
       <dependency>
         <groupId>org.immutables</groupId>
         <artifactId>value</artifactId>
         <version>2.7.5</version>
         <scope>provided</scope>
       </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-core</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-guava</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>28.1-jre</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>${okhttp.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>logging-interceptor</artifactId>
+        <version>${okhttp.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>3.13.2</version>
+        <scope>test</scope>
+      </dependency>
+
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>2.28.1</version>
         <scope>test</scope>
       </dependency>
+
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>1.7.28</version>
       </dependency>
+
       <dependency>
         <groupId>org.zalando</groupId>
         <artifactId>jackson-datatype-problem</artifactId>
         <version>0.23.0</version>
       </dependency>
+
       <dependency>
         <groupId>org.zalando</groupId>
         <artifactId>problem</artifactId>
         <version>0.23.0</version>
       </dependency>
+
     </dependencies>
   </dependencyManagement>
 
@@ -288,6 +356,24 @@
           </configuration>
         </plugin>
 
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.20.1</version>
+          <configuration>
+            <skipITs>${skipITs}</skipITs>
+          </configuration>
+          <executions>
+            <execution>
+              <id>integration-tests</id>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
         <!-- org.apache.maven.plugins:maven-source-plugin -->
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
@@ -306,11 +392,6 @@
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.1.0</version>
-          <configuration>
-            <excludes>
-              <exclude>**/generated-sources/**/*</exclude>
-            </excludes>
-          </configuration>
           <executions>
             <execution>
               <id>attach-javadocs</id>
@@ -331,8 +412,6 @@
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <linkXRef>false</linkXRef>
-            <excludes>**/generated-sources/**/*</excludes>
-            <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
           </configuration>
           <dependencies>
             <!-- Update Checkstyle version used -->
@@ -459,6 +538,11 @@
         <artifactId>maven-compiler-plugin</artifactId>
       </plugin>
 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+      </plugin>
+
       <!-- org.apache.maven.plugins:maven-source-plugin -->
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
@@ -515,12 +599,6 @@
       <!-- org.apache.maven.plugins:maven-checkstyle-plugin -->
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <encoding>UTF-8</encoding>
-          <consoleOutput>true</consoleOutput>
-          <linkXRef>false</linkXRef>
-          <excludes>**/generated-sources/**/*</excludes>
-        </configuration>
         <reportSets>
           <reportSet>
             <reports>
@@ -533,11 +611,6 @@
       <!-- org.apache.maven.plugins:maven-javadoc-plugin -->
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>**/generated-sources/**/*</exclude>
-          </excludes>
-        </configuration>
       </plugin>
 
     </plugins>

@@ -41,7 +41,7 @@ public class AimdCongestionController implements CongestionController {
   private AtomicReference<UnsignedLong> amountInFlight;
 
   /**
-   * The current maximum packet size that will be used
+   * The current maximum packet size that will be used.
    */
   private Optional<UnsignedLong> maxPacketAmount;
 
@@ -105,7 +105,6 @@ public class AimdCongestionController implements CongestionController {
     // Synchronization is _probably not_ needed here since we're not assigning any values that could get corrupted, and
     // usage of this return value should be considered as a snapshot at a given moment of time anyway...
     return this.maxPacketAmount
-        // If maxInFlight is specified, take the min of `amountLeftInWindow` and `maxInFlight`.
         .map(maxPacketAmount -> StreamUtils.min(amountLeftInWindow, maxPacketAmount))
         .orElse(amountLeftInWindow);
   }

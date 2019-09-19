@@ -1,6 +1,7 @@
 package org.interledger.stream;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressBuilder;
 import org.interledger.stream.ImmutableStreamConnectionDetails.Builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

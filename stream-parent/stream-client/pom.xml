@@ -5,14 +5,14 @@
   <parent>
     <groupId>org.interledger</groupId>
     <artifactId>stream-parent</artifactId>
-    <version>0.18-SNAPSHOT</version>
+    <version>0.18.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>stream-client</artifactId>
 
   <name>Quilt :: STREAM :: Client</name>
   <description>Libraries for the STREAM client.</description>
+  <artifactId>stream-client</artifactId>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -74,6 +74,10 @@
       <artifactId>okhttp</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>logging-interceptor</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.zalando</groupId>
       <artifactId>jackson-datatype-problem</artifactId>
     </dependency>
@@ -105,6 +109,24 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>1.7.28</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.12.1</version>
+      <scope>test</scope>
+    </dependency>
+      <dependency>
+          <groupId>org.interledger</groupId>
+          <artifactId>jackson-datatypes</artifactId>
+          <version>0.18.0-SNAPSHOT</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 
 </project>
