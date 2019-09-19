@@ -82,6 +82,12 @@ dependencies {
 }
 ```
 
+### Docker
+By default, the build runs integration tests which depend on Docker daemon to be running. If you don't have Docker running, you can
+skip integration tests using `-DskipITs` (e.g. `mvn clean install -DskipITs`).
+
+Otherwise, to install docker, follow the instructions at [https://docs.docker.com/install/](https://docs.docker.com/install/) 
+
 ## Development
 We welcome any and all submissions, whether it's a typo, bug fix, or new feature. To get started, first download the code:
 
