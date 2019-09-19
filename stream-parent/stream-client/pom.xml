@@ -9,7 +9,6 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-
   <name>Quilt :: STREAM :: Client</name>
   <description>Libraries for the STREAM client.</description>
   <artifactId>stream-client</artifactId>
@@ -33,6 +32,11 @@
       <artifactId>ilp-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>jackson-datatypes</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>link-core</artifactId>
     </dependency>
@@ -47,12 +51,12 @@
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <artifactId>jackson-core</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <scope>test</scope>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -70,20 +74,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>logging-interceptor</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.zalando</groupId>
-      <artifactId>jackson-datatype-problem</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -110,10 +110,8 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.28</version>
-      <scope>test</scope>
+      <groupId>org.zalando</groupId>
+      <artifactId>jackson-datatype-problem</artifactId>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
@@ -121,12 +119,6 @@
       <version>1.12.1</version>
       <scope>test</scope>
     </dependency>
-      <dependency>
-          <groupId>org.interledger</groupId>
-          <artifactId>jackson-datatypes</artifactId>
-          <version>0.18.0-SNAPSHOT</version>
-          <scope>test</scope>
-      </dependency>
   </dependencies>
 
 </project>

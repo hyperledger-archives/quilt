@@ -93,6 +93,7 @@
 
     <jackson.version>2.10.0.pr3</jackson.version>
     <okhttp.version>4.2.0</okhttp.version>
+    <slf4j.version>1.7.28</slf4j.version>
     <skipITs>false</skipITs>
   </properties>
 
@@ -105,6 +106,15 @@
     <module>jackson-datatypes</module>
     <module>stream-parent</module>
   </modules>
+
+  <dependencies>
+    <!-- Enable concrete logging in all tests -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
   <dependencyManagement>
     <dependencies>
@@ -131,6 +141,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>codecs-ilp</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.interledger</groupId>
+        <artifactId>jackson-datatypes</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -186,7 +201,12 @@
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp</artifactId>
-        <version>4.1.0</version>
+        <version>${okhttp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>logging-interceptor</artifactId>
+        <version>${okhttp.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -224,11 +244,6 @@
         <version>28.1-jre</version>
       </dependency>
       <dependency>
-        <groupId>com.squareup.okhttp3</groupId>
-        <artifactId>okhttp</artifactId>
-        <version>${okhttp.version}</version>
-      </dependency>
-      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>4.12</version>
@@ -241,6 +256,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>org.immutables</groupId>
+        <artifactId>value</artifactId>
+        <version>2.7.5</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>2.28.1</version>
@@ -249,7 +270,13 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.28</version>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.zalando</groupId>
