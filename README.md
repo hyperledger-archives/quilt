@@ -55,7 +55,7 @@ Next, add the following Maven dependency:
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>java-ilp-core</artifactId>
-    <version>0.18.0-SNAPSHOT</version>
+    <version>0.18-SNAPSHOT</version>
   </dependency>
   ...
 </dependencies>
@@ -77,10 +77,16 @@ Next, import this library as a dependency, like this:
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.18.0-SNAPSHOT'
+    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.18-SNAPSHOT'
     ...
 }
 ```
+
+### Docker
+By default, the build runs integration tests which depend on Docker daemon to be running. If you don't have Docker running, you can
+skip integration tests using `-DskipITs` (e.g. `mvn clean install -DskipITs`).
+
+Otherwise, to install docker, follow the instructions at [https://docs.docker.com/install/](https://docs.docker.com/install/) 
 
 ## Development
 We welcome any and all submissions, whether it's a typo, bug fix, or new feature. To get started, first download the code:

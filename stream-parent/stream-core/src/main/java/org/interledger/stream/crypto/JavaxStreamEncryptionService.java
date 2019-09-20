@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -119,9 +118,10 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
       byte[] cipherText = new byte[byteBuffer.remaining()];
       byteBuffer.get(cipherText);
 
-      // TODO: Fix this in JS and Rust so that the typical ordering is not wonky, and avoids this copy.
+      // TODO: See https://github.com/hyperledger/quilt/issues/237
+      // Rearrange the bytes so that the `tag` goes last, after tha Additionally Authenticated Data (AAD). Prior to this
+      // reversal, the data is inverted because that's what the RFC specifies, and that's what JS and Rust do.
       byte[] rearrangedCipherText = new byte[cipherText.length];
-      // Rearrange the bytes so that the tag goes last (should have put it first in the JS implementation, but oh well)
       System.arraycopy(
           cipherText, 0, rearrangedCipherText, cipherText.length - AUTH_TAG_LENGTH_BYTES, AUTH_TAG_LENGTH_BYTES
       );

@@ -90,7 +90,7 @@ public class SimpleStreamSender implements StreamSender {
 
     // Note that pools with similar properties but different details (for example, timeout parameters) may be
     // created using {@link ThreadPoolExecutor} constructors.
-    this.executorService = executorService;
+    this.executorService = Objects.requireNonNull(executorService);
   }
 
   @Override
