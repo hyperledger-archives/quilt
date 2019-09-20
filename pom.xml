@@ -104,6 +104,7 @@
     <module>link-parent</module>
     <module>codecs-parent</module>
     <module>jackson-datatypes</module>
+    <module>spsp-parent</module>
     <module>stream-parent</module>
   </modules>
 
@@ -171,6 +172,16 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>link-ilp-over-http</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>spsp-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>spsp-client</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
