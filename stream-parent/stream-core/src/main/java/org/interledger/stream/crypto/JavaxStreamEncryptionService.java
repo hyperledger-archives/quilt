@@ -6,7 +6,7 @@ import com.google.common.hash.Hashing;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
+import java.¬security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
@@ -25,7 +25,9 @@ import javax.crypto.spec.SecretKeySpec;
 public class JavaxStreamEncryptionService implements StreamEncryptionService {
 
   private static final String CIPHER_ALGO = "AES/GCM/NoPadding";
+
   private static final byte[] ENCRYPTION_KEY_STRING = "ilp_stream_encryption".getBytes(StandardCharsets.US_ASCII);
+
   /**
    * For GCM a 12 byte random byte-array is recommend by NIST because it's faster and more secure (See page 8 in the PDF
    * document below).
@@ -33,9 +35,10 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
   private static final int AES_GCM_NONCE_IV_LENGTH = 12;
+
   private static final int AUTH_TAG_LENGTH_BITS = 128;
   private static final int AUTH_TAG_LENGTH_BYTES = AUTH_TAG_LENGTH_BITS / 8;
-  
+
   @Override
   public byte[] encrypt(final byte[] sharedSecret, final byte[] plainText) throws EncryptionException {
     Objects.requireNonNull(plainText);

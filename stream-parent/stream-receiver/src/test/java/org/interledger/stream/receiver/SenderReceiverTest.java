@@ -67,9 +67,9 @@ public class SenderReceiverTest {
         rightStreamReceiver.receiveMoney(incomingPreparePacket, RECEIVER_ADDRESS)
     );
 
-    // TODO: Get from SPSP
-    this.sharedSecret = Base64.getDecoder().decode("uWgjtuKipUQ+kzx8aS/xUveXnHGjOT9Hw6ELPqZtMSc=");
-    this.destinationAddress = RECEIVER_ADDRESS.with("715SC6gpa4WKR0qUHSzBW2O7bon0CM7jc5o_QD5ISUg");
+    this.sharedSecret = Base64.getDecoder().decode("R5FMgJ1fOSg3SztrMwKAS9KaGJuVYAUeLstWt8ZP6mk=");
+    this.destinationAddress = InterledgerAddress
+        .of("test.xpring-dev.rs1.java_stream_receiver.Khml7p2S2JrKWsOSJBTlQDWK5Wz7xiHHvKA8hqS-zHU"); // TODO: Get from SPSP
   }
 
   @Test
