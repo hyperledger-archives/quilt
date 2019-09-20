@@ -1,4 +1,4 @@
-package org.interledger.stream.server;
+package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * <p>A stateless implementation of {@link StreamReceiver} that does **not** maintain STREAM state, but instead fulfills
- * all incoming packets to collect the money.</p>
+ * <p>A stateless implementation of {@link StreamReceiver} that does **not** maintain STREAM state, but instead
+ * fulfills all incoming packets to collect the money.</p>
  *
  * <p>NOTE: This implementation does not currently support handling data sent via STREAM.</p>
  */
@@ -50,7 +50,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
       final StreamEncryptionService streamEncryptionService, final CodecContext streamCodecContext
   ) {
     this.serverSecretSupplier = Objects.requireNonNull(serverSecretSupplier, "serverSecretSupplier must not be null");
-    this.streamConnectionGenerator = Objects.requireNonNull(streamConnectionGenerator, "connectionGenerator must not be null");
+    this.streamConnectionGenerator = Objects
+        .requireNonNull(streamConnectionGenerator, "connectionGenerator must not be null");
     this.streamEncryptionService = Objects
         .requireNonNull(streamEncryptionService, "streamEncryptionService must not be null");
     this.streamCodecContext = Objects.requireNonNull(streamCodecContext, "streamCodecContext must not be null");
@@ -63,40 +64,35 @@ public class StatelessStreamReceiver implements StreamReceiver {
   }
 
   /**
-   * @param preparePacket The actual {@link InterledgerPreparePacket} with a {@link InterledgerPreparePacket#getDestination()}
-   *                      that includes information that could only have been created by this receiver.
-   * @param clientAddress A {@link InterledgerAddress} of the account this packet should be delivered to.
+   * @param preparePacket   The actual {@link InterledgerPreparePacket} with a {@link InterledgerPreparePacket#getDestination()}
+   *                        that includes information that could only have been created by this receiver.
+   * @param receiverAddress A {@link InterledgerAddress} of the account this packet should be delivered to.
    */
   @Override
   public InterledgerResponsePacket receiveMoney(
-      final InterledgerPreparePacket preparePacket, final InterledgerAddress clientAddress
+      final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress
   ) {
     Objects.requireNonNull(preparePacket);
-    Objects.requireNonNull(clientAddress);
+    Objects.requireNonNull(receiverAddress);
 
     // Will throw if there's an error...
-    this.streamConnectionGenerator.deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
-
-    // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
-    final InterledgerFulfillment fulfillment = StreamUtils
-        .generatedFulfillableFulfillment(serverSecretSupplier.get(), preparePacket.getData());
-    final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
+    byte[] sharedSecret = this.streamConnectionGenerator.deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
 
     // Try to parse the STREAM data from the payload.
     final byte[] streamPacketBytes = streamEncryptionService
-        .decrypt(serverSecretSupplier.get(), preparePacket.getData());
+        .decrypt(sharedSecret, preparePacket.getData());
     final StreamPacket streamPacket;
     try {
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
     } catch (IOException e) {
       logger.error(
-          "Unable to decrypt packet. preparePacket={} clientAddress={} error={}",
-          preparePacket, clientAddress, e
+          "Unable to decrypt packet. preparePacket={} receiverAddress={} error={}",
+          preparePacket, receiverAddress, e
       );
       return InterledgerRejectPacket.builder()
           .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
           .message("Could not decrypt data")
-          .triggeredBy(clientAddress)
+          .triggeredBy(receiverAddress)
           .build();
     }
 
@@ -116,6 +112,10 @@ public class StatelessStreamReceiver implements StreamReceiver {
             .build()
         ));
 
+    // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
+    final InterledgerFulfillment fulfillment = StreamUtils
+      .generatedFulfillableFulfillment(sharedSecret, preparePacket.getData());
+    final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
     // Return Fulfill or Reject Packet
     if (isFulfillable && preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) >= 0) {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
@@ -135,7 +135,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
         final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-            .encrypt(serverSecretSupplier.get(), returnableStreamPacketBytes);
+            .encrypt(sharedSecret, returnableStreamPacketBytes);
 
         return InterledgerFulfillPacket.builder()
             .fulfillment(fulfillment)
@@ -173,15 +173,14 @@ public class StatelessStreamReceiver implements StreamReceiver {
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
         final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-            .encrypt(serverSecretSupplier.get(), returnableStreamPacketBytes);
+            .encrypt(sharedSecret, returnableStreamPacketBytes);
 
         return InterledgerRejectPacket.builder()
             .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
             .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
-            .triggeredBy(clientAddress)
+            .triggeredBy(receiverAddress)
             .data(encryptedReturnableStreamPacketBytes)
             .build();
-
       } catch (IOException e) {
         throw new StreamException(e.getMessage(), e);
       }

@@ -1,4 +1,4 @@
-package org.interledger.stream.server;
+package org.interledger.stream.receiver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,7 +53,7 @@ public class SpspStreamConnectionGeneratorTest {
         .generateConnectionDetails(serverSecret, receiverAddress);
 
     assertThat(connectionDetails.destinationAddress().startsWith(receiverAddress)).isTrue();
-    assertThat(connectionDetails.sharedSecret()).isEqualTo(Base64.getUrlEncoder().withoutPadding().encodeToString(
+    assertThat(connectionDetails.sharedSecret()).isEqualTo(Base64.getEncoder().withoutPadding().encodeToString(
         connectionGenerator.deriveSecretFromAddress(serverSecret, connectionDetails.destinationAddress())));
   }
 
