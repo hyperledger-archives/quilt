@@ -48,7 +48,7 @@ public class PingLoopbackLinkTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    this.link = new PingLoopbackLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettingsMock);
+    this.link = new PingLoopbackLink(() -> OPERATOR_ADDRESS, linkSettingsMock);
   }
 
   @Test(expected = RuntimeException.class)
