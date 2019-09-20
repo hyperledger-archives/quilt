@@ -52,7 +52,7 @@ public class PingLoopbackLinkFactoryTest {
   @Test(expected = NullPointerException.class)
   public void constructLinkWithNullLinkSettings() {
     try {
-      pingLoopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), null);
+      pingLoopbackLinkFactory.constructLink(() -> OPERATOR_ADDRESS, null);
       fail();
     } catch (NullPointerException e) {
       assertThat(e.getMessage()).isEqualTo("linkSettings must not be null");
@@ -66,7 +66,7 @@ public class PingLoopbackLinkFactoryTest {
       LinkSettings linkSettings = LinkSettings.builder()
           .linkType(LinkType.of("foo"))
           .build();
-      pingLoopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
+      pingLoopbackLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
       fail();
     } catch (NullPointerException e) {
       assertThat(e.getMessage()).isEqualTo("LinkType not supported by this factory. linkType=LinkType(FOO)");
@@ -79,7 +79,7 @@ public class PingLoopbackLinkFactoryTest {
     LinkSettings linkSettings = LinkSettings.builder()
         .linkType(PingLoopbackLink.LINK_TYPE)
         .build();
-    Link<?> link = pingLoopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
+    Link<?> link = pingLoopbackLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
     link.setLinkId(LINK_ID);
     assertThat(link.getLinkId()).isEqualTo(LINK_ID);
   }
