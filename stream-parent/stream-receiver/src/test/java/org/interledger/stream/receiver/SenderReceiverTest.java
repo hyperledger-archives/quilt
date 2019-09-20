@@ -27,10 +27,9 @@ import java.util.Base64;
  */
 public class SenderReceiverTest {
 
-  private static final InterledgerAddress SENDER_ADDRESS
-      = InterledgerAddress.of("test.xpring-dev.rs1.java_stream_client");
-  private static final InterledgerAddress RECEIVER_ADDRESS
-      = InterledgerAddress.of("test.xpring-dev.rs1.java_stream_receiver");
+  private static final InterledgerAddress ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
+  private static final InterledgerAddress SENDER_ADDRESS = ILP_ADDRESS.with("java_stream_client");
+  private static final InterledgerAddress RECEIVER_ADDRESS = ILP_ADDRESS.with("java_stream_receiver");
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

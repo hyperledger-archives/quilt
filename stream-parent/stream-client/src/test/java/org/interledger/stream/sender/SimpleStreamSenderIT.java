@@ -54,11 +54,11 @@ import org.zalando.problem.ProblemModule;
  */
 public class SimpleStreamSenderIT {
 
-  public static final String ILP_ADDRESS = "test.xpring-dev.rs1";
-  private static final String RECEIVER_ACCOUNT = "java_stream_receiver";
-  private static final String SENDER_ACCOUNT = "java_stream_client";
-  private static final InterledgerAddress SENDER_ADDRESS
-      = InterledgerAddress.of(ILP_ADDRESS + "." + SENDER_ACCOUNT);
+  private static final InterledgerAddress HOST_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
+  private static final String SENDER_ACCOUNT_USERNAME = "java_stream_client";
+  private static final String RECEIVER_ACCOUNT_USERNAME = "java_stream_receiver";
+  private static final InterledgerAddress SENDER_ADDRESS = HOST_ADDRESS.with(SENDER_ACCOUNT_USERNAME);
+  private static final InterledgerAddress RECEIVER_ADDRESS = HOST_ADDRESS.with(RECEIVER_ACCOUNT_USERNAME);
 
   public static final String AUTH_TOKEN = "password";
 
@@ -66,7 +66,7 @@ public class SimpleStreamSenderIT {
   public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledgerrs-standalone")
       .withExposedPorts(7770)
       .withCommand("--admin_auth_token " + AUTH_TOKEN + " " +
-          "--ilp_address " + ILP_ADDRESS + " " +
+          "--ilp_address " + HOST_ADDRESS.getValue() + " " +
           "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d " +
           "--http_bind_address 0.0.0.0:7770");
 
@@ -136,9 +136,9 @@ public class SimpleStreamSenderIT {
     );
     link.setLinkId(LinkId.of("ilpHttpLink"));
 
-    nodeClient.createAccount(ILP_ADDRESS, SENDER_ACCOUNT);
-    nodeClient.createAccount(ILP_ADDRESS, RECEIVER_ACCOUNT);
-    streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_ACCOUNT);
+    nodeClient.createAccount(HOST_ADDRESS, SENDER_ACCOUNT_USERNAME);
+    nodeClient.createAccount(HOST_ADDRESS, RECEIVER_ACCOUNT_USERNAME);
+    streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_ACCOUNT_USERNAME);
   }
 
   @Test
@@ -169,7 +169,7 @@ public class SimpleStreamSenderIT {
     int parallelism = 20;
     int sendCount = 100;
     StreamSender streamSender = new SimpleStreamSender(new JavaxStreamEncryptionService(), link);
-    BigDecimal initialBalance = nodeClient.getBalance(RECEIVER_ACCOUNT);
+    BigDecimal initialBalance = nodeClient.getBalance(RECEIVER_ACCOUNT_USERNAME);
 
     new ForkJoinPool(parallelism).submit(() -> {
       IntStream.range(0, sendCount).parallel().forEach((taskId) -> {
@@ -188,7 +188,7 @@ public class SimpleStreamSenderIT {
       });
     }).get();
 
-    BigDecimal finalBalance = nodeClient.getBalance(RECEIVER_ACCOUNT);
+    BigDecimal finalBalance = nodeClient.getBalance(RECEIVER_ACCOUNT_USERNAME);
     assertThat(finalBalance.subtract(initialBalance)).isEqualTo(
         new BigDecimal(paymentAmount.longValue() * sendCount));
   }
