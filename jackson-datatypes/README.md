@@ -11,7 +11,7 @@ to your project:
 <dependency>
   <groupId>org.interledger.quilt.jackson</groupId>
   <artifactId>jackson-datatypes</artifactId>
-  <version>0.18-SNAPSHOT</version>
+  <version>0.19-SNAPSHOT</version>
 </dependency>
 ```
 

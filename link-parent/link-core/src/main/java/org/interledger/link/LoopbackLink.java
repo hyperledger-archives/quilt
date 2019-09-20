@@ -32,12 +32,15 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
   /**
    * Required-Args Constructor.
    *
-   * @param operatorAddressSupplier A {@link Supplier} of the ILP address for the node that's operating this Link.
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
    * @param linkSettings            A {@link LinkSettings} for this Link.
    * @param packetRejector          A {@link PacketRejector} to aid in rejecting packets in a uniform manner.
    */
   public LoopbackLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
+      final Supplier<InterledgerAddress> operatorAddressSupplier,
       final LinkSettings linkSettings,
       final PacketRejector packetRejector
   ) {

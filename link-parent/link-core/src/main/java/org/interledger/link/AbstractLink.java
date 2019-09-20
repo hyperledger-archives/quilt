@@ -23,7 +23,7 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
    * not yet populated when this client is constructed (e.g, IL-DCP). Thus, the value is optional to accommodate these
    * cases.
    */
-  private final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier;
+  private final Supplier<InterledgerAddress> operatorAddressSupplier;
 
   /**
    * A typed representation of the configuration options passed-into this ledger link.
@@ -38,12 +38,14 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
   /**
    * Required-args Constructor.
    *
-   * @param operatorAddressSupplier A {@link Supplier} that supplies the optionally-present operator address of the node
-   *                                operating this Link (note this is optional to support IL-DCP).
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
    * @param linkSettings            A {@link L} that specified ledger link options.
    */
   protected AbstractLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
+      final Supplier<InterledgerAddress> operatorAddressSupplier,
       final L linkSettings
   ) {
     this.operatorAddressSupplier = Objects.requireNonNull(operatorAddressSupplier);
@@ -66,7 +68,7 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
   }
 
   @Override
-  public Supplier<Optional<InterledgerAddress>> getOperatorAddressSupplier() {
+  public Supplier<InterledgerAddress> getOperatorAddressSupplier() {
     return operatorAddressSupplier;
   }
 

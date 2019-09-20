@@ -35,10 +35,10 @@ public class LoopbackLinkTest {
 
   @Before
   public void setUp() {
-    this.packetRejector = new PacketRejector(() -> Optional.of(OPERATOR_ADDRESS));
+    this.packetRejector = new PacketRejector(() -> OPERATOR_ADDRESS);
 
     this.link = new LoopbackLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).build(),
         packetRejector
     );
@@ -68,7 +68,7 @@ public class LoopbackLinkTest {
   @Test
   public void sendPacket() {
     this.link = new LoopbackLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).build(),
         packetRejector
     );
@@ -92,7 +92,7 @@ public class LoopbackLinkTest {
     final Map<String, String> customSettings = Maps.newHashMap();
     customSettings.put(SIMULATED_REJECT_ERROR_CODE, InterledgerErrorCode.T02_PEER_BUSY_CODE);
     this.link = new LoopbackLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).customSettings(customSettings).build(),
         packetRejector
     );
@@ -114,7 +114,7 @@ public class LoopbackLinkTest {
     final Map<String, String> customSettings = Maps.newHashMap();
     customSettings.put(SIMULATED_REJECT_ERROR_CODE, InterledgerErrorCode.T99_APPLICATION_ERROR_CODE);
     this.link = new LoopbackLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LinkSettings.builder().linkType(LoopbackLink.LINK_TYPE).customSettings(customSettings).build(),
         packetRejector
     );

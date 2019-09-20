@@ -33,7 +33,7 @@ public class PacketRejectorTest {
 
   @Before
   public void setup() {
-    this.packetRejector = new PacketRejector(() -> Optional.of(OPERATOR_ADDRESS));
+    this.packetRejector = new PacketRejector(() -> OPERATOR_ADDRESS);
   }
 
   @Test(expected = NullPointerException.class)
