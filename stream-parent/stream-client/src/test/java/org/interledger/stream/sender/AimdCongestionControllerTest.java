@@ -375,7 +375,7 @@ public class AimdCongestionControllerTest {
   }
 
   @Test
-  public void handleF08RejectionWithPrepareGreaterThanMaxWithRounding() {
+  public void handleF08RejectionWithPrepareGreaterThanMaxWithRoundingDownBelowPoint5() {
     InterledgerRejectPacket rejectPacket = interledgerRejectPacket(Optional.of(
         AmountTooLargeErrorData.builder()
             .receivedAmount(UnsignedLong.valueOf(3L))
@@ -383,6 +383,17 @@ public class AimdCongestionControllerTest {
             .build()
     ));
     assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(6l));
+  }
+
+  @Test
+  public void handleF08RejectionWithPrepareGreaterThanMaxWithRoundingDownAbovePoint5() {
+    InterledgerRejectPacket rejectPacket = interledgerRejectPacket(Optional.of(
+        AmountTooLargeErrorData.builder()
+            .receivedAmount(UnsignedLong.valueOf(7L))
+            .maximumAmount(UnsignedLong.valueOf(2L))
+            .build()
+    ));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(13l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(3l));
   }
 
   @Test
