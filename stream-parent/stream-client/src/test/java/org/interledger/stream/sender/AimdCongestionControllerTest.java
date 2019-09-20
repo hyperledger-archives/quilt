@@ -1,8 +1,6 @@
 package org.interledger.stream.sender;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.fail;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -15,7 +13,9 @@ import org.interledger.stream.sender.AimdCongestionController.CongestionState;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,53 +39,40 @@ public class AimdCongestionControllerTest {
 
   private AimdCongestionController controller;
 
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
   @Before
   public void setUp() {
     this.controller = new AimdCongestionController();
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void constructWithNullStartAmount() {
-    try {
-      new AimdCongestionController(null, UnsignedLong.ONE, BigDecimal.TEN, CodecContextFactory.oer());
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("startAmount must not be null"));
-      throw e;
-    }
+    expectedException.expect(NullPointerException.class);
+    expectedException.expectMessage("startAmount must not be null");
+    new AimdCongestionController(null, UnsignedLong.ONE, BigDecimal.TEN, CodecContextFactory.oer());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void constructWithNullIncreaseAmount() {
-    try {
-      new AimdCongestionController(UnsignedLong.ONE, null, BigDecimal.TEN, CodecContextFactory.oer());
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("increaseAmount must not be null"));
-      throw e;
-    }
+    expectedException.expect(NullPointerException.class);
+    expectedException.expectMessage("increaseAmount must not be null");
+    new AimdCongestionController(UnsignedLong.ONE, null, BigDecimal.TEN, CodecContextFactory.oer());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void constructWithNullDecreaseFactor() {
-    try {
-      new AimdCongestionController(UnsignedLong.ONE, UnsignedLong.ONE, null, CodecContextFactory.oer());
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("decreaseFactor must not be null"));
-      throw e;
-    }
+    expectedException.expect(NullPointerException.class);
+    expectedException.expectMessage("decreaseFactor must not be null");
+    new AimdCongestionController(UnsignedLong.ONE, UnsignedLong.ONE, null, CodecContextFactory.oer());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void constructWithNullCodecContext() {
-    try {
-      new AimdCongestionController(UnsignedLong.ONE, UnsignedLong.ONE, BigDecimal.TEN, null);
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("streamCodecContext must not be null"));
-      throw e;
-    }
+    expectedException.expect(NullPointerException.class);
+    expectedException.expectMessage("streamCodecContext must not be null");
+    new AimdCongestionController(UnsignedLong.ONE, UnsignedLong.ONE, BigDecimal.TEN, null);
   }
 
   @Test
@@ -93,17 +80,17 @@ public class AimdCongestionControllerTest {
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(2000L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(2000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(4000L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(4000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(8000L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(8000L));
   }
 
   @Test
@@ -115,16 +102,16 @@ public class AimdCongestionControllerTest {
         StreamCodecContextFactory.oer()
     );
     this.controller.setCongestionState(CongestionState.SLOW_START);
-    assertThat(controller.getCongestionState(), is(CongestionState.SLOW_START));
+    assertThat(controller.getCongestionState()).isEqualTo(CongestionState.SLOW_START);
 
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.MAX_VALUE));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
 
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.MAX_VALUE));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
   }
 
   @Test
@@ -135,7 +122,7 @@ public class AimdCongestionControllerTest {
       UnsignedLong amount = UnsignedLong.valueOf(i).times(ONE_K);
       controller.prepare(amount);
       controller.fulfill(amount);
-      assertThat(controller.getMaxAmount(), is((ONE_K.times(UnsignedLong.valueOf(i)).plus(ONE_K))));
+      assertThat(controller.getMaxAmount()).isEqualTo((ONE_K.times(UnsignedLong.valueOf(i)).plus(ONE_K)));
     }
   }
 
@@ -146,57 +133,57 @@ public class AimdCongestionControllerTest {
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(500L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(500L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(250L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(250L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(125L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(125L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(62L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(62L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(31L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(31L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(15L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(15L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(7L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(7L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(3L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(3L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(1L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(1L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(1L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1L));
   }
 
   @Test
@@ -206,31 +193,31 @@ public class AimdCongestionControllerTest {
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(2000L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(2000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(3000L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(3000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(1500L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1500L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(2500L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(2500L));
   }
 
   @Test
   public void maxPacketAmount() throws IOException {
     this.controller.setCongestionState(CongestionState.AVOID_CONGESTION);
-    assertThat(controller.getMaxAmount(), is(ONE_K));
+    assertThat(controller.getMaxAmount()).isEqualTo(ONE_K);
 
     controller.prepare(ONE_K);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.ZERO));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.ZERO);
 
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     StreamCodecContextFactory.oer().write(AmountTooLargeErrorData.builder()
@@ -243,14 +230,14 @@ public class AimdCongestionControllerTest {
         .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
         .data(byteArrayOutputStream.toByteArray())
         .build());
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(100L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(100L));
 
     for (int i = 0; i < 100; i++) {
       UnsignedLong amount = controller.getMaxAmount();
       controller.prepare(amount);
-      assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(100L)));
+      assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(100L));
       controller.fulfill(amount);
-      assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(100L)));
+      assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(100L));
     }
   }
 
@@ -263,70 +250,74 @@ public class AimdCongestionControllerTest {
         StreamCodecContextFactory.oer()
     );
     this.controller.setCongestionState(CongestionState.AVOID_CONGESTION);
-    assertThat(controller.getCongestionState(), is(CongestionState.AVOID_CONGESTION));
+    assertThat(controller.getCongestionState()).isEqualTo(CongestionState.AVOID_CONGESTION);
 
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.MAX_VALUE));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
 
     controller.prepare(amount);
     controller.fulfill(amount);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.MAX_VALUE));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
   }
 
   @Test
   public void trackingAmountInFlight() {
     controller.setMaxPacketAmount(SIX_HUNDRED);
-    assertThat(controller.getMaxPacketAmount(), is(Optional.of(SIX_HUNDRED)));
+    assertThat(controller.getMaxPacketAmount()).isEqualTo(Optional.of(SIX_HUNDRED));
 
     controller.prepare(UnsignedLong.valueOf(100L));
-    assertThat(controller.getMaxAmount(), is(SIX_HUNDRED));
+    assertThat(controller.getMaxAmount()).isEqualTo(SIX_HUNDRED);
 
     controller.prepare(SIX_HUNDRED);
-    assertThat(controller.getMaxAmount(), is(UnsignedLong.valueOf(1000L - 600L - 100L)));
+    assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1000L - 600L - 100L));
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void handleF08RejectionWithNullPrepareAmount() {
-    try {
-      controller.handleF08Rejection(null, mock(InterledgerRejectPacket.class));
-      fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage(), is("prepareAmount must not be null"));
-      throw e;
-    }
+    expectedException.expect(NullPointerException.class);
+    expectedException.expectMessage("prepareAmount must not be null");
+    controller.handleF08Rejection(null, mock(InterledgerRejectPacket.class));
   }
 
-  // Scenarios To test
-  //
-  // data, no max
-  // No data, no max
+  @Test
+  public void handleF08RejectionNoDataMaxLessThanPrepare() {
+    InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
+    controller.setMaxPacketAmount(UnsignedLong.valueOf(4l));
+    // would compute to 5 by halving prepare, but controller is set to 4
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(4l));
+  }
 
-  // no data, max < prepare
-  // no data, max == prepare
-  // no data, max > prepare
+  @Test
+  public void handleF08RejectionNoDataMaxEqualToPrepare() {
+    InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
+    controller.setMaxPacketAmount(UnsignedLong.valueOf(5l));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(5l));
+  }
 
-  // data, max < prepare
-  // data, max == prepare
-  // data, max > prepare
+  @Test
+  public void handleF08RejectionNoDataMaxGreaterThanPrepare() {
+    InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
+    controller.setMaxPacketAmount(UnsignedLong.valueOf(6l));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(5l));
+  }
 
   @Test
   public void handleF08RejectionWithNoData() {
     InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
-    assertThat(controller.handleF08Rejection(UnsignedLong.ZERO, rejectPacket), is(UnsignedLong.ONE));
-    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket), is(UnsignedLong.ONE));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2L), rejectPacket), is(UnsignedLong.ONE));
+    assertThat(controller.handleF08Rejection(UnsignedLong.ZERO, rejectPacket)).isEqualTo(UnsignedLong.ONE);
+    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket)).isEqualTo(UnsignedLong.ONE);
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2L), rejectPacket)).isEqualTo(UnsignedLong.ONE);
     assertThat(
-        controller.handleF08Rejection(UnsignedLong.valueOf(500L), rejectPacket),
-        is(UnsignedLong.valueOf(250L))
+        controller.handleF08Rejection(UnsignedLong.valueOf(500L), rejectPacket)).isEqualTo(UnsignedLong.valueOf(250L)
     );
     assertThat(
-        controller.handleF08Rejection(ONE_K, rejectPacket), is(UnsignedLong.valueOf(500L))
+        controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(500L)
     );
     assertThat(
-        controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket),
-        is(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L)))
+        controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket))
+          .isEqualTo(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L))
     );
   }
 
@@ -335,19 +326,18 @@ public class AimdCongestionControllerTest {
     InterledgerRejectPacket rejectPacket = InterledgerRejectPacket.builder().from(interledgerRejectPacket())
         .data(new byte[32]).build();
 
-    assertThat(controller.handleF08Rejection(UnsignedLong.ZERO, rejectPacket), is(UnsignedLong.ONE));
-    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket), is(UnsignedLong.ONE));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2L), rejectPacket), is(UnsignedLong.ONE));
+    assertThat(controller.handleF08Rejection(UnsignedLong.ZERO, rejectPacket)).isEqualTo(UnsignedLong.ONE);
+    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket)).isEqualTo(UnsignedLong.ONE);
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2L), rejectPacket)).isEqualTo(UnsignedLong.ONE);
     assertThat(
-        controller.handleF08Rejection(UnsignedLong.valueOf(500L), rejectPacket),
-        is(UnsignedLong.valueOf(250L))
+        controller.handleF08Rejection(UnsignedLong.valueOf(500L), rejectPacket)).isEqualTo(UnsignedLong.valueOf(250L)
     );
     assertThat(
-        controller.handleF08Rejection(ONE_K, rejectPacket), is(UnsignedLong.valueOf(500L))
+        controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(500L)
     );
     assertThat(
-        controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket),
-        is(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L)))
+        controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket))
+          .isEqualTo(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L))
     );
   }
 
@@ -359,7 +349,7 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket), is(UnsignedLong.ONE));
+    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket)).isEqualTo(UnsignedLong.ONE);
   }
 
   @Test
@@ -370,7 +360,7 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(UnsignedLong.ONE, rejectPacket), is(UnsignedLong.ONE));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(2l));
   }
 
   @Test
@@ -381,7 +371,18 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(ONE_K, rejectPacket), is(ONE_K));
+    assertThat(controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(ONE_K);
+  }
+
+  @Test
+  public void handleF08RejectionWithPrepareGreaterThanMaxWithRounding() {
+    InterledgerRejectPacket rejectPacket = interledgerRejectPacket(Optional.of(
+        AmountTooLargeErrorData.builder()
+            .receivedAmount(UnsignedLong.valueOf(3L))
+            .maximumAmount(UnsignedLong.valueOf(2L))
+            .build()
+    ));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(6l));
   }
 
   @Test
@@ -392,7 +393,7 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(ONE_K, rejectPacket), is(UnsignedLong.valueOf(2L)));
+    assertThat(controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(2L));
   }
 
   private InterledgerRejectPacket interledgerRejectPacket() {
