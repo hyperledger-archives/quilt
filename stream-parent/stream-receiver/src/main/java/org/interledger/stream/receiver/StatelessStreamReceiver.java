@@ -14,6 +14,8 @@ import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.frames.ConnectionCloseFrame;
+import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
@@ -38,8 +40,8 @@ import java.util.Objects;
  */
 public class StatelessStreamReceiver implements StreamReceiver {
 
+  private static final boolean NOT_SAFE = false;
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
   private final ServerSecretSupplier serverSecretSupplier;
   private final StreamConnectionGenerator streamConnectionGenerator;
   private final StreamEncryptionService streamEncryptionService;
@@ -64,9 +66,13 @@ public class StatelessStreamReceiver implements StreamReceiver {
   }
 
   /**
+   * Receive money from a remote STREAM sender.
+   *
    * @param preparePacket   The actual {@link InterledgerPreparePacket} with a {@link InterledgerPreparePacket#getDestination()}
    *                        that includes information that could only have been created by this receiver.
    * @param receiverAddress A {@link InterledgerAddress} of the account this packet should be delivered to.
+   *
+   * @return An {@link InterledgerResponsePacket} that contains STREAM frames.
    */
   @Override
   public InterledgerResponsePacket receiveMoney(
@@ -76,11 +82,11 @@ public class StatelessStreamReceiver implements StreamReceiver {
     Objects.requireNonNull(receiverAddress);
 
     // Will throw if there's an error...
-    byte[] sharedSecret = this.streamConnectionGenerator.deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
+    byte[] sharedSecret = this.streamConnectionGenerator
+        .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
 
     // Try to parse the STREAM data from the payload.
-    final byte[] streamPacketBytes = streamEncryptionService
-        .decrypt(sharedSecret, preparePacket.getData());
+    final byte[] streamPacketBytes = streamEncryptionService.decrypt(sharedSecret, preparePacket.getData());
     final StreamPacket streamPacket;
     try {
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
@@ -100,22 +106,32 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     // TODO send asset code and scale back to sender also
 
-    // Handle STREAM frames
-    streamPacket.frames().stream()
-        .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
-        .map($ -> (StreamMoneyFrame) $)
-        // Tell the sender the stream can handle lots of money
-        .forEach(streamMoneyFrame -> responseFrames.add(StreamMoneyMaxFrame.builder()
-            .streamId(streamMoneyFrame.streamId())
-            .totalReceived(UnsignedLong.ZERO)
-            .receiveMax(UnsignedLong.MAX_VALUE)
-            .build()
-        ));
+    if (streamPacket.sequenceIsSafeForSingleSharedSecret()) {
+      streamPacket.frames().stream()
+          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
+          .map($ -> (StreamMoneyFrame) $)
+          // Tell the sender the stream can handle lots of money
+          .forEach(streamMoneyFrame -> responseFrames.add(StreamMoneyMaxFrame.builder()
+              .streamId(streamMoneyFrame.streamId())
+              .totalReceived(UnsignedLong.ZERO)
+              .receiveMax(UnsignedLong.MAX_VALUE)
+              .build())
+          );
+    } else {
+      logger.warn("This STREAM Connection's sequence {} was too high for safe encryption. CLOSING the stream!",
+          streamPacket.sequence());
+      // If the sequence it too high, we should close the Connection.
+      responseFrames.add(ConnectionCloseFrame.builder()
+          .errorCode(ErrorCode.ProtocolViolation)
+          .errorMessage("Sequence number was to too high for safe encryption")
+          .build());
+    }
 
     // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
     final InterledgerFulfillment fulfillment = StreamUtils
-      .generatedFulfillableFulfillment(sharedSecret, preparePacket.getData());
+        .generatedFulfillableFulfillment(sharedSecret, preparePacket.getData());
     final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
+
     // Return Fulfill or Reject Packet
     if (isFulfillable && preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) >= 0) {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
@@ -155,14 +171,13 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
       if (isFulfillable) {
         logger.debug("Packet is unfulfillable. preparePacket={}", preparePacket);
-      } else if (
-          preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) < 0
-      ) {
+      } else if (preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) < 0) {
         logger.debug(
             "Received only: {} when we should have received at least: {}",
             preparePacket.getAmount(), streamPacket.prepareAmount()
         );
       }
+
       logger.debug(
           "Rejecting Prepare and including encrypted stream packet. preparePacket={} returnableStreamPacketResponse={}",
           preparePacket, returnableStreamPacketResponse
