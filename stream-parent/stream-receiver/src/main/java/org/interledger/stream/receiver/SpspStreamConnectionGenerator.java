@@ -57,7 +57,7 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
     );
 
     return streamConnectionDetailsBuilder
-        .sharedSecret(Base64.getUrlEncoder().withoutPadding().encodeToString(sharedSecret))
+        .sharedSecret(Base64.getEncoder().withoutPadding().encodeToString(sharedSecret))
         .destinationAddress(destinationAddress)
         .build();
   }
