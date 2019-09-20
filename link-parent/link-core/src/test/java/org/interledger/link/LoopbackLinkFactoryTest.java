@@ -67,7 +67,7 @@ public class LoopbackLinkFactoryTest {
   @Test(expected = NullPointerException.class)
   public void constructLinkWithNullLinkSettings() {
     try {
-      loopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), null);
+      loopbackLinkFactory.constructLink(() -> OPERATOR_ADDRESS, null);
       fail();
     } catch (NullPointerException e) {
       assertThat(e.getMessage()).isEqualTo("linkSettings must not be null");
@@ -81,7 +81,7 @@ public class LoopbackLinkFactoryTest {
       LinkSettings linkSettings = LinkSettings.builder()
           .linkType(LinkType.of("foo"))
           .build();
-      loopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
+      loopbackLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
       fail();
     } catch (NullPointerException e) {
       assertThat(e.getMessage()).isEqualTo("LinkType not supported by this factory. linkType=LinkType(FOO)");
@@ -94,7 +94,7 @@ public class LoopbackLinkFactoryTest {
     LinkSettings linkSettings = LinkSettings.builder()
         .linkType(LoopbackLink.LINK_TYPE)
         .build();
-    Link<?> link = loopbackLinkFactory.constructLink(() -> Optional.of(OPERATOR_ADDRESS), linkSettings);
+    Link<?> link = loopbackLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
     link.setLinkId(linkId);
     assertThat(link.getLinkId()).isEqualTo(linkId);
   }

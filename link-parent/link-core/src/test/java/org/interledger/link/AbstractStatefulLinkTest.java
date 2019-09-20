@@ -62,7 +62,7 @@ public class AbstractStatefulLinkTest {
     this.onDisconnectCalled = new AtomicBoolean();
 
     link = new TestAbstractStatefulLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LINK_SETTINGS,
         linkConnectionEventEmitterMock
     );
@@ -72,7 +72,7 @@ public class AbstractStatefulLinkTest {
   @Test(expected = IllegalStateException.class)
   public void getLinkIdWhenNull() {
     link = new TestAbstractStatefulLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LINK_SETTINGS,
         linkConnectionEventEmitterMock
     );
@@ -103,7 +103,7 @@ public class AbstractStatefulLinkTest {
 
   @Test
   public void getOperatorAddressSupplier() {
-    assertThat(link.getOperatorAddressSupplier().get().get()).isEqualTo(OPERATOR_ADDRESS);
+    assertThat(link.getOperatorAddressSupplier().get()).isEqualTo(OPERATOR_ADDRESS);
   }
 
   @Test
@@ -215,7 +215,7 @@ public class AbstractStatefulLinkTest {
     final EventBus eventBus = new EventBus();
 
     this.link = new TestAbstractStatefulLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LINK_SETTINGS,
         new EventBusConnectionEventEmitter(eventBus)
     );
@@ -270,7 +270,7 @@ public class AbstractStatefulLinkTest {
     final EventBus eventBus = new EventBus();
 
     link = new AbstractStatefulLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LINK_SETTINGS,
         new EventBusConnectionEventEmitter(eventBus)
     ) {
@@ -329,7 +329,8 @@ public class AbstractStatefulLinkTest {
   private class TestAbstractStatefulLink extends AbstractStatefulLink {
 
     private TestAbstractStatefulLink(
-        Supplier operatorAddressSupplier, LinkSettings linkSettings,
+        Supplier<InterledgerAddress> operatorAddressSupplier,
+        LinkSettings linkSettings,
         LinkConnectionEventEmitter linkConnectionEventEmitter
     ) {
       super(operatorAddressSupplier, linkSettings, linkConnectionEventEmitter);
