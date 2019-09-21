@@ -7,7 +7,6 @@ import org.interledger.stream.crypto.Random;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
