@@ -14,13 +14,14 @@ import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.quilt.jackson.InterledgerModule;
 import org.interledger.quilt.jackson.conditions.Encoding;
+import org.interledger.spsp.PaymentPointer;
+import org.interledger.spsp.client.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -59,6 +60,8 @@ public class SimpleStreamSenderIT {
   private static final String RECEIVER_ACCOUNT_USERNAME = "java_stream_receiver";
   private static final InterledgerAddress SENDER_ADDRESS = HOST_ADDRESS.with(SENDER_ACCOUNT_USERNAME);
   private static final InterledgerAddress RECEIVER_ADDRESS = HOST_ADDRESS.with(RECEIVER_ACCOUNT_USERNAME);
+  private static final PaymentPointer RECEIVER_PAYMENT_POINTER = PaymentPointer.of("$" + HOST_ADDRESS.getValue()
+    + "/" + RECEIVER_ACCOUNT_USERNAME);
 
   public static final String AUTH_TOKEN = "password";
 
@@ -111,7 +114,8 @@ public class SimpleStreamSenderIT {
     OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
 
     this.nodeClient = new InterledgerRustNodeClient(httpClient, AUTH_TOKEN,
-        objectMapperForTesting(), interledgerNodeBaseURI);
+        objectMapperForTesting(), interledgerNodeBaseURI,
+      (pointer) -> interledgerNodeBaseURI + "/spsp" + pointer.path());
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -138,7 +142,7 @@ public class SimpleStreamSenderIT {
 
     nodeClient.createAccount(HOST_ADDRESS, SENDER_ACCOUNT_USERNAME);
     nodeClient.createAccount(HOST_ADDRESS, RECEIVER_ACCOUNT_USERNAME);
-    streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_ACCOUNT_USERNAME);
+    streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_PAYMENT_POINTER);
   }
 
   @Test
@@ -150,7 +154,7 @@ public class SimpleStreamSenderIT {
     );
 
     final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(Base64.getDecoder().decode(streamConnectionDetails.sharedSecret()),
+        .sendMoney(streamConnectionDetails.sharedSecret().key(),
             SENDER_ADDRESS,
             streamConnectionDetails.destinationAddress(),
             paymentAmount).join();
@@ -175,7 +179,7 @@ public class SimpleStreamSenderIT {
       IntStream.range(0, sendCount).parallel().forEach((taskId) -> {
         logger.info("Running task " + taskId);
         final SendMoneyResult sendMoneyResult = streamSender
-            .sendMoney(Base64.getDecoder().decode(streamConnectionDetails.sharedSecret()),
+            .sendMoney(streamConnectionDetails.sharedSecret().key(),
                 SENDER_ADDRESS,
                 streamConnectionDetails.destinationAddress(),
                 paymentAmount).join();
