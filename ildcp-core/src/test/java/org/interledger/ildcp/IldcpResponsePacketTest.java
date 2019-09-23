@@ -22,10 +22,13 @@ package org.interledger.ildcp;
 
 import org.interledger.core.InterledgerAddress;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.spy;
 
 /**
  * Unit tests for {@link IldcpResponsePacket}.
@@ -34,6 +37,9 @@ public class IldcpResponsePacketTest {
 
   private static final InterledgerAddress FOO_ADDRESS = InterledgerAddress.of("example.foo");
   private static final String BTC = "BTC";
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   final IldcpResponse RESPONSE = IldcpResponse.builder()
       .clientAddress(FOO_ADDRESS)
@@ -49,15 +55,18 @@ public class IldcpResponsePacketTest {
     assertThat(actual.getData()).isEqualTo(new byte[32]);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
+  public void defaults() {
+    IldcpResponsePacket packet = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).build();
+    assertThat(packet.getData()).isEqualTo(new byte[0]);
+    assertThat(spy(IldcpResponsePacket.class).getFulfillment()).isEqualTo(IldcpResponsePacket.EXECUTION_FULFILLMENT);
+  }
+
+  @Test
   public void testEmptyBuilder() {
-    try {
-      IldcpResponsePacket.builder().build();
-      fail("cannot build packet");
-    } catch (IllegalStateException e) {
-      assertThat(e.getMessage()).isEqualTo("Cannot build IldcpResponsePacket, some of required attributes are not set [ildcpResponse]");
-      throw e;
-    }
+    expectedException.expect(IllegalStateException.class);
+    expectedException.expectMessage("Cannot build IldcpResponsePacket, some of required attributes are not set [ildcpResponse]");
+    IldcpResponsePacket.builder().build();
   }
 
   @Test

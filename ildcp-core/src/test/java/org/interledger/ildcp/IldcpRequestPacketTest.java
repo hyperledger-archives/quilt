@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
 
 /**
  * Unit tests for {@link IldcpRequestPacket}.
@@ -39,6 +40,11 @@ public class IldcpRequestPacketTest {
     assertThat(actual.getDestination()).isEqualTo(IldcpRequestPacket.PEER_DOT_CONFIG);
     assertThat(actual.getExecutionCondition()).isEqualTo(IldcpRequestPacket.EXECUTION_CONDITION);
     assertThat(actual.getData()).isEqualTo(new byte[0]);
+    // interface
+    assertThat(spy(IldcpRequestPacket.class).getAmount()).isEqualTo(BigInteger.ZERO);
+    assertThat(spy(IldcpRequestPacket.class).getExecutionCondition()).isEqualTo(IldcpRequestPacket.EXECUTION_CONDITION);
+    assertThat(spy(IldcpRequestPacket.class).getDestination()).isEqualTo(IldcpRequestPacket.PEER_DOT_CONFIG);
+    assertThat(spy(IldcpRequestPacket.class).getData()).isEqualTo(IldcpRequestPacket.EMPTY_DATA);
   }
 
   @Test
