@@ -1,8 +1,5 @@
 package org.interledger.stream.receiver;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.SendMoneyResult;
@@ -20,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Base64;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A unit tests that simulates network connectivity between a sender and a receiver in order isolate and control various
@@ -83,10 +82,10 @@ public class SenderReceiverTest {
     final SendMoneyResult sendMoneyResult = streamSender
         .sendMoney(sharedSecret, SENDER_ADDRESS, destinationAddress, paymentAmount).join();
 
-    assertThat(sendMoneyResult.amountDelivered(), is(paymentAmount));
-    assertThat(sendMoneyResult.originalAmount(), is(paymentAmount));
-    assertThat(sendMoneyResult.numFulfilledPackets(), is(2));
-    assertThat(sendMoneyResult.numRejectPackets(), is(0));
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
+    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
