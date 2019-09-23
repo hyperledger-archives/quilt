@@ -1,7 +1,6 @@
 package org.interledger.stream;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.InterledgerAddressBuilder;
 import org.interledger.stream.ImmutableStreamConnectionDetails.Builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +13,9 @@ import org.immutables.value.Value.Immutable;
  * conforms to the SPSP protocol.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009-simple-payment-setup-protocol.md"
+ * @deprecated Should be moved to the spsp module and called `SpspResponse`.
  */
+@Deprecated
 @Immutable
 @JsonSerialize(as = ImmutableStreamConnectionDetails.class)
 @JsonDeserialize(as = ImmutableStreamConnectionDetails.class)
