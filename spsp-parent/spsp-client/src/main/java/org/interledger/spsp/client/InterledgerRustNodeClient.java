@@ -1,39 +1,38 @@
-package org.interledger.stream.sender;
+package org.interledger.spsp.client;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import okhttp3.*;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.ImmutableStreamConnectionDetails;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.PaymentPointer;
+import org.interledger.spsp.PaymentPointerResolver;
+import org.interledger.spsp.StreamConnectionDetails;
 import java.io.IOException;
 import java.math.BigDecimal;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import org.immutables.value.Value.Immutable;
 
-public class InterledgerRustNodeClient {
+public class InterledgerRustNodeClient implements SpspClient {
 
   public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
   private final OkHttpClient httpClient;
-  private String authToken;
-  private ObjectMapper objectMapper;
-  private String baseUri;
+  private final String authToken;
+  private final ObjectMapper objectMapper;
+  private final String baseUri;
+  private final PaymentPointerResolver paymentPointerResolver;
 
-  public InterledgerRustNodeClient(OkHttpClient okHttpClient, String authToken, ObjectMapper objectMapper, String baseUri) {
+  public InterledgerRustNodeClient(OkHttpClient okHttpClient,
+                                   String authToken,
+                                   ObjectMapper objectMapper,
+                                   String baseUri,
+                                   PaymentPointerResolver paymentPointerResolver) {
     this.httpClient = okHttpClient;
     this.authToken = authToken;
     this.objectMapper = objectMapper;
     this.baseUri = baseUri;
+    this.paymentPointerResolver = paymentPointerResolver;
   }
 
   public void createAccount(InterledgerAddress hostIlpAddress, String accountName) throws IOException {
@@ -53,45 +52,51 @@ public class InterledgerRustNodeClient {
         .put("routing_relation", "Peer")
         .build();
 
-    Request request = new Request.Builder()
+    execute(new Request.Builder()
         .url(HttpUrl.parse(baseUri + "/accounts"))
         .post(RequestBody.create(new ObjectMapper().writeValueAsString(newAccountPayload), JSON))
         .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken)))
-        .build();
-    try (Response response = httpClient.newCall(request).execute()) {
-      assertThat(response.code()).isEqualTo(200);
-    }
+        .build(), Void.class);
   }
 
-  public StreamConnectionDetails getStreamConnectionDetails(String account) throws IOException {
-    Request request = new Request.Builder()
-        .url(HttpUrl.parse(baseUri + "/spsp/" + account))
+  public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverException {
+    return execute(new Request.Builder()
+        .url(HttpUrl.parse(paymentPointerResolver.resolve(paymentPointer)))
         .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken)))
         .get()
-        .build();
-    try (Response response = httpClient.newCall(request).execute()) {
-      assertThat(response.code()).isEqualTo(200);
-      return objectMapper.readValue(response.body().string(), ImmutableStreamConnectionDetails.class);
-    }
+        .build(), StreamConnectionDetails.class);
   }
 
 
-  public BigDecimal getBalance(String accountName) throws IOException {
-    Request request = new Request.Builder()
+  public BigDecimal getBalance(String accountName) throws SpspException {
+    return execute(new Request.Builder()
         .url(HttpUrl.parse(baseUri + "/accounts/" + accountName + "/balance"))
         .get()
         .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken)))
-        .build();
-   try (Response response = httpClient.newCall(request).execute()) {
-     assertThat(response.code()).isEqualTo(200);
-     return objectMapper.readValue(response.body().string(), BalanceResponse.class).getBalance();
-   }
+        .build(), BalanceResponse.class)
+      .getBalance();
+  }
+
+  private <T> T execute(Request request, Class<T> clazz) throws SpspException {
+    try (Response response = httpClient.newCall(request).execute()) {
+      if (!response.isSuccessful()) {
+        if (response.code() == 404) {
+          throw new InvalidReceiverException(request.url().toString());
+        }
+        throw new SpspException("Received non-successful HTTP response code " +  response.code()
+          + " calling " + request.url());
+      }
+      return objectMapper.readValue(response.body().string(), clazz);
+    }
+    catch (IOException e) {
+      throw new SpspException("IOException failure calling " + request.url(), e);
+    }
   }
 
   @Immutable
   @JsonDeserialize(as = ImmutableBalanceResponse.class)
   @JsonSerialize(as = ImmutableBalanceResponse.class)
-  public static interface BalanceResponse {
+  public interface BalanceResponse {
     BigDecimal getBalance();
   }
 

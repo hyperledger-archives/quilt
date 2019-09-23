@@ -38,6 +38,10 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>spsp-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>link-ilp-over-http</artifactId>
       <scope>test</scope>
     </dependency>

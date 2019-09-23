@@ -57,11 +57,6 @@ public interface PaymentPointer {
    */
   String path();
 
-  default String toUrl(boolean useSsl) {
-    String prefix = useSsl ? "https://" : "http://";
-    return prefix + host() + path();
-  }
-
   @Immutable
   abstract class AbstractPaymentPointer implements PaymentPointer {
 

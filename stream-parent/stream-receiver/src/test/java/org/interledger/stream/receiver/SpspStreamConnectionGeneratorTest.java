@@ -3,13 +3,11 @@ package org.interledger.stream.receiver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Base64;
 
 /**
  * Unit tests for {@link SpspStreamConnectionGenerator}.
@@ -53,8 +51,8 @@ public class SpspStreamConnectionGeneratorTest {
         .generateConnectionDetails(serverSecret, receiverAddress);
 
     assertThat(connectionDetails.destinationAddress().startsWith(receiverAddress)).isTrue();
-    assertThat(connectionDetails.sharedSecret()).isEqualTo(Base64.getEncoder().withoutPadding().encodeToString(
-        connectionGenerator.deriveSecretFromAddress(serverSecret, connectionDetails.destinationAddress())));
+    assertThat(connectionDetails.sharedSecret().key()).isEqualTo(
+        connectionGenerator.deriveSecretFromAddress(serverSecret, connectionDetails.destinationAddress()));
   }
 
   @Test(expected = StreamException.class)

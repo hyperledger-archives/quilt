@@ -3,7 +3,7 @@ package org.interledger.stream.receiver;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 
 /**
  * <p>A service that fulfills incoming STREAM packets.</p>

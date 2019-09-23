@@ -4,7 +4,7 @@ import com.google.common.primitives.UnsignedLong;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.*;
 import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
@@ -24,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,7 +85,7 @@ public class StatelessStreamReceiverTest {
     encryptedStreamPacketBytes = createEncryptedStreamPacketBytes(testStreamPacket);
 
     executionCondition = StreamUtils
-        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().getBytes(), encryptedStreamPacketBytes).getCondition();
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(), encryptedStreamPacketBytes).getCondition();
 
     preparePacket = createPreparePacket(executionCondition);
   }
@@ -173,10 +172,10 @@ public class StatelessStreamReceiverTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     streamCodecContext.write(testStreamPacket, baos);
     final byte[] encryptedStreamPacketBytes = streamEncryptionService
-      .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+      .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
 
     final InterledgerCondition executionCondition = StreamUtils
-      .generatedFulfillableFulfillment(Base64.getDecoder().decode(connectionDetails.sharedSecret()), encryptedStreamPacketBytes).getCondition();
+      .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(), encryptedStreamPacketBytes).getCondition();
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
       .destination(connectionDetails.destinationAddress())
@@ -236,7 +235,7 @@ public class StatelessStreamReceiverTest {
     byte[] unfulfillableEncryptedStreamPacketBytes = createEncryptedStreamPacketBytes(unfulfillableStreamPacket);
 
     InterledgerCondition unfulfillableExecutionCondition = StreamUtils
-        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().getBytes(), unfulfillableEncryptedStreamPacketBytes).getCondition();
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(), unfulfillableEncryptedStreamPacketBytes).getCondition();
 
     InterledgerPreparePacket unfulfillablePrepare = createPreparePacket(unfulfillableExecutionCondition);
 
@@ -258,7 +257,7 @@ public class StatelessStreamReceiverTest {
     byte[] unfulfillableEncryptedStreamPacketBytes = createEncryptedStreamPacketBytes(unfulfillableStreamPacket);
 
     InterledgerCondition unfulfillableExecutionCondition = StreamUtils
-        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().getBytes(), unfulfillableEncryptedStreamPacketBytes).getCondition();
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(), unfulfillableEncryptedStreamPacketBytes).getCondition();
 
     InterledgerPreparePacket unfulfillablePrepare = createPreparePacket(unfulfillableExecutionCondition);
 
@@ -286,7 +285,7 @@ public class StatelessStreamReceiverTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     streamCodecContext.write(testStreamPacket, baos);
     return streamEncryptionService
-        .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+        .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
   }
   
   private StreamPacket createStreamPacket(UnsignedLong prepareAmount) {
