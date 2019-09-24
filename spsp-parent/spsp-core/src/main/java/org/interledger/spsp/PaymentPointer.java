@@ -2,6 +2,7 @@ package org.interledger.spsp;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import org.immutables.value.Value.Check;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
@@ -75,6 +76,11 @@ public interface PaymentPointer {
     @Check
     AbstractPaymentPointer validate() {
       Preconditions.checkState(!host().isEmpty(), "PaymentPointers must specify a host");
+      if (Strings.isNullOrEmpty(path())) {
+        return ImmutablePaymentPointer.builder().from(this)
+          .path(WELL_KNOWN)
+          .build();
+      }
       // Normalize acceptable input.
       if (path().equals("/")) {
         return ImmutablePaymentPointer.builder().from(this)

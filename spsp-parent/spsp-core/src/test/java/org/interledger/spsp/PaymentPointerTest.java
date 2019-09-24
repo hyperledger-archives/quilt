@@ -18,6 +18,36 @@ public class PaymentPointerTest {
   }
 
   @Test
+  public void wellKnownPath() {
+    assertThat(PaymentPointer.of("$example.com").path())
+      .isEqualTo("/.well-known/pay");
+  }
+
+  @Test
+  public void wellKnownPathWithTrailingSlash() {
+    assertThat(PaymentPointer.of("$example.com/").path())
+      .isEqualTo("/.well-known/pay");
+  }
+
+  @Test
+  public void builderWithWellKnownPathWithTrailingSlash() {
+    assertThat(ImmutablePaymentPointer.builder().host("example.com").path("/").build().path())
+      .isEqualTo("/.well-known/pay");
+  }
+
+  @Test
+  public void builderWithWellKnownPathWithoutTrailingSlash() {
+    assertThat(ImmutablePaymentPointer.builder().host("example.com").path("").build().path())
+      .isEqualTo("/.well-known/pay");
+  }
+
+  @Test
+  public void accountPath() {
+    assertThat(PaymentPointer.of("$example.com/foo").path())
+      .isEqualTo("/foo");
+  }
+
+  @Test
   public void parseHostOnly() {
     assertThat(PaymentPointer.of("$example.com"))
       .isEqualTo(ImmutablePaymentPointer.builder().host("example.com").path("/").build());
@@ -47,15 +77,5 @@ public class PaymentPointerTest {
     thrown.expectMessage("PaymentPointers may only contain ASCII characters");
     PaymentPointer.of("$ZA̡͊͠͝LGΌ IS̯͈͕̹̘̱ͮ TO͇̹̺ͅƝ̴ȳ̳ TH̘Ë͖́̉ ͠P̯͍̭O̚N̐Y̡");
   }
-
-//  @Test
-//  public void toUrlWithPath() {
-//    assertThat(PaymentPointer.of("$example.com/foo").resolve()).isEqualTo("https://example.com/foo");
-//  }
-//
-//  @Test
-//  public void toUrlWithout() {
-//    assertThat(PaymentPointer.of("$example.com").toUrl()).isEqualTo("https://example.com/.well-known/pay");
-//  }
 
 }
