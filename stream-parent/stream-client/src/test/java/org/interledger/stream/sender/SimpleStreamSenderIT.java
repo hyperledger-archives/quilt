@@ -170,7 +170,7 @@ public class SimpleStreamSenderIT {
       .assetScale(6)
       .minBalance(new BigInteger("-100000000"))
       .roundTripTime(new BigInteger("500"))
-      .routingRelation("Peer");
+      .routingRelation(Account.RoutingRelation.PEER);
   }
 
   @Test

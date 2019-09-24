@@ -18,9 +18,9 @@ import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.PaymentPointerResolver;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.spsp.client.InvalidReceiverException;
+import org.interledger.spsp.client.InvalidReceiverClientException;
 import org.interledger.spsp.client.SpspClient;
-import org.interledger.spsp.client.SpspException;
+import org.interledger.spsp.client.SpspClientException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -75,7 +75,7 @@ public class InterledgerRustNodeClient implements SpspClient {
       .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken)));
   }
 
-  public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverException {
+  public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverClientException {
     return execute(requestBuilder()
       .url(HttpUrl.parse(paymentPointerResolver.resolve(paymentPointer)))
       .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken,
@@ -85,7 +85,7 @@ public class InterledgerRustNodeClient implements SpspClient {
   }
 
 
-  public BigDecimal getBalance(String accountName) throws SpspException {
+  public BigDecimal getBalance(String accountName) throws SpspClientException {
     return execute(requestBuilder()
       .url(HttpUrl.parse(baseUri + "/accounts/" + accountName + "/balance"))
       .get()
@@ -93,18 +93,18 @@ public class InterledgerRustNodeClient implements SpspClient {
       .getBalance();
   }
 
-  private <T> T execute(Request request, Class<T> clazz) throws SpspException {
+  private <T> T execute(Request request, Class<T> clazz) throws SpspClientException {
     try (Response response = httpClient.newCall(request).execute()) {
       if (!response.isSuccessful()) {
         if (response.code() == 404) {
-          throw new InvalidReceiverException(request.url().toString());
+          throw new InvalidReceiverClientException(request.url().toString());
         }
-        throw new SpspException("Received non-successful HTTP response code " + response.code()
+        throw new SpspClientException("Received non-successful HTTP response code " + response.code()
           + " calling " + request.url());
       }
       return objectMapper.readValue(response.body().string(), clazz);
     } catch (IOException e) {
-      throw new SpspException("IOException failure calling " + request.url(), e);
+      throw new SpspClientException("IOException failure calling " + request.url(), e);
     }
   }
 
