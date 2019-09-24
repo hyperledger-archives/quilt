@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -17,19 +16,16 @@ import java.util.function.Supplier;
  */
 public class PacketRejector {
 
-  public static final InterledgerAddress UNSET_OPERATOR_ADDRESS =
-      InterledgerAddress.of(InterledgerAddress.AllocationScheme.PRIVATE.getValue() + ".unset-operator-address");
-
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  private final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier;
+  private final Supplier<InterledgerAddress> operatorAddressSupplier;
 
   /**
    * Required-args Constructor.
    *
    * @param operatorAddressSupplier A {@link Supplier} of the ILP address for the node that's operating this Link.
    */
-  public PacketRejector(final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier) {
+  public PacketRejector(final Supplier<InterledgerAddress> operatorAddressSupplier) {
     this.operatorAddressSupplier = Objects
         .requireNonNull(operatorAddressSupplier, "operatorAddressSupplier must not be null");
   }
@@ -55,7 +51,7 @@ public class PacketRejector {
 
     // Reject.
     final InterledgerRejectPacket rejectPacket = InterledgerRejectPacket.builder()
-        .triggeredBy(operatorAddressSupplier.get().orElse(UNSET_OPERATOR_ADDRESS))
+        .triggeredBy(operatorAddressSupplier.get())
         .code(errorCode)
         .message(errorMessage)
         .build();

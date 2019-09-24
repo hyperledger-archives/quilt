@@ -10,7 +10,6 @@ import org.interledger.link.LinkType;
 
 import java.math.BigDecimal;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * <p>Simulates an ILPv4 network by allowing two {@link Link} instances to speak directly to each other (as
@@ -61,7 +60,7 @@ public class SimulatedILPv4Network {
     this.leftToRightNetworkConditions = Objects.requireNonNull(leftToRightNetworkConditions);
     this.rightToLeftNetworkConditions = Objects.requireNonNull(rightToLeftNetworkConditions);
 
-    this.leftLink = new AbstractLink<LinkSettings>(() -> Optional.of(Link.SELF), LinkSettings.builder().linkType(
+    this.leftLink = new AbstractLink<LinkSettings>(() -> Link.SELF, LinkSettings.builder().linkType(
         LinkType.of("leftLink")).build()) {
       @Override
       public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
@@ -70,7 +69,7 @@ public class SimulatedILPv4Network {
     };
     leftLink.setLinkId(LinkId.of("left"));
 
-    this.rightLink = new AbstractLink<LinkSettings>(() -> Optional.of(Link.SELF),
+    this.rightLink = new AbstractLink<LinkSettings>(() -> Link.SELF,
         LinkSettings.builder().linkType(LinkType.of("rightLink")).build()) {
       @Override
       public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {

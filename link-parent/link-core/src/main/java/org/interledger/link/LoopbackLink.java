@@ -2,6 +2,7 @@ package org.interledger.link;
 
 import static org.interledger.core.InterledgerConstants.ALL_ZEROS_FULFILLMENT;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -32,12 +33,15 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
   /**
    * Required-Args Constructor.
    *
-   * @param operatorAddressSupplier A {@link Supplier} of the ILP address for the node that's operating this Link.
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
    * @param linkSettings            A {@link LinkSettings} for this Link.
    * @param packetRejector          A {@link PacketRejector} to aid in rejecting packets in a uniform manner.
    */
   public LoopbackLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
+      final Supplier<InterledgerAddress> operatorAddressSupplier,
       final LinkSettings linkSettings,
       final PacketRejector packetRejector
   ) {
@@ -62,14 +66,7 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
             return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T02_PEER_BUSY,
                 "Loopback set to manually reject via simulate_timeout=T02");
           } else if (value.equals("T03")) {
-            // Sleep for 1 minute, which in the typical case will exceed the Circuit-breaker's threshold.
-            try {
-              Thread.sleep(60000);
-            } catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-            return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T03_CONNECTOR_BUSY,
-                "Loopback set to exceed timeout via simulate_timeout=T03");
+            return sleepAndReject(preparePacket, 60000);
           }
           if (value.equals("T99")) {
             throw new RuntimeException("T99 APPLICATION ERROR");
@@ -83,5 +80,17 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
         .orElseGet(InterledgerFulfillPacket.builder()
             .fulfillment(LOOPBACK_FULFILLMENT)
             .data(preparePacket.getData())::build);
+  }
+
+  @VisibleForTesting
+  InterledgerResponsePacket sleepAndReject(InterledgerPreparePacket preparePacket, int sleepDuraction) {
+    // Sleep for 1 minute, which in the typical case will exceed the Circuit-breaker's threshold.
+    try {
+      Thread.sleep(sleepDuraction);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T03_CONNECTOR_BUSY,
+        "Loopback set to exceed timeout via simulate_timeout=T03");
   }
 }

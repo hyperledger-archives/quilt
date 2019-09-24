@@ -20,11 +20,13 @@ package org.interledger.stream;
  * =========================LICENSE_END==================================
  */
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
+
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Derived;
 
 import java.util.List;
 
@@ -62,6 +64,9 @@ import java.util.List;
 @Immutable
 public interface StreamPacket {
 
+  // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max.
+  UnsignedLong MAX_FRAMES_PER_CONNECTION = UnsignedLong.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1L);
+
   short VERSION_1 = 1;
 
   /**
@@ -98,6 +103,21 @@ public interface StreamPacket {
    * @return A {@link UnsignedLong} for this packet's sequence.
    */
   UnsignedLong sequence();
+
+  /**
+   * Determines if this packet contains a {@link #sequence()} that can be safely used to encrypt data using a single
+   * shared secret. Per IL-RFC-29, "Implementations MUST close the connection once either endpoint has sent 2^31
+   * packets. According to NIST, it is unsafe to use AES-GCM for more than 2^32 packets using the same encryption key
+   * (STREAM uses the limit of 2^31 because both endpoints encrypt packets with the same key).
+   *
+   * @return {@code true} if the current sequence can safely be used with a single shared-secret; {@code false}
+   *     otherwise.
+   */
+  @Derived
+  default boolean sequenceIsSafeForSingleSharedSecret() {
+    // Only return true if the `sequence` is below MAX_FRAMES_PER_CONNECTION. At or above is unsafe.
+    return this.sequence().compareTo(MAX_FRAMES_PER_CONNECTION) < 0;
+  }
 
   /**
    * If the STREAM packet is sent on an ILP Prepare, this represents the minimum the receiver should accept (this is a

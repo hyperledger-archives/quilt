@@ -57,9 +57,7 @@ public interface IldcpRequest {
    *
    * @return The {@link Instant} this packet should be considered to be expired.
    */
-  default Instant getExpiresAt() {
-    return Instant.now().plusSeconds(30);
-  }
+  Instant getExpiresAt();
 
   /**
    * Exists to satisfy Immutables.

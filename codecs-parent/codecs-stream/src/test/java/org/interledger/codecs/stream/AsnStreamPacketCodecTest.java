@@ -20,9 +20,6 @@
 
  package org.interledger.codecs.stream;
 
- import static org.hamcrest.MatcherAssert.assertThat;
- import static org.hamcrest.core.Is.is;
-
  import org.interledger.core.InterledgerPacketType;
  import org.interledger.encoding.asn.framework.CodecContext;
  import org.interledger.stream.StreamPacket;
@@ -42,6 +39,8 @@
  import java.util.Arrays;
  import java.util.Collection;
  import java.util.Random;
+
+ import static org.assertj.core.api.Assertions.assertThat;
 
  /**
   * Unit tests for {@link AsnStreamPacketCodec}.
@@ -118,7 +117,7 @@
      ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
      final StreamPacket decodedStreamPacket = context.read(StreamPacket.class, byteArrayInputStream);
 
-     assertThat(decodedStreamPacket, is(this.streamPacket));
+     assertThat(decodedStreamPacket).isEqualTo(this.streamPacket);
    }
 
    @Test
@@ -139,7 +138,7 @@
      );
      final StreamPacket decodedStreamPacket = context.read(StreamPacket.class, byteArrayInputStream);
 
-     assertThat(decodedStreamPacket, is(this.streamPacket));
+     assertThat(decodedStreamPacket).isEqualTo(this.streamPacket);
    }
 
  }

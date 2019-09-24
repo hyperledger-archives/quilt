@@ -20,16 +20,16 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.InterledgerAddress;
-import org.interledger.core.InterledgerErrorCode;
-import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.*;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.mockito.Mockito.mock;
 
 /**
  * Unit test for {@link IldcpResponsePacketHandler}.
@@ -48,6 +48,10 @@ public class IldcpResponsePacketHandlerTest {
   private InterledgerResponsePacket fulfillPacket;
   private InterledgerResponsePacket rejectPacket;
   private InterledgerResponsePacket expiredPacket;
+  private InterledgerResponsePacket shampooPacket;
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void setup() {
@@ -62,6 +66,8 @@ public class IldcpResponsePacketHandlerTest {
         .code(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT)
         .message("Timed out!")
         .build();
+
+    shampooPacket = InterledgerShampooPacket.builder().build();
   }
 
   @Test(expected = NullPointerException.class)
@@ -130,6 +136,26 @@ public class IldcpResponsePacketHandlerTest {
         assertThat(ildcpErrorPacket.getCode()).isEqualTo(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT);
       }
     }.handle(expiredPacket);
+  }
+
+  @Test
+  public void fallthrough() {
+    expectedException.expect(RuntimeException.class);
+    expectedException.expectMessage("Unsupported IldcpResponsePacket Type: " +
+        "class org.interledger.ildcp.InterledgerShampooPacketBuilder$ImmutableInterledgerShampooPacket");
+    new IldcpResponsePacketHandler() {
+
+      @Override
+      protected void handleIldcpResponsePacket(IldcpResponsePacket ildcpResponsePacket) {
+
+      }
+
+      @Override
+      protected void handleIldcpErrorPacket(InterledgerRejectPacket ildcpErrorPacket) {
+
+      }
+    }.handle(shampooPacket);
+
   }
 
 }
