@@ -14,12 +14,7 @@ import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.frames.ConnectionCloseFrame;
-import org.interledger.stream.frames.ErrorCode;
-import org.interledger.stream.frames.StreamFrame;
-import org.interledger.stream.frames.StreamFrameType;
-import org.interledger.stream.frames.StreamMoneyFrame;
-import org.interledger.stream.frames.StreamMoneyMaxFrame;
+import org.interledger.stream.frames.*;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -76,7 +71,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
    */
   @Override
   public InterledgerResponsePacket receiveMoney(
-      final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress
+      final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress, final String assetCode,
+      final short assetScale
   ) {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(receiverAddress);
@@ -115,6 +111,14 @@ public class StatelessStreamReceiver implements StreamReceiver {
               .streamId(streamMoneyFrame.streamId())
               .totalReceived(UnsignedLong.ZERO)
               .receiveMax(UnsignedLong.MAX_VALUE)
+              .build())
+          );
+      streamPacket.frames().stream()
+          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionNewAddress)
+          .findFirst()
+          .map(streamFrame -> responseFrames.add(ConnectionAssetDetailsFrame.builder()
+              .sourceAssetScale(assetScale)
+              .sourceAssetCode(assetCode)
               .build())
           );
     } else {

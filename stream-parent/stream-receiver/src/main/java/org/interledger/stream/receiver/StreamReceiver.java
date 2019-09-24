@@ -30,7 +30,8 @@ public interface StreamReceiver {
    * @param clientAddress A {@link InterledgerAddress} of the account this packet should be delivered to.
    */
   InterledgerResponsePacket receiveMoney(
-      final InterledgerPreparePacket preparePacket, final InterledgerAddress clientAddress
+      final InterledgerPreparePacket preparePacket, final InterledgerAddress clientAddress, final String assetCode,
+      final short assetScale
   );
 
 }

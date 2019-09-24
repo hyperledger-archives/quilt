@@ -22,8 +22,7 @@ import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.frames.StreamFrameType;
-import org.interledger.stream.frames.StreamMoneyFrame;
+import org.interledger.stream.frames.*;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
@@ -49,6 +48,9 @@ import java.util.Optional;
 public class StatelessStreamReceiverTest {
 
   private final InterledgerAddress clientAddress = InterledgerAddress.of("example.destination");
+  private final String assetCode = "USD";
+  private final short assetScale = 100;
+
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Mock
@@ -188,9 +190,67 @@ public class StatelessStreamReceiverTest {
         .executionCondition(executionCondition)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, receiverAddress)
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
         .handle((fulfillPacket ->
                 assertThat(fulfillPacket.getFulfillment().getCondition()).isEqualTo(executionCondition)),
+            rejectPacket -> fail("should have fulfilled"));
+  }
+
+  @Test
+  public void returnsAssetDetailsOnNewConnection() throws IOException {
+    streamReceiver = new StatelessStreamReceiver(
+        serverSecretSupplier, streamConnectionGenerator, streamEncryptionService, StreamCodecContextFactory.oer()
+    );
+    final InterledgerAddress receiverAddress = InterledgerAddress.of("example.receiver");
+
+    final StreamConnectionDetails connectionDetails = streamConnectionGenerator
+        .generateConnectionDetails(serverSecretSupplier, receiverAddress);
+
+    final StreamPacket testStreamPacket = StreamPacket.builder()
+        .interledgerPacketType(InterledgerPacketType.PREPARE)
+        .prepareAmount(UnsignedLong.ZERO)
+        .sequence(UnsignedLong.ONE)
+        .addFrames(
+            StreamMoneyFrame.builder()
+                .streamId(UnsignedLong.ONE)
+                .shares(UnsignedLong.ONE)
+                .build(),
+            ConnectionNewAddressFrame.builder()
+                .sourceAddress(clientAddress)
+                .build()
+        )
+        .build();
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    streamCodecContext.write(testStreamPacket, baos);
+    final byte[] encryptedStreamPacketBytes = streamEncryptionService
+        .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+
+    final InterledgerCondition executionCondition = StreamUtils
+        .generatedFulfillableFulfillment(Base64.getDecoder().decode(connectionDetails.sharedSecret()),
+            encryptedStreamPacketBytes).getCondition();
+
+    final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+        .destination(connectionDetails.destinationAddress())
+        .amount(BigInteger.valueOf(100L))
+        .expiresAt(Instant.EPOCH)
+        .data(encryptedStreamPacketBytes)
+        .executionCondition(executionCondition)
+        .build();
+
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
+        .handle((fulfillPacket -> {
+              final byte[] streamData = streamEncryptionService.decrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), fulfillPacket.getData());
+              try {
+                StreamPacket streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamData));
+                assertThat(streamPacket.frames()).containsOnlyOnce(ConnectionAssetDetailsFrame.builder()
+                    .sourceAssetCode(assetCode)
+                    .sourceAssetScale(assetScale)
+                    .build());
+              } catch (IOException e) {
+                fail("cannot read data from fulfill");
+              }
+            }),
             rejectPacket -> fail("should have fulfilled"));
   }
 
@@ -208,7 +268,7 @@ public class StatelessStreamReceiverTest {
         .triggeredBy(clientAddress)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, clientAddress)
+    this.streamReceiver.receiveMoney(preparePacket, clientAddress, assetCode, assetScale)
         .handle((fulfillPacket -> fail("should have rejected")),
             rejectPacket -> assertThat(rejectPacket).isEqualTo(expected));
   }
@@ -225,7 +285,7 @@ public class StatelessStreamReceiverTest {
     doThrow(new IOException()).when(mockCodecContext).write(any(), any());
 
     expectedException.expect(StreamException.class);
-    this.streamReceiver.receiveMoney(preparePacket, clientAddress);
+    this.streamReceiver.receiveMoney(preparePacket, clientAddress, assetCode, assetScale);
   }
 
   @Test
@@ -248,7 +308,7 @@ public class StatelessStreamReceiverTest {
 
     doThrow(new IOException()).when(mockCodecContext).write(any(), any());
     expectedException.expect(StreamException.class);
-    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress);
+    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress, assetCode, assetScale);
   }
 
   @Test
@@ -266,7 +326,7 @@ public class StatelessStreamReceiverTest {
 
     InterledgerPreparePacket unfulfillablePrepare = createPreparePacket(unfulfillableExecutionCondition);
 
-    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress)
+    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress, assetCode, assetScale)
         .handle((fulfillPacket -> fail("should have rejected")),
             rejectPacket -> assertThat(rejectPacket).extracting("code", "message", "triggeredBy")
                 .containsExactly(
@@ -314,7 +374,7 @@ public class StatelessStreamReceiverTest {
         .executionCondition(executionCondition)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, receiverAddress)
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
         .handle(
             fulfillPacket -> {
               assertThat(fulfillPacket.getFulfillment().getCondition()).isEqualTo(executionCondition);
