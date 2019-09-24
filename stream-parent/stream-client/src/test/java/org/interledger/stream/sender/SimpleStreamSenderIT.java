@@ -2,6 +2,7 @@ package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -15,21 +16,13 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.quilt.jackson.InterledgerModule;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.Account;
 import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +37,6 @@ import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -53,12 +45,23 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.zalando.problem.ProblemModule;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+
 /**
- * Integration tests for {@link org.interledger.stream.sender.SimpleStreamSender} that connects to a running ILP Connector using the information
- * supplied in this link, and initiates a STREAM payment.
+ * Integration tests for {@link org.interledger.stream.sender.SimpleStreamSender} that connects to a running ILP
+ * Connector using the information supplied in this link, and initiates a STREAM payment.
  */
 public class SimpleStreamSenderIT {
 
+  public static final String AUTH_TOKEN = "password";
   private static final InterledgerAddress HOST_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
   private static final String SENDER_ACCOUNT_USERNAME = "java_stream_client";
   private static final String RECEIVER_ACCOUNT_USERNAME = "java_stream_receiver";
@@ -67,8 +70,7 @@ public class SimpleStreamSenderIT {
   private static final PaymentPointer RECEIVER_PAYMENT_POINTER = PaymentPointer.of("$" + HOST_ADDRESS.getValue()
     + "/" + RECEIVER_ACCOUNT_USERNAME);
 
-  public static final String AUTH_TOKEN = "password";
-
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
   @Rule
   public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledgerrs-standalone")
       .withExposedPorts(7770)
@@ -76,9 +78,6 @@ public class SimpleStreamSenderIT {
           "--ilp_address " + HOST_ADDRESS.getValue() + " " +
           "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d " +
           "--http_bind_address 0.0.0.0:7770");
-
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
   private Link link;
   private StreamConnectionDetails streamConnectionDetails;
   private String interledgerNodeBaseURI;
@@ -107,7 +106,7 @@ public class SimpleStreamSenderIT {
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-    logging.level(HttpLoggingInterceptor.Level.BODY);
+    logging.level(HttpLoggingInterceptor.Level.BASIC);
     OkHttpClient.Builder builder = new OkHttpClient.Builder()
         .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
         .cookieJar(NO_COOKIES)
@@ -136,7 +135,7 @@ public class SimpleStreamSenderIT {
         .build();
 
     this.link = new IlpOverHttpLink(
-        () -> Optional.of(SENDER_ADDRESS),
+        () -> SENDER_ADDRESS,
         linkSettings,
         httpClient,
         objectMapperForTesting(),
@@ -155,13 +154,11 @@ public class SimpleStreamSenderIT {
       .ilpAddress(RECEIVER_ADDRESS)
       .build();
 
-
     nodeClient.createAccount(sender);
     nodeClient.createAccount(receiver);
     streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_PAYMENT_POINTER);
   }
 
-  @NotNull
   private ImmutableAccount.Builder accountBuilder() {
     return Account.builder()
       .httpIncomingToken(AUTH_TOKEN)

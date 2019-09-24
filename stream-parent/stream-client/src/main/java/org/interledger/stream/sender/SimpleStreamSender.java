@@ -236,6 +236,15 @@ public class SimpleStreamSender implements StreamSender {
           break;
         }
 
+        // Integer.MAX_VALUE is equal to: 2<sup>31</sup>-1, so break only after we exceed Integer.MAX_VALUE
+        if (sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0) {
+          // Break out of the loop and close the connection. Per IL-RFC-29, "Implementations MUST close the connection
+          // once either endpoint has sent 2^31 packets. According to NIST, it is unsafe to use AES-GCM for more than
+          // 2^32 packets using the same encryption key. (STREAM uses the limit of 2^31 because both endpoints encrypt
+          // packets with the same key.)
+          break;
+        }
+
         // Determine the amount to send
         final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
         if (amountToSend.equals(UnsignedLong.ZERO)) {
@@ -518,6 +527,21 @@ public class SimpleStreamSender implements StreamSender {
           .numFulfilledPackets(this.numFulfilledPackets.get())
           .numRejectPackets(this.numRejectedPackets.get())
           .build();
+    }
+
+    /**
+     * Helper method to obtain the `sequence` of this {@link SendMoneyAggregator}. While under normal circumstances it
+     * is ill-advised to be testing a private variable, here we break this rule as a testing optimization. The behavior
+     * that exposing this method allows us to validate is the closing of a STREAM Connection after 2^31 frames. While
+     * the _correct_ way to test this would be to send 2^31 frames into the send method and then assert that the
+     * connection closes,we instead expose this mutator in order to avoid 2^31 redundant calls on every test execution.
+     *
+     * @param newSequence An {@link UnsignedLong} containing a value to set {@link #sequence} to.
+     */
+    @VisibleForTesting
+    public void setSequenceForTesting(final UnsignedLong newSequence) {
+      Objects.requireNonNull(newSequence);
+      this.sequence.set(newSequence);
     }
   }
 }

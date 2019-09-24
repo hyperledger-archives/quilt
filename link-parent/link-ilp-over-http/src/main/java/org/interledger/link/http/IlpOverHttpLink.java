@@ -79,8 +79,10 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
   /**
    * Required-args Constructor.
    *
-   * @param operatorAddressSupplier A {@link Supplier} of an optionally present {@link InterledgerAddress} for the
-   *                                operator of this link.
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
    * @param ilpOverHttpLinkSettings A {@link IlpOverHttpLinkSettings} that specified ledger link options.
    * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
    *                                endpoint.
@@ -91,7 +93,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    *                                authenticated calls to the remote HTTP endpoint.
    */
   public IlpOverHttpLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
+      final Supplier<InterledgerAddress> operatorAddressSupplier,
       final IlpOverHttpLinkSettings ilpOverHttpLinkSettings,
       final OkHttpClient okHttpClient,
       final ObjectMapper objectMapper,
@@ -233,9 +235,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
         .add(PRAGMA, "no-cache");
 
     // Set the Operator Address header, if present.
-    getOperatorAddressSupplier().get().ifPresent(
-        operatorAddress -> headers
-            .set(IlpOverHttpConstants.ILP_OPERATOR_ADDRESS_VALUE, operatorAddress.getValue()));
+    headers.set(IlpOverHttpConstants.ILP_OPERATOR_ADDRESS_VALUE, getOperatorAddressSupplier().get().getValue());
 
     headers.add(HttpHeaders.AUTHORIZATION, BEARER + this.authTokenSupplier.get());
 

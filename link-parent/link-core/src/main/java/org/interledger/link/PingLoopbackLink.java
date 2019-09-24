@@ -1,7 +1,5 @@
 package org.interledger.link;
 
-import static org.interledger.link.PacketRejector.UNSET_OPERATOR_ADDRESS;
-
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
@@ -14,7 +12,6 @@ import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Base64;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -38,11 +35,14 @@ public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link
   /**
    * Required-Args Constructor.
    *
-   * @param operatorAddressSupplier A {@link Supplier} of the ILP address for the node that's operating this Link.
-   * @param linkSettings            A {@link LinkSettings} for this Link.
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
+   * @param linkSettings            An instance of {@link LinkSettings} to initialize this link from.
    */
   public PingLoopbackLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier, final LinkSettings linkSettings
+      final Supplier<InterledgerAddress> operatorAddressSupplier, final LinkSettings linkSettings
   ) {
     super(operatorAddressSupplier, linkSettings);
   }
@@ -66,7 +66,7 @@ public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link
     } else {
       // Reject.
       final InterledgerRejectPacket rejectPacket = InterledgerRejectPacket.builder()
-          .triggeredBy(getOperatorAddressSupplier().get().orElse(UNSET_OPERATOR_ADDRESS))
+          .triggeredBy(getOperatorAddressSupplier().get())
           .code(InterledgerErrorCode.F00_BAD_REQUEST)
           .message("Invalid Ping Protocol Condition")
           .build();

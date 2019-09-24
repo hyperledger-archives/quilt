@@ -35,7 +35,7 @@ public class AbstractLinkTest {
     MockitoAnnotations.initMocks(this);
 
     this.link = new TestAbstractLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LINK_SETTINGS
     );
     this.link.setLinkId(LINK_ID);
@@ -44,7 +44,7 @@ public class AbstractLinkTest {
   @Test(expected = IllegalStateException.class)
   public void getLinkIdWhenNull() {
     this.link = new TestAbstractLink(
-        () -> Optional.of(OPERATOR_ADDRESS),
+        () -> OPERATOR_ADDRESS,
         LinkSettings.builder().linkType(LinkType.of("foo")).build()
     );
     try {
@@ -73,7 +73,7 @@ public class AbstractLinkTest {
 
   @Test
   public void getOperatorAddressSupplier() {
-    assertThat(link.getOperatorAddressSupplier().get().get()).isEqualTo(OPERATOR_ADDRESS);
+    assertThat(link.getOperatorAddressSupplier().get()).isEqualTo(OPERATOR_ADDRESS);
   }
 
   @Test
@@ -117,7 +117,7 @@ public class AbstractLinkTest {
    */
   private class TestAbstractLink extends AbstractLink {
 
-    private TestAbstractLink(Supplier operatorAddressSupplier, LinkSettings linkSettings) {
+    private TestAbstractLink(Supplier<InterledgerAddress> operatorAddressSupplier, LinkSettings linkSettings) {
       super(operatorAddressSupplier, linkSettings);
     }
 

@@ -9,7 +9,6 @@ import org.interledger.link.events.LinkDisconnectedEvent;
 import com.google.common.eventbus.EventBus;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -28,12 +27,15 @@ public abstract class AbstractStatefulLink<L extends LinkSettings>
   /**
    * Required-args Constructor.
    *
-   * @param operatorAddressSupplier    A {@link Supplier} for the ILP address of the node operating this link.
+   * @param operatorAddressSupplier    A supplier for the ILP address of this node operating this Link. This value may
+   *                                   be uninitialized, for example, in cases where the Link obtains its address from a
+   *                                   parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                   been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
    * @param linkSettings               A {@link L} that specified ledger link options.
    * @param linkConnectionEventEmitter A {@link LinkConnectionEventEmitter} that is used to emit events from this link.
    */
   protected AbstractStatefulLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier,
+      final Supplier<InterledgerAddress> operatorAddressSupplier,
       final L linkSettings,
       final LinkConnectionEventEmitter linkConnectionEventEmitter
   ) {
@@ -187,7 +189,7 @@ public abstract class AbstractStatefulLink<L extends LinkSettings>
    * @return A {@link String}.
    */
   private String operatorAddressAsString() {
-    return this.getOperatorAddressSupplier().get().map(InterledgerAddress::getValue).orElse("unset");
+    return this.getOperatorAddressSupplier().get().getValue();
   }
 
 

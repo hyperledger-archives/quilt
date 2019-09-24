@@ -6,7 +6,6 @@ import org.interledger.link.Link;
 import org.interledger.link.LinkFactory;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
-import org.interledger.link.events.LinkConnectionEventEmitter;
 import org.interledger.link.http.auth.BearerTokenSupplier;
 import org.interledger.link.http.auth.Decryptor;
 import org.interledger.link.http.auth.JwtHs256BearerTokenSupplier;
@@ -17,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -25,18 +23,26 @@ import java.util.function.Supplier;
  */
 public class IlpOverHttpLinkFactory implements LinkFactory {
 
-  private final LinkConnectionEventEmitter linkConnectionEventEmitter;
   private final OkHttpClient okHttpClient;
   private final Decryptor decryptor;
   private final ObjectMapper objectMapper;
   private final CodecContext ilpCodecContext;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param okHttpClient    An {@link OkHttpClient} that is used to send data to the remote peer for this {@link Link}.
+   * @param decryptor       A {@link Decryptor} that is used to decrypt sensitive data found in any {@link LinkSettings}
+   *                        object used to construct a new {@link Link}.
+   * @param objectMapper    An {@link ObjectMapper} used to (de)serialize JSON data.
+   * @param ilpCodecContext A {@link CodecContext} that can encode and decode ASN.1 OER payloads.
+   */
   public IlpOverHttpLinkFactory(
-      final LinkConnectionEventEmitter linkConnectionEventEmitter, final OkHttpClient okHttpClient,
+      final OkHttpClient okHttpClient,
       final Decryptor decryptor,
-      final ObjectMapper objectMapper, final CodecContext ilpCodecContext
+      final ObjectMapper objectMapper,
+      final CodecContext ilpCodecContext
   ) {
-    this.linkConnectionEventEmitter = Objects.requireNonNull(linkConnectionEventEmitter);
     this.okHttpClient = Objects.requireNonNull(okHttpClient);
     this.decryptor = Objects.requireNonNull(decryptor);
     this.objectMapper = Objects.requireNonNull(objectMapper);
@@ -46,10 +52,16 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
   /**
    * Construct a new instance of {@link Link} using the supplied inputs.
    *
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a *
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
+   * @param linkSettings            A {@link LinkSettings} that is used to construct an ILP-over-HTTP {@link Link}.
+   *
    * @return A newly constructed instance of {@link Link}.
    */
   public Link<?> constructLink(
-      final Supplier<Optional<InterledgerAddress>> operatorAddressSupplier, final LinkSettings linkSettings
+      final Supplier<InterledgerAddress> operatorAddressSupplier, final LinkSettings linkSettings
   ) {
     Objects.requireNonNull(linkSettings);
 
