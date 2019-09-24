@@ -13,7 +13,8 @@ public interface SpspClient {
   String ACCEPT_SPSP_JSON = "application/spsp4+json, application/spsp+json";
 
   /**
-   * Calls SPSP endpoint to obtain address and secret needed to start a stream connection for the give payment pointer.
+   * Calls SPSP endpoint to obtain address and secret needed to setup a payment (for the given pointer).
+   * Typically used for setting up a STREAM connection.
    * @see "https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009-simple-payment-setup-protocol.md#query-get-spsp-endpoint"
    * @param paymentPointer payment pointer to query on
    * @return stream connection details
