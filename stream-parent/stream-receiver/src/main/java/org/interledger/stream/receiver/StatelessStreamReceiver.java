@@ -1,5 +1,8 @@
 package org.interledger.stream.receiver;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -14,11 +17,13 @@ import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.frames.*;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.primitives.UnsignedLong;
+import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
+import org.interledger.stream.frames.ConnectionCloseFrame;
+import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.StreamFrame;
+import org.interledger.stream.frames.StreamFrameType;
+import org.interledger.stream.frames.StreamMoneyFrame;
+import org.interledger.stream.frames.StreamMoneyMaxFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

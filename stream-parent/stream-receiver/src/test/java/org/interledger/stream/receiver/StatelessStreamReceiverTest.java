@@ -1,13 +1,6 @@
 package org.interledger.stream.receiver;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import com.google.common.primitives.UnsignedLong;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
@@ -22,9 +15,10 @@ import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.frames.*;
-
-import com.google.common.primitives.UnsignedLong;
+import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
+import org.interledger.stream.frames.ConnectionNewAddressFrame;
+import org.interledger.stream.frames.StreamFrameType;
+import org.interledger.stream.frames.StreamMoneyFrame;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +35,14 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link StatelessStreamReceiver}.
