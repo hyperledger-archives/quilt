@@ -44,10 +44,10 @@ public interface SharedSecret {
   default byte[] key() {
     // both base64 and base64 url encoded keys are allowed by the rfc
     try {
-      return Base64.getUrlDecoder().decode(value());
+      return Base64.getDecoder().decode(value());
     } catch (IllegalArgumentException e) {
       try {
-        return Base64.getDecoder().decode(value());
+        return Base64.getUrlDecoder().decode(value());
       } catch (IllegalArgumentException ex) {
         throw new IllegalArgumentException("SharedSecret must be base64 encoded");
       }
