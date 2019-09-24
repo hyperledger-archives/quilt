@@ -5,7 +5,8 @@ import org.interledger.spsp.StreamConnectionDetails;
 
 public interface SpspClient {
 
-  StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverException;
+  String ACCEPT_SPSP_JSON = "application/spsp4+json, application/spsp+json";
 
+  StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverException;
 
 }

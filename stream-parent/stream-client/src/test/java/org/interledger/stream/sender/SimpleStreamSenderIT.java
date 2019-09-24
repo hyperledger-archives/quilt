@@ -15,12 +15,15 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.quilt.jackson.InterledgerModule;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
-import org.interledger.spsp.client.InterledgerRustNodeClient;
+import org.interledger.spsp.client.rust.Account;
+import org.interledger.spsp.client.rust.ImmutableAccount;
+import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +44,7 @@ import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -103,7 +107,7 @@ public class SimpleStreamSenderIT {
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-    logging.level(HttpLoggingInterceptor.Level.BASIC);
+    logging.level(HttpLoggingInterceptor.Level.BODY);
     OkHttpClient.Builder builder = new OkHttpClient.Builder()
         .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
         .cookieJar(NO_COOKIES)
@@ -113,8 +117,9 @@ public class SimpleStreamSenderIT {
         .writeTimeout(30, TimeUnit.SECONDS);
     OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
 
-    this.nodeClient = new InterledgerRustNodeClient(httpClient, AUTH_TOKEN,
-        objectMapperForTesting(), interledgerNodeBaseURI,
+    this.nodeClient = new InterledgerRustNodeClient(httpClient,
+      AUTH_TOKEN,
+      interledgerNodeBaseURI,
       (pointer) -> interledgerNodeBaseURI + "/spsp" + pointer.path());
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
@@ -140,9 +145,32 @@ public class SimpleStreamSenderIT {
     );
     link.setLinkId(LinkId.of("ilpHttpLink"));
 
-    nodeClient.createAccount(HOST_ADDRESS, SENDER_ACCOUNT_USERNAME);
-    nodeClient.createAccount(HOST_ADDRESS, RECEIVER_ACCOUNT_USERNAME);
+    Account sender = accountBuilder()
+      .username(SENDER_ACCOUNT_USERNAME)
+      .ilpAddress(SENDER_ADDRESS)
+      .build();
+
+    Account receiver = accountBuilder()
+      .username(RECEIVER_ACCOUNT_USERNAME)
+      .ilpAddress(RECEIVER_ADDRESS)
+      .build();
+
+
+    nodeClient.createAccount(sender);
+    nodeClient.createAccount(receiver);
     streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_PAYMENT_POINTER);
+  }
+
+  @NotNull
+  private ImmutableAccount.Builder accountBuilder() {
+    return Account.builder()
+      .httpIncomingToken(AUTH_TOKEN)
+      .httpOutgoingToken(AUTH_TOKEN)
+      .assetCode("XRP")
+      .assetScale(6)
+      .minBalance(new BigInteger("-100000000"))
+      .roundTripTime(new BigInteger("500"))
+      .routingRelation("Peer");
   }
 
   @Test
