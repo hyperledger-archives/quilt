@@ -37,6 +37,13 @@ import java.util.Objects;
  * fulfills all incoming packets to collect the money.</p>
  *
  * <p>NOTE: This implementation does not currently support handling data sent via STREAM.</p>
+ *
+ * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
+ * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly check to restrict
+ * the size of thedatafield in any particular {@link InterledgerPreparePacket}, for two reasons. First, this
+ * implementation never packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb
+ * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
+ * sender/receiver software to have to be updated across the Interledger.</p>
  */
 public class StatelessStreamReceiver implements StreamReceiver {
 
