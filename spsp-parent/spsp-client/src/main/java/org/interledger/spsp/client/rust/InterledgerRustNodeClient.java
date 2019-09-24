@@ -1,5 +1,14 @@
 package org.interledger.spsp.client.rust;
 
+import org.interledger.quilt.jackson.InterledgerModule;
+import org.interledger.quilt.jackson.conditions.Encoding;
+import org.interledger.spsp.PaymentPointer;
+import org.interledger.spsp.PaymentPointerResolver;
+import org.interledger.spsp.StreamConnectionDetails;
+import org.interledger.spsp.client.InvalidReceiverClientException;
+import org.interledger.spsp.client.SpspClient;
+import org.interledger.spsp.client.SpspClientException;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
@@ -11,17 +20,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.collect.ImmutableMap;
-import okhttp3.*;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.immutables.value.Value.Immutable;
-import org.interledger.quilt.jackson.InterledgerModule;
-import org.interledger.quilt.jackson.conditions.Encoding;
-import org.interledger.spsp.PaymentPointer;
-import org.interledger.spsp.PaymentPointerResolver;
-import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.spsp.client.InvalidReceiverClientException;
-import org.interledger.spsp.client.SpspClient;
-import org.interledger.spsp.client.SpspClientException;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -40,12 +46,12 @@ public class InterledgerRustNodeClient implements SpspClient {
 
   private static ObjectMapper mapper() {
     final ObjectMapper objectMapper = JsonMapper.builder()
-      .serializationInclusion(JsonInclude.Include.NON_EMPTY)
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-      .configure(JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS, false)
-      .build()
-      .registerModule(new Jdk8Module())
-      .registerModule(new InterledgerModule(Encoding.BASE64));
+        .serializationInclusion(JsonInclude.Include.NON_EMPTY)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS, false)
+        .build()
+        .registerModule(new Jdk8Module())
+        .registerModule(new InterledgerModule(Encoding.BASE64));
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     objectMapper.configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true);
     return objectMapper;
@@ -69,13 +75,13 @@ public class InterledgerRustNodeClient implements SpspClient {
       .build(), Account.class);
   }
 
-  @NotNull
   private Request.Builder requestBuilder() {
     return new Request.Builder()
       .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken)));
   }
 
-  public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverClientException {
+  public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+      throws InvalidReceiverClientException {
     return execute(requestBuilder()
       .url(HttpUrl.parse(paymentPointerResolver.resolve(paymentPointer)))
       .headers(Headers.of(ImmutableMap.of("Authorization", "Bearer " + authToken,

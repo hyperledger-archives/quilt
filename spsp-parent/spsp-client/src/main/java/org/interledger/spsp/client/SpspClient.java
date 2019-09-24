@@ -7,6 +7,7 @@ public interface SpspClient {
 
   String ACCEPT_SPSP_JSON = "application/spsp4+json, application/spsp+json";
 
-  StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer) throws InvalidReceiverClientException;
+  StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+      throws InvalidReceiverClientException;
 
 }
