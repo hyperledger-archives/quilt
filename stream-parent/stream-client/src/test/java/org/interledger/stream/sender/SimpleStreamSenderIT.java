@@ -61,7 +61,7 @@ import java.util.stream.IntStream;
  */
 public class SimpleStreamSenderIT {
 
-  public static final String AUTH_TOKEN = "password";
+  private static final String AUTH_TOKEN = "password";
   private static final InterledgerAddress HOST_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
   private static final String SENDER_ACCOUNT_USERNAME = "java_stream_client";
   private static final String RECEIVER_ACCOUNT_USERNAME = "java_stream_receiver";
@@ -80,7 +80,6 @@ public class SimpleStreamSenderIT {
           "--http_bind_address 0.0.0.0:7770");
   private Link link;
   private StreamConnectionDetails streamConnectionDetails;
-  private String interledgerNodeBaseURI;
   private InterledgerRustNodeClient nodeClient;
 
   private static ObjectMapper objectMapperForTesting() {
@@ -102,7 +101,7 @@ public class SimpleStreamSenderIT {
 
   @Before
   public void setUp() throws IOException {
-    interledgerNodeBaseURI = "http://localhost:" + interledgerNode.getFirstMappedPort();
+    String interledgerNodeBaseURI = "http://localhost:" + interledgerNode.getFirstMappedPort();
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
@@ -145,29 +144,18 @@ public class SimpleStreamSenderIT {
     link.setLinkId(LinkId.of("ilpHttpLink"));
 
     Account sender = accountBuilder()
-      .username(SENDER_ACCOUNT_USERNAME)
-      .ilpAddress(SENDER_ADDRESS)
-      .build();
+        .username(SENDER_ACCOUNT_USERNAME)
+        .ilpAddress(SENDER_ADDRESS)
+        .build();
 
     Account receiver = accountBuilder()
-      .username(RECEIVER_ACCOUNT_USERNAME)
-      .ilpAddress(RECEIVER_ADDRESS)
-      .build();
+        .username(RECEIVER_ACCOUNT_USERNAME)
+        .ilpAddress(RECEIVER_ADDRESS)
+        .build();
 
     nodeClient.createAccount(sender);
     nodeClient.createAccount(receiver);
     streamConnectionDetails = nodeClient.getStreamConnectionDetails(RECEIVER_PAYMENT_POINTER);
-  }
-
-  private ImmutableAccount.Builder accountBuilder() {
-    return Account.builder()
-      .httpIncomingToken(AUTH_TOKEN)
-      .httpOutgoingToken(AUTH_TOKEN)
-      .assetCode("XRP")
-      .assetScale(6)
-      .minBalance(new BigInteger("-100000000"))
-      .roundTripTime(new BigInteger("500"))
-      .routingRelation(Account.RoutingRelation.PEER);
   }
 
   @Test
@@ -193,14 +181,14 @@ public class SimpleStreamSenderIT {
   }
 
   @Test
-  public void sendMoneyMultiThreaded() throws ExecutionException, InterruptedException, IOException {
+  public void sendMoneyMultiThreaded() throws ExecutionException, InterruptedException {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
     int parallelism = 20;
     int sendCount = 100;
     StreamSender streamSender = new SimpleStreamSender(new JavaxStreamEncryptionService(), link);
     BigDecimal initialBalance = nodeClient.getBalance(RECEIVER_ACCOUNT_USERNAME);
 
-    new ForkJoinPool(parallelism).submit(() -> {
+    new ForkJoinPool(parallelism).submit(() ->
       IntStream.range(0, sendCount).parallel().forEach((taskId) -> {
         logger.info("Running task " + taskId);
         final SendMoneyResult sendMoneyResult = streamSender
@@ -214,12 +202,23 @@ public class SimpleStreamSenderIT {
         assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
         logger.info("Task " + taskId + ", Payment Sent: {}", sendMoneyResult);
-      });
-    }).get();
+      })
+    ).get();
 
     BigDecimal finalBalance = nodeClient.getBalance(RECEIVER_ACCOUNT_USERNAME);
     assertThat(finalBalance.subtract(initialBalance)).isEqualTo(
         new BigDecimal(paymentAmount.longValue() * sendCount));
+  }
+
+  private ImmutableAccount.Builder accountBuilder() {
+    return Account.builder()
+        .httpIncomingToken(AUTH_TOKEN)
+        .httpOutgoingToken(AUTH_TOKEN)
+        .assetCode("XRP")
+        .assetScale(6)
+        .minBalance(new BigInteger("-100000000"))
+        .roundTripTime(new BigInteger("500"))
+        .routingRelation(Account.RoutingRelation.PEER);
   }
 
 //  @Test
