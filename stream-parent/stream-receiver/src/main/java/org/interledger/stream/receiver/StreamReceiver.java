@@ -3,7 +3,7 @@ package org.interledger.stream.receiver;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 
 /**
  * <p>A service that fulfills incoming STREAM packets.</p>
@@ -24,6 +24,10 @@ public interface StreamReceiver {
 
   /**
    * Receive money on behalf of {@code clientAddress} using the STREAM protocol.
+   *
+   * Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client, connectors
+   * will reject ILP packets that exceed 32kb (though there is no hard rule that more than 32kb will not be supported
+   * in the future.
    *
    * @param preparePacket The actual {@link InterledgerPreparePacket} with a {@link InterledgerPreparePacket#getDestination()}
    *                      that includes information that could only have been created by this receiver.
