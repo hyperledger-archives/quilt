@@ -105,8 +105,6 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     final Builder<StreamFrame> responseFrames = ImmutableList.builder();
 
-    // TODO send asset code and scale back to sender also
-
     if (streamPacket.sequenceIsSafeForSingleSharedSecret()) {
       streamPacket.frames().stream()
           .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
