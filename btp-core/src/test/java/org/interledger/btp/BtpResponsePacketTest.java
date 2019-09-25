@@ -1,7 +1,6 @@
 package org.interledger.btp;
 
 import org.interledger.btp.BtpSubProtocol.ContentType;
-
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;

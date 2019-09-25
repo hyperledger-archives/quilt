@@ -22,7 +22,6 @@ package org.interledger.codecs.btp;
 
 import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
-import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
 import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;

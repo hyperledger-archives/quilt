@@ -20,8 +20,6 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.google.common.io.BaseEncoding;
 import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
@@ -38,6 +36,8 @@ import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized tests for encoding and decoding {@link AsnBtpGeneralizedTimeCodec} instances.

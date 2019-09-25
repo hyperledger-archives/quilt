@@ -20,14 +20,13 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import static java.lang.String.format;
-
-import org.interledger.core.Immutable;
-
 import org.immutables.value.Value.Default;
+import org.interledger.core.Immutable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+
+import static java.lang.String.format;
 
 /**
  * Contains information required to process sub-protocols using BTP.

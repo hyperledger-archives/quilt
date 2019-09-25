@@ -20,13 +20,12 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.junit.Assert.assertEquals;
-
 import org.interledger.btp.BtpSubProtocol.ContentType;
-
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+
+import static org.junit.Assert.assertEquals;
 
 public class BtpResponseTest {
 

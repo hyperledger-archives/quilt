@@ -22,7 +22,6 @@ package org.interledger.codecs.btp;
 
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecException;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

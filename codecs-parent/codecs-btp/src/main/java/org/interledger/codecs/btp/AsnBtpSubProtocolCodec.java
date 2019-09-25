@@ -22,11 +22,7 @@ package org.interledger.codecs.btp;
 
 import org.interledger.btp.BtpSubProtocol;
 import org.interledger.btp.BtpSubProtocol.ContentType;
-import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
-import org.interledger.encoding.asn.codecs.AsnOctetStringCodec;
-import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
-import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
-import org.interledger.encoding.asn.codecs.AsnUint8Codec;
+import org.interledger.encoding.asn.codecs.*;
 
 public class AsnBtpSubProtocolCodec extends AsnSequenceCodec<BtpSubProtocol> {
 

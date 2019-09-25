@@ -20,9 +20,8 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
-
 import org.immutables.value.Value.Derived;
+import org.interledger.core.Immutable;
 
 public interface BtpMessage extends BtpRequestPacket {
 

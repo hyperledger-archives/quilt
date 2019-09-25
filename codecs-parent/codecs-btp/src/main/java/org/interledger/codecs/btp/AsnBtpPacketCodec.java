@@ -20,13 +20,6 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import static java.lang.String.format;
-import static org.interledger.btp.BtpMessageType.ERROR;
-import static org.interledger.btp.BtpMessageType.MESSAGE;
-import static org.interledger.btp.BtpMessageType.RESPONSE;
-import static org.interledger.btp.BtpMessageType.TRANSFER;
-import static org.interledger.btp.BtpMessageType.fromCode;
-
 import org.interledger.btp.BtpMessageType;
 import org.interledger.btp.BtpPacket;
 import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
@@ -34,6 +27,8 @@ import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.framework.CodecException;
+
+import static java.lang.String.format;
 
 public class AsnBtpPacketCodec<T extends BtpPacket> extends AsnSequenceCodec<T> {
 
@@ -47,9 +42,7 @@ public class AsnBtpPacketCodec<T extends BtpPacket> extends AsnSequenceCodec<T> 
         null
     );
     AsnUint32Codec asnRequestIdCodec = (AsnUint32Codec) getCodecAt(1);
-    asnRequestIdCodec.setValueChangedEventListener((codec) -> {
-      onRequestIdChanged(codec.decode());
-    });
+    asnRequestIdCodec.setValueChangedEventListener((codec) -> onRequestIdChanged(codec.decode()));
   }
 
   /**
