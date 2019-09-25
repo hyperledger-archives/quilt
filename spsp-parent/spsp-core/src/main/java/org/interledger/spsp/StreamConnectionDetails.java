@@ -1,8 +1,8 @@
-package org.interledger.stream;
+package org.interledger.spsp;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressBuilder;
-import org.interledger.stream.ImmutableStreamConnectionDetails.Builder;
+import org.interledger.spsp.ImmutableStreamConnectionDetails.Builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -44,6 +44,6 @@ public interface StreamConnectionDetails {
    * @return A {@link String}.
    */
   @JsonProperty("shared_secret")
-  String sharedSecret();
+  SharedSecret sharedSecret();
 
 }

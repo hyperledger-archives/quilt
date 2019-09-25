@@ -1,8 +1,9 @@
 package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.ImmutableStreamConnectionDetails.Builder;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.ImmutableStreamConnectionDetails.Builder;
+import org.interledger.spsp.SharedSecret;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.crypto.Random;
 
@@ -57,7 +58,7 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
     );
 
     return streamConnectionDetailsBuilder
-        .sharedSecret(Base64.getEncoder().withoutPadding().encodeToString(sharedSecret))
+        .sharedSecret(SharedSecret.of(sharedSecret))
         .destinationAddress(destinationAddress)
         .build();
   }

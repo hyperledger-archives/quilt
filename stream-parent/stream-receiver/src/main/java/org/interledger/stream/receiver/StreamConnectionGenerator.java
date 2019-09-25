@@ -1,7 +1,7 @@
 package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 
 import java.util.function.Supplier;
