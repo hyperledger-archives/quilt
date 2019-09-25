@@ -225,11 +225,10 @@ public class StatelessStreamReceiverTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     streamCodecContext.write(testStreamPacket, baos);
     final byte[] encryptedStreamPacketBytes = streamEncryptionService
-        .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+        .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
 
     final InterledgerCondition executionCondition = StreamUtils
-        .generatedFulfillableFulfillment(Base64.getDecoder().decode(connectionDetails.sharedSecret()),
-            encryptedStreamPacketBytes).getCondition();
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(), encryptedStreamPacketBytes).getCondition();
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
         .destination(connectionDetails.destinationAddress())
@@ -241,7 +240,7 @@ public class StatelessStreamReceiverTest {
 
     this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
         .handle((fulfillPacket -> {
-              final byte[] streamData = streamEncryptionService.decrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), fulfillPacket.getData());
+              final byte[] streamData = streamEncryptionService.decrypt(connectionDetails.sharedSecret().key(), fulfillPacket.getData());
               try {
                 StreamPacket streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamData));
                 assertThat(streamPacket.frames()).containsOnlyOnce(ConnectionAssetDetailsFrame.builder()
