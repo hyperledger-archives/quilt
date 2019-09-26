@@ -1,8 +1,19 @@
 package org.interledger.stream.sender;
 
-import static okhttp3.CookieJar.NO_COOKIES;
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.primitives.UnsignedLong;
+import okhttp3.ConnectionPool;
+import okhttp3.ConnectionSpec;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -22,21 +33,6 @@ import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.primitives.UnsignedLong;
-import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,11 +45,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+
+import static okhttp3.CookieJar.NO_COOKIES;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for {@link org.interledger.stream.sender.SimpleStreamSender} that connects to a running ILP
@@ -206,8 +204,9 @@ public class SimpleStreamSenderIT {
     ).get();
 
     BigDecimal finalBalance = nodeClient.getBalance(RECEIVER_ACCOUNT_USERNAME);
+    System.out.println("Final " + finalBalance + ", expected " + new BigDecimal(paymentAmount.longValue()).multiply(new BigDecimal(sendCount)));
     assertThat(finalBalance.subtract(initialBalance)).isEqualTo(
-        new BigDecimal(paymentAmount.longValue() * sendCount));
+        new BigDecimal(paymentAmount.longValue()).multiply(new BigDecimal(sendCount)));
   }
 
   private ImmutableAccount.Builder accountBuilder() {

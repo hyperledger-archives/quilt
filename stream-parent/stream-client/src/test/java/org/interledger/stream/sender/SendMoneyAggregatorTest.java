@@ -22,6 +22,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -53,9 +54,10 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
 
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.sendMoneyAggregator = new SendMoneyAggregator(
-        Executors.newFixedThreadPool(1), streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend
+        executor, streamCodecContextMock, linkMock, congestionControllerMock,
+        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend, 60000
     );
   }
 
