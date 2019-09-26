@@ -118,7 +118,7 @@ public class SimpleStreamSender implements StreamSender {
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
   ) {
-    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, 0l);
+    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, TimeUnit.SECONDS.toMillis(60));
   }
 
   @Override

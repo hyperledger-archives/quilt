@@ -244,19 +244,58 @@ public class SimpleStreamSenderIT {
     assertThat(totalSent).isEqualTo(new BigDecimal(paymentAmount.longValue()).multiply(new BigDecimal(sendCount)));
   }
 
-  private StreamConnectionDetails getStreamConnectionDetails(int taskId) {
-    String username = "account" + taskId;
+  @Test
+  public void sendMoneyHonorsTimeout() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000000);
+
+    StreamSender streamSender = new SimpleStreamSender(
+        new JavaxStreamEncryptionService(), link
+    );
+
+    String username = "sendMoneyHonorsTimeout";
     InterledgerAddress address = HOST_ADDRESS.with(username);
-    Account receiver = accountBuilder()
+    Account account = accountBuilder()
         .username(username)
         .ilpAddress(address)
+        .maxPacketAmount(BigInteger.valueOf(100))
+        .packetsPerMinuteLimit(BigInteger.valueOf(1))
         .build();
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+
+    final SendMoneyResult sendMoneyResult = streamSender
+        .sendMoney(connectionDetails.sharedSecret().key(),
+            SENDER_ADDRESS,
+            connectionDetails.destinationAddress(),
+            paymentAmount,
+            100).join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  private StreamConnectionDetails getStreamConnectionDetails(int id) {
+    return getStreamConnectionDetails(id + "");
+  }
+
+  private StreamConnectionDetails getStreamConnectionDetails(String username) {
+    InterledgerAddress address = HOST_ADDRESS.with(username);
+    return getStreamConnectionDetails(accountBuilder()
+        .username(username)
+        .ilpAddress(address)
+        .build());
+  }
+
+
+  private StreamConnectionDetails getStreamConnectionDetails(Account account) {
     try {
-      nodeClient.createAccount(receiver);
+      nodeClient.createAccount(account);
     } catch (Exception e) {
       fail("Unexpected error", e);
     }
-    PaymentPointer pointer = PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/" + username);
+    PaymentPointer pointer = PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/" + account.username());
     return nodeClient.getStreamConnectionDetails(pointer);
   }
 
