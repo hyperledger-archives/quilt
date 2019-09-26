@@ -23,6 +23,7 @@ import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
 import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * <p>A simple implementation of {@link StreamSender} that opens a STREAM connection, sends money, and then closes the
@@ -60,12 +62,15 @@ import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment
  * implementation never packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb
  * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
  * sender/receiver software to have to be updated across the Interledger.</p>
+ *
  */
+@NotThreadSafe
 public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
   private final ThreadPoolExecutor executorService;
+  private CongestionController congestionController = new AimdCongestionController();
 
   /**
    * Required-args Constructor.
@@ -79,10 +84,12 @@ public class SimpleStreamSender implements StreamSender {
       final StreamEncryptionService streamEncryptionService, final Link link
   ) {
     // from the Executors.newCachedThreadPool
-    // FIXME add threadfactory
-    this(streamEncryptionService, link, new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+    this(streamEncryptionService, link, new ThreadPoolExecutor(0, 100,
         60L, TimeUnit.SECONDS,
-        new SynchronousQueue<>()));
+        new SynchronousQueue<>(),  new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("simple-stream-sender-%d")
+        .build()));
   }
 
   /**
@@ -130,7 +137,7 @@ public class SimpleStreamSender implements StreamSender {
         this.executorService,
         StreamCodecContextFactory.oer(),
         this.link,
-        new AimdCongestionController(),
+        this.congestionController,
         this.streamEncryptionService,
         sharedSecret,
         sourceAddress,
@@ -264,7 +271,7 @@ public class SimpleStreamSender implements StreamSender {
 
       final Instant start = Instant.now();
 
-      final CompletableFuture<Void> combinedFuture = CompletableFuture.supplyAsync(() -> {
+      final CompletableFuture<Void> paymentFuture = CompletableFuture.supplyAsync(() -> {
         sendMoneyPacketized();
         return null;
       });
@@ -272,11 +279,13 @@ public class SimpleStreamSender implements StreamSender {
       // To track the duration...
       final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
       // All futures will run here using the Cached Executor service.
-      return combinedFuture.whenComplete(($, error) -> {
+      return paymentFuture.whenComplete(($, error) -> {
         if (error != null) {
           logger.error("SendMoney Stream failed: " + error.getMessage(), error);
         }
-
+        if (!originalAmountToSend.get().equals(this.deliveredAmount.get())) {
+          logger.error("Failed to send full amount");
+        }
         sendMoneyDuration.set(Duration.between(start, Instant.now()));
       }).thenApply($ -> closeConnection(sequence.get()))
           .thenApply(closeConnectionResult -> SendMoneyResult.builder()
@@ -290,9 +299,7 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     private void sendMoneyPacketized() {
-      while (amountLeftToSend.get().compareTo(UnsignedLong.ZERO) > 0 ||
-             executorService.getActiveCount() > 0 ||
-             executorService.getQueue().size() > 0) {
+      while (this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0) {
 
         // Integer.MAX_VALUE is equal to: 2<sup>31</sup>-1, so break only after we exceed Integer.MAX_VALUE
         if (sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0) {
@@ -361,21 +368,26 @@ public class SimpleStreamSender implements StreamSender {
             .build();
 
 
-        executorService.submit(() -> {
-          try  {
-            congestionController.prepare(amountToSend);
-            InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
-            responsePacket.handle(
-                (fulfillPacket -> {
-                  handleFulfill(sequence.get(), amountToSend, fulfillPacket);
-                }),
-                (rejectPacket -> {
-                  handleReject(sequence.get(), amountToSend, rejectPacket);
-                }));
-          } catch (Exception e) {
-
-          }
-        });
+        try {
+          executorService.submit(() -> {
+            try  {
+              congestionController.prepare(amountToSend);
+              InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+              responsePacket.handle(
+                  (fulfillPacket -> {
+                    handleFulfill(sequence.get(), amountToSend, fulfillPacket);
+                  }),
+                  (rejectPacket -> {
+                    handleReject(sequence.get(), amountToSend, rejectPacket);
+                  }));
+            } catch (Exception e) {
+              logger.error("Send packet failed", e);
+            }
+          });
+        }
+        catch (Exception e) {
+          logger.error("Submit failed", e);
+        }
 
         // Send it!
 //        final CompletableFuture<InterledgerResponsePacket> sendMoneyFuture = CompletableFuture.supplyAsync(() -> {
