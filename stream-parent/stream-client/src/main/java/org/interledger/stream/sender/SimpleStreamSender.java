@@ -69,8 +69,7 @@ public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
-  private final ThreadPoolExecutor executorService;
-  private CongestionController congestionController = new AimdCongestionController();
+  private final ExecutorService executorService;
 
   /**
    * Required-args Constructor.
@@ -84,7 +83,7 @@ public class SimpleStreamSender implements StreamSender {
       final StreamEncryptionService streamEncryptionService, final Link link
   ) {
     // from the Executors.newCachedThreadPool
-    this(streamEncryptionService, link, new ThreadPoolExecutor(0, 100,
+    this(streamEncryptionService, link, new ThreadPoolExecutor(0, 200,
         60L, TimeUnit.SECONDS,
         new SynchronousQueue<>(),  new ThreadFactoryBuilder()
         .setDaemon(true)
@@ -102,7 +101,7 @@ public class SimpleStreamSender implements StreamSender {
    * @param executorService         executorService to run the payments
    */
   public SimpleStreamSender(
-      final StreamEncryptionService streamEncryptionService, final Link link, ThreadPoolExecutor executorService
+      final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
   ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
@@ -137,7 +136,7 @@ public class SimpleStreamSender implements StreamSender {
         this.executorService,
         StreamCodecContextFactory.oer(),
         this.link,
-        this.congestionController,
+        new AimdCongestionController(),
         this.streamEncryptionService,
         sharedSecret,
         sourceAddress,
@@ -180,7 +179,7 @@ public class SimpleStreamSender implements StreamSender {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final ThreadPoolExecutor executorService;
+    private final ExecutorService executorService;
     private final CodecContext streamCodecContext;
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
@@ -222,7 +221,7 @@ public class SimpleStreamSender implements StreamSender {
      * @param originalAmountToSend    The amount of units (in the senders units) to send to the receiver.
      */
     public SendMoneyAggregator(
-        final ThreadPoolExecutor executorService,
+        final ExecutorService executorService,
         final CodecContext streamCodecContext,
         final Link link,
         final CongestionController congestionController,

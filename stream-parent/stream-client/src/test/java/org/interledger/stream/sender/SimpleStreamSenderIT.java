@@ -9,6 +9,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
@@ -51,6 +52,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -125,7 +128,7 @@ public class SimpleStreamSenderIT {
             .build())
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
-            .tokenSubject("java_stream_client")
+            .tokenSubject(SENDER_ACCOUNT_USERNAME)
             .url(HttpUrl.parse(interledgerNodeBaseURI + "/ilp"))
             .encryptedTokenSharedSecret("password")
             .build())
@@ -137,7 +140,7 @@ public class SimpleStreamSenderIT {
         httpClient,
         objectMapperForTesting(),
         InterledgerCodecContextFactory.oer(),
-        new SimpleBearerTokenSupplier("java_stream_client:password")
+        new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + AUTH_TOKEN)
     );
     link.setLinkId(LinkId.of("ilpHttpLink"));
 
@@ -205,10 +208,17 @@ public class SimpleStreamSenderIT {
     int sendCount = 100;
     ExecutorService executorService = Executors.newFixedThreadPool(parallelism);
 
+    ThreadPoolExecutor streamExecutor = new ThreadPoolExecutor(0, 200,
+        60L, TimeUnit.SECONDS,
+        new SynchronousQueue<>(),  new ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("simple-stream-sender-%d")
+            .build());
+
     List<Future<SendMoneyResult>> results = new ArrayList<>();
     for (int i = 0; i < sendCount; i++) {
       final int id = i;
-      results.add(executorService.submit(() -> sendMoney(paymentAmount, id)));
+      results.add(executorService.submit(() -> sendMoney(paymentAmount, id, streamExecutor)));
     }
 
     executorService.shutdown();
@@ -250,12 +260,12 @@ public class SimpleStreamSenderIT {
     return nodeClient.getStreamConnectionDetails(pointer);
   }
 
-  private SendMoneyResult sendMoney(UnsignedLong paymentAmount, int taskId) {
-    StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
-
+  private SendMoneyResult sendMoney(UnsignedLong paymentAmount, int taskId, ThreadPoolExecutor executor) {
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(taskId);
+
+    StreamSender streamSender = new SimpleStreamSender(
+        new JavaxStreamEncryptionService(), link, executor
+    );
 
     final SendMoneyResult sendMoneyResult = streamSender
         .sendMoney(connectionDetails.sharedSecret().key(),
