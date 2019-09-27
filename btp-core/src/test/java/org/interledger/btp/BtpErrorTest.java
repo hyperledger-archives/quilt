@@ -20,14 +20,15 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 import org.interledger.btp.BtpSubProtocol.ContentType;
+
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Unit tests for {@link BtpError}.

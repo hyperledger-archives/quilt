@@ -20,7 +20,13 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.btp.*;
+import org.interledger.btp.BtpError;
+import org.interledger.btp.BtpMessage;
+import org.interledger.btp.BtpPacket;
+import org.interledger.btp.BtpResponse;
+import org.interledger.btp.BtpSubProtocol;
+import org.interledger.btp.BtpSubProtocols;
+import org.interledger.btp.BtpTransfer;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 

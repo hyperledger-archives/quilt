@@ -20,10 +20,13 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import com.google.common.io.BaseEncoding;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
 import org.interledger.encoding.asn.framework.CodecContext;
+
+import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,8 +39,6 @@ import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized tests for encoding and decoding {@link AsnBtpGeneralizedTimeCodec} instances.
@@ -65,20 +66,20 @@ public class AsnBtpErrorDataSerializationTest {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param btpErrorBase64Bytes
-   * @param expectedRequestId
-   * @param expectedErrorCode
-   * @param expectedTriggeredAt
-   * @param expectedErrorDataBase64Bytes
+   * @param btpErrorBase64Bytes String of base64 encoded {@link BtpError} bytes
+   * @param expectedRequestId {@code long} expected request id.
+   * @param expectedErrorCode {@link BtpErrorCode} expected error code.
+   * @param expectedTriggeredAt {@code Instant} expected triggeredAt time.
+   * @param expectedErrorDataBase64Bytes String of expected base64 error bytes.
    */
   public AsnBtpErrorDataSerializationTest(
-
       final String btpErrorBase64Bytes,
       final long expectedRequestId,
       final BtpErrorCode expectedErrorCode,
       final Instant expectedTriggeredAt,
       final String expectedErrorDataBase64Bytes
-      //final String expectedStringValue, final Instant expectedDecodedInstant
+  // final String expectedStringValue,
+  // final Instant expectedDecodedInstant
   ) {
     this.btpErrorBase64Bytes = btpErrorBase64Bytes;
 
@@ -109,23 +110,23 @@ public class AsnBtpErrorDataSerializationTest {
         },
     });
   }
-//
-//  /**
-//   * Convenience method to convert the expected time string into the byte format that would be found on the wire.
-//   *
-//   * @param value The string to convert. Must not be null.
-//   *
-//   * @return A byte[] representing the expected representation of the string as would be found on the wire.
-//   */
-//  public static byte[] encodeString(String value) {
-//    final byte[] lengthByte = new byte[1];
-//    final byte[] stringBytes = value.getBytes(StandardCharsets.US_ASCII);
-//    final byte[] lengthPrefixed = new byte[stringBytes.length + 1];
-//    lengthByte[0] = Byte.valueOf(stringBytes.length + "");
-//    System.arraycopy(lengthByte, 0, lengthPrefixed, 0, lengthByte.length);
-//    System.arraycopy(stringBytes, 0, lengthPrefixed, lengthByte.length, stringBytes.length);
-//    return lengthPrefixed;
-//  }
+  //
+  //  /**
+  //   * Convenience method to convert the expected time string into the byte format that would be found on the wire.
+  //   *
+  //   * @param value The string to convert. Must not be null.
+  //   *
+  //   * @return A byte[] representing the expected representation of the string as would be found on the wire.
+  //   */
+  //  public static byte[] encodeString(String value) {
+  //    final byte[] lengthByte = new byte[1];
+  //    final byte[] stringBytes = value.getBytes(StandardCharsets.US_ASCII);
+  //    final byte[] lengthPrefixed = new byte[stringBytes.length + 1];
+  //    lengthByte[0] = Byte.valueOf(stringBytes.length + "");
+  //    System.arraycopy(lengthByte, 0, lengthPrefixed, 0, lengthByte.length);
+  //    System.arraycopy(stringBytes, 0, lengthPrefixed, lengthByte.length, stringBytes.length);
+  //    return lengthPrefixed;
+  //  }
 
   /**
    * Test setup.

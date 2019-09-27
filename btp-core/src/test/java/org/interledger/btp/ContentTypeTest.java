@@ -20,10 +20,11 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.btp.BtpSubProtocol.ContentType;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
+
+import org.interledger.btp.BtpSubProtocol.ContentType;
+
+import org.junit.Test;
 
 public class ContentTypeTest {
 

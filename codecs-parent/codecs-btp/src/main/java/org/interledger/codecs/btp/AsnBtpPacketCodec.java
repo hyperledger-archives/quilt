@@ -20,15 +20,16 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
+import static java.lang.String.format;
+
 import org.interledger.btp.BtpMessageType;
 import org.interledger.btp.BtpPacket;
+
 import org.interledger.encoding.asn.codecs.AsnOpenTypeCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.framework.CodecException;
-
-import static java.lang.String.format;
 
 public class AsnBtpPacketCodec<T extends BtpPacket> extends AsnSequenceCodec<T> {
 

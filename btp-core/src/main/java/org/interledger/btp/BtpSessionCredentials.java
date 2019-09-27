@@ -20,9 +20,10 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.btp.ImmutableBtpSessionCredentials.Builder;
+
 import org.immutables.value.Value;
 import org.immutables.value.Value.Redacted;
-import org.interledger.btp.ImmutableBtpSessionCredentials.Builder;
 
 import java.util.Optional;
 
