@@ -122,7 +122,7 @@ public class SimpleStreamSender implements StreamSender {
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
   ) {
-    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, TimeUnit.SECONDS.toMillis(60));
+    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, Duration.ofSeconds(60));
   }
 
   @Override
@@ -131,7 +131,7 @@ public class SimpleStreamSender implements StreamSender {
       final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount,
-      final long timeoutInMillis
+      final Duration timeout
   ) {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
@@ -146,7 +146,7 @@ public class SimpleStreamSender implements StreamSender {
         sourceAddress,
         destinationAddress,
         amount,
-        timeoutInMillis
+        timeout
     );
     return sendMoneyAggregator.send();
   }
@@ -189,17 +189,18 @@ public class SimpleStreamSender implements StreamSender {
     private final CongestionController congestionController;
     private final Link link;
     private final SharedSecret sharedSecret;
-    private final long timeoutInMillis;
+    private final Duration timeout;
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
-    private final AtomicReference<Long> lastResponseTimestamp = new AtomicReference<>();
+
     // The amount
     private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
-    private AtomicReference<UnsignedLong> confirmedAmountRemaining;
     private AtomicReference<UnsignedLong> deliveredAmount;
+
     private AtomicBoolean shouldSendSourceAddress;
+
     private AtomicReference<UnsignedLong> sequence;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
@@ -230,7 +231,7 @@ public class SimpleStreamSender implements StreamSender {
         final InterledgerAddress sourceAddress,
         final InterledgerAddress destinationAddress,
         final UnsignedLong originalAmountToSend,
-        final long timeoutInMillis
+        final Duration timeout
     ) {
       this.executorService = Objects.requireNonNull(executorService);
       this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
@@ -240,19 +241,18 @@ public class SimpleStreamSender implements StreamSender {
       this.shouldSendSourceAddress = new AtomicBoolean(true);
 
       this.sharedSecret = Objects.requireNonNull(sharedSecret);
-      this.sourceAddress = sourceAddress;
+      this.sourceAddress = Objects.requireNonNull(sourceAddress);
       this.destinationAddress = Objects.requireNonNull(destinationAddress);
 
       this.originalAmountToSend = new AtomicReference<>(originalAmountToSend);
       this.amountLeftToSend = new AtomicReference<>(originalAmountToSend);
-      this.confirmedAmountRemaining = new AtomicReference<>(originalAmountToSend);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
       this.sequence = new AtomicReference<>(UnsignedLong.ZERO);
 
       this.numFulfilledPackets = new AtomicInteger(0);
       this.numRejectedPackets = new AtomicInteger(0);
 
-      this.timeoutInMillis = timeoutInMillis;
+      this.timeout = Objects.requireNonNull(timeout);
     }
 
     /**
@@ -301,9 +301,9 @@ public class SimpleStreamSender implements StreamSender {
     private void sendMoneyPacketized() {
       final AtomicBoolean timeoutReached = new AtomicBoolean(false);
 
-      if (timeoutInMillis > 0) {
+      if (!timeout.isZero()) {
         ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
-        timeoutMonitor.schedule(() -> timeoutReached.set(true), timeoutInMillis, TimeUnit.MILLISECONDS);
+        timeoutMonitor.schedule(() -> timeoutReached.set(true), timeout.toMillis(), TimeUnit.MILLISECONDS);
       }
 
       while (soldierOn(timeoutReached.get())) {
@@ -626,16 +626,27 @@ public class SimpleStreamSender implements StreamSender {
     /**
      * Helper method to obtain the `sequence` of this {@link SendMoneyAggregator}. While under normal circumstances it
      * is ill-advised to be testing a private variable, here we break this rule as a testing optimization. The behavior
-     * that exposing this method allows us to validate is the closing of a STREAM Connection after 2^31 frames. While
-     * the _correct_ way to test this would be to send 2^31 frames into the send method and then assert that the
+     * that this is exposing this method allows us to validate is the closing of a STREAM Connection after 2^31 frames.
+     * While the _correct_ way to test this would be to send 2^31 frames into the send method and then assert that the
      * connection closes,we instead expose this mutator in order to avoid 2^31 redundant calls on every test execution.
      *
      * @param newSequence An {@link UnsignedLong} containing a value to set {@link #sequence} to.
      */
     @VisibleForTesting
-    public void setSequenceForTesting(final UnsignedLong newSequence) {
+    void setSequenceForTesting(final UnsignedLong newSequence) {
       Objects.requireNonNull(newSequence);
       this.sequence.set(newSequence);
+    }
+
+    /**
+     * Helper method to mess with delivered amount for the purpose of testing loop breaking conditions.
+     *
+     * @param deliveredAmount
+     */
+    @VisibleForTesting
+    void setDeliveredAmountForTesting(final UnsignedLong deliveredAmount) {
+      Objects.requireNonNull(deliveredAmount);
+      this.deliveredAmount.set(deliveredAmount);
     }
   }
 }

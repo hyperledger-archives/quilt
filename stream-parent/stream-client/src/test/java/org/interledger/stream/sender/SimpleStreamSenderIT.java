@@ -51,6 +51,7 @@ import org.zalando.problem.ProblemModule;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -263,7 +264,7 @@ public class SimpleStreamSenderIT {
             SENDER_ADDRESS,
             connectionDetails.destinationAddress(),
             paymentAmount,
-            100).join();
+            Duration.ofMillis(100)).join();
 
     assertThat(sendMoneyResult.successfulPayment()).isFalse();
 
@@ -317,7 +318,7 @@ public class SimpleStreamSenderIT {
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount,
-        100
+        Duration.ofMillis(100L)
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
