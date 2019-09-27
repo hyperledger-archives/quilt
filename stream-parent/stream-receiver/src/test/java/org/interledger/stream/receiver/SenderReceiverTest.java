@@ -97,7 +97,7 @@ public class SenderReceiverTest {
         .getIlpAddressForStreamReception(leftServerSecret, LEFT_RECEIVER_ADDRESS);
 
     final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
-        Base64.getDecoder().decode(connectionDetails.sharedSecret()),
+        Base64.getDecoder().decode(connectionDetails.sharedSecret().key()),
         RIGHT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount
@@ -131,7 +131,7 @@ public class SenderReceiverTest {
         .getIlpAddressForStreamReception(rightServerSecret, RIGHT_RECEIVER_ADDRESS);
 
     final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
-        Base64.getDecoder().decode(connectionDetails.sharedSecret()),
+        Base64.getDecoder().decode(connectionDetails.sharedSecret().key()),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount
