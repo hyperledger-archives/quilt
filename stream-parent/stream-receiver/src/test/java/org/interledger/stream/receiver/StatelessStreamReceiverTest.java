@@ -1,13 +1,6 @@
 package org.interledger.stream.receiver;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import com.google.common.primitives.UnsignedLong;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
@@ -16,16 +9,16 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.stream.StreamConnectionDetails;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
+import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
-
-import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,8 +33,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link StatelessStreamReceiver}.
@@ -49,6 +49,9 @@ import java.util.Optional;
 public class StatelessStreamReceiverTest {
 
   private final InterledgerAddress clientAddress = InterledgerAddress.of("example.destination");
+  private final String assetCode = "USD";
+  private final short assetScale = 100;
+
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
   @Mock
@@ -86,8 +89,8 @@ public class StatelessStreamReceiverTest {
     encryptedStreamPacketBytes = createEncryptedStreamPacketBytes(testStreamPacket);
 
     executionCondition = StreamUtils
-        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().getBytes(), encryptedStreamPacketBytes)
-        .getCondition();
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(),
+            encryptedStreamPacketBytes).getCondition();
 
     preparePacket = createPreparePacket(executionCondition);
   }
@@ -174,11 +177,11 @@ public class StatelessStreamReceiverTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     streamCodecContext.write(testStreamPacket, baos);
     final byte[] encryptedStreamPacketBytes = streamEncryptionService
-        .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+      .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
 
     final InterledgerCondition executionCondition = StreamUtils
-        .generatedFulfillableFulfillment(Base64.getDecoder().decode(connectionDetails.sharedSecret()),
-            encryptedStreamPacketBytes).getCondition();
+      .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(),
+          encryptedStreamPacketBytes).getCondition();
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
         .destination(connectionDetails.destinationAddress())
@@ -188,9 +191,66 @@ public class StatelessStreamReceiverTest {
         .executionCondition(executionCondition)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, receiverAddress)
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
         .handle((fulfillPacket ->
                 assertThat(fulfillPacket.getFulfillment().getCondition()).isEqualTo(executionCondition)),
+            rejectPacket -> fail("should have fulfilled"));
+  }
+
+  @Test
+  public void returnsAssetDetailsOnNewConnection() throws IOException {
+    streamReceiver = new StatelessStreamReceiver(
+        serverSecretSupplier, streamConnectionGenerator, streamEncryptionService, StreamCodecContextFactory.oer()
+    );
+    final InterledgerAddress receiverAddress = InterledgerAddress.of("example.receiver");
+
+    final StreamConnectionDetails connectionDetails = streamConnectionGenerator
+        .generateConnectionDetails(serverSecretSupplier, receiverAddress);
+
+    final StreamPacket testStreamPacket = StreamPacket.builder()
+        .interledgerPacketType(InterledgerPacketType.PREPARE)
+        .prepareAmount(UnsignedLong.ZERO)
+        .sequence(UnsignedLong.ONE)
+        .addFrames(
+            StreamMoneyFrame.builder()
+                .streamId(UnsignedLong.ONE)
+                .shares(UnsignedLong.ONE)
+                .build(),
+            ConnectionNewAddressFrame.builder()
+                .sourceAddress(clientAddress)
+                .build()
+        )
+        .build();
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    streamCodecContext.write(testStreamPacket, baos);
+    final byte[] encryptedStreamPacketBytes = streamEncryptionService
+        .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
+
+    final InterledgerCondition executionCondition = StreamUtils
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(), encryptedStreamPacketBytes).getCondition();
+
+    final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+        .destination(connectionDetails.destinationAddress())
+        .amount(BigInteger.valueOf(100L))
+        .expiresAt(Instant.EPOCH)
+        .data(encryptedStreamPacketBytes)
+        .executionCondition(executionCondition)
+        .build();
+
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
+        .handle((fulfillPacket -> {
+              final byte[] streamData = streamEncryptionService.decrypt(connectionDetails.sharedSecret().key(), fulfillPacket.getData());
+              try {
+                StreamPacket streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamData));
+                assertThat(streamPacket.frames()).containsOnlyOnce(ConnectionAssetDetailsFrame.builder()
+                    .sourceAssetCode(assetCode)
+                    .sourceAssetScale(assetScale)
+                    .build());
+              } catch (IOException e) {
+                fail("cannot read data from fulfill");
+              }
+            }),
             rejectPacket -> fail("should have fulfilled"));
   }
 
@@ -208,7 +268,7 @@ public class StatelessStreamReceiverTest {
         .triggeredBy(clientAddress)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, clientAddress)
+    this.streamReceiver.receiveMoney(preparePacket, clientAddress, assetCode, assetScale)
         .handle((fulfillPacket -> fail("should have rejected")),
             rejectPacket -> assertThat(rejectPacket).isEqualTo(expected));
   }
@@ -225,7 +285,7 @@ public class StatelessStreamReceiverTest {
     doThrow(new IOException()).when(mockCodecContext).write(any(), any());
 
     expectedException.expect(StreamException.class);
-    this.streamReceiver.receiveMoney(preparePacket, clientAddress);
+    this.streamReceiver.receiveMoney(preparePacket, clientAddress, assetCode, assetScale);
   }
 
   @Test
@@ -238,7 +298,7 @@ public class StatelessStreamReceiverTest {
     byte[] unfulfillableEncryptedStreamPacketBytes = createEncryptedStreamPacketBytes(unfulfillableStreamPacket);
 
     InterledgerCondition unfulfillableExecutionCondition = StreamUtils
-        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().getBytes(),
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(),
             unfulfillableEncryptedStreamPacketBytes).getCondition();
 
     InterledgerPreparePacket unfulfillablePrepare = createPreparePacket(unfulfillableExecutionCondition);
@@ -248,7 +308,7 @@ public class StatelessStreamReceiverTest {
 
     doThrow(new IOException()).when(mockCodecContext).write(any(), any());
     expectedException.expect(StreamException.class);
-    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress);
+    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress, assetCode, assetScale);
   }
 
   @Test
@@ -261,12 +321,12 @@ public class StatelessStreamReceiverTest {
     byte[] unfulfillableEncryptedStreamPacketBytes = createEncryptedStreamPacketBytes(unfulfillableStreamPacket);
 
     InterledgerCondition unfulfillableExecutionCondition = StreamUtils
-        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().getBytes(),
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(),
             unfulfillableEncryptedStreamPacketBytes).getCondition();
 
     InterledgerPreparePacket unfulfillablePrepare = createPreparePacket(unfulfillableExecutionCondition);
 
-    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress)
+    this.streamReceiver.receiveMoney(unfulfillablePrepare, clientAddress, assetCode, assetScale)
         .handle((fulfillPacket -> fail("should have rejected")),
             rejectPacket -> assertThat(rejectPacket).extracting("code", "message", "triggeredBy")
                 .containsExactly(
@@ -300,10 +360,10 @@ public class StatelessStreamReceiverTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     streamCodecContext.write(testStreamPacket, baos);
     final byte[] encryptedStreamPacketBytes = streamEncryptionService
-        .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+        .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
 
     final InterledgerCondition executionCondition = StreamUtils
-        .generatedFulfillableFulfillment(Base64.getDecoder().decode(connectionDetails.sharedSecret()),
+        .generatedFulfillableFulfillment(connectionDetails.sharedSecret().key(),
             encryptedStreamPacketBytes).getCondition();
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
@@ -314,13 +374,13 @@ public class StatelessStreamReceiverTest {
         .executionCondition(executionCondition)
         .build();
 
-    this.streamReceiver.receiveMoney(preparePacket, receiverAddress)
+    this.streamReceiver.receiveMoney(preparePacket, receiverAddress, assetCode, assetScale)
         .handle(
             fulfillPacket -> {
               assertThat(fulfillPacket.getFulfillment().getCondition()).isEqualTo(executionCondition);
               // Decrypt the packet and ensure we get a ConnectionClose Frame.
               final byte[] streamPacketBytes = streamEncryptionService.decrypt(
-                  Base64.getDecoder().decode(connectionDetails.sharedSecret()), fulfillPacket.getData()
+                 connectionDetails.sharedSecret().key(), fulfillPacket.getData()
               );
               try {
                 final StreamPacket streamPacket = streamCodecContext
@@ -347,7 +407,7 @@ public class StatelessStreamReceiverTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     streamCodecContext.write(testStreamPacket, baos);
     return streamEncryptionService
-        .encrypt(Base64.getDecoder().decode(connectionDetails.sharedSecret()), baos.toByteArray());
+        .encrypt(connectionDetails.sharedSecret().key(), baos.toByteArray());
   }
 
   private StreamPacket createStreamPacket(UnsignedLong prepareAmount) {

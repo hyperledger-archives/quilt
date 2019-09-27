@@ -1,7 +1,7 @@
-package org.interledger.stream;
+package org.interledger.spsp;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.ImmutableStreamConnectionDetails.Builder;
+import org.interledger.spsp.ImmutableStreamConnectionDetails.Builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -13,9 +13,7 @@ import org.immutables.value.Value.Immutable;
  * conforms to the SPSP protocol.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009-simple-payment-setup-protocol.md"
- * @deprecated Should be moved to the spsp module and called `SpspResponse`.
  */
-@Deprecated
 @Immutable
 @JsonSerialize(as = ImmutableStreamConnectionDetails.class)
 @JsonDeserialize(as = ImmutableStreamConnectionDetails.class)
@@ -45,6 +43,6 @@ public interface StreamConnectionDetails {
    * @return A {@link String}.
    */
   @JsonProperty("shared_secret")
-  String sharedSecret();
+  SharedSecret sharedSecret();
 
 }

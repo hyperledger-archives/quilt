@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.StreamConnectionDetails;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.receiver.testutils.SimulatedILPv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
@@ -71,7 +71,7 @@ public class SenderReceiverTest {
         .getIlpAddressForStreamReception(rightServerSecret, RIGHT_RECEIVER_ADDRESS);
 
     final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
-        Base64.getDecoder().decode(connectionDetails.sharedSecret()),
+        connectionDetails.sharedSecret().key(),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount
@@ -191,8 +191,8 @@ public class SenderReceiverTest {
         StreamCodecContextFactory.oer()
     );
 
-    simulatedILPv4Network.getRightToLeftLink().registerLinkHandler(incomingPreparePacket ->
-        rightStreamReceiver.receiveMoney(incomingPreparePacket, incomingPreparePacket.getDestination())
+    simulatedILPv4Network.getRightLink().registerLinkHandler(incomingPreparePacket ->
+        rightStreamReceiver.receiveMoney(incomingPreparePacket, RECEIVER_ADDRESS)
     );
   }
 
