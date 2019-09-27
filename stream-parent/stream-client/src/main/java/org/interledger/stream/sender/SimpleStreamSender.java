@@ -1,9 +1,9 @@
 package org.interledger.stream.sender;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedLong;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
+import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
+import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
+
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
@@ -18,16 +18,21 @@ import org.interledger.link.Link;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,9 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
-import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
-import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * <p>A simple implementation of {@link StreamSender} that opens a STREAM connection, sends money, and then closes the
@@ -59,12 +62,11 @@ import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment
  * protocol.</p>
  *
  * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
- * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly check to restrict
- * the size of thedatafield in any particular {@link InterledgerPreparePacket}, for two reasons. First, this
- * implementation never packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb
- * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
- * sender/receiver software to have to be updated across the Interledger.</p>
- *
+ * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly check to restrict the size
+ * of thedatafield in any particular {@link InterledgerPreparePacket}, for two reasons. First, this implementation never
+ * packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb limit to be an issue; Second,
+ * if the ILPv4 RFC ever changes to increase this size limitation, we don't want sender/receiver software to have to be
+ * updated across the Interledger.</p>
  */
 @NotThreadSafe
 public class SimpleStreamSender implements StreamSender {
@@ -87,7 +89,7 @@ public class SimpleStreamSender implements StreamSender {
     // from the Executors.newCachedThreadPool
     this(streamEncryptionService, link, new ThreadPoolExecutor(0, 200,
         60L, TimeUnit.SECONDS,
-        new SynchronousQueue<>(),  new ThreadFactoryBuilder()
+        new SynchronousQueue<>(), new ThreadFactoryBuilder()
         .setDaemon(true)
         .setNameFormat("simple-stream-sender-%d")
         .build()));
@@ -115,7 +117,7 @@ public class SimpleStreamSender implements StreamSender {
 
   @Override
   public CompletableFuture<SendMoneyResult> sendMoney(
-      final byte[] sharedSecret,
+      final SharedSecret sharedSecret,
       final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
@@ -125,7 +127,7 @@ public class SimpleStreamSender implements StreamSender {
 
   @Override
   public CompletableFuture<SendMoneyResult> sendMoney(
-      final byte[] sharedSecret,
+      final SharedSecret sharedSecret,
       final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount,
@@ -186,25 +188,21 @@ public class SimpleStreamSender implements StreamSender {
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
     private final Link link;
-    private final byte[] sharedSecret;
+    private final SharedSecret sharedSecret;
     private final long timeoutInMillis;
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
-
+    private final AtomicReference<Long> lastResponseTimestamp = new AtomicReference<>();
     // The amount
     private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
     private AtomicReference<UnsignedLong> confirmedAmountRemaining;
     private AtomicReference<UnsignedLong> deliveredAmount;
-
     private AtomicBoolean shouldSendSourceAddress;
-
     private AtomicReference<UnsignedLong> sequence;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
-
-    private final AtomicReference<Long> lastResponseTimestamp = new AtomicReference<>();
 
     /**
      * Required-args Constructor.
@@ -228,7 +226,7 @@ public class SimpleStreamSender implements StreamSender {
         final Link link,
         final CongestionController congestionController,
         final StreamEncryptionService streamEncryptionService,
-        final byte[] sharedSecret,
+        final SharedSecret sharedSecret,
         final InterledgerAddress sourceAddress,
         final InterledgerAddress destinationAddress,
         final UnsignedLong originalAmountToSend,
@@ -366,7 +364,6 @@ public class SimpleStreamSender implements StreamSender {
             .data(streamPacketData)
             .build();
 
-
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
           if (canBeScheduled(timeoutReached.get(), streamPacket.sequence())) {
@@ -377,7 +374,7 @@ public class SimpleStreamSender implements StreamSender {
             congestionController.prepare(amountToSend);
             executorService.submit(() -> {
               if (!timeoutReached.get()) {
-                try  {
+                try {
                   InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
                   responsePacket.handle(
                       (fulfillPacket -> {
@@ -393,19 +390,20 @@ public class SimpleStreamSender implements StreamSender {
             });
           }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
           logger.error("Submit failed", e);
         }
 
       }
     }
 
-    private boolean maxPacketsReached() {
+    @VisibleForTesting
+    boolean maxPacketsReached() {
       return sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0;
     }
 
-    private boolean maxPacketsExceeded(UnsignedLong currentSequence) {
+    @VisibleForTesting
+    boolean maxPacketsExceeded(UnsignedLong currentSequence) {
       return currentSequence.compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) > 0;
     }
 
@@ -415,7 +413,7 @@ public class SimpleStreamSender implements StreamSender {
      * to NIST, it is unsafe to use AES-GCM for more than 2^32 packets using the same encryption key. (STREAM uses the
      * limit of 2^31 because both endpoints encrypt packets with the same key.)
      *
-     * @param timeoutReached whether or not we've exceeded the timeout for non in-flight requests
+     * @param timeoutReached  whether or not we've exceeded the timeout for non in-flight requests
      * @param currentSequence sequence number of the most recent packet to be sent
      *
      * @return true if we can schedule a task.
@@ -435,8 +433,8 @@ public class SimpleStreamSender implements StreamSender {
       //   and you haven't timed out
       return this.congestionController.hasInFlight() ||
           (!maxPacketsReached() &&
-           this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 &&
-           !timeoutReached
+              this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 &&
+              !timeoutReached
           );
     }
 
@@ -452,7 +450,7 @@ public class SimpleStreamSender implements StreamSender {
      * @return A byte-array containing the encrypted version of an ASN.1 OER encoded {@link StreamPacket}.
      */
     @VisibleForTesting
-    protected byte[] toEncrypted(final byte[] sharedSecret, final StreamPacket streamPacket) {
+    byte[] toEncrypted(final SharedSecret sharedSecret, final StreamPacket streamPacket) {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(streamPacket);
 
@@ -479,7 +477,7 @@ public class SimpleStreamSender implements StreamSender {
      * @return The decrypted {@link StreamPacket}.
      */
     @VisibleForTesting
-    protected StreamPacket fromEncrypted(final byte[] sharedSecret, final byte[] encryptedStreamPacketBytes) {
+    StreamPacket fromEncrypted(final SharedSecret sharedSecret, final byte[] encryptedStreamPacketBytes) {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(encryptedStreamPacketBytes);
 
@@ -492,7 +490,7 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    protected void handleFulfill(
+    void handleFulfill(
         final UnsignedLong sequence,
         final UnsignedLong amount,
         final InterledgerFulfillPacket fulfillPacket
@@ -532,7 +530,7 @@ public class SimpleStreamSender implements StreamSender {
      *                     Link}.
      */
     @VisibleForTesting
-    protected void handleReject(
+    void handleReject(
         final UnsignedLong sequence,
         final UnsignedLong amountToSend,
         final InterledgerRejectPacket rejectPacket
@@ -576,7 +574,7 @@ public class SimpleStreamSender implements StreamSender {
      * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
      */
     @VisibleForTesting
-    protected CloseConnectionResult closeConnection(final UnsignedLong sequence) {
+    CloseConnectionResult closeConnection(final UnsignedLong sequence) {
       Objects.requireNonNull(sequence);
 
       final StreamPacket streamPacket = StreamPacket.builder()

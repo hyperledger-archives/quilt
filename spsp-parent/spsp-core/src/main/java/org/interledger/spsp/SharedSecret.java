@@ -26,7 +26,6 @@ public interface SharedSecret {
     return ImmutableSharedSecret.of(Base64.getEncoder().withoutPadding().encodeToString(key));
   }
 
-
   /**
    * Base64 encoded key for sending over the wire.
    *

@@ -3,22 +3,28 @@ package org.interledger.stream.receiver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
+import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.link.Link;
 import org.interledger.spsp.StreamConnectionDetails;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
+import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.receiver.testutils.SimulatedILPv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
 import org.interledger.stream.sender.SimpleStreamSender;
+import org.interledger.stream.sender.StreamSender;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Derived;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Base64;
 import java.util.Objects;
 
 /**
@@ -26,6 +32,8 @@ import java.util.Objects;
  * network conditions as part of a STREAM payment.
  */
 public class SenderReceiverTest {
+
+  private static final String SHARED_SECRET_HEX = "9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D";
 
   private static final InterledgerAddress LEFT_ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.left");
   private static final InterledgerAddress LEFT_SENDER_ADDRESS = LEFT_ILP_ADDRESS.with("left_stream_sender");
@@ -37,41 +45,23 @@ public class SenderReceiverTest {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  // Used to derive sub-secrets when the left link is acting as a STREAM receiver.
-  private byte[] leftServerSecret;
-  private StreamReceiver leftStreamReceiver;
+  private StreamNode leftStreamNode;
+  private StreamNode rightStreamNode;
 
-  private StreamConnectionGenerator streamConnectionGenerator;
-  private SimulatedILPv4Network simulatedILPv4Network;
-
-  // Used to derive sub-secrets when the right link is acting as a STREAM receiver.
-  private byte[] rightServerSecret;
-  private StreamReceiver rightStreamReceiver;
+  private SimulatedILPv4Network simulatedIlpNetwork;
 
   @Before
   public void setup() {
-    this.leftServerSecret = BaseEncoding.base16()
-        .decode("9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D");
-    this.rightServerSecret = BaseEncoding.base16()
-        .decode("9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D");
-
-    this.streamConnectionGenerator = new SpspStreamConnectionGenerator();
-    this.initIlpv4NetworkForSTREAM();
+    this.initIlpNetworkForStream();
   }
 
   @Test
   public void testSendFromLeftToRight() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    SimpleStreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), simulatedILPv4Network.getLeftToRightLink()
-    );
-
-    final StreamConnectionDetails connectionDetails = this
-        .getIlpAddressForStreamReception(rightServerSecret, RIGHT_RECEIVER_ADDRESS);
-
-    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
-        connectionDetails.sharedSecret().key(),
+    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
+    final SendMoneyResult sendMoneyResult = leftStreamNode.streamSender().sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount
@@ -89,15 +79,9 @@ public class SenderReceiverTest {
   public void testSendFromRightToLeft() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    SimpleStreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), simulatedILPv4Network.getRightToLeftLink()
-    );
-
-    final StreamConnectionDetails connectionDetails = this
-        .getIlpAddressForStreamReception(leftServerSecret, LEFT_RECEIVER_ADDRESS);
-
-    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
-        Base64.getDecoder().decode(connectionDetails.sharedSecret().key()),
+    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
+    final SendMoneyResult sendMoneyResult = rightStreamNode.streamSender().sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
         RIGHT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount
@@ -118,20 +102,14 @@ public class SenderReceiverTest {
   public void testSendFromLeftToRightWithHighLoss() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
 
-    this.initIlpv4NetworkForSTREAM(new SimulatedILPv4Network(
+    this.initIlpNetworkForStream(new SimulatedILPv4Network(
         SimulatedPathConditions.builder().packetRejectionPercentage(.5f).build(),
         SimulatedPathConditions.builder().build()
     ));
 
-    SimpleStreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), simulatedILPv4Network.getLeftToRightLink()
-    );
-
-    final StreamConnectionDetails connectionDetails = this
-        .getIlpAddressForStreamReception(rightServerSecret, RIGHT_RECEIVER_ADDRESS);
-
-    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
-        Base64.getDecoder().decode(connectionDetails.sharedSecret().key()),
+    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
+    final SendMoneyResult sendMoneyResult = leftStreamNode.streamSender().sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount
@@ -157,59 +135,133 @@ public class SenderReceiverTest {
   /**
    * Initialize the STREAM network with default Simulated Path Conditions on each payment path.
    */
-  private void initIlpv4NetworkForSTREAM() {
-    this.initIlpv4NetworkForSTREAM(this.simulatedILPv4Network = new SimulatedILPv4Network(
+  private void initIlpNetworkForStream() {
+    final SimulatedILPv4Network simulatedIlpNetwork = new SimulatedILPv4Network(
         SimulatedPathConditions.builder().build(),
         SimulatedPathConditions.builder().build()
-    ));
+    );
+    this.initIlpNetworkForStream(simulatedIlpNetwork);
   }
 
-  private void initIlpv4NetworkForSTREAM(final SimulatedILPv4Network simulatedILPv4Network) {
-    this.simulatedILPv4Network = Objects.requireNonNull(simulatedILPv4Network);
-    this.initLeftNode();
-    this.initRightNode();
+  private void initIlpNetworkForStream(final SimulatedILPv4Network simulatedIlpNetwork) {
+    this.simulatedIlpNetwork = Objects.requireNonNull(simulatedIlpNetwork);
+
+    this.leftStreamNode = this.initLeftNode();
+    this.simulatedIlpNetwork.getLeftToRightLink().registerLinkHandler(incomingPreparePacket ->
+        leftStreamNode.streamReceiver()
+            .receiveMoney(incomingPreparePacket, LEFT_RECEIVER_ADDRESS, leftStreamNode.denomination())
+    );
+
+    this.rightStreamNode = this.initRightNode();
+    this.simulatedIlpNetwork.getRightToLeftLink().registerLinkHandler(incomingPreparePacket ->
+        rightStreamNode.streamReceiver()
+            .receiveMoney(incomingPreparePacket, RIGHT_RECEIVER_ADDRESS, rightStreamNode.denomination())
+    );
   }
 
-  private void initLeftNode() {
-    this.leftStreamReceiver = new StatelessStreamReceiver(
-        () -> leftServerSecret,
+  private StreamNode initLeftNode() {
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
+
+    SimpleStreamSender streamSender = new SimpleStreamSender(
+        streamEncryptionService, simulatedIlpNetwork.getLeftToRightLink()
+    );
+
+    StatelessStreamReceiver streamReceiver = new StatelessStreamReceiver(
+        () -> serverSecret,
         new SpspStreamConnectionGenerator(),
-        new JavaxStreamEncryptionService(),
+        streamEncryptionService,
         StreamCodecContextFactory.oer()
     );
 
-    simulatedILPv4Network.getLeftToRightLink().registerLinkHandler(incomingPreparePacket ->
-        leftStreamReceiver.receiveMoney(incomingPreparePacket, incomingPreparePacket.getDestination())
-    );
+    return StreamNode.builder()
+        .serverSecret(serverSecret)
+        .senderAddress(LEFT_SENDER_ADDRESS)
+        .receiverAddress(RIGHT_RECEIVER_ADDRESS)
+        .streamSender(streamSender)
+        .streamReceiver(streamReceiver)
+        .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
+        .link(simulatedIlpNetwork.getLeftToRightLink())
+        .build();
   }
 
-  private void initRightNode() {
-    this.rightStreamReceiver = new StatelessStreamReceiver(
-        () -> rightServerSecret,
+  private StreamNode initRightNode() {
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
+
+    SimpleStreamSender streamSender = new SimpleStreamSender(
+        streamEncryptionService, simulatedIlpNetwork.getRightToLeftLink()
+    );
+
+    StatelessStreamReceiver streamReceiver = new StatelessStreamReceiver(
+        () -> serverSecret,
         new SpspStreamConnectionGenerator(),
-        new JavaxStreamEncryptionService(),
+        streamEncryptionService,
         StreamCodecContextFactory.oer()
     );
 
-    simulatedILPv4Network.getRightLink().registerLinkHandler(incomingPreparePacket ->
-        rightStreamReceiver.receiveMoney(incomingPreparePacket, RECEIVER_ADDRESS)
-    );
+    return StreamNode.builder()
+        .serverSecret(serverSecret)
+        .senderAddress(RIGHT_SENDER_ADDRESS)
+        .receiverAddress(RIGHT_RECEIVER_ADDRESS)
+        .streamSender(streamSender)
+        .streamReceiver(streamReceiver)
+        .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
+        .link(simulatedIlpNetwork.getRightToLeftLink())
+        .build();
   }
 
   /**
-   * Take an ILP address can determine the _actual_ receiver address that will work properly for the shared secret
-   * configured by this test harness.
-   *
-   * @param serverSecret    Random bytes that are used to derive secrets for the STREAM protocol (typically held my a
-   *                        single server like the receiver).
-   * @param receiverAddress A baseline receiver address (e.g., `g.bob`).
-   *
-   * @return A {@link StreamConnectionDetails} that is derived using {@code serverSecret}.
+   * An internal class that encapsulates all the details needed for a particular STREAM node (regardless of if its a
+   * sender or receiver) for purposes of this test harness.
    */
-  private StreamConnectionDetails getIlpAddressForStreamReception(
-      final byte[] serverSecret,
-      final InterledgerAddress receiverAddress
-  ) {
-    return this.streamConnectionGenerator.generateConnectionDetails(() -> serverSecret, receiverAddress);
+  @Immutable
+  public interface StreamNode {
+
+    static StreamNodeBuilder builder() {
+      return new StreamNodeBuilder();
+    }
+
+    /**
+     * The server secret for this node.
+     */
+    byte[] serverSecret();
+
+    /**
+     * The {@link InterledgerAddress} that this node will use to send STREAM payments from.
+     */
+    InterledgerAddress senderAddress();
+
+    /**
+     * The {@link InterledgerAddress} that this node will use to receive STREAM payment to.
+     */
+    InterledgerAddress receiverAddress();
+
+    /**
+     * The denomination that this Node has with its immediate peer (this is not part of Link because it's possible to
+     * have multiple links to the same peer).
+     */
+    Denomination denomination();
+
+    /**
+     * The {@link Link} that this node uses to communicate to its immediate peer with.
+     */
+    Link link();
+
+    /**
+     * The {@link StreamSender} that this node uses to send STREAM payments.
+     */
+    StreamSender streamSender();
+
+    /**
+     * The {@link StreamReceiver} that this node uses to receive STREAM payments on.
+     */
+    StreamReceiver streamReceiver();
+
+    @Derived
+    default StreamConnectionDetails getNewStreamConnectionDetails() {
+      return new SpspStreamConnectionGenerator().generateConnectionDetails(this::serverSecret, receiverAddress());
+    }
+
   }
 }

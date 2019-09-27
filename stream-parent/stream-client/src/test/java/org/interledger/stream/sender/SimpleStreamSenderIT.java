@@ -1,21 +1,8 @@
 package org.interledger.stream.sender;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.primitives.UnsignedLong;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
-import org.assertj.core.data.Offset;
+import static okhttp3.CookieJar.NO_COOKIES;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -35,6 +22,24 @@ import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
+import org.interledger.stream.crypto.SharedSecret;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import okhttp3.ConnectionPool;
+import okhttp3.ConnectionSpec;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,21 +54,17 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static okhttp3.CookieJar.NO_COOKIES;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
- * Integration tests for {@link org.interledger.stream.sender.SimpleStreamSender} that connects to a running ILP
- * Connector using the information supplied in this link, and initiates a STREAM payment.
+ * Integration tests for {@link SimpleStreamSender} that connects to a running ILP Connector using the information
+ * supplied in this link, and initiates a STREAM payment.
  */
 public class SimpleStreamSenderIT {
 
@@ -76,10 +77,12 @@ public class SimpleStreamSenderIT {
   @Rule
   public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledgerrs-standalone")
       .withExposedPorts(7770)
-      .withCommand("--admin_auth_token " + AUTH_TOKEN + " " +
-          "--ilp_address " + HOST_ADDRESS.getValue() + " " +
-          "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d " +
-          "--http_bind_address 0.0.0.0:7770");
+      .withCommand(""
+          + "--admin_auth_token " + AUTH_TOKEN + " "
+          + "--ilp_address " + HOST_ADDRESS.getValue() + " "
+          + "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d "
+          + "--http_bind_address 0.0.0.0:7770"
+      );
   private Link link;
   private InterledgerRustNodeClient nodeClient;
 
@@ -102,25 +105,13 @@ public class SimpleStreamSenderIT {
 
   @Before
   public void setUp() throws IOException {
-    String interledgerNodeBaseURI =
-        "http://"+ interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
-    ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
-    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
-    HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-    logging.level(HttpLoggingInterceptor.Level.BASIC);
-    OkHttpClient.Builder builder = new OkHttpClient.Builder()
-        .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
-        .cookieJar(NO_COOKIES)
-        .connectTimeout(5000, TimeUnit.MILLISECONDS)
-        .addInterceptor(logging)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS);
-    OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
+    OkHttpClient httpClient = this.constructOkHttpClient();
 
+    String interledgerNodeBaseUri = this.getInterledgerBaseUri();
     this.nodeClient = new InterledgerRustNodeClient(httpClient,
-      AUTH_TOKEN,
-      interledgerNodeBaseURI,
-      (pointer) -> interledgerNodeBaseURI + "/spsp" + pointer.path());
+        AUTH_TOKEN,
+        interledgerNodeBaseUri,
+        (pointer) -> interledgerNodeBaseUri + "/spsp" + pointer.path());
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -130,7 +121,7 @@ public class SimpleStreamSenderIT {
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
             .tokenSubject(SENDER_ACCOUNT_USERNAME)
-            .url(HttpUrl.parse(interledgerNodeBaseURI + "/ilp"))
+            .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
             .encryptedTokenSharedSecret("password")
             .build())
         .build();
@@ -163,11 +154,12 @@ public class SimpleStreamSenderIT {
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
-    final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(connectionDetails.sharedSecret().key(),
-            SENDER_ADDRESS,
-            connectionDetails.destinationAddress(),
-            paymentAmount).join();
+    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
+        SENDER_ADDRESS,
+        connectionDetails.destinationAddress(),
+        paymentAmount
+    ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
@@ -187,11 +179,12 @@ public class SimpleStreamSenderIT {
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000001);
 
-    final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(connectionDetails.sharedSecret().key(),
-            SENDER_ADDRESS,
-            connectionDetails.destinationAddress(),
-            paymentAmount).join();
+    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
+        SENDER_ADDRESS,
+        connectionDetails.destinationAddress(),
+        paymentAmount
+    ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
@@ -211,10 +204,10 @@ public class SimpleStreamSenderIT {
 
     ThreadPoolExecutor streamExecutor = new ThreadPoolExecutor(0, 200,
         60L, TimeUnit.SECONDS,
-        new SynchronousQueue<>(),  new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("simple-stream-sender-%d")
-            .build());
+        new SynchronousQueue<>(), new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("simple-stream-sender-%d")
+        .build());
 
     List<Future<SendMoneyResult>> results = new ArrayList<>();
     for (int i = 0; i < sendCount; i++) {
@@ -224,14 +217,14 @@ public class SimpleStreamSenderIT {
 
     executorService.shutdown();
     executorService.awaitTermination(10000, TimeUnit.MILLISECONDS);
-    results.stream().map($ -> {
+    results.forEach($ -> {
       try {
-        return $.get();
+        $.get();
       } catch (Throwable e) {
         e.printStackTrace();
         throw new RuntimeException(e);
       }
-    }).collect(Collectors.toList());
+    });
 
     BigDecimal totalSent = results.stream().map($ -> {
       try {
@@ -240,7 +233,7 @@ public class SimpleStreamSenderIT {
         e.printStackTrace();
         throw new RuntimeException(e);
       }
-    }).reduce(new BigDecimal(0), (left, right) -> left.add(right));
+    }).reduce(new BigDecimal(0), BigDecimal::add);
 
     assertThat(totalSent).isEqualTo(new BigDecimal(paymentAmount.longValue()).multiply(new BigDecimal(sendCount)));
   }
@@ -266,13 +259,71 @@ public class SimpleStreamSenderIT {
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
 
     final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(connectionDetails.sharedSecret().key(),
+        .sendMoney(SharedSecret.of(connectionDetails.sharedSecret().key()),
             SENDER_ADDRESS,
             connectionDetails.destinationAddress(),
             paymentAmount,
             100).join();
 
     assertThat(sendMoneyResult.successfulPayment()).isFalse();
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  @Test
+  public void sendMoneyWithWrongLinkPassword() throws IOException {
+    final String connectorAccountUsername = UUID.randomUUID().toString().replace("-", "");
+
+    final String interledgerNodeBaseUri = this.getInterledgerBaseUri();
+    final OkHttpClient httpClient = this.constructOkHttpClient();
+    final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
+        .incomingHttpLinkSettings(IncomingLinkSettings.builder()
+            .authType(AuthType.SIMPLE)
+            .encryptedTokenSharedSecret(AUTH_TOKEN)
+            .build())
+        .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
+            .authType(AuthType.SIMPLE)
+            .tokenSubject(connectorAccountUsername)
+            .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
+            .encryptedTokenSharedSecret("wrong-password")
+            .build())
+        .build();
+
+    this.link = new IlpOverHttpLink(
+        () -> SENDER_ADDRESS,
+        linkSettings,
+        httpClient,
+        objectMapperForTesting(),
+        InterledgerCodecContextFactory.oer(),
+        new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + "wrong-password")
+    );
+    link.setLinkId(LinkId.of("ilpHttpLink"));
+
+    Account sender = accountBuilder()
+        .username(connectorAccountUsername)
+        .ilpAddress(HOST_ADDRESS.with(connectorAccountUsername))
+        .build();
+
+    nodeClient.createAccount(sender);
+
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
+    final StreamSender streamSender = new SimpleStreamSender(
+        new JavaxStreamEncryptionService(), link
+    );
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
+
+    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
+        SENDER_ADDRESS,
+        connectionDetails.destinationAddress(),
+        paymentAmount,
+        100
+    ).join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
+    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
@@ -289,13 +340,11 @@ public class SimpleStreamSenderIT {
         .build());
   }
 
-
   private StreamConnectionDetails getStreamConnectionDetails(Account account) {
     try {
       nodeClient.createAccount(account);
     } catch (Exception e) {
-      System.out.println("Could not create account " + account.username());
-      fail("Unexpected error", e);
+      throw new RuntimeException(e.getMessage(), e);
     }
     PaymentPointer pointer = PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/" + account.username());
     return nodeClient.getStreamConnectionDetails(pointer);
@@ -308,11 +357,12 @@ public class SimpleStreamSenderIT {
         new JavaxStreamEncryptionService(), link, executor
     );
 
-    final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(connectionDetails.sharedSecret().key(),
-            SENDER_ADDRESS,
-            connectionDetails.destinationAddress(),
-            paymentAmount).join();
+    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
+        SENDER_ADDRESS,
+        connectionDetails.destinationAddress(),
+        paymentAmount
+    ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
@@ -333,42 +383,22 @@ public class SimpleStreamSenderIT {
         .routingRelation(Account.RoutingRelation.PEER);
   }
 
-//  @Test
-//  public void sendMoneyWithWrongPassword() {
+  private String getInterledgerBaseUri() {
+    return "http://" + interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
+  }
 
-  // TODO:
-
-//    this.link = new IlpOverHttpLink(
-//        () -> Optional.of(SENDER_ADDRESS),
-//        linkSettings,
-//        new OkHttpClient(),
-//        objectMapperForTesting(),
-//        InterledgerCodecContextFactory.oer(),
-//        new SimpleBearerTokenSupplier("shh")
-//    );
-//    link.setLinkId(LinkId.of("ilpHttpLink"));
-//
-//    this.sharedSecret = Base64.getDecoder().decode("UL6yyhL8rxYmjECCx27j6SMQxXLFcVosXvwlEvftna0=");
-//    this.destinationAddress = InterledgerAddress
-//        .of("test.xpring-dev.rs1.java_stream_client.wzE2o1X1bfLlZu-8WFU9kDrZPyheJYPivwBP8j1QLzQt"); // TODO: Get from SPSP
-//
-//
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000L);
-//
-//    StreamClient streamClient = new StreamClient(
-//        new JavaxStreamEncryptionService(),
-//        link,
-//        new ConnectionManager()
-//    );
-//
-//    final SendMoneyResult sendMoneyResult = streamClient
-//        .sendMoney(sharedSecret, SENDER_ADDRESS, destinationAddress, paymentAmount).join();
-//
-//    assertThat(sendMoneyResult.amountDelivered(), is(paymentAmount));
-//    assertThat(sendMoneyResult.originalAmount(), is(paymentAmount));
-//    assertThat(sendMoneyResult.numFulfilledPackets(), is(10));
-//    assertThat(sendMoneyResult.numRejectPackets(), is(0));
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-  // }
+  private OkHttpClient constructOkHttpClient() {
+    ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
+    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
+    HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+    logging.level(HttpLoggingInterceptor.Level.BASIC);
+    OkHttpClient.Builder builder = new OkHttpClient.Builder()
+        .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
+        .cookieJar(NO_COOKIES)
+        .connectTimeout(5000, TimeUnit.MILLISECONDS)
+        .addInterceptor(logging)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS);
+    return builder.connectionPool(connectionPool).build();
+  }
 }
