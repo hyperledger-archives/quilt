@@ -14,11 +14,13 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.stream.StreamPacket.MAX_FRAMES_PER_CONNECTION;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -58,7 +60,7 @@ public class SendMoneyAggregatorTest {
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend, 60000
+        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend, Duration.ofSeconds(60)
     );
   }
 
@@ -100,5 +102,49 @@ public class SendMoneyAggregatorTest {
 
     // Expect 1 Link call for the CloseConnection
     Mockito.verify(linkMock).sendPacket(any());
+  }
+
+  @Test
+  public void soldierOn() {
+    // if money in flight, always soldier on
+    // else
+    //   you haven't reached max packets
+    //   and you haven't delivered the full amount
+    //   and you haven't timed out
+
+    // always true when money in flight
+    when(congestionControllerMock.hasInFlight()).thenReturn(true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+    sendMoneyAggregator.setSequenceForTesting(UnsignedLong.MAX_VALUE);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+    sendMoneyAggregator.setSequenceForTesting(UnsignedLong.ONE);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+
+    when(congestionControllerMock.hasInFlight()).thenReturn(false);
+
+    // max packets
+    sendMoneyAggregator.setSequenceForTesting(UnsignedLong.MAX_VALUE);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+    sendMoneyAggregator.setSequenceForTesting(UnsignedLong.ONE);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+
+    // delivered amount
+    sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.valueOf(10l));
+    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+    sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.valueOf(9l));
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+
+    // timed out
+    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+
+  }
+
+  @Test
+  public void canBeScheduled() {
+    assertThat(sendMoneyAggregator.canBeScheduled(true, UnsignedLong.ONE)).isFalse();
+    assertThat(sendMoneyAggregator.canBeScheduled(true, UnsignedLong.MAX_VALUE)).isFalse();
+    assertThat(sendMoneyAggregator.canBeScheduled(false, UnsignedLong.MAX_VALUE)).isFalse();
+    assertThat(sendMoneyAggregator.canBeScheduled(false, UnsignedLong.ONE)).isTrue();
   }
 }
