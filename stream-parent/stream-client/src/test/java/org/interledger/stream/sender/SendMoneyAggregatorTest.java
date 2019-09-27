@@ -1,29 +1,29 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.stream.StreamPacket.MAX_FRAMES_PER_CONNECTION;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
-
+import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
-
-import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.interledger.stream.StreamPacket.MAX_FRAMES_PER_CONNECTION;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -64,6 +64,19 @@ public class SendMoneyAggregatorTest {
 
   @Test
   public void sendMoneyWithMaxSequenceMinus1() throws ExecutionException, InterruptedException {
+    InterledgerRejectPacket reject = mock(InterledgerRejectPacket.class);
+    AtomicBoolean calledSend = new AtomicBoolean(false);
+    // don't mess with these because if you do your test wil have nondeterministic results
+    // you need to make sure to return true from hasInFlight ONLY WHEN WE HAVE CALLED sendPacket
+    // if you always return true, the test will run indefinitely
+    // if you always return false, the test will fail nondeterministically
+    // you may not like .thenAnswer, but it's necessary here
+    when(linkMock.sendPacket(any())).thenAnswer((Answer<InterledgerRejectPacket>) invocationOnMock -> {
+      calledSend.set(true);
+      return reject;
+    });
+    when(congestionControllerMock.hasInFlight()).thenAnswer((Answer<Boolean>) invocationOnMock -> !calledSend.get());
+
     sendMoneyAggregator.setSequenceForTesting(MAX_FRAMES_PER_CONNECTION.minus(UnsignedLong.ONE));
     sendMoneyAggregator.send().get();
 

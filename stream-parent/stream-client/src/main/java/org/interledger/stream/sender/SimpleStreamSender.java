@@ -370,10 +370,14 @@ public class SimpleStreamSender implements StreamSender {
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
           if (canBeScheduled(timeoutReached.get(), streamPacket.sequence())) {
+            // call this before spinning off a task. failing to do so can create a condition in the
+            // soliderOn check where we will incorrectly evaluate hasInFlight on the congestion
+            // controller to not reflect what we've actually scheduled to run, resulting in the loop
+            // breaking prematurely
+            congestionController.prepare(amountToSend);
             executorService.submit(() -> {
               if (!timeoutReached.get()) {
                 try  {
-                  congestionController.prepare(amountToSend);
                   InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
                   responsePacket.handle(
                       (fulfillPacket -> {
@@ -430,7 +434,10 @@ public class SimpleStreamSender implements StreamSender {
       //   and you haven't delivered the full amount
       //   and you haven't timed out
       return this.congestionController.hasInFlight() ||
-          (!maxPacketsReached() && this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 && !timeoutReached);
+          (!maxPacketsReached() &&
+           this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 &&
+           !timeoutReached
+          );
     }
 
     /**
