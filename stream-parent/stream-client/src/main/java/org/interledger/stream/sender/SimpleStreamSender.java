@@ -1,9 +1,9 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
-import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
-import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
@@ -24,13 +24,10 @@ import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,9 +39,17 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
+import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
+import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 /**
  * <p>A simple implementation of {@link StreamSender} that opens a STREAM connection, sends money, and then closes the
@@ -59,7 +64,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * implementation never packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb
  * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
  * sender/receiver software to have to be updated across the Interledger.</p>
+ *
  */
+@NotThreadSafe
 public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
@@ -77,7 +84,13 @@ public class SimpleStreamSender implements StreamSender {
   public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService, final Link link
   ) {
-    this(streamEncryptionService, link, Executors.newCachedThreadPool());
+    // from the Executors.newCachedThreadPool
+    this(streamEncryptionService, link, new ThreadPoolExecutor(0, 200,
+        60L, TimeUnit.SECONDS,
+        new SynchronousQueue<>(),  new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("simple-stream-sender-%d")
+        .build()));
   }
 
   /**
@@ -107,6 +120,17 @@ public class SimpleStreamSender implements StreamSender {
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
   ) {
+    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, TimeUnit.SECONDS.toMillis(60));
+  }
+
+  @Override
+  public CompletableFuture<SendMoneyResult> sendMoney(
+      final byte[] sharedSecret,
+      final InterledgerAddress sourceAddress,
+      final InterledgerAddress destinationAddress,
+      final UnsignedLong amount,
+      final long timeoutInMillis
+  ) {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
@@ -119,10 +143,12 @@ public class SimpleStreamSender implements StreamSender {
         sharedSecret,
         sourceAddress,
         destinationAddress,
-        amount
+        amount,
+        timeoutInMillis
     );
     return sendMoneyAggregator.send();
   }
+
 
   @Immutable
   public interface CloseConnectionResult {
@@ -161,6 +187,7 @@ public class SimpleStreamSender implements StreamSender {
     private final CongestionController congestionController;
     private final Link link;
     private final byte[] sharedSecret;
+    private final long timeoutInMillis;
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
@@ -168,6 +195,7 @@ public class SimpleStreamSender implements StreamSender {
     // The amount
     private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
+    private AtomicReference<UnsignedLong> confirmedAmountRemaining;
     private AtomicReference<UnsignedLong> deliveredAmount;
 
     private AtomicBoolean shouldSendSourceAddress;
@@ -175,6 +203,8 @@ public class SimpleStreamSender implements StreamSender {
     private AtomicReference<UnsignedLong> sequence;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
+
+    private final AtomicReference<Long> lastResponseTimestamp = new AtomicReference<>();
 
     /**
      * Required-args Constructor.
@@ -201,7 +231,8 @@ public class SimpleStreamSender implements StreamSender {
         final byte[] sharedSecret,
         final InterledgerAddress sourceAddress,
         final InterledgerAddress destinationAddress,
-        final UnsignedLong originalAmountToSend
+        final UnsignedLong originalAmountToSend,
+        final long timeoutInMillis
     ) {
       this.executorService = Objects.requireNonNull(executorService);
       this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
@@ -216,11 +247,14 @@ public class SimpleStreamSender implements StreamSender {
 
       this.originalAmountToSend = new AtomicReference<>(originalAmountToSend);
       this.amountLeftToSend = new AtomicReference<>(originalAmountToSend);
+      this.confirmedAmountRemaining = new AtomicReference<>(originalAmountToSend);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
       this.sequence = new AtomicReference<>(UnsignedLong.ZERO);
 
       this.numFulfilledPackets = new AtomicInteger(0);
       this.numRejectedPackets = new AtomicInteger(0);
+
+      this.timeoutInMillis = timeoutInMillis;
     }
 
     /**
@@ -236,12 +270,45 @@ public class SimpleStreamSender implements StreamSender {
       // Fire off requests until the congestion controller tells us to stop or we've sent the total amount
       final List<CompletableFuture<InterledgerResponsePacket>> allFutures = Lists.newArrayList();
 
-      final AtomicInteger totalStreamPackets = new AtomicInteger(0);
       final Instant start = Instant.now();
-      while (totalStreamPackets.getAndIncrement() >= 0) {
-        if (UnsignedLong.ZERO.equals(amountLeftToSend.get())) {
-          break;
+
+      AtomicBoolean timeoutReached = new AtomicBoolean(false);
+      final CompletableFuture<Void> paymentFuture = CompletableFuture.supplyAsync(() -> {
+        sendMoneyPacketized(timeoutReached);
+        return null;
+      });
+
+      if (timeoutInMillis > 0) {
+        ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
+        timeoutMonitor.schedule(() -> timeoutReached.set(true), timeoutInMillis, TimeUnit.MILLISECONDS);
+      }
+
+      // To track the duration...
+      final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
+
+      // All futures will run here using the Cached Executor service.
+      return paymentFuture.whenComplete(($, error) -> {
+        if (error != null) {
+          logger.error("SendMoney Stream failed: " + error.getMessage(), error);
         }
+        if (!originalAmountToSend.get().equals(this.deliveredAmount.get())) {
+          logger.error("Failed to send full amount");
+        }
+        sendMoneyDuration.set(Duration.between(start, Instant.now()));
+      }).thenApply($ -> closeConnection(sequence.get()))
+          .thenApply(closeConnectionResult -> SendMoneyResult.builder()
+              .amountDelivered(closeConnectionResult.amountDelivered())
+              .originalAmount(originalAmountToSend.get())
+              .numFulfilledPackets(closeConnectionResult.numFulfilledPackets())
+              .numRejectPackets(closeConnectionResult.numRejectPackets())
+              .sendMoneyDuration(sendMoneyDuration.get())
+              .build()
+          );
+    }
+
+    private void sendMoneyPacketized(AtomicBoolean timeoutReached) {
+
+      while (soldierOn(timeoutReached)) {
 
         // Integer.MAX_VALUE is equal to: 2<sup>31</sup>-1, so break only after we exceed Integer.MAX_VALUE
         if (sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0) {
@@ -254,7 +321,7 @@ public class SimpleStreamSender implements StreamSender {
 
         // Determine the amount to send
         final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
-        if (amountToSend.equals(UnsignedLong.ZERO)) {
+        if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get()) {
           try {
             Thread.sleep(100);
           } catch (InterruptedException e) {
@@ -308,47 +375,40 @@ public class SimpleStreamSender implements StreamSender {
             .data(streamPacketData)
             .build();
 
-        // Send it!
-        final CompletableFuture<InterledgerResponsePacket> sendMoneyFuture = CompletableFuture.supplyAsync(() -> {
-          congestionController.prepare(amountToSend);
-          return link.sendPacket(preparePacket);
-        }, executorService).thenApply(responsePacket -> {
-          // Executed in the same thread as above
-          responsePacket.handle(
-              (fulfillPacket -> {
-                handleFulfill(sequence.get(), amountToSend, fulfillPacket);
-              }),
-              (rejectPacket -> {
-                handleReject(sequence.get(), amountToSend, rejectPacket);
-              })
-          );
-          return responsePacket;
-        });
 
-        allFutures.add(sendMoneyFuture);
-      }
+        try {
+          // don't submit new tasks if the timeout was reached within this iteration of the while loop
+          if (!timeoutReached.get()) {
+            executorService.submit(() -> {
+              if (!timeoutReached.get()) {
+                try  {
+                  congestionController.prepare(amountToSend);
+                  InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+                  responsePacket.handle(
+                      (fulfillPacket -> {
+                        handleFulfill(sequence.get(), amountToSend, fulfillPacket);
+                      }),
+                      (rejectPacket -> {
+                        handleReject(sequence.get(), amountToSend, rejectPacket);
+                      }));
+                } catch (Exception e) {
+                  logger.error("Send packet failed", e);
+                }
+              }
+            });
+          }
 
-      final CompletableFuture[] allFuturesArray = allFutures.toArray(new CompletableFuture[0]);
-      final CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(allFuturesArray);
-
-      // To track the duration...
-      final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
-      // All futures will run here using the Cached Executor service.
-      return combinedFuture.whenComplete(($, error) -> {
-        if (error != null) {
-          logger.error("SendMoney Stream failed: " + error.getMessage(), error);
+        }
+        catch (Exception e) {
+          logger.error("Submit failed", e);
         }
 
-        sendMoneyDuration.set(Duration.between(start, Instant.now()));
-      }).thenApply($ -> closeConnection(sequence.get()))
-          .thenApply(closeConnectionResult -> SendMoneyResult.builder()
-              .amountDelivered(closeConnectionResult.amountDelivered())
-              .originalAmount(originalAmountToSend.get())
-              .numFulfilledPackets(closeConnectionResult.numFulfilledPackets())
-              .numRejectPackets(closeConnectionResult.numRejectPackets())
-              .sendMoneyDuration(sendMoneyDuration.get())
-              .build()
-          );
+      }
+    }
+
+    private boolean soldierOn(AtomicBoolean timeoutReached) {
+      return (this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 && !timeoutReached.get()) ||
+          this.congestionController.hasInFlight();
     }
 
     /**

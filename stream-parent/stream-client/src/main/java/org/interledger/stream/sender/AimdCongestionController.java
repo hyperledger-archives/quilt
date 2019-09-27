@@ -237,7 +237,6 @@ public class AimdCongestionController implements CongestionController {
         // maxAmount: Maximum amount (inclusive, denominated in same units as the receivedAmount) the connector
         // will forward
         // Equation: new_max_packet_amount = prepare_amount * details.max_amount() / details.amount_received();
-        // TODO: See alternatives in https://github.com/interledger-rs/interledger-rs/issues/49
         final BigDecimal newMaxPacketAmountAsBigDecimal =
             prepareAmountAsBigDecimal.multiply(detailsMaxAmount).divide(detailsAmountReceived, RoundingMode.FLOOR);
         newMaxPacketAmount = UnsignedLong.valueOf(newMaxPacketAmountAsBigDecimal.toBigIntegerExact());
@@ -290,6 +289,11 @@ public class AimdCongestionController implements CongestionController {
   @Override
   public Optional<UnsignedLong> getMaxPacketAmount() {
     return maxPacketAmount;
+  }
+
+  @Override
+  public boolean hasInFlight() {
+    return this.amountInFlight.get().compareTo(UnsignedLong.ZERO) > 0;
   }
 
   public void setMaxPacketAmount(final UnsignedLong maxPacketAmount) {

@@ -1,5 +1,6 @@
 package org.interledger.stream;
 
+import org.immutables.value.Value;
 import org.interledger.core.Immutable;
 
 import com.google.common.primitives.UnsignedLong;
@@ -61,4 +62,14 @@ public interface SendMoneyResult {
    * @return A {@link Duration} representing the total time a STREAM payment took to complete or fail.
    */
   Duration sendMoneyDuration();
+
+  /**
+   * Compare the amount delivered to the original amount to see if they match.
+   *
+   * @return true if delivered matches original.
+   */
+  @Value.Derived
+  default boolean successfulPayment() {
+    return amountDelivered().equals(originalAmount());
+  }
 }
