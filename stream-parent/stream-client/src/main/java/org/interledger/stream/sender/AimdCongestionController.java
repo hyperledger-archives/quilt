@@ -290,6 +290,11 @@ public class AimdCongestionController implements CongestionController {
     return maxPacketAmount;
   }
 
+  @Override
+  public boolean hasInFlight() {
+    return this.amountInFlight.get().compareTo(UnsignedLong.ZERO) > 0;
+  }
+
   public void setMaxPacketAmount(final UnsignedLong maxPacketAmount) {
     this.maxPacketAmount = Optional.of(maxPacketAmount);
   }

@@ -34,7 +34,6 @@ import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -258,6 +257,7 @@ public class SimpleStreamSenderIT {
         .username(username)
         .ilpAddress(address)
         .maxPacketAmount(BigInteger.valueOf(100))
+        .amountPerMinuteLimit(BigInteger.valueOf(1))
         .packetsPerMinuteLimit(BigInteger.valueOf(1))
         .build();
 
@@ -270,14 +270,13 @@ public class SimpleStreamSenderIT {
             paymentAmount,
             100).join();
 
-    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.successfulPayment()).isFalse();
 
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
   private StreamConnectionDetails getStreamConnectionDetails(int id) {
-    return getStreamConnectionDetails(id + "");
+    return getStreamConnectionDetails("accountTest" + id);
   }
 
   private StreamConnectionDetails getStreamConnectionDetails(String username) {
@@ -293,6 +292,7 @@ public class SimpleStreamSenderIT {
     try {
       nodeClient.createAccount(account);
     } catch (Exception e) {
+      System.out.println("Could not create account " + account.username());
       fail("Unexpected error", e);
     }
     PaymentPointer pointer = PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/" + account.username());
