@@ -15,6 +15,7 @@ import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
+import org.assertj.core.data.Offset;
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -194,7 +195,7 @@ public class SimpleStreamSenderIT {
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(8);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(8, Offset.offset(1));
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);

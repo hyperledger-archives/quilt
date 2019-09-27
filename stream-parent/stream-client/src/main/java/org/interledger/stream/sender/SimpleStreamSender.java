@@ -272,16 +272,10 @@ public class SimpleStreamSender implements StreamSender {
 
       final Instant start = Instant.now();
 
-      AtomicBoolean timeoutReached = new AtomicBoolean(false);
       final CompletableFuture<Void> paymentFuture = CompletableFuture.supplyAsync(() -> {
-        sendMoneyPacketized(timeoutReached);
+        sendMoneyPacketized();
         return null;
       });
-
-      if (timeoutInMillis > 0) {
-        ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
-        timeoutMonitor.schedule(() -> timeoutReached.set(true), timeoutInMillis, TimeUnit.MILLISECONDS);
-      }
 
       // To track the duration...
       final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
@@ -306,18 +300,15 @@ public class SimpleStreamSender implements StreamSender {
           );
     }
 
-    private void sendMoneyPacketized(AtomicBoolean timeoutReached) {
+    private void sendMoneyPacketized() {
+      final AtomicBoolean timeoutReached = new AtomicBoolean(false);
 
-      while (soldierOn(timeoutReached)) {
+      if (timeoutInMillis > 0) {
+        ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
+        timeoutMonitor.schedule(() -> timeoutReached.set(true), timeoutInMillis, TimeUnit.MILLISECONDS);
+      }
 
-        // Integer.MAX_VALUE is equal to: 2<sup>31</sup>-1, so break only after we exceed Integer.MAX_VALUE
-        if (sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0) {
-          // Break out of the loop and close the connection. Per IL-RFC-29, "Implementations MUST close the connection
-          // once either endpoint has sent 2^31 packets. According to NIST, it is unsafe to use AES-GCM for more than
-          // 2^32 packets using the same encryption key. (STREAM uses the limit of 2^31 because both endpoints encrypt
-          // packets with the same key.)
-          break;
-        }
+      while (soldierOn(timeoutReached.get())) {
 
         // Determine the amount to send
         final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
@@ -378,7 +369,7 @@ public class SimpleStreamSender implements StreamSender {
 
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
-          if (!timeoutReached.get()) {
+          if (canBeScheduled(timeoutReached.get(), streamPacket.sequence())) {
             executorService.submit(() -> {
               if (!timeoutReached.get()) {
                 try  {
@@ -386,10 +377,10 @@ public class SimpleStreamSender implements StreamSender {
                   InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
                   responsePacket.handle(
                       (fulfillPacket -> {
-                        handleFulfill(sequence.get(), amountToSend, fulfillPacket);
+                        handleFulfill(streamPacket.sequence(), amountToSend, fulfillPacket);
                       }),
                       (rejectPacket -> {
-                        handleReject(sequence.get(), amountToSend, rejectPacket);
+                        handleReject(streamPacket.sequence(), amountToSend, rejectPacket);
                       }));
                 } catch (Exception e) {
                   logger.error("Send packet failed", e);
@@ -406,9 +397,40 @@ public class SimpleStreamSender implements StreamSender {
       }
     }
 
-    private boolean soldierOn(AtomicBoolean timeoutReached) {
-      return (this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 && !timeoutReached.get()) ||
-          this.congestionController.hasInFlight();
+    private boolean maxPacketsReached() {
+      return sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0;
+    }
+
+    private boolean maxPacketsExceeded(UnsignedLong currentSequence) {
+      return currentSequence.compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) > 0;
+    }
+
+    /**
+     * Tasks are only scheduled if we haven't timed out and haven't exceeded the max number of packets that can be sent.
+     * Per IL-RFC-29, "Implementations MUST close the connection once either endpoint has sent 2^31 packets. According
+     * to NIST, it is unsafe to use AES-GCM for more than 2^32 packets using the same encryption key. (STREAM uses the
+     * limit of 2^31 because both endpoints encrypt packets with the same key.)
+     *
+     * @param timeoutReached whether or not we've exceeded the timeout for non in-flight requests
+     * @param currentSequence sequence number of the most recent packet to be sent
+     *
+     * @return true if we can schedule a task.
+     */
+    @VisibleForTesting
+    boolean canBeScheduled(boolean timeoutReached, UnsignedLong currentSequence) {
+      // Integer.MAX_VALUE is equal to: 2<sup>31</sup>-1, so break only after we exceed Integer.MAX_VALUE
+      return !timeoutReached && !maxPacketsExceeded(currentSequence);
+    }
+
+    @VisibleForTesting
+    boolean soldierOn(boolean timeoutReached) {
+      // if money in flight, always soldier on
+      // else
+      //   you haven't reached max packets
+      //   and you haven't delivered the full amount
+      //   and you haven't timed out
+      return this.congestionController.hasInFlight() ||
+          (!maxPacketsReached() && this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 && !timeoutReached);
     }
 
     /**

@@ -62,7 +62,6 @@ public class SendMoneyAggregatorTest {
     );
   }
 
-  @Ignore
   @Test
   public void sendMoneyWithMaxSequenceMinus1() throws ExecutionException, InterruptedException {
     sendMoneyAggregator.setSequenceForTesting(MAX_FRAMES_PER_CONNECTION.minus(UnsignedLong.ONE));
