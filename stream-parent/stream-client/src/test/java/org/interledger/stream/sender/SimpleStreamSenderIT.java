@@ -101,7 +101,8 @@ public class SimpleStreamSenderIT {
 
   @Before
   public void setUp() throws IOException {
-    String interledgerNodeBaseURI = "http://localhost:" + interledgerNode.getFirstMappedPort();
+    String interledgerNodeBaseURI =
+        "http://"+ interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
