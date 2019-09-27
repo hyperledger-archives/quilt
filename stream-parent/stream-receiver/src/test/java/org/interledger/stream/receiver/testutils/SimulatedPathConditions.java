@@ -42,4 +42,21 @@ public interface SimulatedPathConditions {
     return () -> UnsignedLong.MAX_VALUE;
   }
 
+  /**
+   * <p>An integer that represents the percentage of ILPv4 packets that should reject in this simulated path. For
+   * example,
+   * a value of `50` means that 50% of packets will reject, whereas 50% of packets will fulfill, in the simulated
+   * network. Note that this feature can be useful in simulating lossy intermediate network conditions while testing
+   * STREAM sender/receiver scenarios.</p>
+   *
+   * <p>NOTE: This value does not impact the STREAM receiver in any way, but instead only affects the simulate
+   * intermediate network.</p>
+   *
+   * @return A {@link BigDecimal} that represents the percentage of packets to reject in this path.
+   */
+  @Default
+  default float packetRejectionPercentage() {
+    return 0.0f;
+  }
+
 }
