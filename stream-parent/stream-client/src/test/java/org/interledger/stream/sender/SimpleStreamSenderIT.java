@@ -270,7 +270,7 @@ public class SimpleStreamSenderIT {
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
-  @Test
+  @Test(timeout = 10000L)
   public void sendMoneyWithWrongLinkPassword() throws IOException {
     final String connectorAccountUsername = UUID.randomUUID().toString().replace("-", "");
 
