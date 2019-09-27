@@ -407,6 +407,17 @@ public class AimdCongestionControllerTest {
     assertThat(controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(2L));
   }
 
+  @Test
+  public void handleF08RejectionDivideByZeroHalves() {
+    InterledgerRejectPacket rejectPacket = interledgerRejectPacket(Optional.of(
+        AmountTooLargeErrorData.builder()
+            .receivedAmount(UnsignedLong.ZERO)
+            .maximumAmount(UnsignedLong.valueOf(10L))
+            .build()
+    ));
+    assertThat(controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(500L));
+  }
+
   private InterledgerRejectPacket interledgerRejectPacket() {
     return interledgerRejectPacket(Optional.empty());
   }
