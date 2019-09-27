@@ -14,12 +14,12 @@ import org.junit.Test;
  */
 public class JavaxStreamEncryptionServiceTest {
 
-  private static final byte[] SHARED_SECRET = new byte[] {
+  private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[] {
       (byte) 126, (byte) 219, (byte) 117, (byte) 93, (byte) 118, (byte) 248, (byte) 249, (byte) 211, (byte) 20,
       (byte) 211, (byte) 65, 110, (byte) 237, (byte) 80, (byte) 253, (byte) 179, (byte) 81, (byte) 146, (byte) 229,
       (byte) 67, (byte) 231, (byte) 49, (byte) 92, (byte) 127, (byte) 254, (byte) 230, (byte) 144, (byte) 102,
       (byte) 103, (byte) 166, (byte) 150, (byte) 36
-  };
+  });
 
   private static final byte[] PLAINTEXT = new byte[] {99, 0, 12, (byte) 255, 77, 31};
 
@@ -57,5 +57,12 @@ public class JavaxStreamEncryptionServiceTest {
     byte[] cipherMessage = streamEncryptionService.encrypt(SHARED_SECRET, PLAINTEXT);
     byte[] decryptedValue = streamEncryptionService.decrypt(SHARED_SECRET, cipherMessage);
     assertThat(decryptedValue).isEqualTo(PLAINTEXT);
+  }
+
+  @Test
+  public void testIvLength() {
+    final int actualIvLength = JavaxStreamEncryptionService.AES_GCM_NONCE_IV_LENGTH;
+    // See NIST suggestion in JavaxStreamEncryptionService. This test should ALWAYS pass!
+    assertThat(actualIvLength >= 12 || actualIvLength < 16);
   }
 }

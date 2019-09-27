@@ -16,7 +16,7 @@ public interface StreamEncryptionService {
    *
    * @return An byte array containing {@code plainText}, but in encrypted form.
    */
-  byte[] encrypt(final byte[] sharedSecret, final byte[] plainText);
+  byte[] encrypt(final SharedSecret sharedSecret, final byte[] plainText);
 
   /**
    * Decrypt the supplied {@code cipherText}.
@@ -27,6 +27,6 @@ public interface StreamEncryptionService {
    *
    * @return A byte array containing the unencrypted secret value, in binary form.
    */
-  byte[] decrypt(final byte[] sharedSecret, final byte[] cipherMessage);
+  byte[] decrypt(final SharedSecret sharedSecret, final byte[] cipherMessage);
 
 }

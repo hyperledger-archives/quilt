@@ -3,6 +3,7 @@ package org.interledger.stream;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.stream.crypto.Random;
+import org.interledger.stream.crypto.SharedSecret;
 
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
@@ -47,14 +48,14 @@ public class StreamUtils {
    *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
    */
-  public static final InterledgerFulfillment generatedFulfillableFulfillment(
-      final byte[] sharedSecret, final byte[] data
+  public static InterledgerFulfillment generatedFulfillableFulfillment(
+      final SharedSecret sharedSecret, final byte[] data
   ) {
     Objects.requireNonNull(sharedSecret);
     Objects.requireNonNull(data);
 
     // hmac_key = hmac_sha256(shared_secret, "ilp_stream_fulfillment");
-    final SecretKey secretKey = new SecretKeySpec(sharedSecret, HMAC_SHA256_ALG_NAME);
+    final SecretKey secretKey = new SecretKeySpec(sharedSecret.key(), HMAC_SHA256_ALG_NAME);
     final byte[] hmacKey = Hashing.hmacSha256(secretKey).hashBytes(ILP_STREAM_FULFILLMENT).asBytes();
 
     // fulfillment = hmac_sha256(hmac_key, data);
