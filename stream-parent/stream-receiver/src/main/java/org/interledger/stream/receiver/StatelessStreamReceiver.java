@@ -1,5 +1,8 @@
 package org.interledger.stream.receiver;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -14,16 +17,13 @@ import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +37,13 @@ import java.util.Objects;
  * fulfills all incoming packets to collect the money.</p>
  *
  * <p>NOTE: This implementation does not currently support handling data sent via STREAM.</p>
+ *
+ * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
+ * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly check to restrict
+ * the size of thedatafield in any particular {@link InterledgerPreparePacket}, for two reasons. First, this
+ * implementation never packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb
+ * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
+ * sender/receiver software to have to be updated across the Interledger.</p>
  */
 public class StatelessStreamReceiver implements StreamReceiver {
 
@@ -76,7 +83,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
    */
   @Override
   public InterledgerResponsePacket receiveMoney(
-      final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress
+      final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress, final String assetCode,
+      final short assetScale
   ) {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(receiverAddress);
@@ -104,8 +112,6 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     final Builder<StreamFrame> responseFrames = ImmutableList.builder();
 
-    // TODO send asset code and scale back to sender also
-
     if (streamPacket.sequenceIsSafeForSingleSharedSecret()) {
       streamPacket.frames().stream()
           .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
@@ -115,6 +121,14 @@ public class StatelessStreamReceiver implements StreamReceiver {
               .streamId(streamMoneyFrame.streamId())
               .totalReceived(UnsignedLong.ZERO)
               .receiveMax(UnsignedLong.MAX_VALUE)
+              .build())
+          );
+      streamPacket.frames().stream()
+          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionNewAddress)
+          .findFirst()
+          .map(streamFrame -> responseFrames.add(ConnectionAssetDetailsFrame.builder()
+              .sourceAssetScale(assetScale)
+              .sourceAssetCode(assetCode)
               .build())
           );
     } else {

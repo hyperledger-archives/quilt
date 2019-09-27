@@ -29,6 +29,8 @@ public class SenderReceiverTest {
   private static final InterledgerAddress ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
   private static final InterledgerAddress SENDER_ADDRESS = ILP_ADDRESS.with("java_stream_client");
   private static final InterledgerAddress RECEIVER_ADDRESS = ILP_ADDRESS.with("java_stream_receiver");
+  private static final String assetCode = "USD";
+  private static final short assetScale = 100;
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -63,7 +65,7 @@ public class SenderReceiverTest {
     );
 
     simulatedILPv4Network.getRightLink().registerLinkHandler(incomingPreparePacket ->
-        rightStreamReceiver.receiveMoney(incomingPreparePacket, RECEIVER_ADDRESS)
+        rightStreamReceiver.receiveMoney(incomingPreparePacket, RECEIVER_ADDRESS, assetCode, assetScale)
     );
 
     this.sharedSecret = Base64.getDecoder().decode("R5FMgJ1fOSg3SztrMwKAS9KaGJuVYAUeLstWt8ZP6mk=");
