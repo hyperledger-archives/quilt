@@ -27,6 +27,7 @@ import org.interledger.btp.BtpSubProtocol.ContentType;
 import org.junit.Test;
 
 import java.math.BigInteger;
+
 import java.nio.charset.StandardCharsets;
 
 public class BtpTransferTest {

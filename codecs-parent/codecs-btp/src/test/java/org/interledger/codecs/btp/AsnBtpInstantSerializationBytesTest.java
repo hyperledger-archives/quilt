@@ -20,8 +20,6 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
-import static org.junit.Assert.assertTrue;
-
 import org.interledger.encoding.asn.framework.CodecContext;
 
 import com.google.common.io.BaseEncoding;

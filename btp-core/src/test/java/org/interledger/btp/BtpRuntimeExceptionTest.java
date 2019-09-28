@@ -20,13 +20,13 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.btp.BtpSubProtocol.ContentType;
 
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link BtpRuntimeException}.
