@@ -1,8 +1,27 @@
 package org.interledger.stream.frames;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_ASSET_DETAILS;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_CLOSE;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_DATA_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_DATA_MAX;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_MAX_STREAM_ID;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_NEW_ADDRESS;
+import static org.interledger.stream.frames.StreamFrameConstants.CONNECTION_STREAM_ID_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_CLOSE;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA_MAX;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_BLOCKED;
+import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_MAX;
+import static org.mockito.Mockito.spy;
+
+import org.interledger.core.InterledgerAddress;
+import org.interledger.stream.Denomination;
+
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;
-import org.interledger.core.InterledgerAddress;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -11,28 +30,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.frames.StreamFrameConstants.*;
-import static org.mockito.Mockito.spy;
-
 
 public class StreamFrameTypeTest {
 
   private final List<Short> expected = Lists.newArrayList(
-    CONNECTION_CLOSE,
-    CONNECTION_NEW_ADDRESS,
-    CONNECTION_DATA_MAX,
-    CONNECTION_DATA_BLOCKED,
-    CONNECTION_MAX_STREAM_ID,
-    CONNECTION_STREAM_ID_BLOCKED,
-    CONNECTION_ASSET_DETAILS,
-    STREAM_CLOSE,
-    STREAM_MONEY,
-    STREAM_MONEY_MAX,
-    STREAM_MONEY_BLOCKED,
-    STREAM_DATA,
-    STREAM_DATA_MAX,
-    STREAM_DATA_BLOCKED
+      CONNECTION_CLOSE,
+      CONNECTION_NEW_ADDRESS,
+      CONNECTION_DATA_MAX,
+      CONNECTION_DATA_BLOCKED,
+      CONNECTION_MAX_STREAM_ID,
+      CONNECTION_STREAM_ID_BLOCKED,
+      CONNECTION_ASSET_DETAILS,
+      STREAM_CLOSE,
+      STREAM_MONEY,
+      STREAM_MONEY_MAX,
+      STREAM_MONEY_BLOCKED,
+      STREAM_DATA,
+      STREAM_DATA_MAX,
+      STREAM_DATA_BLOCKED
   );
 
   @Rule
@@ -46,7 +61,8 @@ public class StreamFrameTypeTest {
 
   @Test
   public void getCode() {
-    assertThat(Arrays.stream(StreamFrameType.values()).map(StreamFrameType::code).collect(Collectors.toList())).isEqualTo(expected);
+    assertThat(Arrays.stream(StreamFrameType.values()).map(StreamFrameType::code).collect(Collectors.toList()))
+        .isEqualTo(expected);
   }
 
   @Test
@@ -77,13 +93,16 @@ public class StreamFrameTypeTest {
 
   @Test
   public void connectionAssetDetailsFrame() {
-    ConnectionAssetDetailsFrame frame = ConnectionAssetDetailsFrame.builder()
-        .sourceAssetCode("dave and busters dollars")
-        .sourceAssetScale((short) 1)
+    ConnectionAssetDetailsFrame frame = ConnectionAssetDetailsFrame.builder().sourceDenomination(
+        Denomination.builder()
+            .assetCode("dave and busters dollars")
+            .assetScale((short) 1)
+            .build())
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionAssetDetails);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionAssetDetailsFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionAssetDetails);
+    assertThat(spy(ConnectionAssetDetailsFrame.class).streamFrameType())
+        .isEqualTo(StreamFrameType.ConnectionAssetDetails);
   }
 
   @Test
@@ -104,7 +123,8 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataBlocked);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionDataBlockedFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataBlocked);
+    assertThat(spy(ConnectionDataBlockedFrame.class).streamFrameType())
+        .isEqualTo(StreamFrameType.ConnectionDataBlocked);
   }
 
   @Test
@@ -124,7 +144,8 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionMaxStreamId);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionMaxStreamIdFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionMaxStreamId);
+    assertThat(spy(ConnectionMaxStreamIdFrame.class).streamFrameType())
+        .isEqualTo(StreamFrameType.ConnectionMaxStreamId);
   }
 
   @Test
@@ -144,7 +165,8 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionStreamIdBlocked);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionStreamIdBlockedFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionStreamIdBlocked);
+    assertThat(spy(ConnectionStreamIdBlockedFrame.class).streamFrameType())
+        .isEqualTo(StreamFrameType.ConnectionStreamIdBlocked);
   }
 
   @Test

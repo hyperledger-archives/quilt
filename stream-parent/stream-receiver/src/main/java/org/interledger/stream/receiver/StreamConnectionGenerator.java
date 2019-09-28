@@ -1,6 +1,7 @@
 package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.spsp.SharedSecret;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 
@@ -32,7 +33,7 @@ public interface StreamConnectionGenerator {
    *
    * @return A byte array containing the shared secret used to construct the address.
    */
-  byte[] deriveSecretFromAddress(ServerSecretSupplier serverSecretSupplier, InterledgerAddress receiverAddress)
+  SharedSecret deriveSecretFromAddress(ServerSecretSupplier serverSecretSupplier, InterledgerAddress receiverAddress)
       throws StreamException;
 
 }

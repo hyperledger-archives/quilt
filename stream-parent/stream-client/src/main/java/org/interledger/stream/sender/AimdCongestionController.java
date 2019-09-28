@@ -1,5 +1,7 @@
 package org.interledger.stream.sender;
 
+import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
+
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
@@ -66,8 +68,8 @@ public class AimdCongestionController implements CongestionController {
    *                           whenever a valid fulfillment is encountered. This value determines how quickly packet
    *                           sizes increase as the payment path continues to process larger and larger packets.
    * @param decreaseFactor     An {@link UnsignedLong} representing the amount to lower {@link #maxInFlight} by when the
-   *                           receiver rejects a STREAM packet using a T04 or non-F08 error code (F08 rejections will
-   *                           contain information that can be used to reduce
+   *                           receiver rejects a STREAM packet containing a T04 or non-F08 error code (F08 rejections
+   *                           will contain information that can be used to reduce
    * @param streamCodecContext A {@link CodecContext} for encoding and decoding STREAM packets and frames.
    */
   public AimdCongestionController(
@@ -152,7 +154,7 @@ public class AimdCongestionController implements CongestionController {
       /////////////////////////
       // Update the maxInFlight
       /////////////////////////
-      case InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE: {
+      case T04_INSUFFICIENT_LIQUIDITY_CODE: {
         congestionState.set(CongestionState.AVOID_CONGESTION);
 
         final UnsignedLong computedValue = UnsignedLong.valueOf(

@@ -11,6 +11,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 
@@ -43,7 +44,7 @@ public class SendMoneyAggregatorTest {
   @Mock
   private StreamEncryptionService streamEncryptionServiceMock;
 
-  private byte[] sharedSecret = new byte[32];
+  private SharedSecret sharedSecret = SharedSecret.of(new byte[32]);
   private InterledgerAddress sourceAddress = InterledgerAddress.of("example.source");
   private InterledgerAddress destinationAddress = InterledgerAddress.of("example.destination");
   private UnsignedLong originalAmountToSend = UnsignedLong.valueOf(10L);

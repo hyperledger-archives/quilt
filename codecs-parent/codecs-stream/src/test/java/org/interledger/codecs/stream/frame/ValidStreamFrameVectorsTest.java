@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.codecs.stream.frame.helpers.StreamFrameTestVector;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionDataBlockedFrame;
@@ -202,9 +203,11 @@ public class ValidStreamFrameVectorsTest {
         break;
       }
       case ConnectionAssetDetails: {
-        frameFromTestVectorFile = ConnectionAssetDetailsFrame.builder()
-            .sourceAssetCode(streamFrameTestVector.sourceAssetCode().get())
-            .sourceAssetScale(streamFrameTestVector.sourceAssetScale().get())
+        frameFromTestVectorFile = ConnectionAssetDetailsFrame.builder().sourceDenomination(
+            Denomination.builder()
+                .assetCode(streamFrameTestVector.sourceAssetCode().get())
+                .assetScale(streamFrameTestVector.sourceAssetScale().get())
+                .build())
             .build();
         break;
       }

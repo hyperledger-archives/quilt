@@ -20,6 +20,7 @@
 
  package org.interledger.codecs.stream.frame;
 
+ import org.interledger.stream.Denomination;
  import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 
  import org.junit.runner.RunWith;
@@ -49,93 +50,132 @@
          // assetScale=0
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("USD")
-                 .sourceAssetScale((short) 0)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("USD")
+                         .assetScale((short) 0)
+                         .build()
+                 ).build()
          },
          // assetScale=1
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("USD")
-                 .sourceAssetScale((short) 1)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("USD")
+                         .assetScale((short) 1)
+                         .build()
+                 ).build()
          },
          // assetScale=10
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("USD")
-                 .sourceAssetScale((short) 10)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("USD")
+                         .assetScale((short) 10)
+                         .build()
+                 ).build()
          },
          // assetScale=Max-1
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("USD")
-                 .sourceAssetScale((short) (254))
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("USD")
+                         .assetScale((short) 254)
+                         .build()
+                 ).build()
          },
          // assetScale=Max
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("USD")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("USD")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
 
          // empty code
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          // ShortCode=0
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("U")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("U")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          // MediumCode
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("US")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("US")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("USD")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("USD")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          // LongCode
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("DASH")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("DASH")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          // LongerCode
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("DASH-DASH-DASH")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("DASH-DASH-DASH")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          // Chinese String (UTF)
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("元元元")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("元元元")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
          // Russian String (UTF)
          {
              ConnectionAssetDetailsFrame.builder()
-                 .sourceAssetCode("₽")
-                 .sourceAssetScale((short) 255)
-                 .build()
+                 .sourceDenomination(
+                     Denomination.builder()
+                         .assetCode("₽₽₽")
+                         .assetScale((short) 255)
+                         .build()
+                 ).build()
          },
      });
    }

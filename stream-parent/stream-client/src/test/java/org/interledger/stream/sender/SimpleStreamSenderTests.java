@@ -1,7 +1,10 @@
 package org.interledger.stream.sender;
 
+import static org.mockito.Mockito.mock;
+
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamEncryptionService;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,9 +12,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
-import static org.mockito.Mockito.mock;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Unit tests for {@link SimpleStreamSenderTests}.
@@ -50,13 +51,13 @@ public class SimpleStreamSenderTests {
   @Test
   public void constructThreeArgWithNullEncryptionService() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(null, linkMock, mock(ThreadPoolExecutor.class));
+    new SimpleStreamSender(null, linkMock, mock(ExecutorService.class));
   }
 
   @Test
   public void constructThreeArgWithNullLink() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(streamEncryptionServiceMock, null, mock(ThreadPoolExecutor.class));
+    new SimpleStreamSender(streamEncryptionServiceMock, null, mock(ExecutorService.class));
   }
 
   @Test

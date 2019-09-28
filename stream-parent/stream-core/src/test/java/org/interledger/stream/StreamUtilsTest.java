@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerFulfillment;
+import org.interledger.stream.crypto.SharedSecret;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
@@ -17,12 +18,12 @@ import org.junit.Test;
  */
 public class StreamUtilsTest {
 
-  private static final byte[] SHARED_SECRET = new byte[] {
+  private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[] {
       (byte) 126, (byte) 219, (byte) 117, (byte) 93, (byte) 118, (byte) 248, (byte) 249, (byte) 211, (byte) 20,
       (byte) 211, (byte) 65, (byte) 110, (byte) 237, (byte) 80, (byte) 253, (byte) 179, (byte) 81, (byte) 146,
       (byte) 229, (byte) 67, (byte) 231, (byte) 49, (byte) 92, (byte) 127, (byte) 254, (byte) 230, (byte) 144,
       (byte) 102, (byte) 103, (byte) 166, (byte) 150, (byte) 36
-  };
+  });
 
   private static final byte[] DATA = new byte[] {
       (byte) 119, (byte) 248, (byte) 213, (byte) 234, (byte) 63, (byte) 200, (byte) 224, (byte) 140, (byte) 212,

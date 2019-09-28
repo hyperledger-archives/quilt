@@ -90,7 +90,6 @@ public class InterledgerRustNodeClient implements SpspClient {
       .build(), StreamConnectionDetails.class);
   }
 
-
   public BigDecimal getBalance(String accountName) throws SpspClientException {
     return execute(requestBuilder()
       .url(HttpUrl.parse(baseUri + "/accounts/" + accountName + "/balance"))

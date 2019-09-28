@@ -1,7 +1,6 @@
 package org.interledger.spsp;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.InterledgerAddressBuilder;
 import org.interledger.spsp.ImmutableStreamConnectionDetails.Builder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
