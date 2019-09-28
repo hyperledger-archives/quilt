@@ -75,6 +75,7 @@ public class SimpleStreamSenderIT {
   private static final InterledgerAddress HOST_ADDRESS = InterledgerAddress.of("test.xpring-dev.rs1");
   private static final String SENDER_ACCOUNT_USERNAME = "java_stream_client";
   private static final InterledgerAddress SENDER_ADDRESS = HOST_ADDRESS.with(SENDER_ACCOUNT_USERNAME);
+  private static final String LINK_ID = "simpleStreamSenderIT-to-Rust-IlpOverHttpLink";
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -142,7 +143,7 @@ public class SimpleStreamSenderIT {
         InterledgerCodecContextFactory.oer(),
         new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + AUTH_TOKEN)
     );
-    link.setLinkId(LinkId.of("simpleStreamSenderIT-to-Rust-IlpOverHttpLink"));
+    link.setLinkId(LinkId.of(LINK_ID));
 
     Account sender = accountBuilder()
         .username(SENDER_ACCOUNT_USERNAME)
@@ -355,7 +356,7 @@ public class SimpleStreamSenderIT {
         InterledgerCodecContextFactory.oer(),
         new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + "wrong-password")
     );
-    link.setLinkId(LinkId.of("ilpHttpLink"));
+    link.setLinkId(LinkId.of(LINK_ID));
 
     Account sender = accountBuilder()
         .username(connectorAccountUsername)
@@ -370,20 +371,15 @@ public class SimpleStreamSenderIT {
     );
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
-    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+    streamSender.sendMoney(
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount,
         Duration.ofMillis(100L)
-    ).join();
-
-    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
-    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
-
-    logger.info("Payment Sent: {}", sendMoneyResult);
+    ).whenComplete(($, error) -> {
+      assertThat(error).isNotNull();
+    });
   }
 
   private StreamConnectionDetails getStreamConnectionDetails(int id) {

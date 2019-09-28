@@ -8,6 +8,7 @@ import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
@@ -49,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
@@ -422,24 +424,41 @@ public class SimpleStreamSender implements StreamSender {
             // controller to not reflect what we've actually scheduled to run, resulting in the loop
             // breaking prematurely
             congestionController.prepare(amountToSend);
-            executorService.submit(() -> {
-              if (!timeoutReached.get()) {
-                try {
-                  InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
-                  responsePacket.handle(
-                      fulfillPacket -> handleFulfill(streamPacket.sequence(), amountToSend, fulfillPacket),
-                      rejectPacket -> handleReject(streamPacket.sequence(), amountToSend, rejectPacket)
-                  );
-                } catch (Exception e) {
-                  logger.error("Link send failed. prepaprePacket={}", preparePacket, e);
+            try {
+              executorService.submit(() -> {
+                if (!timeoutReached.get()) {
+                  try {
+                    InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+                    responsePacket.handle(
+                        fulfillPacket -> handleFulfill(streamPacket.sequence(), amountToSend, fulfillPacket),
+                        rejectPacket -> handleReject(streamPacket.sequence(), amountToSend, rejectPacket)
+                    );
+                  } catch (Exception e) {
+                    logger.error("Link send failed. prepaprePacket={}", preparePacket, e);
+                    congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
+                        .code(InterledgerErrorCode.F00_BAD_REQUEST)
+                        .message(
+                            String.format("Link send failed. prepaprePacket=%s error=%s", preparePacket, e.getMessage())
+                        )
+                        .build());
+                  }
                 }
-              }
-            });
+              });
+            } catch (RejectedExecutionException e) {
+              // If we get here, it means the task was unable to be scheduled, so we need to unwind the congestion
+              // controller to prevent deadlock.
+              congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
+                  .code(InterledgerErrorCode.F00_BAD_REQUEST)
+                  .message(
+                      String.format("Unable to schedule sendMoney task. prepaprePacket=%s error=%s", preparePacket, e.getMessage())
+                  )
+                  .build());
+              throw e;
+            }
           }
         } catch (Exception e) {
           logger.error("Submit failed", e);
         }
-
       }
     }
 
