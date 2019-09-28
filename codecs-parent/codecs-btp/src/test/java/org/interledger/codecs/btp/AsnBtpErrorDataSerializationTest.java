@@ -66,11 +66,11 @@ public class AsnBtpErrorDataSerializationTest {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param btpErrorBase64Bytes String of base64 encoded {@link BtpError} bytes
+   * @param btpErrorBase64Bytes A {@link String} of base64 encoded {@link BtpError} bytes.
    * @param expectedRequestId {@code long} expected request id.
    * @param expectedErrorCode {@link BtpErrorCode} expected error code.
-   * @param expectedTriggeredAt {@code Instant} expected triggeredAt time.
-   * @param expectedErrorDataBase64Bytes String of expected base64 error bytes.
+   * @param expectedTriggeredAt {@link Instant} expected triggeredAt time.
+   * @param expectedErrorDataBase64Bytes A {@link String} of expected base64 error bytes.
    */
   public AsnBtpErrorDataSerializationTest(
       final String btpErrorBase64Bytes,
