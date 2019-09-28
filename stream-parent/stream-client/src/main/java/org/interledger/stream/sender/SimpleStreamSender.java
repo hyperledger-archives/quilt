@@ -315,7 +315,6 @@ public class SimpleStreamSender implements StreamSender {
           // Wait up to `timeout` to acquire a permit. There are edge-cases here where the permit is acquired and then
           // is immediately expired. However, this will simply look like a normal timeout to the caller.
           if (secretSemaphore.tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-            Thread.sleep(100);
             sendMoneyPacketized();
             return null;
           } else {
