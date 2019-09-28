@@ -40,8 +40,8 @@ public interface StreamSender {
   );
 
   /**
-   * Send "money" (i.e., some unit of value) from a source ILP address to a destination address, preventing any unsent
-   * stream packets from becoming encqueed if the payment timeout has been exceeded.</p>
+   * <p>Send "money" (i.e., some unit of value) from a source ILP address to a destination address, preventing any
+   * unsent STREAM packets from becoming encqueed if the payment timeout has been exceeded.</p>
    *
    * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
    * connectors will reject ILP packets that exceed 32kb (though there is no hard rule that more than 32kb will not be
