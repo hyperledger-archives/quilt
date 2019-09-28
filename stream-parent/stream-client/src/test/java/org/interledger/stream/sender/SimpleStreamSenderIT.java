@@ -43,6 +43,7 @@ import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -75,6 +77,11 @@ public class SimpleStreamSenderIT {
   private static final InterledgerAddress SENDER_ADDRESS = HOST_ADDRESS.with(SENDER_ACCOUNT_USERNAME);
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  // 60 seconds max per method tested
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
+
   @Rule
   public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledgerrs-standalone")
       .withExposedPorts(7770)
@@ -135,7 +142,7 @@ public class SimpleStreamSenderIT {
         InterledgerCodecContextFactory.oer(),
         new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + AUTH_TOKEN)
     );
-    link.setLinkId(LinkId.of("ilpHttpLink"));
+    link.setLinkId(LinkId.of("simpleStreamSenderIT-to-Rust-IlpOverHttpLink"));
 
     Account sender = accountBuilder()
         .username(SENDER_ACCOUNT_USERNAME)
@@ -168,6 +175,56 @@ public class SimpleStreamSenderIT {
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  /**
+   * In general, calling sendMoney using the same Connection (i.e., SharedSecret) in parallel should not be done.
+   * However, the implementation is smart enough to queue up parallel requests and only allow one to run at a time.
+   * However, sometimes waiting tasks will timeout, in which case a particular `sendMoney` may throw an exception. This
+   * test does not expect any exceptions.
+   */
+  @Test
+  public void sendMoneyOnSameConnectionInParallel() {
+    final int numExecutions = 10;
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000L);
+
+    StreamSender streamSender = new SimpleStreamSender(
+        new JavaxStreamEncryptionService(), link
+    );
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
+
+    // Run a bunch of `sendMoney` calls on the same Connection, in parallel.
+    List<SendMoneyResult> sendMoneyResults = new ArrayList<>();
+    List<CompletableFuture<SendMoneyResult>> results = new ArrayList<>();
+    for (int i = 0; i < numExecutions; i++) {
+      final CompletableFuture<SendMoneyResult> job = streamSender.sendMoney(
+          SharedSecret.of(connectionDetails.sharedSecret().key()),
+          SENDER_ADDRESS,
+          connectionDetails.destinationAddress(),
+          paymentAmount
+      ).whenComplete((sendMoneyResult, error) -> {
+        // There should not be any errors for any sendMoney because they should queue-up and eventually run.
+        assertThat(error).isNull();
+        sendMoneyResults.add(sendMoneyResult);
+      });
+      results.add(job);
+    }
+
+    // Wait for all to complete...
+    CompletableFuture.allOf(results.toArray(new CompletableFuture[0])).join();
+
+    // Sum-up the total results of all Calls.
+    long totalAmountDelivered = sendMoneyResults.stream()
+        .map(SendMoneyResult::amountDelivered)
+        .mapToLong(UnsignedLong::longValue)
+        .sum();
+    assertThat(totalAmountDelivered).isEqualTo(numExecutions * paymentAmount.longValue());
+    long totalPackets = sendMoneyResults.stream()
+        .map(SendMoneyResult::totalPackets)
+        .mapToLong(Integer::longValue)
+        .sum();
+    assertThat(totalPackets).isCloseTo(numExecutions * 8, Offset.offset(2L));
   }
 
   @Test

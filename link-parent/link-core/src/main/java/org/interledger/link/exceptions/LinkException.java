@@ -85,4 +85,17 @@ public class LinkException extends RuntimeException {
   public LinkId getLinkId() {
     return linkId;
   }
+
+  /**
+   * Overridden to emit the Link Id.
+   *
+   * @return A {@link String} representation of this Exception.
+   */
+  @Override
+  public String toString() {
+    String s = getClass().getName();
+    String message = getLocalizedMessage() + " LinkId=" + getLinkId();
+    return (message != null) ? (s + ": " + message) : s;
+  }
+
 }

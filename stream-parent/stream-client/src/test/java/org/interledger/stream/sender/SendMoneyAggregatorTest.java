@@ -15,6 +15,7 @@ import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 
+import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,7 +62,7 @@ public class SendMoneyAggregatorTest {
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.sendMoneyAggregator = new SendMoneyAggregator(
-        executor, streamCodecContextMock, linkMock, congestionControllerMock,
+        executor, Maps.newConcurrentMap(), streamCodecContextMock, linkMock, congestionControllerMock,
         streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend,
         Duration.ofSeconds(60)
     );

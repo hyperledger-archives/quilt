@@ -161,7 +161,11 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
         return rejectPacket;
       }
     } catch (IOException e) {
-      throw new LinkException(e.getMessage(), e, getLinkId());
+      throw new LinkException(
+          String.format("Unable to sendPacket. preparePacket=%s error=%s", preparePacket, e.getMessage()),
+          e,
+          getLinkId()
+      );
     }
   }
 

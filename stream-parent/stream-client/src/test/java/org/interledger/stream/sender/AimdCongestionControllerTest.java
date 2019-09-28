@@ -241,6 +241,12 @@ public class AimdCongestionControllerTest {
   }
 
   @Test
+  public void hasInFlight() {
+    controller.prepare(UnsignedLong.ONE);
+    assertThat(controller.hasInFlight()).isTrue();
+  }
+
+  @Test
   public void doesntOverflowU64WithAvoidCongestion() {
     this.controller = new AimdCongestionController(
         UnsignedLong.MAX_VALUE.minus(UnsignedLong.ONE),

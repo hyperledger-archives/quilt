@@ -28,8 +28,11 @@ import org.interledger.stream.frames.StreamMoneyFrame;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.immutables.value.Value.Derived;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,11 +43,14 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * <p>A simple implementation of {@link StreamSender} that opens a STREAM connection, sends money, and then closes the
@@ -67,13 +73,22 @@ import javax.annotation.concurrent.NotThreadSafe;
  * packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb limit to be an issue; Second,
  * if the ILPv4 RFC ever changes to increase this size limitation, we don't want sender/receiver software to have to be
  * updated across the Interledger.</p>
+ *
+ * <p>Every invocation of sendMoney opens and closes a new STREAM connection, resulting in a sequence reset on any
+ * sharedSecret passed (i.e. we never track a sequence on a sharedSecret longer than one call). This implementation will
+ * throw an exception if two sendMoney calls are invoked with the same sharedSecret in parallel.</p>
  */
-@NotThreadSafe
+@ThreadSafe
+@SuppressWarnings("UnstableApiUsage")
 public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
   private final ExecutorService executorService;
+  // Ensures that while multiple sendMoney requests can operate in parallel, only a single sendMoney call per
+  // Connection (i.e., SharedSecret) may be executed at a single time so that the sequence nunmbers of a given
+  // connection are always consistent depsite parallel send operations.
+  private final Map<HashCode, Semaphore> connectionSequences = new ConcurrentHashMap<>();
 
   /**
    * Required-args Constructor.
@@ -122,7 +137,7 @@ public class SimpleStreamSender implements StreamSender {
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
   ) {
-    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, Duration.ofSeconds(60));
+    return sendMoney(sharedSecret, sourceAddress, destinationAddress, amount, Duration.ofSeconds(30));
   }
 
   @Override
@@ -136,8 +151,9 @@ public class SimpleStreamSender implements StreamSender {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
-    final SendMoneyAggregator sendMoneyAggregator = new SendMoneyAggregator(
+    return new SendMoneyAggregator(
         this.executorService,
+        connectionSequences,
         StreamCodecContextFactory.oer(),
         this.link,
         new AimdCongestionController(),
@@ -147,10 +163,8 @@ public class SimpleStreamSender implements StreamSender {
         destinationAddress,
         amount,
         timeout
-    );
-    return sendMoneyAggregator.send();
+    ).send();
   }
-
 
   @Immutable
   public interface CloseConnectionResult {
@@ -160,10 +174,22 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     // Implementations MUST close the connection once either endpoint has sent 2^31 packets.
+
+    /**
+     * The number of fulfilled packets that were received over the lifetime of this connection.
+     *
+     * @return An int representing the number of fulfilled packets.
+     */
     int numFulfilledPackets();
 
+    /**
+     * The number of rejected packets that were received over the lifetime of this connection.
+     *
+     * @return An int representing the number of rejected packets.
+     */
     int numRejectPackets();
 
+    @Derived
     default int totalPackets() {
       return numFulfilledPackets() + numRejectPackets();
     }
@@ -179,11 +205,12 @@ public class SimpleStreamSender implements StreamSender {
    * smaller packets, and then handling all responses. This aggregator operates on a single Connection by opening and
    * closing a single stream.
    */
-  protected static class SendMoneyAggregator {
+  static class SendMoneyAggregator {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ExecutorService executorService;
+    private final Map<HashCode, Semaphore> connectionSequences;
     private final CodecContext streamCodecContext;
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
@@ -194,13 +221,10 @@ public class SimpleStreamSender implements StreamSender {
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
 
-    // The amount
     private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
     private AtomicReference<UnsignedLong> deliveredAmount;
-
     private AtomicBoolean shouldSendSourceAddress;
-
     private AtomicReference<UnsignedLong> sequence;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
@@ -209,6 +233,13 @@ public class SimpleStreamSender implements StreamSender {
      * Required-args Constructor.
      *
      * @param executorService         An {@link ExecutorService} for sending multiple STREAM frames in parallel.
+     * @param connectionSequences     A {@link Map} of {@link Semaphore} keyed by the hash of an actual SharedSecret.
+     *                                This ensures that while multiple {@link #sendMoney} requests can operate in
+     *                                parallel, only a single {@link #sendMoney} call per Connection (i.e.,
+     *                                SharedSecret) may be executed at a single time in order to ensure a monotonically
+     *                                increasing sequence number for a given connection. This implementation stores a
+     *                                sha256 hash of the shared secret so that the actual shared secret isn't hanging
+     *                                around in memory from call to call.
      * @param streamCodecContext      A {@link CodecContext} that can encode and decode ASN.1 OER Stream packets and
      *                                frames.
      * @param link                    The {@link Link} used to send ILPv4 packets containing Stream packets.
@@ -221,8 +252,9 @@ public class SimpleStreamSender implements StreamSender {
      * @param destinationAddress      The {@link InterledgerAddress} of the payment receiver.
      * @param originalAmountToSend    The amount of units (in the senders units) to send to the receiver.
      */
-    public SendMoneyAggregator(
+    SendMoneyAggregator(
         final ExecutorService executorService,
+        final Map<HashCode, Semaphore> connectionSequences,
         final CodecContext streamCodecContext,
         final Link link,
         final CongestionController congestionController,
@@ -234,6 +266,8 @@ public class SimpleStreamSender implements StreamSender {
         final Duration timeout
     ) {
       this.executorService = Objects.requireNonNull(executorService);
+      this.connectionSequences = Objects.requireNonNull(connectionSequences);
+
       this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
       this.link = Objects.requireNonNull(link);
       this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
@@ -260,19 +294,35 @@ public class SimpleStreamSender implements StreamSender {
      *
      * @return A {@link CompletableFuture} containing a {@link SendMoneyResult}.
      */
-    public CompletableFuture<SendMoneyResult> send() {
+    CompletableFuture<SendMoneyResult> send() {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(destinationAddress);
       Objects.requireNonNull(originalAmountToSend);
 
-      // Fire off requests until the congestion controller tells us to stop or we've sent the total amount
-      final List<CompletableFuture<InterledgerResponsePacket>> allFutures = Lists.newArrayList();
-
       final Instant start = Instant.now();
 
       final CompletableFuture<Void> paymentFuture = CompletableFuture.supplyAsync(() -> {
-        sendMoneyPacketized();
-        return null;
+        // Ensure that the connection is only used by one Thread at a single time.
+        final HashCode hashedSecret = Hashing.sha256().hashBytes(sharedSecret.key());
+        final Semaphore secretSemaphore = connectionSequences.computeIfAbsent(hashedSecret, (key) -> new Semaphore(1));
+
+        try {
+          // Wait up to `timeout` to acquire a permit. There are edge-cases here where the permit is acquired and then
+          // is immediately expired. However, this will simply look like a normal timeout to the caller.
+          if (secretSemaphore.tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+            sendMoneyPacketized();
+            return null;
+          } else {
+            throw new StreamSenderException(
+                String.format("Cannot execute parallel executions over the same Stream Connection (i.e., same shared"
+                    + " secret), and unable to acquire semaphore in allotted time. hashedSecret=%s", hashedSecret)
+            );
+          }
+        } catch (InterruptedException e) {
+          throw new IllegalStateException(e);
+        } finally {
+          secretSemaphore.release();
+        }
       });
 
       // To track the duration...
@@ -377,19 +427,15 @@ public class SimpleStreamSender implements StreamSender {
                 try {
                   InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
                   responsePacket.handle(
-                      (fulfillPacket -> {
-                        handleFulfill(streamPacket.sequence(), amountToSend, fulfillPacket);
-                      }),
-                      (rejectPacket -> {
-                        handleReject(streamPacket.sequence(), amountToSend, rejectPacket);
-                      }));
+                      fulfillPacket -> handleFulfill(streamPacket.sequence(), amountToSend, fulfillPacket),
+                      rejectPacket -> handleReject(streamPacket.sequence(), amountToSend, rejectPacket)
+                  );
                 } catch (Exception e) {
-                  logger.error("Send packet failed", e);
+                  logger.error("Link send failed. prepaprePacket={}", preparePacket, e);
                 }
               }
             });
           }
-
         } catch (Exception e) {
           logger.error("Submit failed", e);
         }
@@ -431,11 +477,10 @@ public class SimpleStreamSender implements StreamSender {
       //   you haven't reached max packets
       //   and you haven't delivered the full amount
       //   and you haven't timed out
-      return this.congestionController.hasInFlight() ||
-          (!maxPacketsReached() &&
-              this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0 &&
-              !timeoutReached
-          );
+      return this.congestionController.hasInFlight()
+          || (!maxPacketsReached()
+          && this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0
+          && !timeoutReached);
     }
 
     /**
@@ -603,12 +648,8 @@ public class SimpleStreamSender implements StreamSender {
       logger.debug("Closing STREAM Connection...");
 
       link.sendPacket(preparePacket).handle(
-          (fulfillPacket -> {
-            handleFulfill(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), fulfillPacket);
-          }),
-          (rejectPacket -> {
-            handleReject(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), rejectPacket);
-          })
+          fulfillPacket -> handleFulfill(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), fulfillPacket),
+          rejectPacket -> handleReject(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), rejectPacket)
       );
 
       logger.debug(
@@ -641,7 +682,7 @@ public class SimpleStreamSender implements StreamSender {
     /**
      * Helper method to mess with delivered amount for the purpose of testing loop breaking conditions.
      *
-     * @param deliveredAmount
+     * @param deliveredAmount An {@link UnsignedLong} representing the deliveredAmount to set.
      */
     @VisibleForTesting
     void setDeliveredAmountForTesting(final UnsignedLong deliveredAmount) {
