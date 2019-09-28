@@ -1,12 +1,21 @@
 package org.interledger.stream.sender;
 
-import com.google.common.primitives.UnsignedLong;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.interledger.stream.StreamPacket.MAX_FRAMES_PER_CONNECTION;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
+
+import com.google.common.collect.Maps;
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -19,13 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.StreamPacket.MAX_FRAMES_PER_CONNECTION;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -59,8 +61,9 @@ public class SendMoneyAggregatorTest {
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.sendMoneyAggregator = new SendMoneyAggregator(
-        executor, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend, Duration.ofSeconds(60)
+        executor, Maps.newConcurrentMap(), streamCodecContextMock, linkMock, congestionControllerMock,
+        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend,
+        Duration.ofSeconds(60)
     );
   }
 

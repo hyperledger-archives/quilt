@@ -1,21 +1,9 @@
 package org.interledger.stream.sender;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.primitives.UnsignedLong;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
-import org.assertj.core.data.Offset;
+import static okhttp3.CookieJar.NO_COOKIES;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
@@ -35,6 +23,23 @@ import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import okhttp3.ConnectionPool;
+import okhttp3.ConnectionSpec;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,10 +63,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static okhttp3.CookieJar.NO_COOKIES;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Integration tests for {@link org.interledger.stream.sender.SimpleStreamSender} that connects to a running ILP
@@ -105,7 +106,7 @@ public class SimpleStreamSenderIT {
   @Before
   public void setUp() throws IOException {
     String interledgerNodeBaseURI =
-        "http://"+ interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
+        "http://" + interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
@@ -120,9 +121,9 @@ public class SimpleStreamSenderIT {
     OkHttpClient httpClient = builder.connectionPool(connectionPool).build();
 
     this.nodeClient = new InterledgerRustNodeClient(httpClient,
-      AUTH_TOKEN,
-      interledgerNodeBaseURI,
-      (pointer) -> interledgerNodeBaseURI + "/spsp" + pointer.path());
+        AUTH_TOKEN,
+        interledgerNodeBaseURI,
+        (pointer) -> interledgerNodeBaseURI + "/spsp" + pointer.path());
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -145,7 +146,7 @@ public class SimpleStreamSenderIT {
         InterledgerCodecContextFactory.oer(),
         new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + AUTH_TOKEN)
     );
-    link.setLinkId(LinkId.of("ilpHttpLink"));
+    link.setLinkId(LinkId.of("simpleStreamSenderIT-to-Rust-IlpOverHttpLink"));
 
     Account sender = accountBuilder()
         .username(SENDER_ACCOUNT_USERNAME)
@@ -179,9 +180,16 @@ public class SimpleStreamSenderIT {
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
+  /**
+   * In general, calling sendMoney using the same Connection (i.e., SharedSecret) in parallel should not be done.
+   * However, the implementation is smart enough to queue up parallel requests and only allow one to run at a time.
+   * However, sometimes waiting tasks will timeout, in which case a particular `sendMoney` may throw an exception. This
+   * test does not expect any exceptions.
+   */
   @Test
-  public void sendMoneySinglePacketManyTimes() throws Exception {
-    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
+  public void sendMoneyOnSameConnectionInParallel() {
+    final int NUM_EXECUTIONS = 10;
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000L);
 
     StreamSender streamSender = new SimpleStreamSender(
         new JavaxStreamEncryptionService(), link
@@ -189,28 +197,37 @@ public class SimpleStreamSenderIT {
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
+    // Run a bunch of `sendMoney` calls on the same Connection, in parallel.
+    List<SendMoneyResult> sendMoneyResults = new ArrayList<>();
     List<CompletableFuture<SendMoneyResult>> results = new ArrayList<>();
-
-    for (int i = 0; i < 10; i++) {
-      final CompletableFuture<SendMoneyResult> sendMoneyResult = streamSender
-          .sendMoney(connectionDetails.sharedSecret().key(),
-              SENDER_ADDRESS,
-              connectionDetails.destinationAddress(),
-              paymentAmount);
-      results.add(sendMoneyResult);
-
-//      assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
-//      assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//      assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
-//      assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
-//      logger.info("Payment Sent: {}", sendMoneyResult);
+    for (int i = 0; i < NUM_EXECUTIONS; i++) {
+      final CompletableFuture<SendMoneyResult> job = streamSender.sendMoney(
+          connectionDetails.sharedSecret().key(),
+          SENDER_ADDRESS,
+          connectionDetails.destinationAddress(),
+          paymentAmount
+      ).whenComplete((sendMoneyResult, error) -> {
+        // There should not be any errors for any sendMoney because they should queue-up and eventually run.
+        assertThat(error).isNull();
+        sendMoneyResults.add(sendMoneyResult);
+      });
+      results.add(job);
     }
 
-    CompletableFuture.allOf(results.toArray(new CompletableFuture[0])).whenComplete(($, error) -> {
-      assertThat(error).isNotNull();
-    }).join();
+    // Wait for all to complete...
+    CompletableFuture.allOf(results.toArray(new CompletableFuture[0])).join();
 
-
+    // Sum-up the total results of all Calls.
+    long totalAmountDelivered = sendMoneyResults.stream()
+        .map(smr -> smr.amountDelivered())
+        .mapToLong($ -> $.longValue())
+        .sum();
+    assertThat(totalAmountDelivered).isEqualTo(NUM_EXECUTIONS * paymentAmount.longValue());
+    long totalPackets = sendMoneyResults.stream()
+        .map(smr -> smr.totalPackets())
+        .mapToLong($ -> $.longValue())
+        .sum();
+    assertThat(totalPackets).isCloseTo(NUM_EXECUTIONS * 8, Offset.offset(2L));
   }
 
   @Test
@@ -247,10 +264,10 @@ public class SimpleStreamSenderIT {
 
     ThreadPoolExecutor streamExecutor = new ThreadPoolExecutor(0, 200,
         60L, TimeUnit.SECONDS,
-        new SynchronousQueue<>(),  new ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("simple-stream-sender-%d")
-            .build());
+        new SynchronousQueue<>(), new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("simple-stream-sender-%d")
+        .build());
 
     List<Future<SendMoneyResult>> results = new ArrayList<>();
     for (int i = 0; i < sendCount; i++) {
