@@ -50,6 +50,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -176,6 +177,40 @@ public class SimpleStreamSenderIT {
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  @Test
+  public void sendMoneySinglePacketManyTimes() throws Exception {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
+
+    StreamSender streamSender = new SimpleStreamSender(
+        new JavaxStreamEncryptionService(), link
+    );
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
+
+    List<CompletableFuture<SendMoneyResult>> results = new ArrayList<>();
+
+    for (int i = 0; i < 10; i++) {
+      final CompletableFuture<SendMoneyResult> sendMoneyResult = streamSender
+          .sendMoney(connectionDetails.sharedSecret().key(),
+              SENDER_ADDRESS,
+              connectionDetails.destinationAddress(),
+              paymentAmount);
+      results.add(sendMoneyResult);
+
+//      assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+//      assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+//      assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
+//      assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
+//      logger.info("Payment Sent: {}", sendMoneyResult);
+    }
+
+    CompletableFuture.allOf(results.toArray(new CompletableFuture[0])).whenComplete(($, error) -> {
+      assertThat(error).isNotNull();
+    }).join();
+
+
   }
 
   @Test

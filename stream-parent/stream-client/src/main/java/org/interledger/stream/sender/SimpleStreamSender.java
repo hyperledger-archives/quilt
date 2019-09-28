@@ -2,6 +2,8 @@ package org.interledger.stream.sender;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -35,11 +37,14 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +70,10 @@ import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment
  * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
  * sender/receiver software to have to be updated across the Interledger.</p>
  *
+ * <p>Every invocation of sendMoney opens and closes a new STREAM connection, resulting in a sequence reset on any
+ * sharedSecret passed (i.e. we never track a sequence on a sharedSecret longer than one call). This implementation
+ * will throw an exception if two sendMoney calls are invoked with the same sharedSecret in parallel.</p>
+ *
  */
 @NotThreadSafe
 public class SimpleStreamSender implements StreamSender {
@@ -72,6 +81,7 @@ public class SimpleStreamSender implements StreamSender {
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
   private final ExecutorService executorService;
+  private final Map<HashCode, Semaphore> sequencesBySecret = new ConcurrentHashMap<>();
 
   /**
    * Required-args Constructor.
@@ -134,19 +144,33 @@ public class SimpleStreamSender implements StreamSender {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
-    final SendMoneyAggregator sendMoneyAggregator = new SendMoneyAggregator(
-        this.executorService,
-        StreamCodecContextFactory.oer(),
-        this.link,
-        new AimdCongestionController(),
-        this.streamEncryptionService,
-        sharedSecret,
-        sourceAddress,
-        destinationAddress,
-        amount,
-        timeout
-    );
-    return sendMoneyAggregator.send();
+    HashCode hashedSecret = Hashing.sha256().hashBytes(sharedSecret);
+    Semaphore secretSemaphore = sequencesBySecret.computeIfAbsent(hashedSecret,
+        (key) -> new Semaphore(1));
+
+    if (!secretSemaphore.tryAcquire()) {
+      // make a real exception saying you can't call with same secret in parallel
+      throw new RuntimeException("Cannot run parallel executions with same secret");
+    }
+
+    try {
+      final SendMoneyAggregator sendMoneyAggregator = new SendMoneyAggregator(
+          this.executorService,
+          StreamCodecContextFactory.oer(),
+          this.link,
+          new AimdCongestionController(),
+          this.streamEncryptionService,
+          sharedSecret,
+          sourceAddress,
+          destinationAddress,
+          amount,
+          timeout
+      );
+      return sendMoneyAggregator.send();
+    } finally {
+      secretSemaphore.release();
+    }
+
   }
 
 
