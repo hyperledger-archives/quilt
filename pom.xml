@@ -403,6 +403,7 @@
             <sourceDirectories>
               <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
             </sourceDirectories>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
           </configuration>
           <dependencies>
             <!-- Update Checkstyle version used -->
