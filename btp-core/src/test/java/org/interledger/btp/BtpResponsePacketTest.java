@@ -1,5 +1,8 @@
 package org.interledger.btp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import org.interledger.btp.BtpSubProtocol.ContentType;
 
 import org.junit.Test;
@@ -7,9 +10,6 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Unit tests for {@link BtpResponsePacket}.

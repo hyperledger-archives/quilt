@@ -20,6 +20,8 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecException;
 
@@ -35,8 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Parameterized tests for encoding and decoding {@link AsnBtpGeneralizedTimeCodec} instances.
@@ -114,9 +114,9 @@ public class AsnBtpInstantBadValuesDecodingTest {
         },
         // 10
         // Pending https://github.com/interledger/rfcs/issues/481
-//        {
-//            "20161231235960.852Z",
-//        },
+        // {
+        //     "20161231235960.852Z",
+        // },
         // 10
         {
             "2017010112",

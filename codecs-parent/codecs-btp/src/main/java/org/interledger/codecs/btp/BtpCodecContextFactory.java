@@ -27,14 +27,6 @@ import org.interledger.btp.BtpResponse;
 import org.interledger.btp.BtpSubProtocol;
 import org.interledger.btp.BtpSubProtocols;
 import org.interledger.btp.BtpTransfer;
-import org.interledger.codecs.btp.AsnBtpErrorCodec;
-import org.interledger.codecs.btp.AsnBtpGeneralizedTimeCodec;
-import org.interledger.codecs.btp.AsnBtpMessageCodec;
-import org.interledger.codecs.btp.AsnBtpPacketCodec;
-import org.interledger.codecs.btp.AsnBtpResponseCodec;
-import org.interledger.codecs.btp.AsnBtpSubProtocolCodec;
-import org.interledger.codecs.btp.AsnBtpSubProtocolsCodec;
-import org.interledger.codecs.btp.AsnBtpTransferCodec;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 
