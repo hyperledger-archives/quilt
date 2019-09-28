@@ -43,6 +43,7 @@ import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -76,6 +77,11 @@ public class SimpleStreamSenderIT {
   private static final InterledgerAddress SENDER_ADDRESS = HOST_ADDRESS.with(SENDER_ACCOUNT_USERNAME);
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  // 60 seconds max per method tested
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(60);
+
   @Rule
   public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledgerrs-standalone")
       .withExposedPorts(7770)
