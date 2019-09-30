@@ -20,12 +20,12 @@ package org.interledger.codecs.btp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Instant;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnBtpGeneralizedTimeCodec}.

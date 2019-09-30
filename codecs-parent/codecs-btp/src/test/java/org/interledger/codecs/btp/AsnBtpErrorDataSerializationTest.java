@@ -22,10 +22,11 @@ package org.interledger.codecs.btp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.io.BaseEncoding;
 import org.interledger.btp.BtpError;
 import org.interledger.btp.BtpErrorCode;
 import org.interledger.encoding.asn.framework.CodecContext;
+
+import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,20 +66,20 @@ public class AsnBtpErrorDataSerializationTest {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param btpErrorBase64Bytes
-   * @param expectedRequestId
-   * @param expectedErrorCode
-   * @param expectedTriggeredAt
-   * @param expectedErrorDataBase64Bytes
+   * @param btpErrorBase64Bytes A {@link String} of base64 encoded {@link BtpError} bytes.
+   * @param expectedRequestId {@code long} expected request id.
+   * @param expectedErrorCode {@link BtpErrorCode} expected error code.
+   * @param expectedTriggeredAt {@link Instant} expected triggeredAt time.
+   * @param expectedErrorDataBase64Bytes A {@link String} of expected base64 error bytes.
    */
   public AsnBtpErrorDataSerializationTest(
-
       final String btpErrorBase64Bytes,
       final long expectedRequestId,
       final BtpErrorCode expectedErrorCode,
       final Instant expectedTriggeredAt,
       final String expectedErrorDataBase64Bytes
-      //final String expectedStringValue, final Instant expectedDecodedInstant
+  // final String expectedStringValue,
+  // final Instant expectedDecodedInstant
   ) {
     this.btpErrorBase64Bytes = btpErrorBase64Bytes;
 
@@ -109,23 +110,23 @@ public class AsnBtpErrorDataSerializationTest {
         },
     });
   }
-//
-//  /**
-//   * Convenience method to convert the expected time string into the byte format that would be found on the wire.
-//   *
-//   * @param value The string to convert. Must not be null.
-//   *
-//   * @return A byte[] representing the expected representation of the string as would be found on the wire.
-//   */
-//  public static byte[] encodeString(String value) {
-//    final byte[] lengthByte = new byte[1];
-//    final byte[] stringBytes = value.getBytes(StandardCharsets.US_ASCII);
-//    final byte[] lengthPrefixed = new byte[stringBytes.length + 1];
-//    lengthByte[0] = Byte.valueOf(stringBytes.length + "");
-//    System.arraycopy(lengthByte, 0, lengthPrefixed, 0, lengthByte.length);
-//    System.arraycopy(stringBytes, 0, lengthPrefixed, lengthByte.length, stringBytes.length);
-//    return lengthPrefixed;
-//  }
+  //
+  //  /**
+  //   * Convenience method to convert the expected time string into the byte format that would be found on the wire.
+  //   *
+  //   * @param value The string to convert. Must not be null.
+  //   *
+  //   * @return A byte[] representing the expected representation of the string as would be found on the wire.
+  //   */
+  //  public static byte[] encodeString(String value) {
+  //    final byte[] lengthByte = new byte[1];
+  //    final byte[] stringBytes = value.getBytes(StandardCharsets.US_ASCII);
+  //    final byte[] lengthPrefixed = new byte[stringBytes.length + 1];
+  //    lengthByte[0] = Byte.valueOf(stringBytes.length + "");
+  //    System.arraycopy(lengthByte, 0, lengthPrefixed, 0, lengthByte.length);
+  //    System.arraycopy(stringBytes, 0, lengthPrefixed, lengthByte.length, stringBytes.length);
+  //    return lengthPrefixed;
+  //  }
 
   /**
    * Test setup.
