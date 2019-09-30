@@ -20,12 +20,12 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import org.junit.Test;
 
 import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Unit tests for {@link InterledgerRejectPacket} and {@link InterledgerRejectPacketBuilder}.
@@ -182,8 +182,11 @@ public class InterledgerRejectPacketTest {
         .triggeredBy(FOO)
         .data(new byte[32])
         .build();
+
     assertThat(interledgerProtocolError1.toString())
-            .isEqualTo("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=TEST, data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}");
+            .isEqualTo("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', "
+                + "errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=TEST, "
+                + "data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}");
   }
 
 }

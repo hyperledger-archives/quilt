@@ -64,11 +64,12 @@ public class InterledgerAddressPrefixTest {
 
   @Test(expected = IllegalStateException.class)
   public void test_constructor_with_uninitialized_build() {
+    String errorMessage = "Cannot build InterledgerAddressPrefix, some of required attributes are not set [value]";
     try {
       InterledgerAddressPrefix.builder().build();
     } catch (IllegalStateException e) {
       //Removed message check. This exception is raised by the Immutable generated code.
-      assertThat(e.getMessage()).isEqualTo("Cannot build InterledgerAddressPrefix, some of required attributes are not set [value]");
+      assertThat(e.getMessage()).isEqualTo(errorMessage);
       throw e;
     }
   }
@@ -377,8 +378,11 @@ public class InterledgerAddressPrefixTest {
 
   @Test
   public void testToString() {
-    assertThat(InterledgerAddressPrefix.of("g.foo.bob").toString()).isEqualTo("InterledgerAddressPrefix{value=g.foo.bob}");
-    assertThat(InterledgerAddressPrefix.of(G_FOO).toString()).isEqualTo("InterledgerAddressPrefix{value=g.foo}");
+    assertThat(InterledgerAddressPrefix.of("g.foo.bob").toString())
+        .isEqualTo("InterledgerAddressPrefix{value=g.foo.bob}");
+
+    assertThat(InterledgerAddressPrefix.of(G_FOO).toString())
+        .isEqualTo("InterledgerAddressPrefix{value=g.foo}");
   }
 
   @Test(expected = NullPointerException.class)
