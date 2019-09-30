@@ -22,6 +22,12 @@ using the Octet Encoding Rules (OER).
 
 [READ MORE](./ilp-core)
 
+### examples
+
+The examples modules shows how to use the Quilt library in your code.
+
+[READ MORE](./examples/README.md)
+
 ## Usage
 
 ### Requirements
