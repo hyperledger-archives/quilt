@@ -157,7 +157,7 @@ public class SimulatedILPv4Network {
 
   /**
    * Determines if a packet should reject {@code percentage} percent of the time. For example, by supplying a value of
-   * `40`, then this method will return {@code true} approximately 40% of the time, whereas it will return {@code false}
+   * `0.4`, then this method will return {@code true} approximately 40% of the time, whereas it will return {@code false}
    * approximately 60% of the time.
    *
    * @param percentage The percentage of time this method should return {@code true}, indicating a reject packet should
