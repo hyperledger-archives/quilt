@@ -64,10 +64,11 @@ public class InterledgerAddressTest {
 
   @Test(expected = IllegalStateException.class)
   public void test_constructor_wit_uninitialized_build() {
+    String errorMessage = "Cannot build InterledgerAddress, some of required attributes are not set [value]";
     try {
       InterledgerAddress.builder().build();
     } catch (IllegalStateException e) {
-      assertThat(e.getMessage()).isEqualTo("Cannot build InterledgerAddress, some of required attributes are not set [value]");
+      assertThat(e.getMessage()).isEqualTo(errorMessage);
       throw e;
     }
   }
@@ -161,7 +162,8 @@ public class InterledgerAddressTest {
 
   @Test
   public void testAllocationScheme() {
-    assertThat(InterledgerAddress.of("g.foo.bob").getAllocationScheme()).isEqualTo(AllocationScheme.builder().value("g").build());
+    assertThat(InterledgerAddress.of("g.foo.bob").getAllocationScheme())
+        .isEqualTo(AllocationScheme.builder().value("g").build());
   }
 
   @Test(expected = NullPointerException.class)

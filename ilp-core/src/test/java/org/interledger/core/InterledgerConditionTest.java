@@ -20,11 +20,11 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Test;
 
 import java.util.Arrays;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class InterledgerConditionTest {
 
@@ -84,13 +84,6 @@ public class InterledgerConditionTest {
     assertThat(InterledgerCondition.of(BYTES_2).compareTo(InterledgerCondition.of(BYTES_1)) > 0).isTrue();
   }
 
-  @Test
-  public void testHashCode() {
-    assertThat(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition.of(BYTES_1).hashCode()).isTrue();
-    assertThat(InterledgerCondition.of(BYTES_1).hashCode() == InterledgerCondition.of(BYTES_2).hashCode()).isFalse();
-    assertThat(InterledgerCondition.of(BYTES_2).hashCode() == InterledgerCondition.of(BYTES_1).hashCode()).isFalse();
-  }
-
   @Test(expected = IllegalArgumentException.class)
   public void testUnderFlow() {
     InterledgerCondition.of(UNDERFLOW_BYTES);
@@ -99,6 +92,17 @@ public class InterledgerConditionTest {
   @Test(expected = IllegalArgumentException.class)
   public void testOverFlow() {
     InterledgerCondition.of(OVERFLOW_BYTES);
+  }
+
+  @Test
+  @SuppressWarnings({"checkstyle:AbbreviationAsWordInName", "checkstyle:LocalVariableName"})
+  public void testHashCode() {
+    int BYTES_1_HASHCODE = InterledgerCondition.of(BYTES_1).hashCode();
+    int BYTES_1_HASHCODE_1 = InterledgerCondition.of(BYTES_1).hashCode();
+    int BYTES_2_HASHCODE = InterledgerCondition.of(BYTES_2).hashCode();
+
+    assertThat(BYTES_1_HASHCODE == BYTES_1_HASHCODE_1).isTrue();
+    assertThat(BYTES_1_HASHCODE == BYTES_2_HASHCODE).isFalse();
   }
 
   @Test
