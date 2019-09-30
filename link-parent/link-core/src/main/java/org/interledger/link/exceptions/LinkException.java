@@ -93,9 +93,10 @@ public class LinkException extends RuntimeException {
    */
   @Override
   public String toString() {
+    String linkIdMessage = "LinkId=" + getLinkId();
     String s = getClass().getName();
-    String message = getLocalizedMessage() + " LinkId=" + getLinkId();
-    return (message != null) ? (s + ": " + message) : s;
+    String message = getLocalizedMessage() == null ? linkIdMessage : getLocalizedMessage() + " " + linkIdMessage;
+    return (s + ": " + message);
   }
 
 }
