@@ -39,6 +39,17 @@ public class StreamConnectionManager {
    */
   private static final Map<StreamConnectionId, StreamConnection> connections = Maps.newConcurrentMap();
 
+  /**
+   * Open a new Stream Connection for the specified {@code streamConnectionId}, or return an existing Connection if one
+   * has already been opened for this connection id.
+   *
+   * @param streamConnectionId A {@link StreamConnectionId} that uniquely identifies a {@link StreamConnection}.
+   *                           Implementations should derive this identifier from a STREAM receiver address and shared
+   *                           secret combination, which per IL-RFC-29, will share a sequence number and should thus be
+   *                           considered to be a part of the same STREAM Connection.
+   *
+   * @return A {@link StreamConnection} that may have been newly constructed, or may have existed in this manager.
+   */
   public StreamConnection openConnection(final StreamConnectionId streamConnectionId) {
     Objects.requireNonNull(streamConnectionId);
 
@@ -58,7 +69,7 @@ public class StreamConnectionManager {
    *
    * @param streamConnectionId
    *
-   * @return
+   * @return An optionally-present {@link StreamConnection}, if one is open. Otherwise, {@link Optional#empty()}.
    */
   public Optional<StreamConnection> closeConnection(final StreamConnectionId streamConnectionId) {
     Objects.requireNonNull(streamConnectionId);

@@ -1,7 +1,5 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
-import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -9,6 +7,7 @@ import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
+import org.interledger.core.InterledgerErrorCode.ErrorFamily;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
@@ -477,8 +476,8 @@ public class SimpleStreamSender implements StreamSender {
                   try {
                     InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
                     responsePacket.handle(
-                        fulfillPacket -> handleFulfill(streamPacket.sequence(), amountToSend, fulfillPacket),
-                        rejectPacket -> handleReject(streamPacket.sequence(), amountToSend, rejectPacket)
+                        fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
+                        rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
                     );
                   } catch (Exception e) {
                     logger.error("Link send failed. preparePacket={}", preparePacket, e);
@@ -577,18 +576,18 @@ public class SimpleStreamSender implements StreamSender {
 
     @VisibleForTesting
     void handleFulfill(
-        final UnsignedLong sequence,
-        final UnsignedLong amount,
+        final InterledgerPreparePacket originalPreparePacket,
+        final StreamPacket originalStreamPacket,
         final InterledgerFulfillPacket fulfillPacket
     ) {
-      Objects.requireNonNull(sequence);
-      Objects.requireNonNull(amount);
+      Objects.requireNonNull(originalPreparePacket);
+      Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(fulfillPacket);
 
       this.numFulfilledPackets.getAndIncrement();
 
       // TODO should we check the fulfillment and expiry or can we assume the plugin does that?
-      this.congestionController.fulfill(amount);
+      this.congestionController.fulfill(UnsignedLong.valueOf(originalPreparePacket.getAmount()));
       this.shouldSendSourceAddress.set(false);
 
       final StreamPacket streamPacket = this.fromEncrypted(sharedSecret, fulfillPacket.getData());
@@ -598,56 +597,69 @@ public class SimpleStreamSender implements StreamSender {
         // TODO check that the sequence matches our outgoing packet
         this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(streamPacket.prepareAmount()));
       } else {
-        logger.warn("Unable to parse STREAM packet from fulfill data for sequence {}", sequence);
+        logger.warn("Unable to parse STREAM packet from fulfill data. "
+                + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
+            originalPreparePacket, originalStreamPacket, fulfillPacket);
       }
 
-      logger.debug(
-          "Prepare {} with amount {} was fulfilled ({} left to send)",
-          sequence, amount, this.amountLeftToSend
+      logger.debug("Prepare packet fulfilled ({} left to send). "
+              + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
+          this.amountLeftToSend, originalPreparePacket, originalStreamPacket, fulfillPacket
       );
     }
 
     /**
      * Handle a rejection packet.
      *
-     * @param sequence     An {@link UnsignedLong} representing the current sequence number as viewed from this client.
-     * @param amountToSend The amount that was originally sent in the prepare packet.
-     * @param rejectPacket The {@link InterledgerRejectPacket} received from a peer directly connected via a {@link
-     *                     Link}.
+     * @param originalPreparePacket The {@link InterledgerPreparePacket} that triggered this rejection.
+     * @param originalStreamPacket  The {@link StreamPacket} that was inside of {@code originalPreparePacket}.
+     * @param rejectPacket          The {@link InterledgerRejectPacket} received from a peer directly connected via a
+     *                              {@link Link}.
      */
     @VisibleForTesting
     void handleReject(
-        final UnsignedLong sequence,
-        final UnsignedLong amountToSend,
+        final InterledgerPreparePacket originalPreparePacket,
+        final StreamPacket originalStreamPacket,
         final InterledgerRejectPacket rejectPacket
     ) {
-      Objects.requireNonNull(sequence);
-      Objects.requireNonNull(amountToSend);
+      Objects.requireNonNull(originalPreparePacket);
+      Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(rejectPacket);
 
+      final UnsignedLong amountToSend = UnsignedLong.valueOf(originalPreparePacket.getAmount());
       this.numRejectedPackets.getAndIncrement();
       this.amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
       this.congestionController.reject(amountToSend, rejectPacket);
 
       logger.debug(
-          "Prepare {} with amount {} was rejected with code: {} ({} left to send)",
-          sequence,
+          "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
           amountToSend,
-          rejectPacket.getCode(),
-          this.amountLeftToSend.get()
+          rejectPacket.getCode().getCode(),
+          this.amountLeftToSend.get(),
+          originalPreparePacket,
+          originalStreamPacket,
+          rejectPacket
       );
 
       switch (rejectPacket.getCode().getCode()) {
-        case F08_AMOUNT_TOO_LARGE_CODE: {
-          // Handled by the congestion controller
-          break;
-        }
-        case F99_APPLICATION_ERROR_CODE: {
-          // TODO handle STREAM errors
-          break;
-        }
+        // Handled by the congestion controller
+        //case T04_INSUFFICIENT_LIQUIDITY_CODE:
+        // Handled by the congestion controller
+        //case F08_AMOUNT_TOO_LARGE_CODE: {
         default: {
-          throw new StreamSenderException(String.format("Packet was rejected. rejectPacket=%s", rejectPacket));
+          if (rejectPacket.getCode().getErrorFamily() == ErrorFamily.TEMPORARY) {
+            logger.warn(
+                "Temporary ILPv4 transport outage. Retrying... originalPreparePacket={} originalStreamPacket={} "
+                    + "rejectPacket={}",
+                originalPreparePacket, originalStreamPacket, rejectPacket);
+
+          } else {
+            logger.error(
+                "Encountered Final ILPv4 error. Retrying, but this sendMoney will likely hang until timeout."
+                    + " originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+                originalPreparePacket, originalStreamPacket, rejectPacket);
+          }
+          break;
         }
       }
     }
@@ -689,8 +701,8 @@ public class SimpleStreamSender implements StreamSender {
       logger.debug("Closing STREAM Connection...");
 
       link.sendPacket(preparePacket).handle(
-          fulfillPacket -> handleFulfill(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), fulfillPacket),
-          rejectPacket -> handleReject(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), rejectPacket)
+          fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
+          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
       );
 
       logger.debug(

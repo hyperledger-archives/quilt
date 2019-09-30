@@ -19,6 +19,8 @@ import org.interledger.stream.sender.StreamSender;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
+import org.assertj.core.data.Offset;
+import org.assertj.core.data.Percentage;
 import org.immutables.value.Value.Derived;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,14 +98,60 @@ public class SenderReceiverTest {
   }
 
   /**
-   * Simulate a left-to-right STREAM with high levels of packet loss.
+   * Simulate a left-to-right STREAM with 20% packet loss due to T03 errors.
    */
   @Test
-  public void testSendFromLeftToRightWithHighLoss() {
+  public void testSendFromLeftToRightWith20PercentLoss() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
+    final float rejectionPercentage = 0.2f;
 
+    final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
+
+    final int expectedNumRejectPackets = (int) (sendMoneyResult.totalPackets() * rejectionPercentage);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(7, Offset.offset(1));
+    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(expectedNumRejectPackets, Offset.offset(2));
+  }
+
+  /**
+   * Simulate a left-to-right STREAM with 50% packet loss due to T03 errors.
+   */
+  @Test
+  public void testSendFromLeftToRightWith50PercentLoss() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
+    final float rejectionPercentage = 0.5f;
+
+    final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
+
+    final int expectedNumRejectPackets = (int) (sendMoneyResult.totalPackets() * rejectionPercentage);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(7, Offset.offset(1));
+    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(expectedNumRejectPackets, Percentage.withPercentage(50.0));
+  }
+
+  /**
+   * Simulate a left-to-right STREAM with 90% packet loss due to T03 errors.
+   */
+  @Test
+  public void testSendFromLeftToRightWith90PercentLoss() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(2000);
+    final float rejectionPercentage = 0.9f;
+
+    final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
+
+    final int expectedNumRejectPackets = (int) (sendMoneyResult.totalPackets() * rejectionPercentage);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(2, Offset.offset(1));
+    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(expectedNumRejectPackets, Percentage.withPercentage(15.0));
+  }
+
+  /////////////////
+  // Helper Methods
+  /////////////////
+
+  /**
+   * Helper method to test lossy ILPv4 network percentages.
+   */
+  private SendMoneyResult sendMoneyWithLossHelper(final UnsignedLong paymentAmount, final float rejectionPercentage) {
     this.initIlpNetworkForStream(new SimulatedILPv4Network(
-        SimulatedPathConditions.builder().packetRejectionPercentage(.5f).build(),
+        SimulatedPathConditions.builder().packetRejectionPercentage(rejectionPercentage).build(),
         SimulatedPathConditions.builder().build()
     ));
 
@@ -117,20 +165,10 @@ public class SenderReceiverTest {
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    // Depending on the probability of rejection, we expect the number of fulfill packets to be _at least_ 5, but
-    // perhaps more.
-    assertThat(sendMoneyResult.numFulfilledPackets()).isGreaterThanOrEqualTo(5);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isLessThanOrEqualTo(20);
-    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
-
-
+    return sendMoneyResult;
   }
-
-  /////////////////
-  // Helper Methods
-  /////////////////
 
   /**
    * Initialize the STREAM network with default Simulated Path Conditions on each payment path.

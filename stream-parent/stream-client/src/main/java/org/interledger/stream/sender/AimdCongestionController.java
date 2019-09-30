@@ -164,7 +164,8 @@ public class AimdCongestionController implements CongestionController {
 
         this.maxInFlight.set(StreamUtils.max(computedValue, UnsignedLong.ONE));
 
-        logger.warn("Rejected packet with T04 error. previousAmountInFlight={} amountInFlight={} maxInFlight={}",
+        logger.debug("For Congestion control purposes, handled T04 rejection. previousAmountInFlight={} "
+                + "amountInFlight={} maxInFlight={}",
             amountInFlight.get().plus(prepareAmount), amountInFlight.get(), maxInFlight
         );
 
@@ -175,13 +176,18 @@ public class AimdCongestionController implements CongestionController {
       /////////////////////////
       case InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE: {
         this.maxPacketAmount = Optional.of(this.handleF08Rejection(prepareAmount, rejectPacket));
+        // Actual packet data is logged by the StreamSender, so no need to log packet details here.
+        logger.debug("For Congestion control purposes, handled F08 rejection. previousAmountInFlight={} "
+                + "amountInFlight={} maxInFlight={}",
+            amountInFlight.get().plus(prepareAmount), amountInFlight.get(), maxInFlight
+        );
         break;
       }
       default: {
-        // No special treatment for unhandled errors.
-        logger.warn(
-            "STREAM packet rejected with unhandled error. prepareAmount={} rejectPacket={}",
-            prepareAmount, rejectPacket
+        // No special treatment for unhandled errors, but warn just in case we start to see a lot of them.
+        // Actual packet data is logged by the StreamSender, so no need to log packet details here.
+        logger.warn("For Congestion control purposes, ignoring unhandled packet rejection ({}: {}).",
+            rejectPacket.getCode().getCode(), rejectPacket.getCode().getName()
         );
       }
     }
@@ -295,17 +301,17 @@ public class AimdCongestionController implements CongestionController {
     return maxPacketAmount;
   }
 
-  @Override
-  public boolean hasInFlight() {
-    return this.amountInFlight.get().compareTo(UnsignedLong.ZERO) > 0;
-  }
-
   public void setMaxPacketAmount(final UnsignedLong maxPacketAmount) {
     this.maxPacketAmount = Optional.of(maxPacketAmount);
   }
 
   public void setMaxPacketAmount(final Optional<UnsignedLong> maxPacketAmount) {
     this.maxPacketAmount = Objects.requireNonNull(maxPacketAmount);
+  }
+
+  @Override
+  public boolean hasInFlight() {
+    return this.amountInFlight.get().compareTo(UnsignedLong.ZERO) > 0;
   }
 
   /**
