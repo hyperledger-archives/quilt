@@ -390,7 +390,13 @@ public class SimpleStreamSender implements StreamSender {
 
       timeout.ifPresent($ -> {
         ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
-        timeoutMonitor.schedule(() -> timeoutReached.set(true), $.toMillis(), TimeUnit.MILLISECONDS);
+        timeoutMonitor.schedule(
+            () -> {
+              timeoutReached.set(true);
+              timeoutMonitor.shutdown();
+            },
+            $.toMillis(), TimeUnit.MILLISECONDS
+        );
       });
 
       while (soldierOn(timeoutReached.get())) {
@@ -704,6 +710,8 @@ public class SimpleStreamSender implements StreamSender {
           fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
           rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
       );
+
+      streamConnection.closeConnection();
 
       logger.debug(
           "Send money future finished. Delivered: {} ({} packets fulfilled, {} packets rejected)",
