@@ -105,12 +105,12 @@ public class AsnBtpInstantSerializationTest {
             Instant.parse("2017-12-24T16:14:32.270Z")
         },
         // Pending https://github.com/interledger/rfcs/issues/481
-//      Leap Second.
-//        {
-//            Instant.parse("2016-12-31T23:59:59.852Z")
-//            "20161231235960.852Z",
-//            Instant.parse("2016-12-31T23:59:59.852Z")
-//        },
+        // Leap Second.
+        // {
+        //     Instant.parse("2016-12-31T23:59:59.852Z")
+        //     "20161231235960.852Z",
+        //     Instant.parse("2016-12-31T23:59:59.852Z")
+        // },
         // 3
         {
             Instant.parse("2017-12-24T16:14:32.2Z"),
@@ -186,7 +186,8 @@ public class AsnBtpInstantSerializationTest {
         },
         // 15
         {
-            Instant.parse("2017-12-24T24:00:00.000Z"), // Wrong representation of midnight, should translate to correct representation.
+            // Wrong representation of midnight, should translate to correct representation.
+            Instant.parse("2017-12-24T24:00:00.000Z"),
             "20171225000000Z",
             Instant.parse("2017-12-25T00:00:00.000Z")
         }
