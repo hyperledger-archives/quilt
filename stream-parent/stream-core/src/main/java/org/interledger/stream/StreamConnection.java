@@ -60,8 +60,8 @@ public class StreamConnection {
   }
 
   /**
-   * Return the next sequence number from {@link this#sequence} for use by a Stream Sender. The first call to this
-   * method will return {@link UnsignedLong#ONE}. Upon each subsequent call to this method, the sequence will increase
+   * Return the next sequence number from {@link #sequence} for use by a Stream Sender. The first call to this method
+   * will return {@link UnsignedLong#ONE}. Upon each subsequent call to this method, the sequence will increase
    * monotonically up to {2<sup>31</sup>}, after which the connection will be closed.
    *
    * @return A {@link UnsignedLong} representing the next sequence number that can safely be used by a Stream Sender.
