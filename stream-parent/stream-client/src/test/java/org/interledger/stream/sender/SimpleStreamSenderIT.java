@@ -220,7 +220,7 @@ public class SimpleStreamSenderIT {
         .map(SendMoneyResult::amountDelivered)
         .mapToLong(UnsignedLong::longValue)
         .sum();
-    assertThat(totalAmountDelivered).isCloseTo(numExecutions * paymentAmount.longValue(), Offset.offset(1L));
+    assertThat(totalAmountDelivered).isCloseTo(numExecutions * paymentAmount.longValue(), Offset.offset(100000L));
     long totalPackets = sendMoneyResults.stream()
         .map(SendMoneyResult::totalPackets)
         .mapToLong(Integer::longValue)
