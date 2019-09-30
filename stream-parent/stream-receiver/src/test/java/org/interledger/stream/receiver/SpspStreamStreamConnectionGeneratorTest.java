@@ -51,7 +51,7 @@ public class SpspStreamStreamConnectionGeneratorTest {
         .generateConnectionDetails(serverSecret, receiverAddress);
 
     assertThat(connectionDetails.destinationAddress().startsWith(receiverAddress)).isTrue();
-    assertThat(connectionDetails.sharedSecret().key()).isEqualTo(
+    assertThat(connectionDetails.sharedSecret()).isEqualTo(
         connectionGenerator.deriveSecretFromAddress(serverSecret, connectionDetails.destinationAddress()));
   }
 
