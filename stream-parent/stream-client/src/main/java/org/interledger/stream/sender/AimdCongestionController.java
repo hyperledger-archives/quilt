@@ -230,15 +230,18 @@ public class AimdCongestionController implements CongestionController {
         final BigDecimal detailsAmountReceived = new BigDecimal(
             amountTooLargeErrorData.receivedAmount().bigIntegerValue());
 
-        // Prepared 10, but only sent 3, max is 2
-        // receivedAmount: Local amount received by the connector
-        // maxAmount: Maximum amount (inclusive, denominated in same units as the receivedAmount) the connector
-        // will forward
-        // Equation: new_max_packet_amount = prepare_amount * details.max_amount() / details.amount_received();
-        // TODO: See alternatives in https://github.com/interledger-rs/interledger-rs/issues/49
-        final BigDecimal newMaxPacketAmountAsBigDecimal =
-            prepareAmountAsBigDecimal.multiply(detailsMaxAmount).divide(detailsAmountReceived, RoundingMode.FLOOR);
-        newMaxPacketAmount = UnsignedLong.valueOf(newMaxPacketAmountAsBigDecimal.toBigIntegerExact());
+        if (detailsAmountReceived.equals(BigDecimal.ZERO)) {
+          newMaxPacketAmount = halvePrepareAmount(prepareAmount);
+        } else {
+          // Prepared 10, but only sent 3, max is 2
+          // receivedAmount: Local amount received by the connector
+          // maxAmount: Maximum amount (inclusive, denominated in same units as the receivedAmount) the connector
+          // will forward
+          // Equation: new_max_packet_amount = prepare_amount * details.max_amount() / details.amount_received();
+          final BigDecimal newMaxPacketAmountAsBigDecimal =
+              prepareAmountAsBigDecimal.multiply(detailsMaxAmount).divide(detailsAmountReceived, RoundingMode.FLOOR);
+          newMaxPacketAmount = UnsignedLong.valueOf(newMaxPacketAmountAsBigDecimal.toBigIntegerExact());
+        }
       } catch (Exception e) {
         // log a warning, but otherwise eat this exception. We'll continue on using default reduction values.
         logger.warn("Unable to decode AmountTooLargeErrorData from F08 Reject packet. Setting newMaxPacketAmount to be "
