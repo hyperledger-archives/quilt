@@ -220,6 +220,8 @@ public class SimpleStreamSenderIT {
         .map(SendMoneyResult::amountDelivered)
         .mapToLong(UnsignedLong::longValue)
         .sum();
+    // Depending on the Congestion controller, the payment amount here may vary by a single packet holding `100000`
+    // units
     assertThat(totalAmountDelivered).isCloseTo(numExecutions * paymentAmount.longValue(), Offset.offset(100000L));
     long totalPackets = sendMoneyResults.stream()
         .map(SendMoneyResult::totalPackets)
