@@ -16,6 +16,8 @@ public interface Denomination {
 
   /**
    * Currency code or other asset identifier. For example, `USD`, `EUR`, or `BTC`.
+   *
+   * @return A {@link String} containing the asset code.
    */
   String assetCode();
 

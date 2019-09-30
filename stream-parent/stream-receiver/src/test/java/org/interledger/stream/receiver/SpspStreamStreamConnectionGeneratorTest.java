@@ -12,7 +12,7 @@ import org.junit.Test;
 /**
  * Unit tests for {@link SpspStreamConnectionGenerator}.
  */
-public class SpspStreamConnectionGeneratorTest {
+public class SpspStreamStreamConnectionGeneratorTest {
 
   private ServerSecretSupplier serverSecret;
 

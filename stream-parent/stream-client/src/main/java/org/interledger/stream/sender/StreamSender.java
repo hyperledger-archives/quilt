@@ -27,7 +27,7 @@ public interface StreamSender {
    *                           higher-level protocol (e.g., SPSP or something else).
    * @param sourceAddress      The {@link InterledgerAddress} of the source of this payment.
    * @param destinationAddress The {@link InterledgerAddress} of the receiver of this payment.
-   * @param amount             A {@link UnsignedLong} containing the amount of this payment.
+   * @param amount             An {@link UnsignedLong} containing the amount of this payment.
    *
    * @return A {@link CompletableFuture} that, once complete, will contain either an error or an instance of {@link
    *     SendMoneyResult} that displays the result of this "send money" request.
@@ -51,7 +51,7 @@ public interface StreamSender {
    *                           higher-level protocol (e.g., SPSP or something else).
    * @param sourceAddress      The {@link InterledgerAddress} of the source of this payment.
    * @param destinationAddress The {@link InterledgerAddress} of the receiver of this payment.
-   * @param amount             A {@link UnsignedLong} containing the amount of this payment.
+   * @param amount             An {@link UnsignedLong} containing the amount of this payment.
    * @param timeout            A {@link Duration} to wait before no longer scheduling any off more requests to send
    *                           stream packets for this payment.
    *

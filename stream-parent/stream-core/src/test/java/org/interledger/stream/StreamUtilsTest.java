@@ -3,6 +3,7 @@ package org.interledger.stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.stream.crypto.SharedSecret;
 
@@ -89,5 +90,11 @@ public class StreamUtilsTest {
     assertThat(StreamUtils.max(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE)).isEqualTo(UnsignedLong.MAX_VALUE);
     assertThat(StreamUtils.max(UnsignedLong.ONE, UnsignedLong.MAX_VALUE)).isEqualTo(UnsignedLong.MAX_VALUE);
     assertThat(StreamUtils.max(UnsignedLong.MAX_VALUE, UnsignedLong.ONE)).isEqualTo(UnsignedLong.MAX_VALUE);
+  }
+
+  @Test
+  public void unfulfillableCondition() {
+    assertThat(StreamUtils.unfulfillableCondition()).isNotNull();
+    assertThat(StreamUtils.unfulfillableCondition()).isNotEqualTo(InterledgerCondition.of(new byte[32]));
   }
 }
