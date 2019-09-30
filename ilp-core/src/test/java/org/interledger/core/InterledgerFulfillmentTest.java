@@ -20,11 +20,11 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Test;
 
 import java.util.Arrays;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class InterledgerFulfillmentTest {
 
@@ -106,9 +106,14 @@ public class InterledgerFulfillmentTest {
     final InterledgerFulfillment fulfillment = InterledgerFulfillment.of(BYTES_1);
     final byte[] copyOfBytes1 = Arrays.copyOf(BYTES_1, 32);
 
-    assertThat(fulfillment.hashCode()).isEqualTo(fulfillment.hashCode()); //Same object
-    assertThat(fulfillment.hashCode()).isEqualTo(InterledgerFulfillment.of(BYTES_1).hashCode()); //Same array as input
-    assertThat(fulfillment.hashCode()).isEqualTo(InterledgerFulfillment.of(copyOfBytes1).hashCode()); //Equal arrays as input
+    // Same object
+    assertThat(fulfillment.hashCode()).isEqualTo(fulfillment.hashCode());
+
+    // Same array as input
+    assertThat(fulfillment.hashCode()).isEqualTo(InterledgerFulfillment.of(BYTES_1).hashCode());
+
+    // Equal arrays as input
+    assertThat(fulfillment.hashCode()).isEqualTo(InterledgerFulfillment.of(copyOfBytes1).hashCode());
 
     final InterledgerFulfillment otherFulfillment = InterledgerFulfillment.of(new byte[32]);
     assertThat(otherFulfillment.hashCode()).isNotEqualTo(fulfillment.hashCode());

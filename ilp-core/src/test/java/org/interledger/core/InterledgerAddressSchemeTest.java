@@ -77,7 +77,8 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "" + ".foo"));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(),
+          this.allocationScheme + "" + ".foo"));
       throw e;
     }
   }
@@ -90,7 +91,8 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".foo.").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + ".foo."));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(),
+          this.allocationScheme + ".foo."));
       throw e;
     }
   }
@@ -103,7 +105,8 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "."));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(),
+          this.allocationScheme + "."));
       throw e;
     }
   }
@@ -113,7 +116,8 @@ public class InterledgerAddressSchemeTest {
     try {
       AllocationScheme.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1.foo"));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(),
+          this.allocationScheme + "1.foo"));
       throw e;
     }
   }
@@ -183,7 +187,8 @@ public class InterledgerAddressSchemeTest {
     try {
       InterledgerAddress.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(), this.allocationScheme + "1"));
+      assertThat(e.getMessage()).isEqualTo(String.format(INVALID_SCHEME_PREFIX.getMessageFormat(),
+          this.allocationScheme + "1"));
       throw e;
     }
   }
