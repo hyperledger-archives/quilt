@@ -53,7 +53,10 @@ public interface StreamSender {
    * @param destinationAddress The {@link InterledgerAddress} of the receiver of this payment.
    * @param amount             An {@link UnsignedLong} containing the amount of this payment.
    * @param timeout            A {@link Duration} to wait before no longer scheduling any off more requests to send
-   *                           stream packets for this payment.
+   *                           stream packets for this payment. This is an important distinction as compared to a
+   *                           traditional `hard timeout` where processing might end immediately upon timeout. Instead,
+   *                           this timeout should be considered to be a `soft timeout`, because the sender will wait
+   *                           for any in-flight packetized payments to be sent before exiting out of it run-loop.
    *
    * @return A {@link CompletableFuture} that, once complete, will contain either an error or an instance of {@link
    *     SendMoneyResult} that displays the result of this "send money" request.
