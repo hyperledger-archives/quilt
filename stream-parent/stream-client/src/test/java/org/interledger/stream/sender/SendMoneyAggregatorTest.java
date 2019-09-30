@@ -3,7 +3,6 @@ package org.interledger.stream.sender;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
@@ -25,14 +24,12 @@ import org.junit.rules.Timeout;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.stubbing.Answer;
 
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -87,8 +84,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call for the CloseConnection
-    Mockito.verify(linkMock).sendPacket(any());
+    // Expect 0 Link calls since close Connection is not called automatically
+    Mockito.verifyNoMoreInteractions(linkMock);
   }
 
   @Test
@@ -100,8 +97,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call for the CloseConnection
-    Mockito.verify(linkMock).sendPacket(any());
+    // Expect 0 Link calls since close Connection is not called automatically
+    Mockito.verifyNoMoreInteractions(linkMock);
   }
 
   @Test
@@ -113,8 +110,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call for the CloseConnection
-    Mockito.verify(linkMock).sendPacket(any());
+    // Expect 0 Link calls since close Connection is not called automatically
+    Mockito.verifyNoMoreInteractions(linkMock);
   }
 
   @Test
@@ -127,8 +124,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call for the CloseConnection
-    Mockito.verify(linkMock).sendPacket(any());
+    // Expect 0 Link calls since close Connection is not called automatically
+    Mockito.verifyNoMoreInteractions(linkMock);
   }
 
   @Test

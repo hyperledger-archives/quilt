@@ -74,13 +74,12 @@ public class StreamConnectionManager {
   public Optional<StreamConnection> closeConnection(final StreamConnectionId streamConnectionId) {
     Objects.requireNonNull(streamConnectionId);
 
-    // Remove the connection, if it's present.
-    final Optional<StreamConnection> connectionToClose = Optional.ofNullable(
-        connections.remove(streamConnectionId)
-    );
-    // Close the Connection if it's present.
-    connectionToClose.ifPresent(StreamConnection::closeConnection);
-    return connectionToClose;
+    // WARNING: Don't ever remove the connection once it's closed. Closed connections MUST never be re-used so that they
+    // don't accidentally use a sequence number that exceeds the StreamConnection.MAX_FRAMES_PER_CONNECTION
+    return Optional.ofNullable(connections.get(streamConnectionId))
+        .map(connectionToClose -> {
+          connectionToClose.closeConnection();
+          return connectionToClose;
+        });
   }
-
 }

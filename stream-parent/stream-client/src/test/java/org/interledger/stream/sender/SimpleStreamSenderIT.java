@@ -180,7 +180,7 @@ public class SimpleStreamSenderIT {
 
   /**
    * In general, calling sendMoney using the same Connection (i.e., SharedSecret) in parallel should not be done.
-   * However, the implementation is smart enough to queue up parallel requests and only allow one to run at a time.
+   * However, the implementation is smart enough to allow parallel requests to run in parallel, although one of the calls will end up closing the connection, which will typically make the
    * However, sometimes waiting tasks will timeout, in which case a particular `sendMoney` may throw an exception. This
    * test does not expect any exceptions.
    */
@@ -220,9 +220,7 @@ public class SimpleStreamSenderIT {
         .map(SendMoneyResult::amountDelivered)
         .mapToLong(UnsignedLong::longValue)
         .sum();
-    // Depending on the Congestion controller, the payment amount here may vary by a single packet holding `100000`
-    // units
-    assertThat(totalAmountDelivered).isCloseTo(numExecutions * paymentAmount.longValue(), Offset.offset(100000L));
+    assertThat(totalAmountDelivered).isEqualTo(numExecutions * paymentAmount.longValue());
     long totalPackets = sendMoneyResults.stream()
         .map(SendMoneyResult::totalPackets)
         .mapToLong(Integer::longValue)
