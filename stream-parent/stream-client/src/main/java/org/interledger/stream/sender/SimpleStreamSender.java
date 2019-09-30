@@ -82,7 +82,7 @@ public class SimpleStreamSender implements StreamSender {
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
   private final ExecutorService executorService;
-  private final ConnectionManager connectionManager;
+  private final StreamConnectionManager streamConnectionManager;
 
   /**
    * Required-args Constructor.
@@ -118,7 +118,7 @@ public class SimpleStreamSender implements StreamSender {
   public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
   ) {
-    this(streamEncryptionService, link, executorService, new ConnectionManager());
+    this(streamEncryptionService, link, executorService, new StreamConnectionManager());
   }
 
   /**
@@ -129,14 +129,14 @@ public class SimpleStreamSender implements StreamSender {
    *                                receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    * @param executorService         A {@link ExecutorService} to run the payments.
-   * @param connectionManager       A {@link ConnectionManager} that manages connections for all senders and receivers
-   *                                in this JVM.
+   * @param streamConnectionManager A {@link StreamConnectionManager} that manages connections for all senders and
+   *                                receivers in this JVM.
    */
   public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService,
       final Link link,
       final ExecutorService executorService,
-      final ConnectionManager connectionManager
+      final StreamConnectionManager streamConnectionManager
   ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
@@ -144,7 +144,7 @@ public class SimpleStreamSender implements StreamSender {
     // Note that pools with similar properties but different details (for example, timeout parameters) may be
     // created using {@link ThreadPoolExecutor} constructors.
     this.executorService = Objects.requireNonNull(executorService);
-    this.connectionManager = Objects.requireNonNull(connectionManager);
+    this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
   }
 
   @Override
@@ -157,7 +157,7 @@ public class SimpleStreamSender implements StreamSender {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
-    final StreamConnection streamConnection = this.connectionManager.openConnection(
+    final StreamConnection streamConnection = this.streamConnectionManager.openConnection(
         StreamConnectionId.from(destinationAddress, sharedSecret)
     );
 
@@ -187,7 +187,7 @@ public class SimpleStreamSender implements StreamSender {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
-    final StreamConnection streamConnection = this.connectionManager.openConnection(
+    final StreamConnection streamConnection = this.streamConnectionManager.openConnection(
         StreamConnectionId.from(destinationAddress, sharedSecret)
     );
 
@@ -206,14 +206,15 @@ public class SimpleStreamSender implements StreamSender {
     ).send();
   }
 
+  /**
+   * Contains summary information about a STREAM Connection.
+   */
   @Immutable
-  public interface CloseConnectionResult {
+  public interface ConnectionStatistics {
 
-    static CloseConnectionResultBuilder builder() {
-      return new CloseConnectionResultBuilder();
+    static ConnectionStatisticsBuilder builder() {
+      return new ConnectionStatisticsBuilder();
     }
-
-    // Implementations MUST close the connection once either endpoint has sent 2^31 packets.
 
     /**
      * The number of fulfilled packets that were received over the lifetime of this connection.
@@ -229,6 +230,11 @@ public class SimpleStreamSender implements StreamSender {
      */
     int numRejectPackets();
 
+    /**
+     * Compute the total number of packets that were fulfilled or rejected on this Connection.
+     *
+     * @return An int representing the total number of response packets processed.
+     */
     @Derived
     default int totalPackets() {
       return numFulfilledPackets() + numRejectPackets();
@@ -358,7 +364,7 @@ public class SimpleStreamSender implements StreamSender {
               return closeConnection(streamConnection.nextSequence());
             } catch (StreamConnectionClosedException e) {
               // Return a default close result, even though we didn't _actually_ get to close the STREAM.
-              final CloseConnectionResult connectionCloseResult = CloseConnectionResult.builder()
+              final ConnectionStatistics connectionCloseResult = ConnectionStatistics.builder()
                   .amountDelivered(this.deliveredAmount.get())
                   .numFulfilledPackets(this.numFulfilledPackets.get())
                   .numRejectPackets(this.numRejectedPackets.get())
@@ -370,11 +376,11 @@ public class SimpleStreamSender implements StreamSender {
               return connectionCloseResult;
             }
           })
-          .thenApply(closeConnectionResult -> SendMoneyResult.builder()
-              .amountDelivered(closeConnectionResult.amountDelivered())
+          .thenApply(connectionStatistics -> SendMoneyResult.builder()
+              .amountDelivered(connectionStatistics.amountDelivered())
               .originalAmount(originalAmountToSend.get())
-              .numFulfilledPackets(closeConnectionResult.numFulfilledPackets())
-              .numRejectPackets(closeConnectionResult.numRejectPackets())
+              .numFulfilledPackets(connectionStatistics.numFulfilledPackets())
+              .numRejectPackets(connectionStatistics.numRejectPackets())
               .sendMoneyDuration(sendMoneyDuration.get())
               .build()
           );
@@ -654,7 +660,7 @@ public class SimpleStreamSender implements StreamSender {
      * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
      */
     @VisibleForTesting
-    CloseConnectionResult closeConnection(final UnsignedLong sequence) {
+    ConnectionStatistics closeConnection(final UnsignedLong sequence) {
       Objects.requireNonNull(sequence);
 
       final StreamPacket streamPacket = StreamPacket.builder()
@@ -692,13 +698,14 @@ public class SimpleStreamSender implements StreamSender {
           this.deliveredAmount, this.numFulfilledPackets.get(), this.numRejectedPackets.get()
       );
 
-      return CloseConnectionResult.builder()
+      return ConnectionStatistics.builder()
           .amountDelivered(this.deliveredAmount.get())
           .numFulfilledPackets(this.numFulfilledPackets.get())
           .numRejectPackets(this.numRejectedPackets.get())
           .build();
     }
 
+    // TODO: Remove this
 //    /**
 //     * Helper method to obtain the `sequence` of this {@link SendMoneyAggregator}. While under normal circumstances it
 //     * is ill-advised to be testing a private variable, here we break this rule as a testing optimization. The behavior

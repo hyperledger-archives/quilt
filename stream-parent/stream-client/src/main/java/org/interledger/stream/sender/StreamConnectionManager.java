@@ -8,7 +8,6 @@ import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Semaphore;
 
 /**
  * <p>Manages all STREAM connections across this JVM.</p>
@@ -29,18 +28,14 @@ import java.util.concurrent.Semaphore;
  * because it is possible that certain implementations of Stream Receiver might return the same shared secret if queried
  * more than once using the same receiver address.</p>
  */
-public class ConnectionManager {
-
-  // Ensures that multiple threads and/or implementations can share a StreamConnection and operate safely in parallel.
+public class StreamConnectionManager {
 
   /**
-   * * @param connectionSequences     A {@link Map} of {@link Semaphore} keyed by the hash of an actual SharedSecret.
-   *      *                                This ensures that while multiple {@link #sendMoney} requests can operate in
-   *      *                                parallel, only a single {@link #sendMoney} call per Connection (i.e.,
-   *      *                                SharedSecret) may be executed at a single time in order to ensure a monotonically
-   *      *                                increasing sequence number for a given connection. This implementation stores a
-   *      *                                sha256 hash of the shared secret so that the actual shared secret isn't hanging
-   *      *                                around in memory from call to call.
+   * A {@link Map} of {@link StreamConnection} keyed by a {@link StreamConnectionId}. This ensures that while multiple
+   * {@link StreamSender#sendMoney} requests can operate in parallel, the underlying StreamConnection will guarantee a
+   * monotonically increasing sequence number so that parallel Streams acrros multiple instances of the same
+   * StreamConnection do not interfere with each other. per Connection (i.e., SharedSecret+destination address) may be
+   * executed at a single time.
    */
   private static final Map<StreamConnectionId, StreamConnection> connections = Maps.newConcurrentMap();
 
