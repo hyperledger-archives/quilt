@@ -34,6 +34,8 @@ public interface StreamReceiver {
    *                      that includes information that could only have been created by this receiver.
    * @param clientAddress A {@link InterledgerAddress} of the account this packet should be delivered to.
    * @param denomination  A {@link Denomination} containing information about the value this receiever is receiving.
+   *
+   * @return An {@link InterledgerResponsePacket} containing the ILPv4 response that should be returned for this call.
    */
   InterledgerResponsePacket receiveMoney(
       InterledgerPreparePacket preparePacket, InterledgerAddress clientAddress, Denomination denomination

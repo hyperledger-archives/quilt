@@ -11,6 +11,7 @@ import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.StreamConnection;
+import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
@@ -18,7 +19,9 @@ import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -36,6 +39,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class SendMoneyAggregatorTest {
 
+  // 5 seconds max per method tested
+  @Rule
+  public Timeout globalTimeout = Timeout.seconds(5);
+
   @Mock
   private CodecContext streamCodecContextMock;
   @Mock
@@ -44,6 +51,8 @@ public class SendMoneyAggregatorTest {
   private CongestionController congestionControllerMock;
   @Mock
   private StreamEncryptionService streamEncryptionServiceMock;
+  @Mock
+  private StreamConnection streamConnectionMock;
 
   private SharedSecret sharedSecret = SharedSecret.of(new byte[32]);
   private InterledgerAddress sourceAddress = InterledgerAddress.of("example.source");
@@ -60,69 +69,68 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
-
     final StreamConnection streamConnection = new StreamConnection(StreamConnectionId.of("foo"));
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.sendMoneyAggregator = new SendMoneyAggregator(
-        executor, streamConnection, streamCodecContextMock, linkMock, congestionControllerMock,
+        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
         streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend,
         Optional.of(Duration.ofSeconds(60))
     );
   }
 
   @Test
-  public void sendMoneyWithMaxSequenceMinus1() throws ExecutionException, InterruptedException {
-    InterledgerRejectPacket reject = mock(InterledgerRejectPacket.class);
-    AtomicBoolean calledSend = new AtomicBoolean(false);
-    // don't mess with these because if you do your test wil have nondeterministic results
-    // you need to make sure to return true from hasInFlight ONLY WHEN WE HAVE CALLED sendPacket
-    // if you always return true, the test will run indefinitely
-    // if you always return false, the test will fail nondeterministically
-    // you may not like .thenAnswer, but it's necessary here
-    when(linkMock.sendPacket(any())).thenAnswer((Answer<InterledgerRejectPacket>) invocationOnMock -> {
-      calledSend.set(true);
-      return reject;
-    });
-    when(congestionControllerMock.hasInFlight()).thenAnswer((Answer<Boolean>) invocationOnMock -> !calledSend.get());
+  public void sendMoneyWhenTimedOut()
+      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    //sendMoneyAggregator.setSequenceForTesting(MAX_FRAMES_PER_CONNECTION.minus(UnsignedLong.ONE));
-    //sendMoneyAggregator.send().get();
+    setSoldierOnBooleans(false, false, false, true);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 
-    // Expect 1 Link call for the OpenConnection, and 1 Link call for the CloseConnection
-    Mockito.verify(linkMock, times(2)).sendPacket(any());
+    sendMoneyAggregator.send().get();
+
+    // Expect 1 Link call for the CloseConnection
+    Mockito.verify(linkMock).sendPacket(any());
   }
 
-  // TODO: Move these tests to StreamConnection
-//  @Test
-//  public void sendMoneyWithMaxSequence() throws ExecutionException, InterruptedException {
-//
-//    final StreamConnection streamConnection = new StreamConnection(StreamConnectionId.of("foo"));
-//    streamConnection.closeConnection();
-//
-//    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-//    this.sendMoneyAggregator = new SendMoneyAggregator(
-//        executor, streamConnection, streamCodecContextMock, linkMock, congestionControllerMock,
-//        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend,
-//        Optional.of(Duration.ofSeconds(60))
-//    );
-//
-//    sendMoneyAggregator.setSequenceForTesting(MAX_FRAMES_PER_CONNECTION);
-//    sendMoneyAggregator.send().get();
-//
-//    // Expect 1 Link call for the CloseConnection
-//    Mockito.verify(linkMock).sendPacket(any());
-//  }
-//
-//  @Test
-//  public void sendMoneyWithMaxSequencePlus1() throws ExecutionException, InterruptedException {
-//    sendMoneyAggregator.setSequenceForTesting(MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE));
-//    sendMoneyAggregator.send().get();
-//
-//    // Expect 1 Link call for the CloseConnection
-//    Mockito.verify(linkMock).sendPacket(any());
-//  }
+  @Test
+  public void sendMoneyWhenMoreToSendButTimedOut()
+      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-  // TODO: Redo this...
+    setSoldierOnBooleans(false, false, false, true);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+
+    sendMoneyAggregator.send().get();
+
+    // Expect 1 Link call for the CloseConnection
+    Mockito.verify(linkMock).sendPacket(any());
+  }
+
+  @Test
+  public void sendMoneyWhenNoMoreToSend()
+      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+
+    setSoldierOnBooleans(false, false, false, false);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+
+    sendMoneyAggregator.send().get();
+
+    // Expect 1 Link call for the CloseConnection
+    Mockito.verify(linkMock).sendPacket(any());
+  }
+
+  @Test
+  public void sendMoneyWhenConnectionIsClosed()
+      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+
+    setSoldierOnBooleans(false, true, true, false);
+    when(streamConnectionMock.nextSequence())
+        .thenReturn(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE));
+
+    sendMoneyAggregator.send().get();
+
+    // Expect 1 Link call for the CloseConnection
+    Mockito.verify(linkMock).sendPacket(any());
+  }
+
   @Test
   public void soldierOn() {
     // if money in flight, always soldier on
@@ -131,39 +139,68 @@ public class SendMoneyAggregatorTest {
     //   and you haven't delivered the full amount
     //   and you haven't timed out
 
-    // always true when money in flight
-    when(congestionControllerMock.hasInFlight()).thenReturn(true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
-    // sendMoneyAggregator.setSequenceForTesting(UnsignedLong.MAX_VALUE);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
-    //sendMoneyAggregator.setSequenceForTesting(UnsignedLong.ONE);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
-
-    when(congestionControllerMock.hasInFlight()).thenReturn(false);
-
-    // max packets
-    // sendMoneyAggregator.setSequenceForTesting(UnsignedLong.MAX_VALUE);
+    setSoldierOnBooleans(false, false, false, false);
     assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
-    // sendMoneyAggregator.setSequenceForTesting(UnsignedLong.ONE);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
 
-    // delivered amount
-    sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.valueOf(10l));
-    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
-    sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.valueOf(9l));
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
-
-    // timed out
+    setSoldierOnBooleans(false, false, false, true);
     assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
 
+    setSoldierOnBooleans(false, false, true, false);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+
+    setSoldierOnBooleans(false, false, true, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+
+    setSoldierOnBooleans(false, true, false, false);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+
+    setSoldierOnBooleans(false, true, false, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+
+    setSoldierOnBooleans(false, true, true, false);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+
+    setSoldierOnBooleans(false, true, true, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+
+    setSoldierOnBooleans(true, false, false, false);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+
+    setSoldierOnBooleans(true, false, false, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+
+    setSoldierOnBooleans(true, false, true, false);
+    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+
+    setSoldierOnBooleans(true, false, true, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+
+    setSoldierOnBooleans(true, true, false, false);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+
+    setSoldierOnBooleans(true, true, false, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+
+    setSoldierOnBooleans(true, true, true, false);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+
+    setSoldierOnBooleans(true, true, true, true);
+    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
   }
 
-//  @Test
-//  public void canBeScheduled() {
-//    assertThat(sendMoneyAggregator.canBeScheduled(true, UnsignedLong.ONE)).isFalse();
-//    assertThat(sendMoneyAggregator.canBeScheduled(true, UnsignedLong.MAX_VALUE)).isFalse();
-//    assertThat(sendMoneyAggregator.canBeScheduled(false, UnsignedLong.MAX_VALUE)).isFalse();
-//    assertThat(sendMoneyAggregator.canBeScheduled(false, UnsignedLong.ONE)).isTrue();
-//  }
+  /**
+   * Helper method to set the soldierOn mock values for clearer test coverage.
+   */
+  private void setSoldierOnBooleans(
+      final boolean moneyInFlight, final boolean streamConnectionClosed, final boolean moreToSend,
+      final boolean timeoutReached
+  ) {
+    when(congestionControllerMock.hasInFlight()).thenReturn(moneyInFlight);
+    when(streamConnectionMock.isClosed()).thenReturn(streamConnectionClosed);
+    if (moreToSend) {
+      sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.ZERO);
+    } else {
+      sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.valueOf(10L));
+    }
+  }
 }

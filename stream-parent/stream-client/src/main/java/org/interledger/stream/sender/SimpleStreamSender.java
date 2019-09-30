@@ -705,22 +705,6 @@ public class SimpleStreamSender implements StreamSender {
           .build();
     }
 
-    // TODO: Remove this
-//    /**
-//     * Helper method to obtain the `sequence` of this {@link SendMoneyAggregator}. While under normal circumstances it
-//     * is ill-advised to be testing a private variable, here we break this rule as a testing optimization. The behavior
-//     * that this is exposing this method allows us to validate is the closing of a STREAM Connection after 2^31 frames.
-//     * While the _correct_ way to test this would be to send 2^31 frames into the send method and then assert that the
-//     * connection closes,we instead expose this mutator in order to avoid 2^31 redundant calls on every test execution.
-//     *
-//     * @param newSequence An {@link UnsignedLong} containing a value to set {@link #sequence} to.
-//     */
-//    @VisibleForTesting
-//    void setSequenceForTesting(final UnsignedLong newSequence) {
-//      Objects.requireNonNull(newSequence);
-//      this.sequence.set(newSequence);
-//    }
-
     @VisibleForTesting
     boolean moreToSend() {
       return this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0;

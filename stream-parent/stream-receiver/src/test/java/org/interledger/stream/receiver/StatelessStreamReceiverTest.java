@@ -17,6 +17,7 @@ import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.Denomination;
+import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
@@ -361,7 +362,7 @@ public class StatelessStreamReceiverTest {
     final StreamPacket testStreamPacket = StreamPacket.builder()
         .interledgerPacketType(InterledgerPacketType.PREPARE)
         .prepareAmount(UnsignedLong.ZERO)
-        .sequence(StreamPacket.MAX_FRAMES_PER_CONNECTION)
+        .sequence(StreamConnection.MAX_FRAMES_PER_CONNECTION)
         .addFrames(StreamMoneyFrame.builder()
             .streamId(UnsignedLong.ONE)
             .shares(UnsignedLong.ONE)
