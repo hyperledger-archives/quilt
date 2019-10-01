@@ -17,6 +17,8 @@ public class SendMoneyResultTest {
     SendMoneyResult result = SendMoneyResult.builder()
         .originalAmount(UnsignedLong.ZERO)
         .amountDelivered(UnsignedLong.ZERO)
+        .amountSent(UnsignedLong.ZERO)
+        .amountLeftToSend(UnsignedLong.ZERO)
         .numFulfilledPackets(10)
         .numRejectPackets(5)
         .sendMoneyDuration(Duration.ZERO)

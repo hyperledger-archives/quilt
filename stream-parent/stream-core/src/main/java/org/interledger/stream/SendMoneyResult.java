@@ -25,11 +25,29 @@ public interface SendMoneyResult {
   UnsignedLong originalAmount();
 
   /**
-   * The actual amount, in the senders units, that was delivered to the receiver.
+   * The actual amount, in the receivers units, that was delivered to the receiver. Any currency conversion and/or
+   * connector fees may cause this to be different than the amount sent.
    *
    * @return An {@link UnsignedLong} representing the amount delivered.
    */
   UnsignedLong amountDelivered();
+
+  /**
+   * The actual amount, in the senders units, that was sent to the receiver. In the case, of a timeout or rejected
+   * packets this amount may be less than the requested amount to be sent.
+   *
+   * @return An {@link UnsignedLong} representing the amount sent.
+   */
+  UnsignedLong amountSent();
+
+  /**
+   * The actual amount, in the senders units, that is still left to send. If the payment was successful, this amount
+   * will be 0. If there was an issue sending payment (repeated rejections or timeouts), this will be the amount that
+   * could not be sent or which may have been sent but we failed to receive the fulfillment packet (network issue).
+   *
+   * @return An {@link UnsignedLong} representing the amount left to send.
+   */
+  UnsignedLong amountLeftToSend();
 
   /**
    * Metadata representing the number of fulfilled packets in a request to send money. Note that STREAM implementations
@@ -70,6 +88,6 @@ public interface SendMoneyResult {
    */
   @Value.Derived
   default boolean successfulPayment() {
-    return amountDelivered().equals(originalAmount());
+    return amountSent().equals(originalAmount());
   }
 }
