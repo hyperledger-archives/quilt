@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.link.LinkId;
 import org.interledger.link.http.IlpOverHttpLink;
@@ -22,7 +23,6 @@ import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-import org.interledger.stream.crypto.SharedSecret;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;

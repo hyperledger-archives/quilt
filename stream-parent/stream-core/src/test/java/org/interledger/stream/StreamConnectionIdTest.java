@@ -3,7 +3,7 @@ package org.interledger.stream;
 import static org.mockito.Mockito.mock;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;
 
 import org.junit.Rule;
 import org.junit.Test;

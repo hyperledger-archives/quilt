@@ -2,8 +2,8 @@ package org.interledger.stream;
 
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.crypto.Random;
-import org.interledger.stream.crypto.SharedSecret;
 
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;

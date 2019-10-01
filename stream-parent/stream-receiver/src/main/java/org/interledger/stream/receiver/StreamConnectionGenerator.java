@@ -1,7 +1,7 @@
 package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.spsp.SharedSecret;
+import org.interledger.core.SharedSecret;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 
