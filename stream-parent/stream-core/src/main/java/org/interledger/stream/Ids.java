@@ -17,7 +17,8 @@ public class Ids {
 
   @Value.Immutable
   @Wrapped
-  static abstract class _StreamConnectionId extends Wrapper<String> {
+  @SuppressWarnings("checkstyle:TypeName")
+  abstract static class _StreamConnectionId extends Wrapper<String> {
 
     /**
      * Constructs a {@link StreamConnectionId} that is derived from from the supplied {@code receiverAddress} and {@code
