@@ -59,6 +59,12 @@ public class InterledgerRustNodeClient implements SpspClient {
 
   public InterledgerRustNodeClient(OkHttpClient okHttpClient,
                                    String authToken,
+                                   String baseUri) {
+    this(okHttpClient, authToken, baseUri, PaymentPointerResolver.defaultResolver());
+  }
+
+  public InterledgerRustNodeClient(OkHttpClient okHttpClient,
+                                   String authToken,
                                    String baseUri,
                                    PaymentPointerResolver paymentPointerResolver) {
     this.httpClient = okHttpClient;
@@ -89,7 +95,6 @@ public class InterledgerRustNodeClient implements SpspClient {
       .get()
       .build(), StreamConnectionDetails.class);
   }
-
 
   public BigDecimal getBalance(String accountName) throws SpspClientException {
     return execute(requestBuilder()

@@ -1,5 +1,7 @@
 package org.interledger.stream.sender;
 
+import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
+
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
@@ -66,8 +68,8 @@ public class AimdCongestionController implements CongestionController {
    *                           whenever a valid fulfillment is encountered. This value determines how quickly packet
    *                           sizes increase as the payment path continues to process larger and larger packets.
    * @param decreaseFactor     An {@link UnsignedLong} representing the amount to lower {@link #maxInFlight} by when the
-   *                           receiver rejects a STREAM packet using a T04 or non-F08 error code (F08 rejections will
-   *                           contain information that can be used to reduce
+   *                           receiver rejects a STREAM packet containing a T04 or non-F08 error code (F08 rejections
+   *                           will contain information that can be used to reduce
    * @param streamCodecContext A {@link CodecContext} for encoding and decoding STREAM packets and frames.
    */
   public AimdCongestionController(
@@ -152,7 +154,7 @@ public class AimdCongestionController implements CongestionController {
       /////////////////////////
       // Update the maxInFlight
       /////////////////////////
-      case InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE: {
+      case T04_INSUFFICIENT_LIQUIDITY_CODE: {
         congestionState.set(CongestionState.AVOID_CONGESTION);
 
         final UnsignedLong computedValue = UnsignedLong.valueOf(
@@ -162,7 +164,8 @@ public class AimdCongestionController implements CongestionController {
 
         this.maxInFlight.set(StreamUtils.max(computedValue, UnsignedLong.ONE));
 
-        logger.warn("Rejected packet with T04 error. previousAmountInFlight={} amountInFlight={} maxInFlight={}",
+        logger.debug("For Congestion control purposes, handled T04 rejection. previousAmountInFlight={} "
+                + "amountInFlight={} maxInFlight={}",
             amountInFlight.get().plus(prepareAmount), amountInFlight.get(), maxInFlight
         );
 
@@ -173,13 +176,18 @@ public class AimdCongestionController implements CongestionController {
       /////////////////////////
       case InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE: {
         this.maxPacketAmount = Optional.of(this.handleF08Rejection(prepareAmount, rejectPacket));
+        // Actual packet data is logged by the StreamSender, so no need to log packet details here.
+        logger.debug("For Congestion control purposes, handled F08 rejection. previousAmountInFlight={} "
+                + "amountInFlight={} maxInFlight={}",
+            amountInFlight.get().plus(prepareAmount), amountInFlight.get(), maxInFlight
+        );
         break;
       }
       default: {
-        // No special treatment for unhandled errors.
-        logger.warn(
-            "STREAM packet rejected with unhandled error. prepareAmount={} rejectPacket={}",
-            prepareAmount, rejectPacket
+        // No special treatment for unhandled errors, but warn just in case we start to see a lot of them.
+        // Actual packet data is logged by the StreamSender, so no need to log packet details here.
+        logger.warn("For Congestion control purposes, ignoring unhandled packet rejection ({}: {}).",
+            rejectPacket.getCode().getCode(), rejectPacket.getCode().getName()
         );
       }
     }
@@ -250,8 +258,11 @@ public class AimdCongestionController implements CongestionController {
         newMaxPacketAmount = halvePrepareAmount(prepareAmount);
       }
     } else {
-      logger.warn("F08 Reject packet had no data payload.  Setting newMaxPacketAmount to be half the prepare amount.");
       newMaxPacketAmount = halvePrepareAmount(prepareAmount);
+      logger.warn(
+          "F08 Reject packet had no data payload.  Setting newMaxPacketAmount to be {} (half the prepare amount)",
+          newMaxPacketAmount
+      );
     }
 
     final UnsignedLong newMaxPacketAmountFinal = newMaxPacketAmount;
@@ -299,6 +310,11 @@ public class AimdCongestionController implements CongestionController {
 
   public void setMaxPacketAmount(final Optional<UnsignedLong> maxPacketAmount) {
     this.maxPacketAmount = Objects.requireNonNull(maxPacketAmount);
+  }
+
+  @Override
+  public boolean hasInFlight() {
+    return this.amountInFlight.get().compareTo(UnsignedLong.ZERO) > 0;
   }
 
   /**

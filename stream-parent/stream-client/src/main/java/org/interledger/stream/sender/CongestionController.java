@@ -42,4 +42,6 @@ public interface CongestionController {
   CongestionState getCongestionState();
 
   Optional<UnsignedLong> getMaxPacketAmount();
+
+  boolean hasInFlight();
 }

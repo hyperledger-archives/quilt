@@ -28,7 +28,7 @@ import java.util.Optional;
  */
 public class AimdCongestionControllerTest {
 
-  public static final UnsignedLong SIX_HUNDRED = UnsignedLong.valueOf(600L);
+  private static final UnsignedLong SIX_HUNDRED = UnsignedLong.valueOf(600L);
   private static final InterledgerAddress OPERATOR_ADRESS = InterledgerAddress.of("test.operator");
   private static final UnsignedLong ONE_K = UnsignedLong.valueOf(1000L);
   private static final InterledgerRejectPacket T04_INSUFFICIENT_LIQUIDITY = InterledgerRejectPacket.builder()
@@ -36,11 +36,10 @@ public class AimdCongestionControllerTest {
       .triggeredBy(OPERATOR_ADRESS)
       .message("the error message")
       .build();
-
-  private AimdCongestionController controller;
-
+  
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+  private AimdCongestionController controller;
 
   @Before
   public void setUp() {
@@ -242,6 +241,12 @@ public class AimdCongestionControllerTest {
   }
 
   @Test
+  public void hasInFlight() {
+    controller.prepare(UnsignedLong.ONE);
+    assertThat(controller.hasInFlight()).isTrue();
+  }
+
+  @Test
   public void doesntOverflowU64WithAvoidCongestion() {
     this.controller = new AimdCongestionController(
         UnsignedLong.MAX_VALUE.minus(UnsignedLong.ONE),
@@ -284,23 +289,26 @@ public class AimdCongestionControllerTest {
   @Test
   public void handleF08RejectionNoDataMaxLessThanPrepare() {
     InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
-    controller.setMaxPacketAmount(UnsignedLong.valueOf(4l));
+    controller.setMaxPacketAmount(UnsignedLong.valueOf(4L));
     // would compute to 5 by halving prepare, but controller is set to 4
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(4l));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10L), rejectPacket))
+        .isEqualTo(UnsignedLong.valueOf(4L));
   }
 
   @Test
   public void handleF08RejectionNoDataMaxEqualToPrepare() {
     InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
-    controller.setMaxPacketAmount(UnsignedLong.valueOf(5l));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(5l));
+    controller.setMaxPacketAmount(UnsignedLong.valueOf(5L));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10L), rejectPacket))
+        .isEqualTo(UnsignedLong.valueOf(5L));
   }
 
   @Test
   public void handleF08RejectionNoDataMaxGreaterThanPrepare() {
     InterledgerRejectPacket rejectPacket = interledgerRejectPacket();
-    controller.setMaxPacketAmount(UnsignedLong.valueOf(6l));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(5l));
+    controller.setMaxPacketAmount(UnsignedLong.valueOf(6L));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10L), rejectPacket))
+        .isEqualTo(UnsignedLong.valueOf(5L));
   }
 
   @Test
@@ -315,10 +323,8 @@ public class AimdCongestionControllerTest {
     assertThat(
         controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(500L)
     );
-    assertThat(
-        controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket))
-          .isEqualTo(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L))
-    );
+    assertThat(controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket))
+        .isEqualTo(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L)));
   }
 
   @Test
@@ -335,10 +341,8 @@ public class AimdCongestionControllerTest {
     assertThat(
         controller.handleF08Rejection(ONE_K, rejectPacket)).isEqualTo(UnsignedLong.valueOf(500L)
     );
-    assertThat(
-        controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket))
-          .isEqualTo(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L))
-    );
+    assertThat(controller.handleF08Rejection(UnsignedLong.MAX_VALUE, rejectPacket))
+        .isEqualTo(UnsignedLong.MAX_VALUE.dividedBy(UnsignedLong.valueOf(2L)));
   }
 
   @Test
@@ -360,7 +364,8 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(2l));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(2L), rejectPacket))
+        .isEqualTo(UnsignedLong.valueOf(2L));
   }
 
   @Test
@@ -382,7 +387,8 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(6l));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(10L), rejectPacket))
+        .isEqualTo(UnsignedLong.valueOf(6L));
   }
 
   @Test
@@ -393,7 +399,8 @@ public class AimdCongestionControllerTest {
             .maximumAmount(UnsignedLong.valueOf(2L))
             .build()
     ));
-    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(13l), rejectPacket)).isEqualTo(UnsignedLong.valueOf(3l));
+    assertThat(controller.handleF08Rejection(UnsignedLong.valueOf(13L), rejectPacket))
+        .isEqualTo(UnsignedLong.valueOf(3L));
   }
 
   @Test

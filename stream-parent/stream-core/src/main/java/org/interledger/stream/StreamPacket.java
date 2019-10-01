@@ -64,9 +64,6 @@ import java.util.List;
 @Immutable
 public interface StreamPacket {
 
-  // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max.
-  UnsignedLong MAX_FRAMES_PER_CONNECTION = UnsignedLong.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1L);
-
   short VERSION_1 = 1;
 
   /**
@@ -116,7 +113,7 @@ public interface StreamPacket {
   @Derived
   default boolean sequenceIsSafeForSingleSharedSecret() {
     // Only return true if the `sequence` is below MAX_FRAMES_PER_CONNECTION. At or above is unsafe.
-    return this.sequence().compareTo(MAX_FRAMES_PER_CONNECTION) < 0;
+    return this.sequence().compareTo(StreamConnection.MAX_FRAMES_PER_CONNECTION) < 0;
   }
 
   /**

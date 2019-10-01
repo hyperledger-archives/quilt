@@ -24,23 +24,24 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class JavaxStreamEncryptionService implements StreamEncryptionService {
 
-  private static final String CIPHER_ALGO = "AES/GCM/NoPadding";
-
-  private static final byte[] ENCRYPTION_KEY_STRING = "ilp_stream_encryption".getBytes(StandardCharsets.US_ASCII);
-
   /**
    * For GCM a 12 byte random byte-array is recommend by NIST because it's faster and more secure (See page 8 in the PDF
    * document below).
    *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
-  private static final int AES_GCM_NONCE_IV_LENGTH = 12;
+  @VisibleForTesting
+  static final int AES_GCM_NONCE_IV_LENGTH = 12;
+
+  private static final String CIPHER_ALGO = "AES/GCM/NoPadding";
+
+  private static final byte[] ENCRYPTION_KEY_STRING = "ilp_stream_encryption".getBytes(StandardCharsets.US_ASCII);
 
   private static final int AUTH_TAG_LENGTH_BITS = 128;
   private static final int AUTH_TAG_LENGTH_BYTES = AUTH_TAG_LENGTH_BITS / 8;
 
   @Override
-  public byte[] encrypt(final byte[] sharedSecret, final byte[] plainText) throws EncryptionException {
+  public byte[] encrypt(final SharedSecret sharedSecret, final byte[] plainText) throws EncryptionException {
     Objects.requireNonNull(plainText);
 
     // Create an initialization vector. For GCM a 12 byte random byte-array is recommend by NIST
@@ -52,11 +53,11 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
   }
 
   @VisibleForTesting
-  protected byte[] encryptWithIv(final byte[] sharedSecret, final byte[] plainText, final byte[] iv)
+  byte[] encryptWithIv(final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv)
       throws EncryptionException {
     Objects.requireNonNull(plainText);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // See https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9
@@ -93,27 +94,28 @@ public class JavaxStreamEncryptionService implements StreamEncryptionService {
       Arrays.fill(encryptionKey, (byte) 0);
 
       return cipherMessage;
-    } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException |
-        InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+    } catch (NoSuchAlgorithmException
+        | NoSuchPaddingException
+        | InvalidAlgorithmParameterException
+        | InvalidKeyException
+        | BadPaddingException
+        | IllegalBlockSizeException e
+    ) {
       throw new EncryptionException("Unable to Encrypt: ", e);
     }
   }
 
   @Override
-  public byte[] decrypt(final byte[] sharedSecret, final byte[] cipherMessage) {
+  public byte[] decrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
     Objects.requireNonNull(cipherMessage);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // First, deconstruct the message
     try {
       ByteBuffer byteBuffer = ByteBuffer.wrap(cipherMessage);
-      int ivLength = AES_GCM_NONCE_IV_LENGTH;
-      if (ivLength < 12 || ivLength >= 16) { // check input parameter
-        throw new IllegalArgumentException("invalid IV length (suggested is " + AES_GCM_NONCE_IV_LENGTH);
-      }
-      byte[] iv = new byte[ivLength];
+      byte[] iv = new byte[AES_GCM_NONCE_IV_LENGTH];
       byteBuffer.get(iv);
       byte[] cipherText = new byte[byteBuffer.remaining()];
       byteBuffer.get(cipherText);

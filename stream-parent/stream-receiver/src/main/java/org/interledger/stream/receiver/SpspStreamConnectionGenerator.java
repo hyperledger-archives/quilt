@@ -20,6 +20,7 @@ import java.util.function.Supplier;
 /**
  * A {@link StreamConnectionGenerator} that generates SPSP-compatible connection details.
  */
+@SuppressWarnings("UnstableApiUsage")
 public class SpspStreamConnectionGenerator implements StreamConnectionGenerator {
 
   private static final Charset US_ASCII = StandardCharsets.US_ASCII;
@@ -64,7 +65,7 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
   }
 
   @Override
-  public byte[] deriveSecretFromAddress(
+  public SharedSecret deriveSecretFromAddress(
       final ServerSecretSupplier serverSecretSupplier, final InterledgerAddress receiverAddress
   ) {
     Objects.requireNonNull(receiverAddress);
@@ -95,7 +96,7 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
       throw new StreamException("Invalid Receiver Address (derived AuthTag failure)!");
     }
 
-    return sharedSecret;
+    return SharedSecret.of(sharedSecret);
   }
 
   /**

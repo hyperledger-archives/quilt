@@ -12,7 +12,7 @@ import org.junit.Test;
 /**
  * Unit tests for {@link SpspStreamConnectionGenerator}.
  */
-public class SpspStreamConnectionGeneratorTest {
+public class SpspStreamStreamConnectionGeneratorTest {
 
   private ServerSecretSupplier serverSecret;
 
@@ -51,7 +51,7 @@ public class SpspStreamConnectionGeneratorTest {
         .generateConnectionDetails(serverSecret, receiverAddress);
 
     assertThat(connectionDetails.destinationAddress().startsWith(receiverAddress)).isTrue();
-    assertThat(connectionDetails.sharedSecret().key()).isEqualTo(
+    assertThat(connectionDetails.sharedSecret()).isEqualTo(
         connectionGenerator.deriveSecretFromAddress(serverSecret, connectionDetails.destinationAddress()));
   }
 

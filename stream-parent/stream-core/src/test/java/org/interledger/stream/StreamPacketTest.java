@@ -8,6 +8,9 @@ import org.interledger.core.InterledgerPacketType;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
+/**
+ * Unit tests for {@link StreamPacket}.
+ */
 public class StreamPacketTest {
 
   @Test
@@ -31,11 +34,12 @@ public class StreamPacketTest {
 
     assertThat(builder.sequence(UnsignedLong.ZERO).build().sequenceIsSafeForSingleSharedSecret()).isTrue();
     assertThat(builder.sequence(UnsignedLong.ONE).build().sequenceIsSafeForSingleSharedSecret()).isTrue();
-    assertThat(builder.sequence(StreamPacket.MAX_FRAMES_PER_CONNECTION.minus(UnsignedLong.ONE)).build()
+    assertThat(builder.sequence(StreamConnection.MAX_FRAMES_PER_CONNECTION.minus(UnsignedLong.ONE)).build()
         .sequenceIsSafeForSingleSharedSecret()).isTrue();
-    assertThat(builder.sequence(StreamPacket.MAX_FRAMES_PER_CONNECTION).build().sequenceIsSafeForSingleSharedSecret())
+    assertThat(
+        builder.sequence(StreamConnection.MAX_FRAMES_PER_CONNECTION).build().sequenceIsSafeForSingleSharedSecret())
         .isFalse();
-    assertThat(builder.sequence(StreamPacket.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)).build()
+    assertThat(builder.sequence(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)).build()
         .sequenceIsSafeForSingleSharedSecret()).isFalse();
     assertThat(builder.sequence(UnsignedLong.MAX_VALUE).build().sequenceIsSafeForSingleSharedSecret()).isFalse();
   }

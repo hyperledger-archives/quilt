@@ -21,6 +21,7 @@ package org.interledger.stream.frames;
  */
 
 import org.interledger.core.Immutable;
+import org.interledger.stream.Denomination;
 
 /**
  * A STREAM frame for propagating asset details for a Connection.
@@ -43,17 +44,10 @@ public interface ConnectionAssetDetailsFrame extends StreamFrame {
   }
 
   /**
-   * Asset code of endpoint that sent the frame.
+   * Denomination information (e.g., an asset code and scale) for the source entity that sent this frame.
    *
-   * @return {@link String} representing the asset code.
+   * @return A {@link Denomination}.
    */
-  String sourceAssetCode();
-
-  /**
-   * Asset scale of endpoint that sent the frame.
-   *
-   * @return A {@link Short}.
-   */
-  short sourceAssetScale();
+  Denomination sourceDenomination();
 
 }

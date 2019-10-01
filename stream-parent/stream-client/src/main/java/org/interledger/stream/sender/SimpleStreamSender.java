@@ -1,13 +1,15 @@
 package org.interledger.stream.sender;
 
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
-import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR_CODE;
+import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerErrorCode;
+import org.interledger.core.InterledgerErrorCode.ErrorFamily;
 import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
@@ -16,18 +18,26 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.SendMoneyResult;
+import org.interledger.stream.StreamConnection;
+import org.interledger.stream.StreamConnectionClosedException;
+import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
+import org.interledger.stream.crypto.JavaxStreamEncryptionService;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
-import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
+import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.immutables.value.Value.Derived;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,14 +47,23 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * <p>A simple implementation of {@link StreamSender} that opens a STREAM connection, sends money, and then closes the
@@ -54,17 +73,29 @@ import java.util.concurrent.atomic.AtomicReference;
  * protocol.</p>
  *
  * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
- * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly check to restrict
- * the size of thedatafield in any particular {@link InterledgerPreparePacket}, for two reasons. First, this
- * implementation never packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb
- * limit to be an issue; Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want
- * sender/receiver software to have to be updated across the Interledger.</p>
+ * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly restrict the size of the
+ * data field in any particular {@link InterledgerPreparePacket}, for two reasons. First, this implementation never
+ * packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb limit to ever be reached;
+ * Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want sender/receiver software to
+ * have to be updated across the Interledger.</p>
  */
+@ThreadSafe
+@SuppressWarnings("UnstableApiUsage")
 public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
   private final StreamEncryptionService streamEncryptionService;
   private final ExecutorService executorService;
+  private final StreamConnectionManager streamConnectionManager;
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param link A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   */
+  public SimpleStreamSender(final Link link) {
+    this(new JavaxStreamEncryptionService(), link);
+  }
 
   /**
    * Required-args Constructor.
@@ -74,11 +105,20 @@ public class SimpleStreamSender implements StreamSender {
    *                                sender and receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    */
-  public SimpleStreamSender(
-      final StreamEncryptionService streamEncryptionService, final Link link
-  ) {
-    this(streamEncryptionService, link, Executors.newCachedThreadPool());
+  public SimpleStreamSender(final StreamEncryptionService streamEncryptionService, final Link link) {
+    this(
+        streamEncryptionService, link,
+        new ThreadPoolExecutor(
+            0, 30, 60L, TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("simple-stream-sender-%d")
+                .build()
+        )
+    );
   }
+
 
   /**
    * Required-args Constructor.
@@ -92,17 +132,38 @@ public class SimpleStreamSender implements StreamSender {
   public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
   ) {
+    this(streamEncryptionService, link, executorService, new StreamConnectionManager());
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param streamEncryptionService A {@link StreamEncryptionService} used to encrypt and decrypted end-to-end STREAM
+   *                                packet data (i.e., packets that should only be visible between sender and
+   *                                receiver).
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param executorService         A {@link ExecutorService} to run the payments.
+   * @param streamConnectionManager A {@link StreamConnectionManager} that manages connections for all senders and
+   *                                receivers in this JVM.
+   */
+  public SimpleStreamSender(
+      final StreamEncryptionService streamEncryptionService,
+      final Link link,
+      final ExecutorService executorService,
+      final StreamConnectionManager streamConnectionManager
+  ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
 
     // Note that pools with similar properties but different details (for example, timeout parameters) may be
     // created using {@link ThreadPoolExecutor} constructors.
     this.executorService = Objects.requireNonNull(executorService);
+    this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
   }
 
   @Override
   public CompletableFuture<SendMoneyResult> sendMoney(
-      final byte[] sharedSecret,
+      final SharedSecret sharedSecret,
       final InterledgerAddress sourceAddress,
       final InterledgerAddress destinationAddress,
       final UnsignedLong amount
@@ -110,8 +171,13 @@ public class SimpleStreamSender implements StreamSender {
     Objects.requireNonNull(destinationAddress);
     Objects.requireNonNull(amount);
 
-    final SendMoneyAggregator sendMoneyAggregator = new SendMoneyAggregator(
+    final StreamConnection streamConnection = this.streamConnectionManager.openConnection(
+        StreamConnectionId.from(destinationAddress, sharedSecret)
+    );
+
+    return new SendMoneyAggregator(
         this.executorService,
+        streamConnection,
         StreamCodecContextFactory.oer(),
         this.link,
         new AimdCongestionController(),
@@ -119,60 +185,108 @@ public class SimpleStreamSender implements StreamSender {
         sharedSecret,
         sourceAddress,
         destinationAddress,
-        amount
-    );
-    return sendMoneyAggregator.send();
+        amount,
+        Optional.empty()
+    ).send();
   }
 
-  @Immutable
-  public interface CloseConnectionResult {
+  @Override
+  public CompletableFuture<SendMoneyResult> sendMoney(
+      final SharedSecret sharedSecret,
+      final InterledgerAddress sourceAddress,
+      final InterledgerAddress destinationAddress,
+      final UnsignedLong amount,
+      final Duration timeout
+  ) {
+    Objects.requireNonNull(destinationAddress);
+    Objects.requireNonNull(amount);
 
-    static CloseConnectionResultBuilder builder() {
-      return new CloseConnectionResultBuilder();
+    final StreamConnection streamConnection = this.streamConnectionManager.openConnection(
+        StreamConnectionId.from(destinationAddress, sharedSecret)
+    );
+
+    return new SendMoneyAggregator(
+        this.executorService,
+        streamConnection,
+        StreamCodecContextFactory.oer(),
+        this.link,
+        new AimdCongestionController(),
+        this.streamEncryptionService,
+        sharedSecret,
+        sourceAddress,
+        destinationAddress,
+        amount,
+        Optional.of(timeout)
+    ).send();
+  }
+
+  /**
+   * Contains summary information about a STREAM Connection.
+   */
+  @Immutable
+  public interface ConnectionStatistics {
+
+    static ConnectionStatisticsBuilder builder() {
+      return new ConnectionStatisticsBuilder();
     }
 
-    // Implementations MUST close the connection once either endpoint has sent 2^31 packets.
+    /**
+     * The number of fulfilled packets that were received over the lifetime of this connection.
+     *
+     * @return An int representing the number of fulfilled packets.
+     */
     int numFulfilledPackets();
 
+    /**
+     * The number of rejected packets that were received over the lifetime of this connection.
+     *
+     * @return An int representing the number of rejected packets.
+     */
     int numRejectPackets();
 
+    /**
+     * Compute the total number of packets that were fulfilled or rejected on this Connection.
+     *
+     * @return An int representing the total number of response packets processed.
+     */
+    @Derived
     default int totalPackets() {
       return numFulfilledPackets() + numRejectPackets();
     }
 
+    /**
+     * The total amount delivered to the receiver.
+     *
+     * @return An {@link UnsignedLong} representing the total amount delivered.
+     */
     UnsignedLong amountDelivered();
   }
-
-  // TODO: Pull Connection-management operations out of the Aggregator? Maybe make the client itself able to do these
-  //  things via an accessor to the connection manager. It's generally not used, but can be if desired.
 
   /**
    * Encapsulates everything needed to send a particular amount of money by breaking up a payment into a bunch of
    * smaller packets, and then handling all responses. This aggregator operates on a single Connection by opening and
    * closing a single stream.
    */
-  protected static class SendMoneyAggregator {
+  static class SendMoneyAggregator {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final ExecutorService executorService;
+    private final StreamConnection streamConnection;
     private final CodecContext streamCodecContext;
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
     private final Link link;
-    private final byte[] sharedSecret;
+    private final SharedSecret sharedSecret;
+    private final Optional<Duration> timeout;
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
 
-    // The amount
     private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
     private AtomicReference<UnsignedLong> deliveredAmount;
-
     private AtomicBoolean shouldSendSourceAddress;
-
-    private AtomicReference<UnsignedLong> sequence;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
 
@@ -180,6 +294,7 @@ public class SimpleStreamSender implements StreamSender {
      * Required-args Constructor.
      *
      * @param executorService         An {@link ExecutorService} for sending multiple STREAM frames in parallel.
+     * @param streamConnection        A {@link StreamConnection} that can be used to send packets with.
      * @param streamCodecContext      A {@link CodecContext} that can encode and decode ASN.1 OER Stream packets and
      *                                frames.
      * @param link                    The {@link Link} used to send ILPv4 packets containing Stream packets.
@@ -192,18 +307,22 @@ public class SimpleStreamSender implements StreamSender {
      * @param destinationAddress      The {@link InterledgerAddress} of the payment receiver.
      * @param originalAmountToSend    The amount of units (in the senders units) to send to the receiver.
      */
-    public SendMoneyAggregator(
+    SendMoneyAggregator(
         final ExecutorService executorService,
+        final StreamConnection streamConnection,
         final CodecContext streamCodecContext,
         final Link link,
         final CongestionController congestionController,
         final StreamEncryptionService streamEncryptionService,
-        final byte[] sharedSecret,
+        final SharedSecret sharedSecret,
         final InterledgerAddress sourceAddress,
         final InterledgerAddress destinationAddress,
-        final UnsignedLong originalAmountToSend
+        final UnsignedLong originalAmountToSend,
+        final Optional<Duration> timeout
     ) {
       this.executorService = Objects.requireNonNull(executorService);
+      this.streamConnection = Objects.requireNonNull(streamConnection);
+
       this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
       this.link = Objects.requireNonNull(link);
       this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
@@ -211,16 +330,17 @@ public class SimpleStreamSender implements StreamSender {
       this.shouldSendSourceAddress = new AtomicBoolean(true);
 
       this.sharedSecret = Objects.requireNonNull(sharedSecret);
-      this.sourceAddress = sourceAddress;
+      this.sourceAddress = Objects.requireNonNull(sourceAddress);
       this.destinationAddress = Objects.requireNonNull(destinationAddress);
 
       this.originalAmountToSend = new AtomicReference<>(originalAmountToSend);
       this.amountLeftToSend = new AtomicReference<>(originalAmountToSend);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
-      this.sequence = new AtomicReference<>(UnsignedLong.ZERO);
 
       this.numFulfilledPackets = new AtomicInteger(0);
       this.numRejectedPackets = new AtomicInteger(0);
+
+      this.timeout = Objects.requireNonNull(timeout);
     }
 
     /**
@@ -228,34 +348,63 @@ public class SimpleStreamSender implements StreamSender {
      *
      * @return A {@link CompletableFuture} containing a {@link SendMoneyResult}.
      */
-    public CompletableFuture<SendMoneyResult> send() {
+    CompletableFuture<SendMoneyResult> send() {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(destinationAddress);
       Objects.requireNonNull(originalAmountToSend);
 
-      // Fire off requests until the congestion controller tells us to stop or we've sent the total amount
-      final List<CompletableFuture<InterledgerResponsePacket>> allFutures = Lists.newArrayList();
-
-      final AtomicInteger totalStreamPackets = new AtomicInteger(0);
       final Instant start = Instant.now();
-      while (totalStreamPackets.getAndIncrement() >= 0) {
-        if (UnsignedLong.ZERO.equals(amountLeftToSend.get())) {
-          break;
-        }
+      // All futures will run here using the Cached Executor service.
+      return CompletableFuture
+          .supplyAsync(() -> {
 
-        // Integer.MAX_VALUE is equal to: 2<sup>31</sup>-1, so break only after we exceed Integer.MAX_VALUE
-        if (sequence.get().compareTo(StreamPacket.MAX_FRAMES_PER_CONNECTION) >= 0) {
-          // Break out of the loop and close the connection. Per IL-RFC-29, "Implementations MUST close the connection
-          // once either endpoint has sent 2^31 packets. According to NIST, it is unsafe to use AES-GCM for more than
-          // 2^32 packets using the same encryption key. (STREAM uses the limit of 2^31 because both endpoints encrypt
-          // packets with the same key.)
-          break;
-        }
+            // Do all the work of sending packetized money for this Stream/sendMoney request.
+            this.sendMoneyPacketized();
 
+            return SendMoneyResult.builder()
+                .amountDelivered(deliveredAmount.get())
+                .originalAmount(originalAmountToSend.get())
+                .numFulfilledPackets(numFulfilledPackets.get())
+                .numRejectPackets(numRejectedPackets.get())
+                .sendMoneyDuration(Duration.between(start, Instant.now()))
+                .build();
+          }, executorService)
+          .whenComplete(($, error) -> {
+            if (error != null) {
+              logger.error("SendMoney Stream failed: " + error.getMessage(), error);
+            }
+            if (!originalAmountToSend.get().equals(this.deliveredAmount.get())) {
+              logger.error("Failed to send full amount");
+            }
+          });
+    }
+
+    /**
+     * TODO: See https://github.com/hyperledger/quilt/issues/308 to determine when the Stream and/or Connection should
+     * be closed.
+     */
+    private void sendMoneyPacketized() {
+
+      final AtomicBoolean timeoutReached = new AtomicBoolean(false);
+
+      timeout.ifPresent($ -> {
+        ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
+        timeoutMonitor.schedule(
+            () -> {
+              timeoutReached.set(true);
+              timeoutMonitor.shutdown();
+            },
+            $.toMillis(), TimeUnit.MILLISECONDS
+        );
+      });
+
+      while (soldierOn(timeoutReached.get())) {
         // Determine the amount to send
         final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
-        if (amountToSend.equals(UnsignedLong.ZERO)) {
+        if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get()) {
           try {
+            // Don't send any more, but wait a bit for outstanding requests to complete so we don't cycle needlessly in
+            // a while loop that doesn't do anything useful.
             Thread.sleep(100);
           } catch (InterruptedException e) {
             throw new StreamSenderException(e.getMessage(), e);
@@ -266,7 +415,17 @@ public class SimpleStreamSender implements StreamSender {
         this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
 
         // Load up the STREAM packet
-        this.sequence.getAndUpdate($ -> $.plus(UnsignedLong.ONE));
+        final UnsignedLong sequence;
+        try {
+          sequence = this.streamConnection.nextSequence();
+        } catch (StreamConnectionClosedException e) {
+          // The Connection is closed, so we can't send anything more on it.
+          logger.warn(
+              "Unable to send more packets on a closed StreamConnection. streamConnection={} error={}",
+              streamConnection, e
+          );
+          continue;
+        }
 
         final List<StreamFrame> frames = Lists.newArrayList(
             StreamMoneyFrame.builder()
@@ -291,7 +450,7 @@ public class SimpleStreamSender implements StreamSender {
             // If the STREAM packet is sent on an ILP Prepare, this represents the minimum the receiver should accept.
             // TODO: enforce min exchange rate?
             .prepareAmount(UnsignedLong.ZERO)
-            .sequence(sequence.get())
+            .sequence(sequence)
             .frames(frames)
             .build();
 
@@ -308,47 +467,68 @@ public class SimpleStreamSender implements StreamSender {
             .data(streamPacketData)
             .build();
 
-        // Send it!
-        final CompletableFuture<InterledgerResponsePacket> sendMoneyFuture = CompletableFuture.supplyAsync(() -> {
-          congestionController.prepare(amountToSend);
-          return link.sendPacket(preparePacket);
-        }, executorService).thenApply(responsePacket -> {
-          // Executed in the same thread as above
-          responsePacket.handle(
-              (fulfillPacket -> {
-                handleFulfill(sequence.get(), amountToSend, fulfillPacket);
-              }),
-              (rejectPacket -> {
-                handleReject(sequence.get(), amountToSend, rejectPacket);
-              })
-          );
-          return responsePacket;
-        });
-
-        allFutures.add(sendMoneyFuture);
-      }
-
-      final CompletableFuture[] allFuturesArray = allFutures.toArray(new CompletableFuture[0]);
-      final CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(allFuturesArray);
-
-      // To track the duration...
-      final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
-      // All futures will run here using the Cached Executor service.
-      return combinedFuture.whenComplete(($, error) -> {
-        if (error != null) {
-          logger.error("SendMoney Stream failed: " + error.getMessage(), error);
+        try {
+          // don't submit new tasks if the timeout was reached within this iteration of the while loop
+          if (!timeoutReached.get()) {
+            // call this before spinning off a task. failing to do so can create a condition in the
+            // soliderOn check where we will incorrectly evaluate hasInFlight on the congestion
+            // controller to not reflect what we've actually scheduled to run, resulting in the loop
+            // breaking prematurely
+            congestionController.prepare(amountToSend);
+            try {
+              executorService.submit(() -> {
+                if (!timeoutReached.get()) {
+                  try {
+                    InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+                    responsePacket.handle(
+                        fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
+                        rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
+                    );
+                  } catch (Exception e) {
+                    logger.error("Link send failed. preparePacket={}", preparePacket, e);
+                    congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
+                        .code(InterledgerErrorCode.F00_BAD_REQUEST)
+                        .message(
+                            String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
+                        )
+                        .build());
+                    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
+                  }
+                }
+              });
+            } catch (RejectedExecutionException e) {
+              // If we get here, it means the task was unable to be scheduled, so we need to unwind the congestion
+              // controller to prevent deadlock.
+              congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
+                  .code(InterledgerErrorCode.F00_BAD_REQUEST)
+                  .message(
+                      String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacket,
+                          e.getMessage())
+                  )
+                  .build());
+              throw e;
+            }
+          } else {
+            logger.error("SoldierOn runLoop had more tasks to schedule but was timed-out");
+            continue;
+          }
+        } catch (Exception e) {
+          // Retry this amount on the next run...
+          this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
+          logger.error("Submit failed", e);
         }
+      }
+    }
 
-        sendMoneyDuration.set(Duration.between(start, Instant.now()));
-      }).thenApply($ -> closeConnection(sequence.get()))
-          .thenApply(closeConnectionResult -> SendMoneyResult.builder()
-              .amountDelivered(closeConnectionResult.amountDelivered())
-              .originalAmount(originalAmountToSend.get())
-              .numFulfilledPackets(closeConnectionResult.numFulfilledPackets())
-              .numRejectPackets(closeConnectionResult.numRejectPackets())
-              .sendMoneyDuration(sendMoneyDuration.get())
-              .build()
-          );
+    @VisibleForTesting
+    boolean soldierOn(boolean timeoutReached) {
+      // if money in flight, always soldier on
+      // otherwise, soldier on if
+      //   the connection is not closed
+      //   and you haven't delivered the full amount
+      //   and you haven't timed out
+      return this.congestionController.hasInFlight()
+          || (!streamConnection.isClosed() && moreToSend() && !timeoutReached);
     }
 
     /**
@@ -363,7 +543,7 @@ public class SimpleStreamSender implements StreamSender {
      * @return A byte-array containing the encrypted version of an ASN.1 OER encoded {@link StreamPacket}.
      */
     @VisibleForTesting
-    protected byte[] toEncrypted(final byte[] sharedSecret, final StreamPacket streamPacket) {
+    byte[] toEncrypted(final SharedSecret sharedSecret, final StreamPacket streamPacket) {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(streamPacket);
 
@@ -390,7 +570,7 @@ public class SimpleStreamSender implements StreamSender {
      * @return The decrypted {@link StreamPacket}.
      */
     @VisibleForTesting
-    protected StreamPacket fromEncrypted(final byte[] sharedSecret, final byte[] encryptedStreamPacketBytes) {
+    StreamPacket fromEncrypted(final SharedSecret sharedSecret, final byte[] encryptedStreamPacketBytes) {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(encryptedStreamPacketBytes);
 
@@ -403,19 +583,19 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    protected void handleFulfill(
-        final UnsignedLong sequence,
-        final UnsignedLong amount,
+    void handleFulfill(
+        final InterledgerPreparePacket originalPreparePacket,
+        final StreamPacket originalStreamPacket,
         final InterledgerFulfillPacket fulfillPacket
     ) {
-      Objects.requireNonNull(sequence);
-      Objects.requireNonNull(amount);
+      Objects.requireNonNull(originalPreparePacket);
+      Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(fulfillPacket);
 
       this.numFulfilledPackets.getAndIncrement();
 
       // TODO should we check the fulfillment and expiry or can we assume the plugin does that?
-      this.congestionController.fulfill(amount);
+      this.congestionController.fulfill(UnsignedLong.valueOf(originalPreparePacket.getAmount()));
       this.shouldSendSourceAddress.set(false);
 
       final StreamPacket streamPacket = this.fromEncrypted(sharedSecret, fulfillPacket.getData());
@@ -425,79 +605,120 @@ public class SimpleStreamSender implements StreamSender {
         // TODO check that the sequence matches our outgoing packet
         this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(streamPacket.prepareAmount()));
       } else {
-        logger.warn("Unable to parse STREAM packet from fulfill data for sequence {}", sequence);
+        logger.warn("Unable to parse STREAM packet from fulfill data. "
+                + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
+            originalPreparePacket, originalStreamPacket, fulfillPacket);
       }
 
-      logger.debug(
-          "Prepare {} with amount {} was fulfilled ({} left to send)",
-          sequence, amount, this.amountLeftToSend
+      logger.debug("Prepare packet fulfilled ({} left to send). "
+              + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
+          this.amountLeftToSend, originalPreparePacket, originalStreamPacket, fulfillPacket
       );
     }
 
     /**
      * Handle a rejection packet.
      *
-     * @param sequence     An {@link UnsignedLong} representing the current sequence number as viewed from this client.
-     * @param amountToSend The amount that was originally sent in the prepare packet.
-     * @param rejectPacket The {@link InterledgerRejectPacket} received from a peer directly connected via a {@link
-     *                     Link}.
+     * @param originalPreparePacket The {@link InterledgerPreparePacket} that triggered this rejection.
+     * @param originalStreamPacket  The {@link StreamPacket} that was inside of {@code originalPreparePacket}.
+     * @param rejectPacket          The {@link InterledgerRejectPacket} received from a peer directly connected via a
+     *                              {@link Link}.
      */
     @VisibleForTesting
-    protected void handleReject(
-        final UnsignedLong sequence,
-        final UnsignedLong amountToSend,
+    void handleReject(
+        final InterledgerPreparePacket originalPreparePacket,
+        final StreamPacket originalStreamPacket,
         final InterledgerRejectPacket rejectPacket
     ) {
-      Objects.requireNonNull(sequence);
-      Objects.requireNonNull(amountToSend);
+      Objects.requireNonNull(originalPreparePacket);
+      Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(rejectPacket);
 
+      final UnsignedLong amountToSend = UnsignedLong.valueOf(originalPreparePacket.getAmount());
       this.numRejectedPackets.getAndIncrement();
       this.amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
       this.congestionController.reject(amountToSend, rejectPacket);
 
       logger.debug(
-          "Prepare {} with amount {} was rejected with code: {} ({} left to send)",
-          sequence,
+          "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
           amountToSend,
-          rejectPacket.getCode(),
-          this.amountLeftToSend.get()
+          rejectPacket.getCode().getCode(),
+          this.amountLeftToSend.get(),
+          originalPreparePacket,
+          originalStreamPacket,
+          rejectPacket
       );
 
       switch (rejectPacket.getCode().getCode()) {
+
+        case T04_INSUFFICIENT_LIQUIDITY_CODE:
         case F08_AMOUNT_TOO_LARGE_CODE: {
           // Handled by the congestion controller
           break;
         }
-        case F99_APPLICATION_ERROR_CODE: {
-          // TODO handle STREAM errors
-          break;
-        }
         default: {
-          throw new StreamSenderException(String.format("Packet was rejected. rejectPacket=%s", rejectPacket));
+          if (rejectPacket.getCode().getErrorFamily() == ErrorFamily.TEMPORARY) {
+            logger.warn(
+                "Temporary ILPv4 transport outage. Retrying... originalPreparePacket={} originalStreamPacket={} "
+                    + "rejectPacket={}",
+                originalPreparePacket, originalStreamPacket, rejectPacket);
+
+          } else {
+            logger.error(
+                "Encountered Final ILPv4 error. Retrying, but this sendMoney will likely hang until timeout."
+                    + " originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+                originalPreparePacket, originalStreamPacket, rejectPacket);
+          }
+          break;
         }
       }
     }
 
-    /**
-     * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
-     *
-     * @param sequence An {@link UnsignedLong} representing the current sequence number as viewed from this client.
-     *
-     * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
-     */
-    @VisibleForTesting
-    protected CloseConnectionResult closeConnection(final UnsignedLong sequence) {
-      Objects.requireNonNull(sequence);
+    ///**
+    // * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
+    // *
+    // * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
+    // */
+    // TODO: Add unit test coverage here per See https://github.com/hyperledger/quilt/issues/308
+    // @VisibleForTesting
+    // void closeStream() throws StreamConnectionClosedException {
+    //   this.sendStreamFramesInZeroValuePacket(Lists.newArrayList(
+    //       StreamCloseFrame.builder()
+    //           .streamId(UnsignedLong.ONE)
+    //           .errorCode(ErrorCode.NoError)
+    //           .build()
+    //   ));
+    // }
+
+    // /**
+    //  * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
+    //  *
+    //  * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
+    //  */
+    // // TODO: Add unit test coverage here per See https://github.com/hyperledger/quilt/issues/308
+    // @VisibleForTesting
+    // void closeConnection() throws StreamConnectionClosedException {
+    //   this.sendStreamFramesInZeroValuePacket(Lists.newArrayList(
+    //       ConnectionCloseFrame.builder()
+    //           .errorCode(ErrorCode.NoError)
+    //           .build()
+    //   ));
+    // }
+
+    private void sendStreamFramesInZeroValuePacket(final Collection<StreamFrame> streamFrames)
+        throws StreamConnectionClosedException {
+      Objects.requireNonNull(streamFrames);
+
+      if (streamFrames.size() <= 0) {
+        logger.warn("sendStreamFrames called with 0 frames");
+        return;
+      }
 
       final StreamPacket streamPacket = StreamPacket.builder()
           .interledgerPacketType(InterledgerPacketType.PREPARE)
-          // TODO: enforce min exchange rate.
           .prepareAmount(UnsignedLong.ZERO)
-          .sequence(sequence)
-          .addFrames(ConnectionCloseFrame.builder()
-              .errorCode(ErrorCode.NoError)
-              .build())
+          .sequence(streamConnection.nextSequence())
+          .addAllFrames(streamFrames)
           .build();
 
       // Create the ILP Prepare packet using an encrypted StreamPacket as the encryptedStreamPacket payload...
@@ -513,42 +734,61 @@ public class SimpleStreamSender implements StreamSender {
           .data(encryptedStreamPacket)
           .build();
 
-      logger.debug("Closing STREAM Connection...");
-
       link.sendPacket(preparePacket).handle(
-          (fulfillPacket -> {
-            handleFulfill(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), fulfillPacket);
-          }),
-          (rejectPacket -> {
-            handleReject(sequence, UnsignedLong.valueOf(preparePacket.getAmount()), rejectPacket);
-          })
+          fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
+          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
       );
 
-      logger.debug(
-          "Send money future finished. Delivered: {} ({} packets fulfilled, {} packets rejected)",
-          this.deliveredAmount, this.numFulfilledPackets.get(), this.numRejectedPackets.get()
-      );
+      // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
+      streamFrames.stream()
+          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
+          .findAny()
+          .ifPresent($ -> {
+            streamConnection.closeConnection();
+            logger.info("STREAM Connection closed.");
+          });
 
-      return CloseConnectionResult.builder()
+      // Emit a log statement if the called supplied a StreamCloseFrame
+      streamFrames.stream()
+          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
+          .findAny()
+          .map($ -> (StreamCloseFrame) $)
+          .ifPresent($ -> {
+            logger.info(
+                "StreamId {} Closed. Delivered: {} ({} packets fulfilled, {} packets rejected)",
+                $.streamId(), this.deliveredAmount, this.numFulfilledPackets.get(), this.numRejectedPackets.get()
+            );
+          });
+    }
+
+    /**
+     * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
+     *
+     * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
+     */
+    @VisibleForTesting
+    SendMoneyResult collectSendMoneyStatistics() {
+      return SendMoneyResult.builder()
           .amountDelivered(this.deliveredAmount.get())
           .numFulfilledPackets(this.numFulfilledPackets.get())
           .numRejectPackets(this.numRejectedPackets.get())
           .build();
     }
 
+    @VisibleForTesting
+    boolean moreToSend() {
+      return this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0;
+    }
+
     /**
-     * Helper method to obtain the `sequence` of this {@link SendMoneyAggregator}. While under normal circumstances it
-     * is ill-advised to be testing a private variable, here we break this rule as a testing optimization. The behavior
-     * that exposing this method allows us to validate is the closing of a STREAM Connection after 2^31 frames. While
-     * the _correct_ way to test this would be to send 2^31 frames into the send method and then assert that the
-     * connection closes,we instead expose this mutator in order to avoid 2^31 redundant calls on every test execution.
+     * Helper method to mess with delivered amount for the purpose of testing loop breaking conditions.
      *
-     * @param newSequence An {@link UnsignedLong} containing a value to set {@link #sequence} to.
+     * @param deliveredAmount An {@link UnsignedLong} representing the deliveredAmount to set.
      */
     @VisibleForTesting
-    public void setSequenceForTesting(final UnsignedLong newSequence) {
-      Objects.requireNonNull(newSequence);
-      this.sequence.set(newSequence);
+    void setDeliveredAmountForTesting(final UnsignedLong deliveredAmount) {
+      Objects.requireNonNull(deliveredAmount);
+      this.deliveredAmount.set(deliveredAmount);
     }
   }
 }
