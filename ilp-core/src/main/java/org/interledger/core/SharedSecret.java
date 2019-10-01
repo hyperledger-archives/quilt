@@ -1,6 +1,5 @@
 package org.interledger.core;
 
-import com.google.common.base.Preconditions;
 import org.immutables.value.Value;
 
 import java.util.Base64;
@@ -53,7 +52,9 @@ public interface SharedSecret {
 
   @Value.Check
   default SharedSecret validate() {
-    Preconditions.checkState(key().length == 32, "SharedSecret must be 32 bytes");
+    if (key().length != 32) {
+      throw new IllegalStateException(String.valueOf("SharedSecret must be 32 bytes"));
+    }
     return this;
   }
 
