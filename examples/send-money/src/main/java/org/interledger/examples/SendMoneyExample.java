@@ -13,7 +13,6 @@ import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.sender.SimpleStreamSender;
 import java.util.Arrays;
@@ -58,7 +57,7 @@ public class SendMoneyExample {
     Link link = newIlpOverHttpLink();
 
     // Create SimpleStreamSender for sending STREAM payments
-    SimpleStreamSender simpleStreamSender = new SimpleStreamSender(new JavaxStreamEncryptionService(), link);
+    SimpleStreamSender simpleStreamSender = new SimpleStreamSender(link);
 
     System.out.println("Starting balance for sender: " + spspClient.getBalance(SENDER_ACCOUNT_USERNAME));
 

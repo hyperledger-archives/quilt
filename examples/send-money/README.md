@@ -83,7 +83,7 @@ Link link = new IlpOverHttpLink(
 
 Using this `link`, we can now create a `SimpleStreamSender`:
 ```java
-SimpleStreamSender simpleStreamSender = new SimpleStreamSender(new JavaxStreamEncryptionService(), link);
+SimpleStreamSender simpleStreamSender = new SimpleStreamSender(link);
 ```
 
 Now, we can send a payment for 1000 millidrops from our source account to our destination account using the shared secret.

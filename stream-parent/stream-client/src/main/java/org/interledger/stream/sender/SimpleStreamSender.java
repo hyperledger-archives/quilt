@@ -21,6 +21,7 @@ import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
+import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
@@ -86,6 +87,15 @@ public class SimpleStreamSender implements StreamSender {
   /**
    * Required-args Constructor.
    *
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   */
+  public SimpleStreamSender(final Link link) {
+    this(new JavaxStreamEncryptionService(), link);
+  }
+
+  /**
+   * Required-args Constructor.
+   *
    * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
    *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
    *                                sender and receiver).
@@ -104,6 +114,7 @@ public class SimpleStreamSender implements StreamSender {
         )
     );
   }
+
 
   /**
    * Required-args Constructor.
