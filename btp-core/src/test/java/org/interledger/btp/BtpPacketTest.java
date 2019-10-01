@@ -23,6 +23,7 @@ package org.interledger.btp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.interledger.btp.BtpSubProtocol.ContentType;
 
@@ -60,6 +61,28 @@ public class BtpPacketTest {
 
     assertEquals(message.getSubProtocols(), SUB_PROTOCOLS);
     assertEquals(message.getSubProtocols().size(), 2);
+  }
+
+  @Test(expected = IndexOutOfBoundsException.class)
+  public void getPrimarySubProtocolsWhenEmpty() {
+    final BtpSubProtocols protocols = new BtpSubProtocols();
+
+    final BtpMessage message = BtpMessage.builder().requestId(REQUEST_ID).subProtocols(protocols).build();
+
+    assertEquals(message.getSubProtocols(), protocols);
+    try {
+      message.getPrimarySubProtocol();
+      fail("Should have failed to retrieve the primary sub protocol when there are no sub protocols.");
+    } catch (Exception e) {
+      throw e;
+    }
+  }
+
+  @Test
+  public void getSubProtocolsWhenNotUsed() {
+    final BtpMessage message = BtpMessage.builder().requestId(REQUEST_ID).build();
+
+    assertEquals(message.getSubProtocols(), BtpSubProtocols.empty());
   }
 
   @Test
