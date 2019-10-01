@@ -71,7 +71,7 @@ public class SenderReceiverTest {
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(1);
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
@@ -91,7 +91,7 @@ public class SenderReceiverTest {
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(1);
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);

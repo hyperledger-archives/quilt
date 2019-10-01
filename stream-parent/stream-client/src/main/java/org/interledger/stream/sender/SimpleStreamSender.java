@@ -25,7 +25,6 @@ import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
-import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
@@ -342,16 +341,21 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(originalAmountToSend);
 
       final Instant start = Instant.now();
-      final CompletableFuture<Void> paymentFuture = CompletableFuture.supplyAsync(() -> {
-        sendMoneyPacketized();
-        return null;
-      });
-
-      // To track the duration below...
-      final AtomicReference<Duration> sendMoneyDuration = new AtomicReference<>();
-
       // All futures will run here using the Cached Executor service.
-      return paymentFuture
+      return CompletableFuture
+          .supplyAsync(() -> {
+
+            // Do all the work of sending packetized money for this Stream/sendMoney request.
+            this.sendMoneyPacketized();
+
+            return SendMoneyResult.builder()
+                .amountDelivered(deliveredAmount.get())
+                .originalAmount(originalAmountToSend.get())
+                .numFulfilledPackets(numFulfilledPackets.get())
+                .numRejectPackets(numRejectedPackets.get())
+                .sendMoneyDuration(Duration.between(start, Instant.now()))
+                .build();
+          }, executorService)
           .whenComplete(($, error) -> {
             if (error != null) {
               logger.error("SendMoney Stream failed: " + error.getMessage(), error);
@@ -359,21 +363,15 @@ public class SimpleStreamSender implements StreamSender {
             if (!originalAmountToSend.get().equals(this.deliveredAmount.get())) {
               logger.error("Failed to send full amount");
             }
-            sendMoneyDuration.set(Duration.between(start, Instant.now()));
-          })
-          // See https://github.com/hyperledger/quilt/issues/308 before uncommenting this section.
-          //.thenApply($ -> closeStream())
-          .thenApply($ -> SendMoneyResult.builder()
-              .amountDelivered(deliveredAmount.get())
-              .originalAmount(originalAmountToSend.get())
-              .numFulfilledPackets(numFulfilledPackets.get())
-              .numRejectPackets(numRejectedPackets.get())
-              .sendMoneyDuration(sendMoneyDuration.get())
-              .build()
-          );
+          });
     }
 
+    /**
+     * TODO: See https://github.com/hyperledger/quilt/issues/308 to determine when the Stream and/or Connection should
+     * be closed.
+     */
     private void sendMoneyPacketized() {
+
       final AtomicBoolean timeoutReached = new AtomicBoolean(false);
 
       timeout.ifPresent($ -> {

@@ -11,7 +11,6 @@ import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
-import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
@@ -66,8 +65,9 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
-    final StreamConnection streamConnection = new StreamConnection(StreamConnectionId.of("foo"));
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
+    final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
         streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend,

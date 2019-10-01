@@ -64,6 +64,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Integration tests for {@link SimpleStreamSender} that connects to a running ILP Connector using the information
@@ -153,6 +154,10 @@ public class SimpleStreamSenderIT {
     nodeClient.createAccount(sender);
   }
 
+  /**
+   * One call to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
+   * UnsignedLong)} that involves a single packet for the entire payment.
+   */
   @Test
   public void sendMoneySinglePacket() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
@@ -172,7 +177,7 @@ public class SimpleStreamSenderIT {
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(2);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(1);
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
 
     logger.info("Payment Sent: {}", sendMoneyResult);
@@ -180,9 +185,8 @@ public class SimpleStreamSenderIT {
 
   /**
    * In general, calling sendMoney using the same Connection (i.e., SharedSecret) in parallel should not be done.
-   * However, the implementation is smart enough to allow parallel requests to run in parallel, although one of the calls will end up closing the connection, which will typically make the
-   * However, sometimes waiting tasks will timeout, in which case a particular `sendMoney` may throw an exception. This
-   * test does not expect any exceptions.
+   * However, the implementation is smart enough to allow parallel requests to run in parallel, which this test
+   * validates.
    */
   @Test
   public void sendMoneyOnSameConnectionInParallel() {
@@ -195,25 +199,39 @@ public class SimpleStreamSenderIT {
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
-    // Run a bunch of `sendMoney` calls on the same Connection, in parallel.
-    List<SendMoneyResult> sendMoneyResults = new ArrayList<>();
     List<CompletableFuture<SendMoneyResult>> results = new ArrayList<>();
+
     for (int i = 0; i < numExecutions; i++) {
       final CompletableFuture<SendMoneyResult> job = streamSender.sendMoney(
           SharedSecret.of(connectionDetails.sharedSecret().key()),
           SENDER_ADDRESS,
           connectionDetails.destinationAddress(),
           paymentAmount
-      ).whenComplete((sendMoneyResult, error) -> {
-        // There should not be any errors for any sendMoney because they should queue-up and eventually run.
-        assertThat(error).isNull();
-        sendMoneyResults.add(sendMoneyResult);
-      });
+      );
       results.add(job);
     }
 
     // Wait for all to complete...
-    CompletableFuture.allOf(results.toArray(new CompletableFuture[0])).join();
+    CompletableFuture[] completableFutures = results.toArray(new CompletableFuture[0]);
+    CompletableFuture.allOf(completableFutures)
+        .handle(($, error) -> {
+          if (error != null) {
+            logger.error("ERROR: {}", error);
+          }
+          // To placate completable future.
+          return null;
+        }).join();
+
+    // Run a bunch of `sendMoney` calls on the same Connection, in parallel.
+    List<SendMoneyResult> sendMoneyResults = results.stream()
+        .map($ -> {
+          try {
+            return $.get();
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .collect(Collectors.toList());
 
     // Sum-up the total results of all Calls.
     long totalAmountDelivered = sendMoneyResults.stream()
@@ -225,9 +243,13 @@ public class SimpleStreamSenderIT {
         .map(SendMoneyResult::totalPackets)
         .mapToLong(Integer::longValue)
         .sum();
-    assertThat(totalPackets).isCloseTo(numExecutions * 8, Offset.offset(2L));
+    assertThat(totalPackets).isCloseTo(numExecutions * 7, Offset.offset(2L));
   }
 
+  /**
+   * One call to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
+   * UnsignedLong)} that involves multiple packets in parallel.
+   */
   @Test
   public void sendMoneyMultiPacket() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
@@ -253,8 +275,13 @@ public class SimpleStreamSenderIT {
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
+  /**
+   * Multiple calls to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
+   * UnsignedLong)} that involves multiple packets in parallel, but using different accounts for each Stream, and thus a
+   * different Connection.
+   */
   @Test
-  public void sendMoneyMultiThreaded() throws InterruptedException {
+  public void sendMoneyMultiThreadedToSeparateAccounts() throws InterruptedException {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
 
     int parallelism = 20;
