@@ -1,5 +1,7 @@
 package org.interledger.stream.sender;
 
+import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
+import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -89,7 +91,7 @@ public class SimpleStreamSender implements StreamSender {
   /**
    * Required-args Constructor.
    *
-   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param link A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    */
   public SimpleStreamSender(final Link link) {
     this(new JavaxStreamEncryptionService(), link);
@@ -107,7 +109,7 @@ public class SimpleStreamSender implements StreamSender {
     this(
         streamEncryptionService, link,
         new ThreadPoolExecutor(
-            0, 20, 60L, TimeUnit.SECONDS,
+            0, 30, 60L, TimeUnit.SECONDS,
             new SynchronousQueue<>(),
             new ThreadFactoryBuilder()
                 .setDaemon(true)
@@ -490,6 +492,7 @@ public class SimpleStreamSender implements StreamSender {
                             String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
                         )
                         .build());
+                    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
                   }
                 }
               });
@@ -510,6 +513,8 @@ public class SimpleStreamSender implements StreamSender {
             continue;
           }
         } catch (Exception e) {
+          // Retry this amount on the next run...
+          this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
           logger.error("Submit failed", e);
         }
       }
@@ -645,10 +650,12 @@ public class SimpleStreamSender implements StreamSender {
       );
 
       switch (rejectPacket.getCode().getCode()) {
-        // Handled by the congestion controller
-        //case T04_INSUFFICIENT_LIQUIDITY_CODE:
-        // Handled by the congestion controller
-        //case F08_AMOUNT_TOO_LARGE_CODE: {
+
+        case T04_INSUFFICIENT_LIQUIDITY_CODE:
+        case F08_AMOUNT_TOO_LARGE_CODE: {
+          // Handled by the congestion controller
+          break;
+        }
         default: {
           if (rejectPacket.getCode().getErrorFamily() == ErrorFamily.TEMPORARY) {
             logger.warn(

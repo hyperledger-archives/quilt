@@ -20,7 +20,6 @@ import org.interledger.stream.sender.StreamSender;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
 import org.assertj.core.data.Offset;
-import org.assertj.core.data.Percentage;
 import org.immutables.value.Value.Derived;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,14 +101,13 @@ public class SenderReceiverTest {
    */
   @Test
   public void testSendFromLeftToRightWith20PercentLoss() {
-    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
     final float rejectionPercentage = 0.2f;
 
     final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
 
-    final int expectedNumRejectPackets = (int) (sendMoneyResult.totalPackets() * rejectionPercentage);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(7, Offset.offset(1));
-    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(expectedNumRejectPackets, Offset.offset(2));
+    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(10, Offset.offset(1));
+    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
   }
 
   /**
@@ -117,13 +115,13 @@ public class SenderReceiverTest {
    */
   @Test
   public void testSendFromLeftToRightWith50PercentLoss() {
-    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
     final float rejectionPercentage = 0.5f;
 
     final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
 
-    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(7, Offset.offset(1));
-    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThan(1);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(10, Offset.offset(1));
+    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
   }
 
   /**
@@ -136,9 +134,36 @@ public class SenderReceiverTest {
 
     final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
 
-    final int expectedNumRejectPackets = (int) (sendMoneyResult.totalPackets() * rejectionPercentage);
     assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(2, Offset.offset(1));
-    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(expectedNumRejectPackets, Percentage.withPercentage(15.0));
+    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
+  }
+
+  @Test
+  public void testSendFromLeftToRightWithSmallMaxPacketValueInNetwork() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
+
+    final SimulatedILPv4Network simulatedIlpNetwork = new SimulatedILPv4Network(
+        SimulatedPathConditions.builder()
+            .maxPacketAmount(() -> UnsignedLong.ONE)
+            .build(),
+        SimulatedPathConditions.builder().build()
+    );
+    this.initIlpNetworkForStream(simulatedIlpNetwork);
+
+    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
+    final SendMoneyResult sendMoneyResult = leftStreamNode.streamSender().sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
+        LEFT_SENDER_ADDRESS,
+        connectionDetails.destinationAddress(),
+        paymentAmount
+    ).join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(100);
+    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(11, Offset.offset(3));
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
   /////////////////

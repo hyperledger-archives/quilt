@@ -12,6 +12,7 @@ import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 
 import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
@@ -99,8 +100,16 @@ public class SimulatedILPv4Network {
     if (rejectPacket(leftToRightNetworkConditions.packetRejectionPercentage())) {
       return InterledgerRejectPacket.builder()
           .message("Intermediate Connector timed out")
-          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network"))
+          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.left-to-right"))
           .code(InterledgerErrorCode.T03_CONNECTOR_BUSY)
+          .build();
+    } else if (maxPacketAmountExceeded(leftToRightNetworkConditions, preparePacket)) {
+      return InterledgerRejectPacket.builder()
+          .message("Intermediate Connector does not allow packets greater than "
+              + leftToRightNetworkConditions.maxPacketAmount().get()
+          )
+          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.left-to-right"))
+          .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
           .build();
     } else {
       final InterledgerPreparePacket adjustedPreparePacket = this.applyExchangeRate(
@@ -121,8 +130,16 @@ public class SimulatedILPv4Network {
     if (rejectPacket(rightToLeftNetworkConditions.packetRejectionPercentage())) {
       return InterledgerRejectPacket.builder()
           .message("Intermediate Connector timed out")
-          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network"))
+          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.right-to-left"))
           .code(InterledgerErrorCode.T03_CONNECTOR_BUSY)
+          .build();
+    } else if (maxPacketAmountExceeded(rightToLeftNetworkConditions, preparePacket)) {
+      return InterledgerRejectPacket.builder()
+          .message("Intermediate Connector does not allow packets greater than "
+              + rightToLeftNetworkConditions.maxPacketAmount().get()
+          )
+          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.ight-to-left"))
+          .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
           .build();
     } else {
       final InterledgerPreparePacket adjustedPreparePacket = this.applyExchangeRate(
@@ -157,8 +174,8 @@ public class SimulatedILPv4Network {
 
   /**
    * Determines if a packet should reject {@code percentage} percent of the time. For example, by supplying a value of
-   * `0.4`, then this method will return {@code true} approximately 40% of the time, whereas it will return {@code false}
-   * approximately 60% of the time.
+   * `0.4`, then this method will return {@code true} approximately 40% of the time, whereas it will return {@code
+   * false} approximately 60% of the time.
    *
    * @param percentage The percentage of time this method should return {@code true}, indicating a reject packet should
    *                   be returned.
@@ -178,4 +195,20 @@ public class SimulatedILPv4Network {
     }
   }
 
+  /**
+   * Determines if the {@code preparePacket} has an amount that is too large for a given network path.
+   *
+   * @param simulatedPathConditions A {@link SimulatedPathConditions} to check against.
+   * @param preparePacket           An {@link InterledgerPreparePacket} to check the size of the amount.
+   *
+   * @return
+   */
+  private boolean maxPacketAmountExceeded(
+      final SimulatedPathConditions simulatedPathConditions, final InterledgerPreparePacket preparePacket
+  ) {
+    Objects.requireNonNull(simulatedPathConditions);
+    Objects.requireNonNull(preparePacket);
+    return UnsignedLong.valueOf(preparePacket.getAmount())
+        .compareTo(simulatedPathConditions.maxPacketAmount().get()) > 0;
+  }
 }

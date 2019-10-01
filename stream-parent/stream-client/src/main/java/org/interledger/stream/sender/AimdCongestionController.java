@@ -258,8 +258,11 @@ public class AimdCongestionController implements CongestionController {
         newMaxPacketAmount = halvePrepareAmount(prepareAmount);
       }
     } else {
-      logger.warn("F08 Reject packet had no data payload.  Setting newMaxPacketAmount to be half the prepare amount.");
       newMaxPacketAmount = halvePrepareAmount(prepareAmount);
+      logger.warn(
+          "F08 Reject packet had no data payload.  Setting newMaxPacketAmount to be {} (half the prepare amount)",
+          newMaxPacketAmount
+      );
     }
 
     final UnsignedLong newMaxPacketAmountFinal = newMaxPacketAmount;
