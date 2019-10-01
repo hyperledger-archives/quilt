@@ -122,9 +122,8 @@ public class SenderReceiverTest {
 
     final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
 
-    final int expectedNumRejectPackets = (int) (sendMoneyResult.totalPackets() * rejectionPercentage);
     assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(7, Offset.offset(1));
-    assertThat(sendMoneyResult.numRejectPackets()).isCloseTo(expectedNumRejectPackets, Percentage.withPercentage(50.0));
+    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThan(1);
   }
 
   /**
