@@ -20,11 +20,11 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link IldcpResponse}.
@@ -36,10 +36,12 @@ public class IldcpResponseTest {
 
   @Test(expected = IllegalStateException.class)
   public void testBuilderWhenEmpty() {
+    final String errorMessage =
+        "Cannot build IldcpResponse, some of required attributes are not set [clientAddress, assetCode, assetScale]";
     try {
       IldcpResponse.builder().build();
     } catch (IllegalStateException e) {
-      assertThat(e.getMessage()).isEqualTo("Cannot build IldcpResponse, some of required attributes are not set [clientAddress, assetCode, assetScale]");
+      assertThat(e.getMessage()).isEqualTo(errorMessage);
       throw e;
     }
   }

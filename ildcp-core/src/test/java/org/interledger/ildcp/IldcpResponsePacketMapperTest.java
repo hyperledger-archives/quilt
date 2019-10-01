@@ -1,15 +1,16 @@
 package org.interledger.ildcp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class IldcpResponsePacketMapperTest {
 
@@ -56,8 +57,8 @@ public class IldcpResponsePacketMapperTest {
   @Test
   public void cannotMap() {
     expectedException.expect(RuntimeException.class);
-    expectedException.expectMessage("Unsupported IldcpResponsePacket Type: " +
-        "class org.interledger.ildcp.InterledgerShampooPacketBuilder$ImmutableInterledgerShampooPacket");
+    expectedException.expectMessage("Unsupported IldcpResponsePacket Type: "
+        + "class org.interledger.ildcp.InterledgerShampooPacketBuilder$ImmutableInterledgerShampooPacket");
     new ResponseWrapperMapper().map(shampooPacket);
   }
 
