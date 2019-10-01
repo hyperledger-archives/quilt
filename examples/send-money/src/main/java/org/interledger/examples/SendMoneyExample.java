@@ -13,7 +13,7 @@ import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.sender.SimpleStreamSender;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;

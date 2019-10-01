@@ -7,11 +7,11 @@ import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 

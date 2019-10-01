@@ -23,10 +23,12 @@ package org.interledger.quilt.jackson;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.SharedSecret;
 import org.interledger.quilt.jackson.conditions.Encoding;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,8 +38,10 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -135,6 +139,29 @@ public class InterledgerModuleTest {
 
     assertThat(actualAddressContainer).isEqualTo(expectedContainer);
     assertThat(actualAddressContainer.getCondition()).isEqualTo(condition);
+  }
+
+  @Test
+  public void sharedSecretSerializeDeserialize() throws JsonProcessingException {
+    byte[] key = new byte[32];
+    new Random().nextBytes(key);
+    SharedSecret sharedSecret = SharedSecret.of(key);
+
+    String jsonValue = objectMapper.writeValueAsString(sharedSecret);
+    SharedSecret fromJackson = objectMapper.readValue(jsonValue, SharedSecret.class);
+    assertThat(fromJackson).isEqualTo(sharedSecret);
+  }
+
+  @Test
+  public void sharedSecretBase64SerializeDeserialize() throws JsonProcessingException {
+    byte[] key = new byte[32];
+    new Random().nextBytes(key);
+    String base64 = Base64.getEncoder().encodeToString(key);
+    SharedSecret sharedSecret = SharedSecret.of(key);
+
+    String jsonValue = objectMapper.writeValueAsString(sharedSecret);
+    SharedSecret fromJackson = objectMapper.readValue(jsonValue, SharedSecret.class);
+    assertThat(fromJackson).isEqualTo(sharedSecret);
   }
 
   private static class InterledgerContainer {

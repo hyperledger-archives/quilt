@@ -1,5 +1,7 @@
 package org.interledger.stream.crypto;
 
+import org.interledger.core.SharedSecret;
+
 /**
  * A helper class for performing encryption and decryption operations required by the STREAM protocol.
  *

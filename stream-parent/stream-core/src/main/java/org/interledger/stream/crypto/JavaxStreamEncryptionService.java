@@ -1,5 +1,6 @@
 package org.interledger.stream.crypto;
 
+import org.interledger.core.SharedSecret;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 

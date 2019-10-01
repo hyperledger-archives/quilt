@@ -8,13 +8,13 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
@@ -83,7 +83,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
     Objects.requireNonNull(receiverAddress);
 
     // Will throw if there's an error...
-    final org.interledger.spsp.SharedSecret spspSharedSecret = this.streamConnectionGenerator
+    final SharedSecret spspSharedSecret = this.streamConnectionGenerator
         .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
     final SharedSecret streamSharedSecret = SharedSecret.of(spspSharedSecret.key());
 

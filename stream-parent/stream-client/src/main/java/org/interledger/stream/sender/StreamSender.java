@@ -1,8 +1,8 @@
 package org.interledger.stream.sender;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.crypto.SharedSecret;
 
 import com.google.common.primitives.UnsignedLong;
 

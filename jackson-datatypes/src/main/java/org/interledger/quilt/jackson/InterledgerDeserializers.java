@@ -23,10 +23,13 @@ package org.interledger.quilt.jackson;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.SharedSecret;
 import org.interledger.quilt.jackson.address.InterledgerAddressDeserializer;
 import org.interledger.quilt.jackson.conditions.ConditionDeserializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.quilt.jackson.conditions.FulfillmentDeserializer;
+import org.interledger.quilt.jackson.sharedsecret.SharedSecretDeserializer;
+import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
@@ -62,7 +65,9 @@ public class InterledgerDeserializers extends Deserializers.Base {
     if (type.hasRawClass(InterledgerFulfillment.class)) {
       return new FulfillmentDeserializer(cryptoConditionEncoding);
     }
-
+    if (type.hasRawClass(SharedSecret.class)) {
+      return new SharedSecretDeserializer();
+    }
     return null;
   }
 
