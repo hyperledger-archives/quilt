@@ -195,9 +195,9 @@ public class SendMoneyAggregatorTest {
     when(congestionControllerMock.hasInFlight()).thenReturn(moneyInFlight);
     when(streamConnectionMock.isClosed()).thenReturn(streamConnectionClosed);
     if (moreToSend) {
-      sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.ZERO);
+      sendMoneyAggregator.setAmountSentForTesting(UnsignedLong.ZERO);
     } else {
-      sendMoneyAggregator.setDeliveredAmountForTesting(UnsignedLong.valueOf(10L));
+      sendMoneyAggregator.setAmountSentForTesting(UnsignedLong.valueOf(10L));
     }
   }
 }

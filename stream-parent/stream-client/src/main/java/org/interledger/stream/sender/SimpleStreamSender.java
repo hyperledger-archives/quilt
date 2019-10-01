@@ -56,8 +56,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -107,16 +106,15 @@ public class SimpleStreamSender implements StreamSender {
    */
   public SimpleStreamSender(final StreamEncryptionService streamEncryptionService, final Link link) {
     this(
-        streamEncryptionService, link,
-        new ThreadPoolExecutor(
-            0, 30, 60L, TimeUnit.SECONDS,
-            new SynchronousQueue<>(),
-            new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("simple-stream-sender-%d")
-                .build()
-        )
-    );
+        streamEncryptionService, link, newDefaultExecutor());
+  }
+
+  public static ExecutorService newDefaultExecutor() {
+    ThreadFactory factory = new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("simple-stream-sender-%d")
+        .build();
+    return Executors.newFixedThreadPool(30, factory);
   }
 
 
@@ -286,6 +284,7 @@ public class SimpleStreamSender implements StreamSender {
     private AtomicReference<UnsignedLong> originalAmountToSend;
     private AtomicReference<UnsignedLong> amountLeftToSend;
     private AtomicReference<UnsignedLong> deliveredAmount;
+    private final AtomicReference<UnsignedLong> sentAmount;
     private AtomicBoolean shouldSendSourceAddress;
     private AtomicInteger numFulfilledPackets;
     private AtomicInteger numRejectedPackets;
@@ -335,6 +334,7 @@ public class SimpleStreamSender implements StreamSender {
 
       this.originalAmountToSend = new AtomicReference<>(originalAmountToSend);
       this.amountLeftToSend = new AtomicReference<>(originalAmountToSend);
+      this.sentAmount = new AtomicReference<>(UnsignedLong.ZERO);
       this.deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
 
       this.numFulfilledPackets = new AtomicInteger(0);
@@ -360,9 +360,10 @@ public class SimpleStreamSender implements StreamSender {
 
             // Do all the work of sending packetized money for this Stream/sendMoney request.
             this.sendMoneyPacketized();
-
             return SendMoneyResult.builder()
                 .amountDelivered(deliveredAmount.get())
+                .amountSent(sentAmount.get())
+                .amountLeftToSend(this.amountLeftToSend.get())
                 .originalAmount(originalAmountToSend.get())
                 .numFulfilledPackets(numFulfilledPackets.get())
                 .numRejectPackets(numRejectedPackets.get())
@@ -373,7 +374,7 @@ public class SimpleStreamSender implements StreamSender {
             if (error != null) {
               logger.error("SendMoney Stream failed: " + error.getMessage(), error);
             }
-            if (!originalAmountToSend.get().equals(this.deliveredAmount.get())) {
+            if (!$.successfulPayment()) {
               logger.error("Failed to send full amount");
             }
           });
@@ -387,8 +388,9 @@ public class SimpleStreamSender implements StreamSender {
 
       final AtomicBoolean timeoutReached = new AtomicBoolean(false);
 
+      final ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
+
       timeout.ifPresent($ -> {
-        ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
         timeoutMonitor.schedule(
             () -> {
               timeoutReached.set(true);
@@ -411,8 +413,6 @@ public class SimpleStreamSender implements StreamSender {
           }
           continue;
         }
-
-        this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
 
         // Load up the STREAM packet
         final UnsignedLong sequence;
@@ -467,6 +467,8 @@ public class SimpleStreamSender implements StreamSender {
             .data(streamPacketData)
             .build();
 
+        this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(amountToSend));
+
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
           if (!timeoutReached.get()) {
@@ -518,6 +520,7 @@ public class SimpleStreamSender implements StreamSender {
           logger.error("Submit failed", e);
         }
       }
+      timeoutMonitor.shutdownNow();
     }
 
     @VisibleForTesting
@@ -604,6 +607,7 @@ public class SimpleStreamSender implements StreamSender {
       if (streamPacket.interledgerPacketType() == InterledgerPacketType.FULFILL) {
         // TODO check that the sequence matches our outgoing packet
         this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(streamPacket.prepareAmount()));
+        this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(UnsignedLong.valueOf(originalPreparePacket.getAmount())));
       } else {
         logger.warn("Unable to parse STREAM packet from fulfill data. "
                 + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
@@ -770,6 +774,8 @@ public class SimpleStreamSender implements StreamSender {
     SendMoneyResult collectSendMoneyStatistics() {
       return SendMoneyResult.builder()
           .amountDelivered(this.deliveredAmount.get())
+          .amountSent(this.sentAmount.get())
+          .amountLeftToSend(this.amountLeftToSend.get())
           .numFulfilledPackets(this.numFulfilledPackets.get())
           .numRejectPackets(this.numRejectedPackets.get())
           .build();
@@ -777,18 +783,18 @@ public class SimpleStreamSender implements StreamSender {
 
     @VisibleForTesting
     boolean moreToSend() {
-      return this.deliveredAmount.get().compareTo(this.originalAmountToSend.get()) < 0;
+      return this.sentAmount.get().compareTo(this.originalAmountToSend.get()) < 0;
     }
 
     /**
      * Helper method to mess with delivered amount for the purpose of testing loop breaking conditions.
      *
-     * @param deliveredAmount An {@link UnsignedLong} representing the deliveredAmount to set.
+     * @param sentAmount An {@link UnsignedLong} representing the deliveredAmount to set.
      */
     @VisibleForTesting
-    void setDeliveredAmountForTesting(final UnsignedLong deliveredAmount) {
-      Objects.requireNonNull(deliveredAmount);
-      this.deliveredAmount.set(deliveredAmount);
+    void setAmountSentForTesting(final UnsignedLong sentAmount) {
+      Objects.requireNonNull(sentAmount);
+      this.sentAmount.set(sentAmount);
     }
   }
 }

@@ -15,6 +15,7 @@ import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.core.SharedSecret;
 import org.interledger.stream.sender.SimpleStreamSender;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -35,11 +36,9 @@ public class SendMoneyExample {
   // NOTE - replace this with the passkey for your sender account
   private static final String SENDER_PASS_KEY = "jxelaxvqz2ne6";
   // NOTE - replace this with the payment pointer for your receiver account
-  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_jwmqq7kv/spsp";
+  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_uk152ktl/spsp";
 
   private static final String TESTNET_URI = "https://rs3.xpring.dev";
-
-  private static final int ASSET_SCALE = 9;
 
   private static final InterledgerAddress SENDER_ADDRESS =
       InterledgerAddress.of("test.xpring-dev.rs3").with(SENDER_ACCOUNT_USERNAME);
@@ -63,7 +62,7 @@ public class SendMoneyExample {
 
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(SharedSecret.of(connectionDetails.sharedSecret().value()),
-        SENDER_ADDRESS, connectionDetails.destinationAddress(), UnsignedLong.valueOf(1000))
+        SENDER_ADDRESS, connectionDetails.destinationAddress(), UnsignedLong.valueOf(100000), Duration.ofMillis(30000))
         .get();
 
     System.out.println("Send money result: " + result);
