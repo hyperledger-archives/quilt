@@ -84,6 +84,6 @@ public class IldcpRequestPacketTest {
         first.toString()).startsWith(
             "IldcpRequestPacket{destination=InterledgerAddress{value=peer.config}, amount=0, executionCondition="
                 + "Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}, expiresAt=2019-12-25T01:02:03.996Z,"
-                + " data=[B@");
+                + " data=[]");
   }
 }
