@@ -26,7 +26,7 @@ using the Octet Encoding Rules (OER).
 
 The examples modules shows how to use the Quilt library in your code.
 
-[READ MORE](./examples/README.md)
+[READ MORE](examples-parent/README.md)
 
 ## Usage
 
