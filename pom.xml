@@ -106,7 +106,7 @@
     <module>jackson-datatypes</module>
     <module>spsp-parent</module>
     <module>stream-parent</module>
-    <module>examples</module>
+    <module>examples-parent</module>
   </modules>
 
   <dependencies>
