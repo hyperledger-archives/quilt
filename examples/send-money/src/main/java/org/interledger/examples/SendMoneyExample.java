@@ -12,6 +12,7 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
+import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.core.SharedSecret;
 import org.interledger.stream.sender.SimpleStreamSender;
@@ -62,7 +63,8 @@ public class SendMoneyExample {
 
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(SharedSecret.of(connectionDetails.sharedSecret().value()),
-        SENDER_ADDRESS, connectionDetails.destinationAddress(), UnsignedLong.valueOf(100000), Duration.ofMillis(30000))
+        SENDER_ADDRESS, connectionDetails.destinationAddress(), UnsignedLong.valueOf(100000), Denominations.XRP,
+        Duration.ofMillis(30000))
         .get();
 
     System.out.println("Send money result: " + result);

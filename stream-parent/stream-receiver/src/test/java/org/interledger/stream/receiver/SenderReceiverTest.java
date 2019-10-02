@@ -9,6 +9,7 @@ import org.interledger.core.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.Denomination;
+import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
@@ -65,7 +66,8 @@ public class SenderReceiverTest {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -85,7 +87,8 @@ public class SenderReceiverTest {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         RIGHT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -155,7 +158,8 @@ public class SenderReceiverTest {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -184,7 +188,8 @@ public class SenderReceiverTest {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         LEFT_SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);

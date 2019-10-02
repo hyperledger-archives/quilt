@@ -3,6 +3,7 @@ package org.interledger.stream.sender;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
@@ -10,8 +11,12 @@ import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
+import org.interledger.stream.Denominations;
+import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
+import org.interledger.stream.StreamConnectionId;
+import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 
@@ -65,13 +70,20 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
-
-    final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-
+    final StreamConnection streamConnection = new StreamConnection(StreamConnectionId.of("foo"));
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .sharedSecret(sharedSecret)
+        .sourceAddress(sourceAddress)
+        .destinationAddress(destinationAddress)
+        .amount(originalAmountToSend)
+        .timeout(Optional.of(Duration.ofSeconds(60)))
+        .denomination(Denominations.XRP)
+        .exchangeRateCalculator(new NoOpExchangeRateCalculator())
+        .build();
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, sharedSecret, sourceAddress, destinationAddress, originalAmountToSend,
-        Optional.of(Duration.ofSeconds(60))
+        streamEncryptionServiceMock, request
     );
   }
 
@@ -84,8 +96,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 0 Link calls since close Connection is not called automatically
-    Mockito.verifyNoMoreInteractions(linkMock);
+    // Expect 1 Link call due to preflight check
+    Mockito.verify(linkMock, times(1)).sendPacket(any());
   }
 
   @Test
@@ -97,8 +109,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 0 Link calls since close Connection is not called automatically
-    Mockito.verifyNoMoreInteractions(linkMock);
+    // Expect 1 Link call due to preflight check
+    Mockito.verify(linkMock, times(1)).sendPacket(any());
   }
 
   @Test
@@ -110,8 +122,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 0 Link calls since close Connection is not called automatically
-    Mockito.verifyNoMoreInteractions(linkMock);
+    // Expect 1 Link call due to preflight check
+    Mockito.verify(linkMock, times(1)).sendPacket(any());
   }
 
   @Test
@@ -124,8 +136,8 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 0 Link calls since close Connection is not called automatically
-    Mockito.verifyNoMoreInteractions(linkMock);
+    // Expect 1 Link call due to preflight check
+    Mockito.verify(linkMock, times(1)).sendPacket(any());
   }
 
   @Test

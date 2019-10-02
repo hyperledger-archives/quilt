@@ -21,6 +21,8 @@ import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.Account;
 import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
+import org.interledger.stream.Denomination;
+import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 
@@ -156,7 +158,7 @@ public class SimpleStreamSenderIT {
 
   /**
    * One call to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
-   * UnsignedLong)} that involves a single packet for the entire payment.
+   * UnsignedLong, Denomination)} that involves a single packet for the entire payment.
    */
   @Test
   public void sendMoneySinglePacket() {
@@ -172,7 +174,8 @@ public class SimpleStreamSenderIT {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -185,8 +188,9 @@ public class SimpleStreamSenderIT {
 
   /**
    * In general, calling sendMoney using the same Connection (i.e., SharedSecret) in parallel should not be done.
-   * However, the implementation is smart enough to allow parallel requests to run in parallel, which this test
-   * validates.
+   * However, the implementation is smart enough to queue up parallel requests and only allow one to run at a time.
+   * However, sometimes waiting tasks will timeout, in which case a particular `sendMoney` may throw an exception. This
+   * test does not expect any exceptions.
    */
   @Test
   public void sendMoneyOnSameConnectionInParallel() {
@@ -206,7 +210,8 @@ public class SimpleStreamSenderIT {
           SharedSecret.of(connectionDetails.sharedSecret().key()),
           SENDER_ADDRESS,
           connectionDetails.destinationAddress(),
-          paymentAmount
+          paymentAmount,
+          Denominations.XRP
       );
       results.add(job);
     }
@@ -264,7 +269,8 @@ public class SimpleStreamSenderIT {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -349,6 +355,7 @@ public class SimpleStreamSenderIT {
             SENDER_ADDRESS,
             connectionDetails.destinationAddress(),
             paymentAmount,
+            Denominations.XRP,
             Duration.ofMillis(100)).join();
 
     assertThat(sendMoneyResult.successfulPayment()).isFalse();
@@ -403,6 +410,7 @@ public class SimpleStreamSenderIT {
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount,
+        Denominations.XRP,
         Duration.ofMillis(100L)
     ).whenComplete(($, error) -> {
       assertThat(error).isNotNull();
@@ -442,7 +450,8 @@ public class SimpleStreamSenderIT {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
