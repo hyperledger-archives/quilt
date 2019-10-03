@@ -20,9 +20,10 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.core.Immutable;
+
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value;
-import org.interledger.core.Immutable;
 
 /**
  * <p>Used to advertise to the other stream party that the frame sender has more money to send, but this would exceed

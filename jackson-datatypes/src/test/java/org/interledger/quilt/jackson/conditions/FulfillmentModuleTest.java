@@ -20,6 +20,8 @@ package org.interledger.quilt.jackson.conditions;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerFulfillment;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,8 +35,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Validates the functionality of {@link ConditionModule}.
@@ -117,14 +117,14 @@ public class FulfillmentModuleTest extends AbstractConditionModuleTest {
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object obj) {
+      if (this == obj) {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (obj == null || getClass() != obj.getClass()) {
         return false;
       }
-      FulfillmentContainer that = (FulfillmentContainer) o;
+      FulfillmentContainer that = (FulfillmentContainer) obj;
       return Objects.equals(getFulfillment(), that.getFulfillment());
     }
 

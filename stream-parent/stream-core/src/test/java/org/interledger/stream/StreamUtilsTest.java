@@ -13,7 +13,7 @@ import org.junit.Test;
 /**
  * Unit tests for {@link StreamUtils}.
  *
- * Note: Test values were taken from the Interledger-rs project, which mimic the Interledger-js test values.
+ * <p>Note: Test values were taken from the Interledger-rs project, which mimic the Interledger-js test values.</p>
  *
  * @see "https://github.com/interledger-rs/interledger-rs/blob/master/crates/interledger-stream/src/crypto.rs"
  */

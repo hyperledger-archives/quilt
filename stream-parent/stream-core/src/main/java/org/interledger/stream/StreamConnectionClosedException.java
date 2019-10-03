@@ -37,8 +37,10 @@ public class StreamConnectionClosedException extends Exception {
   }
 
   /**
-   * Constructs a new runtime exception with the specified detail message and cause.  <p>Note that the detail message
-   * associated with {@code cause} is <i>not</i> automatically incorporated in this runtime exception's detail message.
+   * Constructs a new runtime exception with the specified detail message and cause.
+   *
+   * <p>Note that the detail message associated with {@code cause} is <i>not</i>
+   * automatically incorporated in this runtime exception's detail message.</p>
    *
    * @param message            the detail message (which is saved for later retrieval by the {@link #getMessage()}
    *                           method).
@@ -109,8 +111,8 @@ public class StreamConnectionClosedException extends Exception {
    * @return a string representation of this throwable.
    */
   public String toString() {
-    String s = getClass().getName();
+    String str = getClass().getName();
     String message = getLocalizedMessage() + " streamConnectionId=" + streamConnectionId.value();
-    return (message != null) ? (s + ": " + message) : s;
+    return (message != null) ? (str + ": " + message) : str;
   }
 }

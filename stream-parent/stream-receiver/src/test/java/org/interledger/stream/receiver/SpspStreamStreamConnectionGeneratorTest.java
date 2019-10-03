@@ -64,7 +64,8 @@ public class SpspStreamStreamConnectionGeneratorTest {
       connectionGenerator.deriveSecretFromAddress(serverSecret, receiverAddress);
     } catch (StreamException e) {
       assertThat(e.getMessage()).isEqualTo(
-          "Invalid Receiver Address (should have been 32 byte long): InterledgerAddress{value=example.receiver.55412631d66b49073b0c36e17a29ba266164fc508bd3eb1c8fc718a02907ce01}");
+          "Invalid Receiver Address (should have been 32 byte long): InterledgerAddress{"
+              + "value=example.receiver.55412631d66b49073b0c36e17a29ba266164fc508bd3eb1c8fc718a02907ce01}");
       throw e;
     }
   }

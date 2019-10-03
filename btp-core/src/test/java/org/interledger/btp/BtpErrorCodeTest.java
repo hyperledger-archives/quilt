@@ -24,6 +24,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class BtpErrorCodeTest {
 
   @Test
@@ -31,6 +34,36 @@ public class BtpErrorCodeTest {
 
     for (BtpErrorCode code : BtpErrorCode.values()) {
       assertEquals(code, BtpErrorCode.fromCodeAsString(code.getCodeIdentifier()));
+    }
+  }
+
+  @Test
+  public void testBtpErrorCodeDescriptions() {
+    final BtpErrorCode[] errorCodes = BtpErrorCode.values();
+
+    Map<String, String> errorToDescriptionMap = new HashMap<>();
+    errorToDescriptionMap.put(BtpErrorCode.F00_NotAcceptedError.getCodeName(),
+        BtpErrorCode.F00_NotAcceptedError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F01_InvalidFieldsError.getCodeName(),
+        BtpErrorCode.F01_InvalidFieldsError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F03_TransferNotFoundError.getCodeName(),
+        BtpErrorCode.F03_TransferNotFoundError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F04_InvalidFulfillmentError.getCodeName(),
+        BtpErrorCode.F04_InvalidFulfillmentError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F05_DuplicateIdError.getCodeName(),
+        BtpErrorCode.F05_DuplicateIdError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F06_AlreadyRolledBackError.getCodeName(),
+        BtpErrorCode.F06_AlreadyRolledBackError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F07_AlreadyFulfilledError.getCodeName(),
+        BtpErrorCode.F07_AlreadyFulfilledError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.F08_InsufficientBalanceError.getCodeName(),
+        BtpErrorCode.F08_InsufficientBalanceError.getCodeDescription());
+    errorToDescriptionMap.put(BtpErrorCode.T00_UnreachableError.getCodeName(),
+        BtpErrorCode.T00_UnreachableError.getCodeDescription());
+
+    assertEquals(errorCodes.length, errorToDescriptionMap.size());
+    for (BtpErrorCode code : errorCodes) {
+      assertEquals(code.getCodeDescription(), errorToDescriptionMap.get(code.getCodeName()));
     }
   }
 
