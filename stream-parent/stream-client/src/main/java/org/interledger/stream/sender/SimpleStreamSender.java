@@ -358,12 +358,7 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(originalAmountToSend);
 
       try {
-        Optional<ConnectionAssetDetailsFrame> assetDetails = preflightCheck();
-        if (assetDetails.isPresent()) {
-          receiverDenomination = Optional.of(Denomination.builder()
-              .from(assetDetails.get().sourceDenomination())
-              .build());
-        }
+        receiverDenomination = preflightCheck();
       } catch (StreamConnectionClosedException e) {
         return CompletableFuture.completedFuture(SendMoneyResult.builder().build());
       } catch (Exception e) {
@@ -401,7 +396,7 @@ public class SimpleStreamSender implements StreamSender {
      * TODO: See https://github.com/hyperledger/quilt/issues/308 to determine when the Stream and/or Connection should
      * be closed.
      */
-    private Optional<ConnectionAssetDetailsFrame> preflightCheck() throws StreamConnectionClosedException {
+    private Optional<Denomination> preflightCheck() throws StreamConnectionClosedException {
       // Load up the STREAM packet
       final UnsignedLong sequence;
       try {
@@ -450,12 +445,13 @@ public class SimpleStreamSender implements StreamSender {
 
       InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
 
-      final Function<InterledgerResponsePacket, Optional<ConnectionAssetDetailsFrame>> readDetails = (p) -> {
+      final Function<InterledgerResponsePacket, Optional<Denomination>> readDetails = (p) -> {
         final StreamPacket packet = this.fromEncrypted(sharedSecret, p.getData());
         return packet.frames().stream()
             .filter(f -> f.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
             .findFirst()
-            .map(f -> (ConnectionAssetDetailsFrame) f);
+            .map(f -> (ConnectionAssetDetailsFrame) f)
+            .map(f -> Denomination.builder().from(f.sourceDenomination()).build());
       };
 
       return responsePacket.map(
