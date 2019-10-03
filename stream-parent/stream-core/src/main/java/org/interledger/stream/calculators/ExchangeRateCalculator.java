@@ -4,6 +4,7 @@ import com.google.common.primitives.UnsignedLong;
 import org.interledger.stream.Denomination;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 public interface ExchangeRateCalculator {
 
@@ -12,11 +13,15 @@ public interface ExchangeRateCalculator {
    * @param sendAmount                   amount to send.
    * @param sendDenomination             asset code and scale of the amount to send.
    * @param expectedReceivedDenomination asset code and scale to apply to the amount the receiver should receive
-   *                                     when computing the total for an exchange rate.
+   *                                     when computing the total for an exchange rate. Optional if denomination of
+   *                                     receiver is unknown. ExchangeRateCalculator implementations should throw a
+   *                                     {@link NoExchangeRateException}
    * @return                             the minimum amount the receiver should accept.
+   * @throws NoExchangeRateException if exchange rate could not be calculated
    */
   UnsignedLong calculate(UnsignedLong sendAmount, Denomination sendDenomination,
-                         Denomination expectedReceivedDenomination);
+                         Optional<Denomination> expectedReceivedDenomination)
+    throws NoExchangeRateException;
 
   /**
    * Convenience method to compute the BigDecimal representation of an amount for a given asset scale

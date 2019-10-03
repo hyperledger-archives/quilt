@@ -364,7 +364,6 @@ public class SimpleStreamSender implements StreamSender {
               .from(assetDetails.get().sourceDenomination())
               .build());
         }
-        System.out.println(assetDetails);
       } catch (StreamConnectionClosedException e) {
         return CompletableFuture.completedFuture(SendMoneyResult.builder().build());
       } catch (Exception e) {
@@ -516,10 +515,8 @@ public class SimpleStreamSender implements StreamSender {
                 .build()
         );
 
-        UnsignedLong receiverMinimum = receiverDenomination
-            .map(d -> exchangeRateCalculator.calculate(amountToSend, senderDenomination, d))
-            .orElse(UnsignedLong.ZERO);
-
+        UnsignedLong receiverMinimum =
+            exchangeRateCalculator.calculate(amountToSend, senderDenomination, receiverDenomination);
 
         final StreamPacket streamPacket = StreamPacket.builder()
             .interledgerPacketType(InterledgerPacketType.PREPARE)
