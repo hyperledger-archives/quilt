@@ -357,10 +357,19 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(destinationAddress);
       Objects.requireNonNull(originalAmountToSend);
 
+      Instant startPreflight = Instant.now();
       try {
         receiverDenomination = preflightCheck();
       } catch (StreamConnectionClosedException e) {
-        return CompletableFuture.completedFuture(SendMoneyResult.builder().build());
+        return CompletableFuture.completedFuture(SendMoneyResult.builder()
+            .sendMoneyDuration(Duration.between(startPreflight, Instant.now()))
+            .numRejectPackets(1)
+            .numFulfilledPackets(0)
+            .amountDelivered(UnsignedLong.ZERO)
+            .amountSent(UnsignedLong.ZERO)
+            .originalAmount(originalAmountToSend.get())
+            .amountLeftToSend(originalAmountToSend.get())
+            .build());
       } catch (Exception e) {
         logger.warn("Preflight check failed", e);
       }
