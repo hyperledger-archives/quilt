@@ -365,7 +365,6 @@ public class SimpleStreamSender implements StreamSender {
               .from(assetDetails.get().sourceDenomination())
               .build());
         }
-        System.out.println(assetDetails);
       } catch (StreamConnectionClosedException e) {
         return CompletableFuture.completedFuture(SendMoneyResult.builder().build());
       } catch (Exception e) {

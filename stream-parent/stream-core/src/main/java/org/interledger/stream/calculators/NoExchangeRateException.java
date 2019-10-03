@@ -10,8 +10,4 @@ public class NoExchangeRateException extends RuntimeException {
     super(message);
   }
 
-  public NoExchangeRateException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
 }
