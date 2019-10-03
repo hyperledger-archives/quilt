@@ -77,4 +77,57 @@ public class BtpErrorTest {
     assertArrayEquals(error.getErrorData(), ERROR_DATA);
   }
 
+  @Test
+  public void testToString() {
+    final String expectedResponse = "BtpError{ "
+        + "requestId=1, "
+        + "triggeredAt="+TRIGGERED_AT+", "
+        + "errorData=AAEC, "
+        + "subProtocols=[BtpSubProtocol{contentType=MIME_TEXT_PLAIN_UTF8, protocolName=TEST, data=VGVzdCBEYXRh}], "
+        + "errorCode=F00_NotAcceptedError}";
+    final String response =  error.toString();
+    assertEquals(expectedResponse, response);
+  }
+
+  @Test
+  public void testToStringWithoutErrorData() {
+    final BtpError testError = BtpError.builder()
+        .requestId(REQUEST_ID)
+        .errorCode(BtpErrorCode.F00_NotAcceptedError)
+        .errorData()
+        .triggeredAt(TRIGGERED_AT)
+        .subProtocols(SUB_PROTOCOLS)
+        .build();
+
+    final String expectedResponse = "BtpError{ "
+        + "requestId=1, "
+        + "triggeredAt="+TRIGGERED_AT+", "
+        + "errorData=, "
+        + "subProtocols=[BtpSubProtocol{contentType=MIME_TEXT_PLAIN_UTF8, protocolName=TEST, data=VGVzdCBEYXRh}], "
+        + "errorCode=F00_NotAcceptedError}";
+
+    String response = testError.toString();
+    assertEquals(expectedResponse, response);
+  }
+
+  @Test
+  public void testToStringWithoutSubProtocolsAndErrorData() {
+    final BtpError testError = BtpError.builder()
+        .requestId(REQUEST_ID)
+        .errorCode(BtpErrorCode.F00_NotAcceptedError)
+        .errorData()
+        .triggeredAt(TRIGGERED_AT)
+        .build();
+
+    final String expectedResponse = "BtpError{ "
+        + "requestId=1, "
+        + "triggeredAt="+TRIGGERED_AT+", "
+        + "errorData=, "
+        + "subProtocols=[], "
+        + "errorCode=F00_NotAcceptedError}";
+
+    String response = testError.toString();
+    assertEquals(expectedResponse, response);
+  }
+
 }

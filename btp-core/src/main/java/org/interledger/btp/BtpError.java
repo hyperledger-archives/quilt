@@ -26,6 +26,7 @@ import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 import java.time.Instant;
+import java.util.Base64;
 
 public interface BtpError extends BtpResponsePacket {
 
@@ -89,7 +90,7 @@ public interface BtpError extends BtpResponsePacket {
       return "BtpError{"
           + " requestId=" + getRequestId()
           + ", triggeredAt=" + getTriggeredAt()
-          + ", errorData=" + getErrorData() == null ? null : new String(getErrorData())
+          + ", errorData=" + Base64.getEncoder().encodeToString(getErrorData())
           + ", subProtocols=" + getSubProtocols()
           + ", errorCode=" + getErrorCode()
           + "}";
