@@ -99,6 +99,27 @@ public class SenderReceiverTest {
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
+  @Test
+  public void testSendCannotDetermineReceiverDenomination() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
+
+    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
+    final SendMoneyResult sendMoneyResult = rightStreamNode.streamSender().sendMoney(
+        SharedSecret.of(connectionDetails.sharedSecret().key()),
+        RIGHT_SENDER_ADDRESS,
+        connectionDetails.destinationAddress(),
+        paymentAmount,
+        Denominations.XRP
+    ).join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(1);
+    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
   /**
    * Simulate a left-to-right STREAM with 20% packet loss due to T03 errors.
    */

@@ -26,6 +26,7 @@ import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
+import org.interledger.stream.calculators.NoExchangeRateException;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
@@ -516,10 +517,8 @@ public class SimpleStreamSender implements StreamSender {
                 .build()
         );
 
-        UnsignedLong receiverMinimum = receiverDenomination
-            .map(d -> exchangeRateCalculator.calculate(amountToSend, senderDenomination, d))
-            .orElse(UnsignedLong.ZERO);
-
+        UnsignedLong receiverMinimum =
+            exchangeRateCalculator.calculate(amountToSend, senderDenomination, receiverDenomination);
 
         final StreamPacket streamPacket = StreamPacket.builder()
             .interledgerPacketType(InterledgerPacketType.PREPARE)
