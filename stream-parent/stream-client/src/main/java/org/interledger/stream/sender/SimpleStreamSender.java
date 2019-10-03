@@ -26,7 +26,6 @@ import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
-import org.interledger.stream.calculators.NoExchangeRateException;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
