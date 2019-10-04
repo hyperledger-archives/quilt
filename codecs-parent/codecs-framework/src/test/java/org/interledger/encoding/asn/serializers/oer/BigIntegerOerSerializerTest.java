@@ -20,13 +20,13 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import com.google.common.primitives.Longs;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 
 /**
@@ -38,8 +38,7 @@ public class BigIntegerOerSerializerTest extends AbstractSerializerTest<BigInteg
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER
-   *                     encoding.
+   * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code intValue}.
    */
   public BigIntegerOerSerializerTest(final BigInteger inputValue, final byte[] asn1OerBytes) {
@@ -55,98 +54,92 @@ public class BigIntegerOerSerializerTest extends AbstractSerializerTest<BigInteg
         {
             // Input Value as a long; Expected byte[] in ASN.1
             // 0
-            {BigInteger.ZERO, Longs.toByteArray(0L)},
+            {BigInteger.ZERO, Base64.getDecoder().decode("AQA=")},
             // 1
-            {BigInteger.ONE, Longs.toByteArray(1L)},
+            {BigInteger.ONE, Base64.getDecoder().decode("AQE=")},
             // 2
-            {new BigInteger("2"), Longs.toByteArray(2L)},
+            {new BigInteger("2"), Base64.getDecoder().decode("AQI=")},
             // 3
-            {new BigInteger("254"), Longs.toByteArray(254L)},
+            {new BigInteger("254"), Base64.getDecoder().decode("Af4=")},
             // 4
-            {new BigInteger("255"), Longs.toByteArray(255L)},
+            {new BigInteger("255"), Base64.getDecoder().decode("Af8=")},
 
             // Two Bytes (16 bits)
             // 5
-            {new BigInteger("256"), Longs.toByteArray(256L)},
+            {new BigInteger("256"), Base64.getDecoder().decode("AgEA")},
             // 6
-            {new BigInteger("257"), Longs.toByteArray(257L)},
+            {new BigInteger("257"), Base64.getDecoder().decode("AgEB")},
             // 7
-            {new BigInteger("65534"), Longs.toByteArray(65534L)},
+            {new BigInteger("65534"), Base64.getDecoder().decode("Av/+")},
             // 8
-            {new BigInteger("65535"), Longs.toByteArray(65535L)},
+            {new BigInteger("65535"), Base64.getDecoder().decode("Av//")},
 
             // Three Bytes (24 bits)
             // 9
-            {new BigInteger("65536"), Longs.toByteArray(65536L)},
+            {new BigInteger("65536"), Base64.getDecoder().decode("AwEAAA==")},
             // 10
-            {new BigInteger("65537"), Longs.toByteArray(65537L)},
+            {new BigInteger("65537"), Base64.getDecoder().decode("AwEAAQ==")},
             // 11
-            {new BigInteger("16777214"), Longs.toByteArray(16777214L)},
+            {new BigInteger("16777214"), Base64.getDecoder().decode("A////g==")},
             // 12
-            {new BigInteger("16777215"), Longs.toByteArray(16777215L)},
+            {new BigInteger("16777215"), Base64.getDecoder().decode("A////w==")},
 
             // Four Bytes (32 bits)
             // 13
-            {new BigInteger("16777216"), Longs.toByteArray(16777216L)},
+            {new BigInteger("16777216"), Base64.getDecoder().decode("BAEAAAA=")},
             // 14
-            {new BigInteger("16777217"), Longs.toByteArray(16777217L)},
+            {new BigInteger("16777217"), Base64.getDecoder().decode("BAEAAAE=")},
             // 15
-            {new BigInteger("4294967294"), Longs.toByteArray(4294967294L)},
+            {new BigInteger("4294967294"), Base64.getDecoder().decode("BP////4=")},
             // 16
-            {new BigInteger("4294967295"), Longs.toByteArray(4294967295L)},
+            {new BigInteger("4294967295"), Base64.getDecoder().decode("BP////8=")},
 
             // Five Bytes (40 bits)
             // 17
-            {new BigInteger("4294967296"), Longs.toByteArray(4294967296L)},
+            {new BigInteger("4294967296"), Base64.getDecoder().decode("BQEAAAAA")},
             // 18
-            {new BigInteger("4294967297"), Longs.toByteArray(4294967297L)},
+            {new BigInteger("4294967297"), Base64.getDecoder().decode("BQEAAAAB")},
             // 19
-            {new BigInteger("1099511627774"), Longs.toByteArray(1099511627774L)},
+            {new BigInteger("1099511627774"), Base64.getDecoder().decode("Bf/////+")},
             // 20
-            {new BigInteger("1099511627775"), Longs.toByteArray(1099511627775L)},
+            {new BigInteger("1099511627775"), Base64.getDecoder().decode("Bf//////")},
 
             // Six Bytes (48 bits)
             // 21
-            {new BigInteger("1099511627776"), Longs.toByteArray(1099511627776L)},
+            {new BigInteger("1099511627776"), Base64.getDecoder().decode("BgEAAAAAAA==")},
             // 22
-            {new BigInteger("1099511627777"), Longs.toByteArray(1099511627777L)},
+            {new BigInteger("1099511627777"), Base64.getDecoder().decode("BgEAAAAAAQ==")},
             // 23
-            {new BigInteger("281474976710654"), Longs.toByteArray(281474976710654L)},
+            {new BigInteger("281474976710654"), Base64.getDecoder().decode("Bv///////g==")},
             // 24
-            {new BigInteger("281474976710655"), Longs.toByteArray(281474976710655L)},
+            {new BigInteger("281474976710655"), Base64.getDecoder().decode("Bv///////w==")},
 
             // Seven Bytes (56 bits)
             // 25
-            {new BigInteger("281474976710656"), Longs.toByteArray(281474976710656L)},
+            {new BigInteger("281474976710656"), Base64.getDecoder().decode("BwEAAAAAAAA=")},
             // 26
-            {new BigInteger("281474976710657"), Longs.toByteArray(281474976710657L)},
+            {new BigInteger("281474976710657"), Base64.getDecoder().decode("BwEAAAAAAAE=")},
             // 27
-            {new BigInteger("72057594037927934"), Longs.toByteArray(72057594037927934L)},
+            {new BigInteger("72057594037927934"), Base64.getDecoder().decode("B/////////4=")},
             // 28 (max 7-bit long value)
-            {new BigInteger("72057594037927935"), Longs.toByteArray(72057594037927935L)},
+            {new BigInteger("72057594037927935"), Base64.getDecoder().decode("B/////////8=")},
 
             // 29
-            {new BigInteger("9223372036854775805"), Longs.toByteArray(Long.MAX_VALUE - 2L)},
+            {new BigInteger("9223372036854775805"), Base64.getDecoder().decode("CH/////////9")},
             // 30
-            {new BigInteger("9223372036854775806"), Longs.toByteArray(Long.MAX_VALUE - 1L)},
+            {new BigInteger("9223372036854775806"), Base64.getDecoder().decode("CH/////////+")},
             // 31
-            {new BigInteger("9223372036854775807"), Longs.toByteArray(Long.MAX_VALUE)},
+            {new BigInteger("9223372036854775807"), Base64.getDecoder().decode("CH//////////")},
 
             // 32 Eight bytes, beyond Long.MAX_VALUE
-            {new BigInteger("9223372036854775808"),
-                new byte[] {(byte) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+            {new BigInteger("9223372036854775808"), Base64.getDecoder().decode("CIAAAAAAAAAA")},
 
             // 33
-            {new BigInteger("9223372036854775809"),
-                new byte[] {(byte) 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}},
+            {new BigInteger("9223372036854775809"), Base64.getDecoder().decode("CIAAAAAAAAAB")},
             // 33
-            {new BigInteger("18446744073709551614"),
-                new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-                    (byte) 0xFF, (byte) 0xFF, (byte) 0xFE}},
+            {new BigInteger("18446744073709551614"), Base64.getDecoder().decode("CP/////////+")},
             // 34
-            {new BigInteger("18446744073709551615"),
-                new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
-                    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF}}
+            {new BigInteger("18446744073709551615"), Base64.getDecoder().decode("CP//////////")},
         }
     );
   }

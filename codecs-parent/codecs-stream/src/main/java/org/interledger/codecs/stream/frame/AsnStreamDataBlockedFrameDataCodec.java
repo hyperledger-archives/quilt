@@ -21,11 +21,8 @@ package org.interledger.codecs.stream.frame;
  */
 
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
-import org.interledger.encoding.asn.codecs.AsnUint64Codec;
-import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
 import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.stream.frames.StreamDataBlockedFrame;
-import org.interledger.stream.frames.StreamDataMaxFrame;
 
 public class AsnStreamDataBlockedFrameDataCodec extends AsnSequenceCodec<StreamDataBlockedFrame> {
 

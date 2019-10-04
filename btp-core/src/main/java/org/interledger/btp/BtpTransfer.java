@@ -22,9 +22,8 @@ package org.interledger.btp;
 
 import org.interledger.core.Immutable;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
-
-import java.math.BigInteger;
 
 /**
  * Used to send proof of payment, payment channel claims, or other settlement information to the other connector. The
@@ -37,7 +36,7 @@ public interface BtpTransfer extends BtpRequestPacket {
     return new BtpTransferBuilder();
   }
 
-  BigInteger getAmount();
+  UnsignedLong getAmount();
 
   @Immutable
   abstract class AbstractBtpTransfer implements BtpTransfer {

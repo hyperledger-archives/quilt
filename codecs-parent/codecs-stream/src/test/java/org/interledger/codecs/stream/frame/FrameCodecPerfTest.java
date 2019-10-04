@@ -34,7 +34,7 @@
  import java.util.Locale;
 
  /**
-  * Unit test to see how long it takes to serialize/deserialize frames when the codec use a BigInteger vs an
+  * Unit test to see how long it takes to serialize/deserialize frames when the codec use a UnsignedLong vs an
   * UnsignedLong vs a Long.
   */
  public class FrameCodecPerfTest {
@@ -52,8 +52,8 @@
     * UnsignedLong: 10M Frames --> 6.4s (1,562,500 fps)
     * UnsignedLong: 100M Frames --> 52s (1,922,485 fps)
     *
-    * BigInteger: 1M Frames --> 1.06s (943,396 fps)
-    * BigInteger: 10M Frames --> 6.9s (1,449,275 fps)
+    * UnsignedLong: 1M Frames --> 1.06s (943,396 fps)
+    * UnsignedLong: 10M Frames --> 6.9s (1,449,275 fps)
     * </pre>
     */
    @Test
@@ -61,7 +61,7 @@
      final CodecContext context = StreamCodecContextFactory.oer();
      final ConnectionDataMaxFrame frame = ConnectionDataMaxFrame.builder()
          .maxOffset(UnsignedLong.ZERO)
-         //.maxOffset(BigInteger.ZERO)
+         //.maxOffset(UnsignedLong.ZERO)
          //.maxOffset(0)
          .build();
      final int numFrames = 1000;

@@ -6,10 +6,10 @@ import org.interledger.btp.BtpSubProtocol;
 import org.interledger.btp.BtpSubProtocols;
 import org.interledger.btp.BtpTransfer;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
 public class AsnBtpTransferDataCodecTest {
@@ -28,12 +28,12 @@ public class AsnBtpTransferDataCodecTest {
     btpSubProtocols.add(BtpSubProtocol.builder()
         .protocolName("TEST")
         .contentType(BtpSubProtocol.ContentType.MIME_TEXT_PLAIN_UTF8)
-        .data("Test Data".getBytes(StandardCharsets.UTF_8))
+        .data("Test Data" .getBytes(StandardCharsets.UTF_8))
         .build());
 
     btpTransfer = BtpTransfer.builder()
         .requestId(requestId)
-        .amount(BigInteger.TEN)
+        .amount(UnsignedLong.valueOf(10L))
         .subProtocols(btpSubProtocols)
         .build();
   }
@@ -43,7 +43,7 @@ public class AsnBtpTransferDataCodecTest {
     codec.encode(btpTransfer);
 
     assertThat(codec.getRequestId()).isEqualTo(btpTransfer.getRequestId());
-    assertThat((BigInteger) codec.getValueAt(0)).isEqualTo(btpTransfer.getAmount());
+    assertThat((UnsignedLong) codec.getValueAt(0)).isEqualTo(btpTransfer.getAmount());
     assertThat((BtpSubProtocols) codec.getValueAt(1)).isEqualTo(btpTransfer.getSubProtocols());
 
     final BtpTransfer decodedBtpTransferMessage = codec.decode();

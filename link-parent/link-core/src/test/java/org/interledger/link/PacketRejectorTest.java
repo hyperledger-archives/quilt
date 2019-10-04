@@ -8,12 +8,11 @@ import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.time.Instant;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link PacketRejector}.
@@ -23,7 +22,7 @@ public class PacketRejectorTest {
   private static final LinkId LINK_ID = LinkId.of("fooLink");
   private static final InterledgerPreparePacket PREPARE_PACKET = InterledgerPreparePacket.builder()
       .expiresAt(Instant.now())
-      .amount(BigInteger.ONE)
+      .amount(UnsignedLong.ONE)
       .destination(InterledgerAddress.of("test.destination"))
       .executionCondition(PingLoopbackLink.PING_PROTOCOL_CONDITION)
       .build();

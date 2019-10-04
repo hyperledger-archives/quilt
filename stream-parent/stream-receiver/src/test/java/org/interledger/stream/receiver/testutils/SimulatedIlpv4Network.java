@@ -15,6 +15,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.Random;
@@ -45,7 +46,7 @@ import java.util.Random;
  * └────────────┴────────────┘               └────────────┴────────────┘
  * </pre>
  */
-public class SimulatedILPv4Network {
+public class SimulatedIlpv4Network {
 
   private final Link<?> leftToRightLink;
   private final SimulatedPathConditions leftToRightNetworkConditions;
@@ -63,7 +64,7 @@ public class SimulatedILPv4Network {
    * @param rightToLeftNetworkConditions A {@link SimulatedPathConditions} that governs the simulated path from right to
    *                                     left.
    */
-  public SimulatedILPv4Network(
+  public SimulatedIlpv4Network(
       final SimulatedPathConditions leftToRightNetworkConditions,
       final SimulatedPathConditions rightToLeftNetworkConditions
   ) {
@@ -159,9 +160,9 @@ public class SimulatedILPv4Network {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(multiplier);
 
-    return InterledgerPreparePacket.builder().from(preparePacket)
-        .amount(multiplier.multiply(new BigDecimal(preparePacket.getAmount())).toBigIntegerExact())
-        .build();
+    BigInteger newAmount = multiplier.multiply(new BigDecimal(preparePacket.getAmount().bigIntegerValue()))
+        .toBigIntegerExact();
+    return InterledgerPreparePacket.builder().from(preparePacket).amount(UnsignedLong.valueOf(newAmount)).build();
   }
 
   public Link<?> getLeftToRightLink() {
@@ -208,7 +209,6 @@ public class SimulatedILPv4Network {
   ) {
     Objects.requireNonNull(simulatedPathConditions);
     Objects.requireNonNull(preparePacket);
-    return UnsignedLong.valueOf(preparePacket.getAmount())
-        .compareTo(simulatedPathConditions.maxPacketAmount().get()) > 0;
+    return preparePacket.getAmount().compareTo(simulatedPathConditions.maxPacketAmount().get()) > 0;
   }
 }
