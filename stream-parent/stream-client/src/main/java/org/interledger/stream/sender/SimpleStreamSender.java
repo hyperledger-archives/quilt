@@ -1,7 +1,7 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
+import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -405,7 +405,8 @@ public class SimpleStreamSender implements StreamSender {
      * TODO: See https://github.com/hyperledger/quilt/issues/308 to determine when the Stream and/or Connection should
      * be closed.
      */
-    private Optional<Denomination> preflightCheck() throws StreamConnectionClosedException {
+    @VisibleForTesting
+    Optional<Denomination> preflightCheck() throws StreamConnectionClosedException {
       // Load up the STREAM packet
       final UnsignedLong sequence;
       try {

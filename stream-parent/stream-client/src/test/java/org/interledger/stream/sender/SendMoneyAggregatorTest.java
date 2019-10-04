@@ -11,12 +11,15 @@ import static org.mockito.Mockito.when;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
+import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.StreamConnection;
@@ -25,10 +28,10 @@ import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 
 import com.google.common.primitives.UnsignedLong;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -91,7 +94,6 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
-    final StreamConnection streamConnection = new StreamConnection(StreamConnectionId.of("foo"));
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sharedSecret(sharedSecret)
@@ -229,6 +231,37 @@ public class SendMoneyAggregatorTest {
     expectedException.expect(RejectedExecutionException.class);
     sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket(), UnsignedLong.ONE);
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
+  }
+
+  @Test
+  public void preflightCheckFindsNoDenomination() throws Exception {
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+    when(linkMock.sendPacket(any())).thenReturn(sampleFulfillPacket());
+    StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
+        .addFrames(StreamMoneyFrame.builder()
+            .shares(UnsignedLong.ONE)
+            .streamId(UnsignedLong.ONE)
+            .build())
+        .build();
+    when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
+
+    Optional<Denomination> denomination = sendMoneyAggregator.preflightCheck();
+    assertThat(denomination).isEmpty();
+  }
+
+  @Test
+  public void preflightCheckRejects() throws Exception{
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
+    StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
+        .addFrames(StreamMoneyFrame.builder()
+            .shares(UnsignedLong.ONE)
+            .streamId(UnsignedLong.ONE)
+            .build())
+        .build();
+    when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
+    Optional<Denomination> denomination = sendMoneyAggregator.preflightCheck();
+    assertThat(denomination).isEmpty();
   }
 
   @Test
@@ -370,4 +403,12 @@ public class SendMoneyAggregatorTest {
         .data(new byte[0])
         .build();
   }
+
+  private InterledgerFulfillPacket sampleFulfillPacket() {
+    return InterledgerFulfillPacket.builder()
+        .data(new byte[0])
+        .fulfillment(InterledgerFulfillment.of(new byte[32]))
+        .build();
+  }
+
 }
