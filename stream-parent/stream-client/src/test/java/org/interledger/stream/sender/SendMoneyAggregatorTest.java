@@ -22,6 +22,7 @@ import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
+import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
@@ -115,7 +116,7 @@ public class SendMoneyAggregatorTest {
   public void sendMoneyWhenTimedOut()
       throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    setSoldierOnBooleans(false, false, false, true);
+    setSoldierOnBooleans(false, false, false);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 
     sendMoneyAggregator.send().get();
@@ -128,7 +129,7 @@ public class SendMoneyAggregatorTest {
   public void sendMoneyWhenMoreToSendButTimedOut()
       throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    setSoldierOnBooleans(false, false, false, true);
+    setSoldierOnBooleans(false, false, false);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 
     sendMoneyAggregator.send().get();
@@ -141,7 +142,7 @@ public class SendMoneyAggregatorTest {
   public void sendMoneyWhenNoMoreToSend()
       throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    setSoldierOnBooleans(false, false, false, false);
+    setSoldierOnBooleans(false, false, false);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 
     sendMoneyAggregator.send().get();
@@ -154,7 +155,7 @@ public class SendMoneyAggregatorTest {
   public void sendMoneyWhenConnectionIsClosed()
       throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    setSoldierOnBooleans(false, true, true, false);
+    setSoldierOnBooleans(false, true, true);
     when(streamConnectionMock.nextSequence())
         .thenReturn(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE));
 
@@ -168,7 +169,7 @@ public class SendMoneyAggregatorTest {
   public void sendMoneyFailsPreflightSequenceIncrement()
       throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    setSoldierOnBooleans(false, true, true, false);
+    setSoldierOnBooleans(false, true, true);
     when(streamConnectionMock.nextSequence())
         .thenThrow(new StreamConnectionClosedException(StreamConnectionId.of("whoops")));
 
@@ -182,7 +183,7 @@ public class SendMoneyAggregatorTest {
   public void sendMoneyWhenSequenceCannotIncrement()
       throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 
-    setSoldierOnBooleans(false, true, true, false);
+    setSoldierOnBooleans(false, true, true);
     when(streamConnectionMock.nextSequence()).thenAnswer(new Answer<UnsignedLong>() {
       AtomicInteger counter = new AtomicInteger(0);
 
@@ -272,54 +273,48 @@ public class SendMoneyAggregatorTest {
     //   you haven't reached max packets
     //   and you haven't delivered the full amount
     //   and you haven't timed out
+    //   and you haven't sent more than you should have
 
-    setSoldierOnBooleans(false, false, false, false);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+    setSoldierOnBooleans(false, false, false);
+    assertSoldierOnAlwaysFalse();
 
-    setSoldierOnBooleans(false, false, false, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+    setSoldierOnBooleans(false, false, true);
+    assertThat(sendMoneyAggregator.soldierOn(false, false)).isTrue();
+    assertThat(sendMoneyAggregator.soldierOn(false, true)).isFalse();
+    assertThat(sendMoneyAggregator.soldierOn(true, false)).isFalse();
+    assertThat(sendMoneyAggregator.soldierOn(true, true)).isFalse();
 
-    setSoldierOnBooleans(false, false, true, false);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+    setSoldierOnBooleans(false, true, false);
+    assertSoldierOnAlwaysFalse();
 
-    setSoldierOnBooleans(false, false, true, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+    setSoldierOnBooleans(false, true, true);
+    assertSoldierOnAlwaysFalse();
 
-    setSoldierOnBooleans(false, true, false, false);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+    setSoldierOnBooleans(true, false, false);
+    assertSoldierOnAlwaysTrue();
 
-    setSoldierOnBooleans(false, true, false, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+    setSoldierOnBooleans(true, false, true);
+    assertSoldierOnAlwaysTrue();
 
-    setSoldierOnBooleans(false, true, true, false);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isFalse();
+    setSoldierOnBooleans(true, true, false);
+    assertSoldierOnAlwaysTrue();
 
-    setSoldierOnBooleans(false, true, true, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isFalse();
+    setSoldierOnBooleans(true, true, true);
+    assertSoldierOnAlwaysTrue();
+  }
 
-    setSoldierOnBooleans(true, false, false, false);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
+  private void assertSoldierOnAlwaysFalse() {
+    assertThat(sendMoneyAggregator.soldierOn(false, false)).isFalse();
+    assertThat(sendMoneyAggregator.soldierOn(false, true)).isFalse();
+    assertThat(sendMoneyAggregator.soldierOn(true, false)).isFalse();
+    assertThat(sendMoneyAggregator.soldierOn(true, true)).isFalse();
+  }
 
-    setSoldierOnBooleans(true, false, false, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
-
-    setSoldierOnBooleans(true, false, true, false);
-    assertThat(sendMoneyAggregator.soldierOn(false)).isTrue();
-
-    setSoldierOnBooleans(true, false, true, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
-
-    setSoldierOnBooleans(true, true, false, false);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
-
-    setSoldierOnBooleans(true, true, false, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
-
-    setSoldierOnBooleans(true, true, true, false);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
-
-    setSoldierOnBooleans(true, true, true, true);
-    assertThat(sendMoneyAggregator.soldierOn(true)).isTrue();
+  private void assertSoldierOnAlwaysTrue() {
+    assertThat(sendMoneyAggregator.soldierOn(false, false)).isTrue();
+    assertThat(sendMoneyAggregator.soldierOn(false, true)).isTrue();
+    assertThat(sendMoneyAggregator.soldierOn(true, false)).isTrue();
+    assertThat(sendMoneyAggregator.soldierOn(true, true)).isTrue();
   }
 
   @Test
@@ -397,12 +392,25 @@ public class SendMoneyAggregatorTest {
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, reject);
   }
 
+  @Test
+  public void sendTooMuch() throws Exception {
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+    sendMoneyAggregator.setAmountSentForTesting(UnsignedLong.valueOf(11));
+    SendMoneyResult result = sendMoneyAggregator.send().get();
+
+    // we should never have attempted to send anything and bailed immediately
+    assertThat(result.amountDelivered().intValue()).isZero();
+    assertThat(result.amountSent().intValue()).isEqualTo(11);
+    assertThat(result.numFulfilledPackets()).isZero();
+    assertThat(result.numRejectPackets()).isZero();
+    assertThat(result.successfulPayment()).isFalse();
+  }
+
   /**
    * Helper method to set the soldierOn mock values for clearer test coverage.
    */
   private void setSoldierOnBooleans(
-      final boolean moneyInFlight, final boolean streamConnectionClosed, final boolean moreToSend,
-      final boolean timeoutReached
+      final boolean moneyInFlight, final boolean streamConnectionClosed, final boolean moreToSend
   ) {
     when(congestionControllerMock.hasInFlight()).thenReturn(moneyInFlight);
     when(streamConnectionMock.isClosed()).thenReturn(streamConnectionClosed);

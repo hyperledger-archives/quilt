@@ -260,7 +260,7 @@ public class SimpleStreamSenderIT {
 
   /**
    * One call to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
-   * UnsignedLong)} that involves multiple packets in parallel.
+   * UnsignedLong, Denomination)} that involves multiple packets in parallel.
    */
   @Test
   public void sendMoneyMultiPacket() {
@@ -290,7 +290,7 @@ public class SimpleStreamSenderIT {
 
   /**
    * Multiple calls to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
-   * UnsignedLong)} that involves multiple packets in parallel, but using different accounts for each Stream, and thus a
+   * UnsignedLong, Denomination)} that involves multiple packets in parallel, but using different accounts for each Stream, and thus a
    * different Connection.
    */
   @Test

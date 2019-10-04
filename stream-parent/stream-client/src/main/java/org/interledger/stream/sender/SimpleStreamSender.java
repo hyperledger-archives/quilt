@@ -474,6 +474,8 @@ public class SimpleStreamSender implements StreamSender {
 
       final AtomicBoolean timeoutReached = new AtomicBoolean(false);
 
+      boolean sentTooMuch = false;
+
       final ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
 
       timeout.ifPresent($ -> {
@@ -486,7 +488,7 @@ public class SimpleStreamSender implements StreamSender {
         );
       });
 
-      while (soldierOn(timeoutReached.get())) {
+      while (soldierOn(timeoutReached.get(), sentTooMuch)) {
         // Determine the amount to send
         final UnsignedLong amountToSend = StreamUtils.min(amountLeftToSend.get(), congestionController.getMaxAmount());
         if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get()) {
@@ -497,6 +499,12 @@ public class SimpleStreamSender implements StreamSender {
           } catch (InterruptedException e) {
             throw new StreamSenderException(e.getMessage(), e);
           }
+          continue;
+        }
+
+        if (amountLeftToSend.get().compareTo(UnsignedLong.ZERO) < 0 ||
+            sentAmount.get().compareTo(originalAmountToSend.get()) > 0) {
+          sentTooMuch = true;
           continue;
         }
 
@@ -609,14 +617,15 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    boolean soldierOn(boolean timeoutReached) {
+    boolean soldierOn(boolean timeoutReached, boolean sentTooMuch) {
       // if money in flight, always soldier on
       // otherwise, soldier on if
       //   the connection is not closed
       //   and you haven't delivered the full amount
       //   and you haven't timed out
+      //   and you haven't sent more than you should have
       return this.congestionController.hasInFlight()
-          || (!streamConnection.isClosed() && moreToSend() && !timeoutReached);
+          || (!streamConnection.isClosed() && moreToSend() && !timeoutReached && !sentTooMuch);
     }
 
     /**
