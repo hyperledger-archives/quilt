@@ -5,12 +5,12 @@
   <parent>
     <groupId>org.interledger</groupId>
     <artifactId>quilt-parent</artifactId>
-    <version>0.19-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <name>Quilt :: Examples :: Parent</name>
-  <artifactId>quilt-examples-parent</artifactId>
+  <artifactId>examples-parent</artifactId>
   <packaging>pom</packaging>
 
   <build>
