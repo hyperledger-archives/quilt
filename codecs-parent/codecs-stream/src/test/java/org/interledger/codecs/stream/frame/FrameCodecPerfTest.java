@@ -52,8 +52,8 @@
     * UnsignedLong: 10M Frames --> 6.4s (1,562,500 fps)
     * UnsignedLong: 100M Frames --> 52s (1,922,485 fps)
     *
-    * UnsignedLong: 1M Frames --> 1.06s (943,396 fps)
-    * UnsignedLong: 10M Frames --> 6.9s (1,449,275 fps)
+    * BigInteger: 1M Frames --> 1.06s (943,396 fps)
+    * BigInteger: 10M Frames --> 6.9s (1,449,275 fps)
     * </pre>
     */
    @Test
