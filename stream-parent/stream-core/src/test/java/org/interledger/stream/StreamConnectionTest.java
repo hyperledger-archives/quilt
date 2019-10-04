@@ -1,6 +1,7 @@
 package org.interledger.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
 import org.interledger.core.InterledgerAddress;
@@ -14,6 +15,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -131,6 +133,18 @@ public class StreamConnectionTest {
   }
 
   @Test
+  public void testStreamConnectionClose() {
+    assertThat(streamConnection.isClosed()).isFalse();
+    try {
+      streamConnection.close();
+    } catch (IOException e) {
+      fail("This error should not have occurred while closing a StreamConnection.");
+      e.printStackTrace();
+    }
+    assertThat(streamConnection.isClosed()).isTrue();
+  }
+
+  @Test
   public void transitionConnectionStateAfterConnectionClosed() {
     streamConnection.closeConnection();
     assertThat(streamConnection.getConnectionState()).isEqualTo(StreamConnectionState.CLOSED);
@@ -234,5 +248,16 @@ public class StreamConnectionTest {
 
     StreamConnection nonIdenticalStreamConnection = new StreamConnection(StreamConnectionId.of("foo1"));
     assertThat(streamConnection.hashCode()).isNotEqualTo(nonIdenticalStreamConnection.hashCode());
+  }
+
+  @Test
+  public void testToString() {
+    final String matchingSerializedRegex = "StreamConnection\\["
+        + "creationDateTime=[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.\\d+Z, "
+        + "streamConnectionId=\\S+ sequence=\\d+, connectionState=[A-Z]+]";
+
+    final String serializedStreamConnection = streamConnection.toString();
+
+    assertThat(serializedStreamConnection.matches(matchingSerializedRegex)).isTrue();
   }
 }

@@ -6,6 +6,8 @@ import org.interledger.core.SharedSecret;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>Any given Connection in a JVM manages a unique sequence id that can be incremented for each Stream Packet sent
  * over the connection.</p>
  */
-public class StreamConnection {
+public class StreamConnection implements Closeable {
 
   // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max per IL-RFC-29.
   public static final UnsignedLong MAX_FRAMES_PER_CONNECTION =
@@ -178,6 +180,11 @@ public class StreamConnection {
         .add("sequence=" + sequence)
         .add("connectionState=" + connectionState)
         .toString();
+  }
+
+  @Override
+  public void close() throws IOException {
+    this.closeConnection();
   }
 
   /**
