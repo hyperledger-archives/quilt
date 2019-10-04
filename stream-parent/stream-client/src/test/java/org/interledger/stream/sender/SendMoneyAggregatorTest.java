@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
@@ -45,8 +46,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -193,6 +197,38 @@ public class SendMoneyAggregatorTest {
 
     // Expect 1 Link call due to preflight check
     Mockito.verify(linkMock, times(1)).sendPacket(any());
+  }
+
+  @Test
+  public void failureToSchedulePutsMoneyBack() {
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .sharedSecret(sharedSecret)
+        .sourceAddress(sourceAddress)
+        .destinationAddress(destinationAddress)
+        .amount(originalAmountToSend)
+        .timeout(Optional.of(Duration.ofSeconds(60)))
+        .denomination(Denominations.XRP)
+        .exchangeRateCalculator(new NoOpExchangeRateCalculator())
+        .build();
+    ExecutorService executor = mock(ExecutorService.class);
+    this.sendMoneyAggregator = new SendMoneyAggregator(
+        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+        streamEncryptionServiceMock, request);
+
+    when(executor.submit(any(Runnable.class))).thenThrow(new RejectedExecutionException());
+
+    InterledgerPreparePacket prepare = samplePreparePacket();
+    InterledgerRejectPacket expectedReject = InterledgerRejectPacket.builder()
+        .code(InterledgerErrorCode.F00_BAD_REQUEST)
+        .message(
+            String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", prepare,
+                "java.util.concurrent.RejectedExecutionException")
+        )
+        .build();
+
+    expectedException.expect(RejectedExecutionException.class);
+    sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket(), UnsignedLong.ONE);
+    verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
   }
 
   @Test

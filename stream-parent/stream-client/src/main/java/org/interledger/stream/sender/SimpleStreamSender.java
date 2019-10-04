@@ -554,39 +554,7 @@ public class SimpleStreamSender implements StreamSender {
             // controller to not reflect what we've actually scheduled to run, resulting in the loop
             // breaking prematurely
             congestionController.prepare(amountToSend);
-            try {
-              executorService.submit(() -> {
-                if (!timeoutReached.get()) {
-                  try {
-                    InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
-                    responsePacket.handle(
-                        fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-                        rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
-                    );
-                  } catch (Exception e) {
-                    logger.error("Link send failed. preparePacket={}", preparePacket, e);
-                    congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
-                        .code(InterledgerErrorCode.F00_BAD_REQUEST)
-                        .message(
-                            String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
-                        )
-                        .build());
-                    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
-                  }
-                }
-              });
-            } catch (RejectedExecutionException e) {
-              // If we get here, it means the task was unable to be scheduled, so we need to unwind the congestion
-              // controller to prevent deadlock.
-              congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
-                  .code(InterledgerErrorCode.F00_BAD_REQUEST)
-                  .message(
-                      String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacket,
-                          e.getMessage())
-                  )
-                  .build());
-              throw e;
-            }
+            schedule(timeoutReached, preparePacket, streamPacket, amountToSend);
           } else {
             logger.error("SoldierOn runLoop had more tasks to schedule but was timed-out");
             continue;
@@ -598,6 +566,44 @@ public class SimpleStreamSender implements StreamSender {
         }
       }
       timeoutMonitor.shutdownNow();
+    }
+
+    @VisibleForTesting
+    void schedule(AtomicBoolean timeoutReached, InterledgerPreparePacket preparePacket, StreamPacket streamPacket,
+                  UnsignedLong amountToSend) {
+      try {
+        executorService.submit(() -> {
+          if (!timeoutReached.get()) {
+            try {
+              InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+              responsePacket.handle(
+                  fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
+                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
+              );
+            } catch (Exception e) {
+              logger.error("Link send failed. preparePacket={}", preparePacket, e);
+              congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
+                  .code(InterledgerErrorCode.F00_BAD_REQUEST)
+                  .message(
+                      String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
+                  )
+                  .build());
+              this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
+            }
+          }
+        });
+      } catch (RejectedExecutionException e) {
+        // If we get here, it means the task was unable to be scheduled, so we need to unwind the congestion
+        // controller to prevent deadlock.
+        congestionController.reject(amountToSend, InterledgerRejectPacket.builder()
+            .code(InterledgerErrorCode.F00_BAD_REQUEST)
+            .message(
+                String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacket,
+                    e.getMessage())
+            )
+            .build());
+        throw e;
+      }
     }
 
     @VisibleForTesting
