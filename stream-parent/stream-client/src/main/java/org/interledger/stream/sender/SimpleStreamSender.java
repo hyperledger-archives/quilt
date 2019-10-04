@@ -579,7 +579,8 @@ public class SimpleStreamSender implements StreamSender {
               InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
               responsePacket.handle(
                   fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
+                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets,
+                      amountLeftToSend, congestionController)
               );
             } catch (Exception e) {
               logger.error("Link send failed. preparePacket={}", preparePacket, e);
@@ -716,22 +717,28 @@ public class SimpleStreamSender implements StreamSender {
     void handleReject(
         final InterledgerPreparePacket originalPreparePacket,
         final StreamPacket originalStreamPacket,
-        final InterledgerRejectPacket rejectPacket
+        final InterledgerRejectPacket rejectPacket,
+        final AtomicInteger numRejectedPackets,
+        final AtomicReference<UnsignedLong> amountLeftToSend,
+        final CongestionController congestionController
     ) {
       Objects.requireNonNull(originalPreparePacket);
       Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(rejectPacket);
+      Objects.requireNonNull(numRejectedPackets);
+      Objects.requireNonNull(amountLeftToSend);
+      Objects.requireNonNull(congestionController);
 
       final UnsignedLong amountToSend = UnsignedLong.valueOf(originalPreparePacket.getAmount());
-      this.numRejectedPackets.getAndIncrement();
-      this.amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
-      this.congestionController.reject(amountToSend, rejectPacket);
+      numRejectedPackets.getAndIncrement();
+      amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
+      congestionController.reject(amountToSend, rejectPacket);
 
       logger.debug(
           "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
           amountToSend,
           rejectPacket.getCode().getCode(),
-          this.amountLeftToSend.get(),
+          amountLeftToSend.get(),
           originalPreparePacket,
           originalStreamPacket,
           rejectPacket
@@ -824,7 +831,8 @@ public class SimpleStreamSender implements StreamSender {
 
       link.sendPacket(preparePacket).handle(
           fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket)
+          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets, amountLeftToSend,
+              congestionController)
       );
 
       // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame

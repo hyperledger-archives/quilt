@@ -55,6 +55,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -340,26 +341,60 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullPrepare() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        new AtomicReference<>(), congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullStreamPacket() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(samplePreparePacket(), null,
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        new AtomicReference<>(), congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullReject() {
     expectedException.expect(NullPointerException.class);
-    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), null);
+    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), null, new AtomicInteger(),
+        new AtomicReference<UnsignedLong>(), congestionControllerMock);
+  }
+
+  @Test
+  public void handleRejectHatesNullNumReject() {
+    expectedException.expect(NullPointerException.class);
+    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR),
+        null, new AtomicReference<UnsignedLong>(), congestionControllerMock);
+  }
+
+  @Test
+  public void handleRejectHatesNullAmountLeftToSend() {
+    expectedException.expect(NullPointerException.class);
+    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        null, congestionControllerMock);
+  }
+
+  @Test
+  public void handleRejectHatesNullCongestionController() {
+    expectedException.expect(NullPointerException.class);
+    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        new AtomicReference<UnsignedLong>(), null);
   }
 
   @Test
   public void handleReject() {
-    sendMoneyAggregator.handleReject(samplePreparePacket(), sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
+    AtomicInteger numReject = new AtomicInteger(0);
+    AtomicReference<UnsignedLong> amountLeftToSend = new AtomicReference<>(UnsignedLong.ONE);
+    InterledgerPreparePacket prepare = samplePreparePacket();
+    InterledgerRejectPacket reject = sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR);
+    sendMoneyAggregator.handleReject(prepare, sampleStreamPacket(),
+        reject, numReject, amountLeftToSend,
+        congestionControllerMock);
+    assertThat(numReject.get()).isEqualTo(1);
+    assertThat(amountLeftToSend.get().intValue()).isEqualTo(2);
+    verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, reject);
   }
 
   /**
