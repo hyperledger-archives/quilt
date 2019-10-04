@@ -61,7 +61,7 @@
      final CodecContext context = StreamCodecContextFactory.oer();
      final ConnectionDataMaxFrame frame = ConnectionDataMaxFrame.builder()
          .maxOffset(UnsignedLong.ZERO)
-         //.maxOffset(UnsignedLong.ZERO)
+         //.maxOffset(BigInteger.ZERO)
          //.maxOffset(0)
          .build();
      final int numFrames = 1000;

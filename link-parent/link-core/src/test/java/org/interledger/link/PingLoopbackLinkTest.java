@@ -83,8 +83,8 @@ public class PingLoopbackLinkTest {
 
   @Test
   public void testFulfillmentFromAscii() {
-    final InterledgerFulfillment expectedFulfillment =
-        InterledgerFulfillment.of("pingpingpingpingpingpingpingping" .getBytes(StandardCharsets.US_ASCII));
+    final InterledgerFulfillment expectedFulfillment = InterledgerFulfillment
+        .of("pingpingpingpingpingpingpingping".getBytes(StandardCharsets.US_ASCII));
 
     assertThat(expectedFulfillment).isEqualTo(PING_PROTOCOL_FULFILLMENT);
     assertThat(expectedFulfillment.getCondition()).isEqualTo(PING_PROTOCOL_CONDITION);
