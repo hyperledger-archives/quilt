@@ -61,7 +61,6 @@ public class BtpMessageTest {
         .build();
 
     assertEquals(message.getPrimarySubProtocol(), SUB_PROTOCOL);
-
   }
 
 }

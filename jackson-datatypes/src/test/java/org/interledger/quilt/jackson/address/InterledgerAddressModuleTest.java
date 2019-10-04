@@ -20,6 +20,8 @@ package org.interledger.quilt.jackson.address;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,8 +32,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Validates the functionality of {@link InterledgerAddressModule}.

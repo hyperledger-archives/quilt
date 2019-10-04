@@ -20,9 +20,10 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.core.Immutable;
+
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value;
-import org.interledger.core.Immutable;
 
 /**
  * <p>Packets may be received out of order so the Offset is used to indicate the correct position of the byte segment

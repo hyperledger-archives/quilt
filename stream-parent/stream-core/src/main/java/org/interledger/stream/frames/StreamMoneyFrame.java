@@ -20,8 +20,9 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.Immutable;
+
+import com.google.common.primitives.UnsignedLong;
 
 /**
  * <p>The amount of money that should go to each stream is calculated by dividing the number of shares for the given

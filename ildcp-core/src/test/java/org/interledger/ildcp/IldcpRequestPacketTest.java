@@ -20,13 +20,13 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+
 import org.junit.Test;
 
 import java.math.BigInteger;
 import java.time.Instant;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 /**
  * Unit tests for {@link IldcpRequestPacket}.

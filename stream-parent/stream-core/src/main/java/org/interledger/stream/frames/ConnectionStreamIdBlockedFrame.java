@@ -20,8 +20,9 @@ package org.interledger.stream.frames;
  * =========================LICENSE_END==================================
  */
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.Immutable;
+
+import com.google.common.primitives.UnsignedLong;
 
 /**
  * Indicates that the connection was closed.

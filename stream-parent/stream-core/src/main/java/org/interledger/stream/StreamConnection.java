@@ -22,7 +22,7 @@ public class StreamConnection {
 
   // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max per IL-RFC-29.
   public static final UnsignedLong MAX_FRAMES_PER_CONNECTION =
-      UnsignedLong.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1L);
+      UnsignedLong.valueOf((long) Integer.MAX_VALUE + 1L);
 
   /**
    * The unique identifier of this Connection. A Connection is unique to a destination {@link InterledgerAddress} and a
@@ -152,15 +152,15 @@ public class StreamConnection {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
 
-    StreamConnection that = (StreamConnection) o;
+    StreamConnection that = (StreamConnection) obj;
 
     return streamConnectionId.equals(that.streamConnectionId);
   }
