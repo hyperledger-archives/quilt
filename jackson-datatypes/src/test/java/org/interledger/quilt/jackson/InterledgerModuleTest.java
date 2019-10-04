@@ -20,6 +20,8 @@ package org.interledger.quilt.jackson;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
@@ -42,8 +44,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Random;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Validates the functionality of {@link InterledgerModule}.

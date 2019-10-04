@@ -20,15 +20,14 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+
 import org.interledger.core.InterledgerAddress;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.spy;
 
 /**
  * Unit tests for {@link IldcpResponsePacket}.
@@ -41,7 +40,7 @@ public class IldcpResponsePacketTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  final IldcpResponse RESPONSE = IldcpResponse.builder()
+  final IldcpResponse response = IldcpResponse.builder()
       .clientAddress(FOO_ADDRESS)
       .assetScale((short) 9)
       .assetCode(BTC)
@@ -49,7 +48,7 @@ public class IldcpResponsePacketTest {
 
   @Test
   public void testBuilder() {
-    final IldcpResponsePacket actual = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[32]).build();
+    final IldcpResponsePacket actual = IldcpResponsePacket.builder().ildcpResponse(response).data(new byte[32]).build();
 
     assertThat(actual.getFulfillment()).isEqualTo(IldcpResponsePacket.EXECUTION_FULFILLMENT);
     assertThat(actual.getData()).isEqualTo(new byte[32]);
@@ -57,24 +56,25 @@ public class IldcpResponsePacketTest {
 
   @Test
   public void defaults() {
-    IldcpResponsePacket packet = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).build();
+    IldcpResponsePacket packet = IldcpResponsePacket.builder().ildcpResponse(response).build();
     assertThat(packet.getData()).isEqualTo(new byte[0]);
     assertThat(spy(IldcpResponsePacket.class).getFulfillment()).isEqualTo(IldcpResponsePacket.EXECUTION_FULFILLMENT);
   }
 
   @Test
   public void testEmptyBuilder() {
+    String errorMessage = "Cannot build IldcpResponsePacket, some of required attributes are not set [ildcpResponse]";
     expectedException.expect(IllegalStateException.class);
-    expectedException.expectMessage("Cannot build IldcpResponsePacket, some of required attributes are not set [ildcpResponse]");
+    expectedException.expectMessage(errorMessage);
     IldcpResponsePacket.builder().build();
   }
 
   @Test
   public void testEqualsHashcode() {
 
-    final IldcpResponsePacket first = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[32]).build();
-    final IldcpResponsePacket second = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[32]).build();
-    final IldcpResponsePacket third = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[64]).build();
+    final IldcpResponsePacket first = IldcpResponsePacket.builder().ildcpResponse(response).data(new byte[32]).build();
+    final IldcpResponsePacket second = IldcpResponsePacket.builder().ildcpResponse(response).data(new byte[32]).build();
+    final IldcpResponsePacket third = IldcpResponsePacket.builder().ildcpResponse(response).data(new byte[64]).build();
 
     assertThat(first).isEqualTo(second);
     assertThat(second).isEqualTo(first);
@@ -87,12 +87,13 @@ public class IldcpResponsePacketTest {
 
   @Test
   public void testToString() {
-    final IldcpResponsePacket first = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[0]).build();
+    final IldcpResponsePacket first = IldcpResponsePacket.builder().ildcpResponse(response).data(new byte[0]).build();
 
     assertThat(
         first.toString())
         .isEqualTo("IldcpResponsePacket{"
-            + "ildcpResponse=IldcpResponse{clientAddress=InterledgerAddress{value=example.foo}, assetCode=BTC, assetScale=9}, "
+            + "ildcpResponse=IldcpResponse{clientAddress=InterledgerAddress{"
+            + "value=example.foo}, assetCode=BTC, assetScale=9}, "
             + "fulfillment=ImmutableInterledgerFulfillment["
             + "preimage=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=, "
             + "condition=Condition{hash=Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}], "

@@ -12,9 +12,9 @@ public class IldcpRequestTest {
 
   @Test
   public void defaults() throws Exception {
-    Instant nowPlus30 = Instant.now().plusSeconds(30);
+    final Instant nowPlus30 = Instant.now().plusSeconds(30);
     Thread.sleep(1);
-    IldcpRequest request = IldcpRequest.builder().build();
+    final IldcpRequest request = IldcpRequest.builder().build();
     Thread.sleep(1);
     Instant afterPlus30 = Instant.now().plusSeconds(30);
     assertThat(request.getAmount()).isEqualTo(UnsignedLong.ZERO);

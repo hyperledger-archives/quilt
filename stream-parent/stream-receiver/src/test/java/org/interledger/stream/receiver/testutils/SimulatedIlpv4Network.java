@@ -46,6 +46,7 @@ import java.util.Random;
  * └────────────┴────────────┘               └────────────┴────────────┘
  * </pre>
  */
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public class SimulatedIlpv4Network {
 
   private final Link<?> leftToRightLink;

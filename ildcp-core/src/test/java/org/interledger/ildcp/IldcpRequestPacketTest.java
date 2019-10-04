@@ -26,6 +26,7 @@ import static org.mockito.Mockito.spy;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.time.Instant;
 
 /**
