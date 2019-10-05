@@ -373,8 +373,8 @@ public class SimpleStreamSender implements StreamSender {
         logger.warn("Preflight check failed", e);
       }
       // A separate executor is needed for overall call to sendMoneyPacketized otherwise a livelock can occur.
-      // If a shared executor were to be used then sendMoneyPacketized internally could get blocked from submitting tasks
-      // because the shared executor is already blocked waiting on the results sendMoneyPacketized
+      // Using a shared executor could cause sendMoneyPacketized to internally get blocked from submitting tasks
+      // because the shared executor is already blocked waiting on the results of the call here to sendMoneyPacketized
       ExecutorService sendMoneyExecutor = Executors.newSingleThreadExecutor();
       final Instant start = Instant.now();
       // All futures will run here using the Cached Executor service.
