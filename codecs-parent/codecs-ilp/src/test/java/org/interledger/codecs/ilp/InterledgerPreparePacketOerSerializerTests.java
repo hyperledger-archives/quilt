@@ -20,12 +20,15 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.encoding.asn.framework.CodecContext;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -35,13 +38,10 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests to validate the functionality for all {@link InterledgerPreparePacket} packets.
@@ -72,20 +72,20 @@ public class InterledgerPreparePacketOerSerializerTests {
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.of("test3.foo.bar"))
-            .amount(BigInteger.valueOf(100L))
+            .amount(UnsignedLong.valueOf(100L))
             .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now()).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
-            .amount(BigInteger.valueOf(50L))
+            .amount(UnsignedLong.valueOf(50L))
             .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
-            .amount(BigInteger.valueOf(50L))
+            .amount(UnsignedLong.valueOf(50L))
             .executionCondition(InterledgerCondition.of(conditionBytes))
             .expiresAt(Instant.now())
             .data(byteArrayOutputStream.toByteArray()).build()},
@@ -94,9 +94,8 @@ public class InterledgerPreparePacketOerSerializerTests {
   }
 
   /**
-   * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that
-   * this context call specifies the type, whereas the test below determines the type from the
-   * payload.
+   * The primary difference between this test and {@link #testInterledgerPaymentCodec()} is that this context call
+   * specifies the type, whereas the test below determines the type from the payload.
    */
   @Test
   public void testIndividualRead() throws IOException {
@@ -109,9 +108,8 @@ public class InterledgerPreparePacketOerSerializerTests {
   }
 
   /**
-   * The primary difference between this test and {@link #testIndividualRead()} is that this context
-   * determines the ipr type from the payload, whereas the test above specifies the type in the
-   * method call.
+   * The primary difference between this test and {@link #testIndividualRead()} is that this context determines the ipr
+   * type from the payload, whereas the test above specifies the type in the method call.
    */
   @Test
   public void testInterledgerPaymentCodec() throws Exception {

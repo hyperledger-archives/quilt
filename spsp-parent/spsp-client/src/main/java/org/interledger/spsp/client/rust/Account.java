@@ -14,6 +14,7 @@ import java.util.Optional;
 
 /**
  * Account object for Interledger-RS HTTP API.
+ *
  * @see "https://github.com/interledger-rs/interledger-rs/blob/master/docs/api.md"
  */
 @Value.Immutable
@@ -27,6 +28,7 @@ public interface Account {
 
   /**
    * ILP address.
+   *
    * @return address
    */
   @JsonProperty("ilp_address")
@@ -34,28 +36,31 @@ public interface Account {
 
   /**
    * Name of the account.
+   *
    * @return name
    */
   String username();
 
   /**
    * Asset code for this account.
+   *
    * @return code
    */
   @JsonProperty("asset_code")
   String assetCode();
 
   /**
-   * Scale to use for amounts of the asset code
-   * (for example, a scale of 9 means that an amount of 1000000000 in an ILP packet sent between peers
-   * represents 1 unit of that asset).
-   * @return
+   * Scale to use for amounts of the asset code (for example, a scale of 9 means that an amount of 1000000000 in an ILP
+   * packet sent between peers represents 1 unit of that asset).
+   *
+   * @return An int representing the asset scale.
    */
   @JsonProperty("asset_scale")
   int assetScale();
 
   /**
    * Maximum amount that can transferred in a packet.
+   *
    * @return amount or empty if not set
    */
   @JsonProperty("max_packet_amount")
@@ -63,6 +68,7 @@ public interface Account {
 
   /**
    * Mininum balance to be maintained on this account.
+   *
    * @return amount or empty if not set
    */
   @JsonProperty("min_balance")
@@ -70,6 +76,7 @@ public interface Account {
 
   /**
    * http bearer token the client will use to authenticate with ILP node.
+   *
    * @return token or emmpty for send only accounts
    */
   @JsonProperty("http_incoming_token")
@@ -77,6 +84,7 @@ public interface Account {
 
   /**
    * http bearer token ILP node will use to authenticate to client.
+   *
    * @return token or empty for receive only accounts
    */
   @JsonProperty("http_outgoing_token")
@@ -84,6 +92,7 @@ public interface Account {
 
   /**
    * URI for HTTP.
+   *
    * @return http uri or empty if not set
    */
   @JsonProperty("http_endpoint")
@@ -91,6 +100,7 @@ public interface Account {
 
   /**
    * URI for BTP.
+   *
    * @return btp uri or empty if not set
    */
   @JsonProperty("btp_uri")
@@ -98,6 +108,7 @@ public interface Account {
 
   /**
    * Threshold amount that triggers settlement.
+   *
    * @return amount or empty if not set
    */
   @JsonProperty("settle_threshold")
@@ -105,6 +116,7 @@ public interface Account {
 
   /**
    * When settlement occurs, that balance that should be settled to.
+   *
    * @return amount or empty if not set
    */
   @JsonProperty("settle_to")
@@ -112,6 +124,7 @@ public interface Account {
 
   /**
    * Type of routing relation.
+   *
    * @return relation or empty if not set
    */
   @JsonProperty("routing_relation")
@@ -119,6 +132,7 @@ public interface Account {
 
   /**
    * round trip time in milliseconds.
+   *
    * @return time or empty if not set
    */
   @JsonProperty("round_trip_time")
@@ -126,6 +140,7 @@ public interface Account {
 
   /**
    * Amount of asset that can be sent per minute.
+   *
    * @return amount or empty if not set
    */
   @JsonProperty("amount_per_minute_limit")
@@ -133,6 +148,7 @@ public interface Account {
 
   /**
    * Amount of packets that can be sent per minute.
+   *
    * @return amount or empty if not set
    */
   @JsonProperty("packets_per_minute_limit")

@@ -67,7 +67,7 @@ public class StreamConnectionManager {
    * {@link StreamConnection#nextSequence()} so long as the sequence is not too large. Ultimately it is the
    * responsibility of {@link StreamConnection} to manage it effective Connection state.</p>
    *
-   * @param streamConnectionId
+   * @param streamConnectionId A {@link StreamConnectionId} that uniquely identifies a stream connection to close.
    *
    * @return An optionally-present {@link StreamConnection}, if one is open. Otherwise, {@link Optional#empty()}.
    */

@@ -20,9 +20,9 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
 
-import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Base64;
 
@@ -73,11 +73,11 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
    * modified by each connector, who applies their exchange rate and adjusts the amount to the appropriate scale and
    * precision of the outgoing account
    *
-   * @return A {@link BigInteger} representing the amount of this packet.
+   * @return A {@link UnsignedLong} representing the amount of this packet.
    */
   @Default
-  default BigInteger getAmount() {
-    return BigInteger.ZERO;
+  default UnsignedLong getAmount() {
+    return UnsignedLong.ZERO;
   }
 
   /**

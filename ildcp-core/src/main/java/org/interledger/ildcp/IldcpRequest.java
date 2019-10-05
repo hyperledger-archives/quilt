@@ -23,9 +23,9 @@ package org.interledger.ildcp;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerCondition;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
 
-import java.math.BigInteger;
 import java.time.Instant;
 
 /**
@@ -47,8 +47,8 @@ public interface IldcpRequest {
   /**
    * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
    */
-  default BigInteger getAmount() {
-    return BigInteger.ZERO;
+  default UnsignedLong getAmount() {
+    return UnsignedLong.ZERO;
   }
 
   /**
@@ -67,8 +67,8 @@ public interface IldcpRequest {
 
     @Override
     @Default
-    public BigInteger getAmount() {
-      return BigInteger.ZERO;
+    public UnsignedLong getAmount() {
+      return UnsignedLong.ZERO;
     }
 
     @Override

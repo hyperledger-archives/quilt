@@ -26,12 +26,11 @@ public interface StreamReceiver {
   /**
    * Receive money on behalf of {@code clientAddress} using the STREAM protocol.
    *
-   * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client, connectors
-   * will reject ILP packets that exceed 32kb (though there is no hard rule that more than 32kb will not be supported in
-   * the future.</p>
+   * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
+   * connectors will reject ILP packets that exceed 32kb (though there is no hard rule that more than 32kb will not be
+   * supported in the future.</p>
    *
-   * @param preparePacket The actual {@link InterledgerPreparePacket} with an
-   *                      {@link InterledgerPreparePacket#getDestination()} that includes information that
+   * @param preparePacket The actual {@link InterledgerPreparePacket} with a destination that includes information that
    *                      could only have been created by this receiver.
    * @param clientAddress A {@link InterledgerAddress} of the account this packet should be delivered to.
    * @param denomination  A {@link Denomination} containing information about the value this receiever is receiving.

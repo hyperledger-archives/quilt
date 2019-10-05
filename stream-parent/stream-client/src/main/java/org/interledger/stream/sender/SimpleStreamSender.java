@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -79,7 +78,6 @@ import javax.annotation.concurrent.ThreadSafe;
  * have to be updated across the Interledger.</p>
  */
 @ThreadSafe
-@SuppressWarnings("UnstableApiUsage")
 public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
@@ -109,15 +107,6 @@ public class SimpleStreamSender implements StreamSender {
         streamEncryptionService, link, newDefaultExecutor());
   }
 
-  public static ExecutorService newDefaultExecutor() {
-    ThreadFactory factory = new ThreadFactoryBuilder()
-        .setDaemon(true)
-        .setNameFormat("simple-stream-sender-%d")
-        .build();
-    return Executors.newFixedThreadPool(30, factory);
-  }
-
-
   /**
    * Required-args Constructor.
    *
@@ -132,6 +121,7 @@ public class SimpleStreamSender implements StreamSender {
   ) {
     this(streamEncryptionService, link, executorService, new StreamConnectionManager());
   }
+
 
   /**
    * Required-args Constructor.
@@ -157,6 +147,14 @@ public class SimpleStreamSender implements StreamSender {
     // created using {@link ThreadPoolExecutor} constructors.
     this.executorService = Objects.requireNonNull(executorService);
     this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
+  }
+
+  private static ExecutorService newDefaultExecutor() {
+    ThreadFactory factory = new ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("simple-stream-sender-%d")
+        .build();
+    return Executors.newFixedThreadPool(30, factory);
   }
 
   @Override
@@ -280,14 +278,18 @@ public class SimpleStreamSender implements StreamSender {
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
-
-    private AtomicReference<UnsignedLong> originalAmountToSend;
-    private AtomicReference<UnsignedLong> amountLeftToSend;
-    private AtomicReference<UnsignedLong> deliveredAmount;
+    // The original amount, in sender's units, to send
+    private final AtomicReference<UnsignedLong> originalAmountToSend;
+    // The amount, in sender's units, left to send (i.e., the unsent amount). On rare error occasions, this value
+    // _could_ diverge from 1-sentAmount.
+    private final AtomicReference<UnsignedLong> amountLeftToSend;
+    // The amount, in sender's units, that was sent.
     private final AtomicReference<UnsignedLong> sentAmount;
-    private AtomicBoolean shouldSendSourceAddress;
-    private AtomicInteger numFulfilledPackets;
-    private AtomicInteger numRejectedPackets;
+    // The amount, in receiver's units, that was actually delivered to the receiver.
+    private final AtomicReference<UnsignedLong> deliveredAmount;
+    private final AtomicBoolean shouldSendSourceAddress;
+    private final AtomicInteger numFulfilledPackets;
+    private final AtomicInteger numRejectedPackets;
 
     /**
      * Required-args Constructor.
@@ -390,15 +392,13 @@ public class SimpleStreamSender implements StreamSender {
 
       final ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
 
-      timeout.ifPresent($ -> {
-        timeoutMonitor.schedule(
-            () -> {
-              timeoutReached.set(true);
-              timeoutMonitor.shutdown();
-            },
-            $.toMillis(), TimeUnit.MILLISECONDS
-        );
-      });
+      timeout.ifPresent($ -> timeoutMonitor.schedule(
+          () -> {
+            timeoutReached.set(true);
+            timeoutMonitor.shutdown();
+          },
+          $.toMillis(), TimeUnit.MILLISECONDS
+      ));
 
       while (soldierOn(timeoutReached.get())) {
         // Determine the amount to send
@@ -461,7 +461,7 @@ public class SimpleStreamSender implements StreamSender {
 
         final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
             .destination(destinationAddress)
-            .amount(amountToSend.bigIntegerValue())
+            .amount(amountToSend)
             .executionCondition(executionCondition)
             .expiresAt(Instant.now().plusSeconds(30L))
             .data(streamPacketData)
@@ -512,7 +512,6 @@ public class SimpleStreamSender implements StreamSender {
             }
           } else {
             logger.error("SoldierOn runLoop had more tasks to schedule but was timed-out");
-            continue;
           }
         } catch (Exception e) {
           // Retry this amount on the next run...
@@ -598,7 +597,7 @@ public class SimpleStreamSender implements StreamSender {
       this.numFulfilledPackets.getAndIncrement();
 
       // TODO should we check the fulfillment and expiry or can we assume the plugin does that?
-      this.congestionController.fulfill(UnsignedLong.valueOf(originalPreparePacket.getAmount()));
+      this.congestionController.fulfill(originalPreparePacket.getAmount());
       this.shouldSendSourceAddress.set(false);
 
       final StreamPacket streamPacket = this.fromEncrypted(sharedSecret, fulfillPacket.getData());
@@ -607,7 +606,7 @@ public class SimpleStreamSender implements StreamSender {
       if (streamPacket.interledgerPacketType() == InterledgerPacketType.FULFILL) {
         // TODO check that the sequence matches our outgoing packet
         this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(streamPacket.prepareAmount()));
-        this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(UnsignedLong.valueOf(originalPreparePacket.getAmount())));
+        this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(originalPreparePacket.getAmount()));
       } else {
         logger.warn("Unable to parse STREAM packet from fulfill data. "
                 + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
@@ -638,13 +637,14 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(rejectPacket);
 
-      final UnsignedLong amountToSend = UnsignedLong.valueOf(originalPreparePacket.getAmount());
+      final UnsignedLong amountToSend = originalPreparePacket.getAmount();
       this.numRejectedPackets.getAndIncrement();
       this.amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
       this.congestionController.reject(amountToSend, rejectPacket);
 
       logger.debug(
-          "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+          "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} "
+              + "originalStreamPacket={} rejectPacket={}",
           amountToSend,
           rejectPacket.getCode().getCode(),
           this.amountLeftToSend.get(),
@@ -732,7 +732,7 @@ public class SimpleStreamSender implements StreamSender {
 
       final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
           .destination(destinationAddress)
-          .amount(BigInteger.ZERO)
+          .amount(UnsignedLong.ZERO)
           .executionCondition(executionCondition)
           .expiresAt(Instant.now().plusSeconds(30L))
           .data(encryptedStreamPacket)

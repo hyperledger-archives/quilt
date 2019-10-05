@@ -158,8 +158,8 @@ public class AimdCongestionController implements CongestionController {
         congestionState.set(CongestionState.AVOID_CONGESTION);
 
         final UnsignedLong computedValue = UnsignedLong.valueOf(
-            new BigDecimal(maxInFlight.get().bigIntegerValue()).divide(decreaseFactor, RoundingMode.FLOOR)
-                .toBigInteger()
+            new BigDecimal(maxInFlight.get().bigIntegerValue())
+                .divide(decreaseFactor, RoundingMode.FLOOR).toBigInteger()
         );
 
         this.maxInFlight.set(StreamUtils.max(computedValue, UnsignedLong.ONE));

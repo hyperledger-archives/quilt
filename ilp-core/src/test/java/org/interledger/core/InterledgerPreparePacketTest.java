@@ -24,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.time.Instant;
 
 /**
@@ -38,7 +38,7 @@ public class InterledgerPreparePacketTest {
   public void testBuild() {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[] {127};
-    BigInteger amount = BigInteger.TEN;
+    UnsignedLong amount = UnsignedLong.valueOf(10L);
     InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
@@ -75,7 +75,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .amount(mock(BigInteger.class))
+          .amount(UnsignedLong.ZERO)
           .executionCondition(mock(InterledgerCondition.class))
           .expiresAt(Instant.now())
           .build();
@@ -87,7 +87,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .amount(mock(BigInteger.class))
+          .amount(UnsignedLong.ZERO)
           .executionCondition(mock(InterledgerCondition.class))
           .build();
       fail("cannot build packet");
@@ -100,7 +100,7 @@ public class InterledgerPreparePacketTest {
     try {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
-          .amount(mock(BigInteger.class))
+          .amount(UnsignedLong.ZERO)
           .expiresAt(Instant.now())
           .build();
       fail("cannot build packet");
@@ -117,12 +117,12 @@ public class InterledgerPreparePacketTest {
         .expiresAt(Instant.now())
         .build();
     assertThat(preparePacket).isNotNull();
-    assertThat(preparePacket.getAmount()).isEqualTo(BigInteger.ZERO);
+    assertThat(preparePacket.getAmount()).isEqualTo(UnsignedLong.ZERO);
 
     //No destination
     try {
       InterledgerPreparePacket.builder()
-          .amount(mock(BigInteger.class))
+          .amount(UnsignedLong.ZERO)
           .executionCondition(mock(InterledgerCondition.class))
           .expiresAt(Instant.now())
           .build();
@@ -135,7 +135,7 @@ public class InterledgerPreparePacketTest {
     final InterledgerPreparePacket interledgerPreparePacket =
         InterledgerPreparePacket.builder()
             .destination(mock(InterledgerAddress.class))
-            .amount(mock(BigInteger.class))
+            .amount(UnsignedLong.ZERO)
             .executionCondition(mock(InterledgerCondition.class))
             .expiresAt(Instant.now())
             .build();
@@ -146,7 +146,7 @@ public class InterledgerPreparePacketTest {
   public void testEqualsHashCode() {
     final InterledgerAddress destination = mock(InterledgerAddress.class);
     byte[] data = new byte[] {127};
-    BigInteger amount = BigInteger.TEN;
+    UnsignedLong amount = UnsignedLong.valueOf(10L);
     InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
@@ -177,7 +177,7 @@ public class InterledgerPreparePacketTest {
 
     final InterledgerPreparePacket interledgerPreparePacket3 = InterledgerPreparePacket.builder()
         .destination(destination)
-        .amount(amount.add(BigInteger.ONE))
+        .amount(amount.plus(UnsignedLong.ONE))
         .executionCondition(interledgerCondition)
         .expiresAt(expiry)
         .data(data)
@@ -192,7 +192,7 @@ public class InterledgerPreparePacketTest {
   public void testToString() {
     final InterledgerAddress destination = InterledgerAddress.of("test.foo");
     byte[] data = new byte[] {127};
-    BigInteger amount = BigInteger.TEN;
+    UnsignedLong amount = UnsignedLong.valueOf(10L);
     InterledgerCondition interledgerCondition = InterledgerCondition.of(
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
@@ -201,7 +201,7 @@ public class InterledgerPreparePacketTest {
 
     final InterledgerPreparePacket interledgerPreparePacket = InterledgerPreparePacket.builder()
         .destination(destination)
-        .amount(amount.add(BigInteger.ONE))
+        .amount(amount.plus(UnsignedLong.ONE))
         .executionCondition(interledgerCondition)
         .expiresAt(expiry)
         .data(data)

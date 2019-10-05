@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 
 /**
  * Parameterized unit tests for encoding an instance of {@link T}.
@@ -74,8 +75,8 @@ public abstract class AbstractSerializerTest<T> {
     final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     codecContext.write(inputValue, byteArrayOutputStream);
 
-    final byte[] actual = byteArrayOutputStream.toByteArray();
-    assertThat(actual).isEqualTo(this.asn1OerBytes);
+    final String actual = Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray());
+    assertThat(actual).isEqualTo(Base64.getEncoder().encodeToString(this.asn1OerBytes));
   }
 
   @Test
