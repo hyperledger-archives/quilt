@@ -26,9 +26,9 @@ import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
-import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
+import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
@@ -67,7 +67,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -373,7 +372,10 @@ public class SimpleStreamSender implements StreamSender {
       } catch (Exception e) {
         logger.warn("Preflight check failed", e);
       }
-
+      // A separate executor is needed for overall call to sendMoneyPacketized otherwise a livelock can occur.
+      // If a shared executor were to be used then sendMoneyPacketized internally could get blocked from submitting tasks
+      // because the shared executor is already blocked waiting on the results sendMoneyPacketized
+      ExecutorService sendMoneyExecutor = Executors.newSingleThreadExecutor();
       final Instant start = Instant.now();
       // All futures will run here using the Cached Executor service.
       return CompletableFuture
@@ -390,8 +392,9 @@ public class SimpleStreamSender implements StreamSender {
                 .numRejectPackets(numRejectedPackets.get())
                 .sendMoneyDuration(Duration.between(start, Instant.now()))
                 .build();
-          }, executorService)
+          }, sendMoneyExecutor)
           .whenComplete(($, error) -> {
+            sendMoneyExecutor.shutdown();
             if (error != null) {
               logger.error("SendMoney Stream failed: " + error.getMessage(), error);
             }
