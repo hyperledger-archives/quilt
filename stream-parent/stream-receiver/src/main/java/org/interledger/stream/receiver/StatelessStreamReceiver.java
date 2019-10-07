@@ -138,11 +138,11 @@ public class StatelessStreamReceiver implements StreamReceiver {
     final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
 
     // Return Fulfill or Reject Packet
-    if (isFulfillable && preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) >= 0) {
+    if (isFulfillable && preparePacket.getAmount().compareTo(streamPacket.prepareAmount()) >= 0) {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
           .sequence(streamPacket.sequence())
           .interledgerPacketType(InterledgerPacketType.FULFILL)
-          .prepareAmount(UnsignedLong.valueOf(preparePacket.getAmount()))
+          .prepareAmount(preparePacket.getAmount())
           .frames(responseFrames.build())
           .build();
 
@@ -170,13 +170,13 @@ public class StatelessStreamReceiver implements StreamReceiver {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
           .sequence(streamPacket.sequence())
           .interledgerPacketType(InterledgerPacketType.REJECT)
-          .prepareAmount(UnsignedLong.valueOf(preparePacket.getAmount()))
+          .prepareAmount(preparePacket.getAmount())
           .frames(responseFrames.build())
           .build();
 
       if (isFulfillable) {
         logger.debug("Packet is unfulfillable. preparePacket={}", preparePacket);
-      } else if (preparePacket.getAmount().compareTo(streamPacket.prepareAmount().bigIntegerValue()) < 0) {
+      } else if (preparePacket.getAmount().compareTo(streamPacket.prepareAmount()) < 0) {
         logger.debug(
             "Received only: {} when we should have received at least: {}",
             preparePacket.getAmount(), streamPacket.prepareAmount()

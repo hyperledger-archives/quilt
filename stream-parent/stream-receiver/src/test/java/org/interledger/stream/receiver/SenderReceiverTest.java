@@ -15,7 +15,7 @@ import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.receiver.testutils.SimulatedILPv4Network;
+import org.interledger.stream.receiver.testutils.SimulatedIlpv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
 import org.interledger.stream.sender.SimpleStreamSender;
 import org.interledger.stream.sender.StreamSender;
@@ -61,7 +61,7 @@ public class SenderReceiverTest {
   private StreamNode leftStreamNode;
   private StreamNode rightStreamNode;
 
-  private SimulatedILPv4Network simulatedIlpNetwork;
+  private SimulatedIlpv4Network simulatedIlpNetwork;
 
   @Before
   public void setup() {
@@ -164,7 +164,7 @@ public class SenderReceiverTest {
   public void testSendFromLeftToRightWithSmallMaxPacketValueInNetwork() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
 
-    final SimulatedILPv4Network simulatedIlpNetwork = new SimulatedILPv4Network(
+    final SimulatedIlpv4Network simulatedIlpNetwork = new SimulatedIlpv4Network(
         SimulatedPathConditions.builder()
             .maxPacketAmount(() -> UnsignedLong.ONE)
             .build(),
@@ -268,7 +268,7 @@ public class SenderReceiverTest {
    * Helper method to test lossy ILPv4 network percentages.
    */
   private SendMoneyResult sendMoneyWithLossHelper(final UnsignedLong paymentAmount, final float rejectionPercentage) {
-    this.initIlpNetworkForStream(new SimulatedILPv4Network(
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
         SimulatedPathConditions.builder().packetRejectionPercentage(rejectionPercentage).build(),
         SimulatedPathConditions.builder().build()
     ));
@@ -286,14 +286,14 @@ public class SenderReceiverTest {
    * Initialize the STREAM network with default Simulated Path Conditions on each payment path.
    */
   private void initIlpNetworkForStream() {
-    final SimulatedILPv4Network simulatedIlpNetwork = new SimulatedILPv4Network(
+    final SimulatedIlpv4Network simulatedIlpNetwork = new SimulatedIlpv4Network(
         SimulatedPathConditions.builder().build(),
         SimulatedPathConditions.builder().build()
     );
     this.initIlpNetworkForStream(simulatedIlpNetwork);
   }
 
-  private void initIlpNetworkForStream(final SimulatedILPv4Network simulatedIlpNetwork) {
+  private void initIlpNetworkForStream(final SimulatedIlpv4Network simulatedIlpNetwork) {
     this.simulatedIlpNetwork = Objects.requireNonNull(simulatedIlpNetwork);
 
     this.leftStreamNode = this.initLeftNode();

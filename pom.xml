@@ -400,7 +400,7 @@
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <linkXRef>false</linkXRef>
-            <excludes>**/generated-sources/**/*</excludes>
+            <excludes>**/generated-sources/**/*,**/generated-test-sources/**/*</excludes>
             <sourceDirectories>
               <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
             </sourceDirectories>

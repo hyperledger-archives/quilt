@@ -34,7 +34,7 @@
  import java.util.Locale;
 
  /**
-  * Unit test to see how long it takes to serialize/deserialize frames when the codec use a BigInteger vs an
+  * Unit test to see how long it takes to serialize/deserialize frames when the codec use a UnsignedLong vs an
   * UnsignedLong vs a Long.
   */
  public class FrameCodecPerfTest {

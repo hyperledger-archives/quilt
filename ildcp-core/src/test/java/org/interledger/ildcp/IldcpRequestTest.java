@@ -3,9 +3,9 @@ package org.interledger.ildcp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.time.Instant;
 
 public class IldcpRequestTest {
@@ -17,8 +17,8 @@ public class IldcpRequestTest {
     final IldcpRequest request = IldcpRequest.builder().build();
     Thread.sleep(1);
     Instant afterPlus30 = Instant.now().plusSeconds(30);
-    assertThat(request.getAmount()).isEqualTo(BigInteger.ZERO);
-    assertThat(spy(IldcpRequest.class).getAmount()).isEqualTo(BigInteger.ZERO);
+    assertThat(request.getAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(spy(IldcpRequest.class).getAmount()).isEqualTo(UnsignedLong.ZERO);
     assertThat(request.getExpiresAt()).isAfter(nowPlus30);
     assertThat(request.getExpiresAt()).isBefore(afterPlus30);
   }

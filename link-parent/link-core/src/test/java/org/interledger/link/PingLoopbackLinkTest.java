@@ -12,6 +12,7 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -19,11 +20,9 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link PingLoopbackLink}.
@@ -84,8 +83,8 @@ public class PingLoopbackLinkTest {
 
   @Test
   public void testFulfillmentFromAscii() {
-    final InterledgerFulfillment expectedFulfillment =
-        InterledgerFulfillment.of("pingpingpingpingpingpingpingping".getBytes(StandardCharsets.US_ASCII));
+    final InterledgerFulfillment expectedFulfillment = InterledgerFulfillment
+        .of("pingpingpingpingpingpingpingping".getBytes(StandardCharsets.US_ASCII));
 
     assertThat(expectedFulfillment).isEqualTo(PING_PROTOCOL_FULFILLMENT);
     assertThat(expectedFulfillment.getCondition()).isEqualTo(PING_PROTOCOL_CONDITION);
@@ -105,7 +104,7 @@ public class PingLoopbackLinkTest {
   @Test
   public void sendPacketWithInvalidCondition() {
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
-        .amount(BigInteger.TEN)
+        .amount(UnsignedLong.valueOf(10L))
         .executionCondition(InterledgerCondition.of(new byte[32]))
         .destination(OPERATOR_ADDRESS)
         .expiresAt(Instant.now())
@@ -131,7 +130,7 @@ public class PingLoopbackLinkTest {
   @Test
   public void sendPacketWithInvalidAddress() {
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
-        .amount(BigInteger.TEN)
+        .amount(UnsignedLong.valueOf(10L))
         .executionCondition(PING_PROTOCOL_CONDITION)
         .destination(InterledgerAddress.of("example.foo"))
         .expiresAt(Instant.now())
@@ -149,7 +148,7 @@ public class PingLoopbackLinkTest {
   @Test
   public void sendPacket() {
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
-        .amount(BigInteger.TEN)
+        .amount(UnsignedLong.valueOf(10L))
         .executionCondition(PING_PROTOCOL_CONDITION)
         .destination(OPERATOR_ADDRESS)
         .expiresAt(Instant.now())

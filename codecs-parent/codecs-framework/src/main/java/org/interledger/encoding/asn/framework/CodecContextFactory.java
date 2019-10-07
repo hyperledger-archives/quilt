@@ -32,7 +32,6 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint16Codec;
 import org.interledger.encoding.asn.codecs.AsnUint32Codec;
 import org.interledger.encoding.asn.codecs.AsnUint64Codec;
-import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.codecs.AsnUintCodec;
 import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
@@ -43,6 +42,8 @@ import org.interledger.encoding.asn.serializers.oer.AsnOctetStringOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnOpenTypeOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnSequenceOerSerializer;
 import org.interledger.encoding.asn.serializers.oer.AsnSequenceOfSequenceOerSerializer;
+
+import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigInteger;
 
@@ -61,9 +62,9 @@ public class CodecContextFactory {
         .register(byte[].class, () -> new AsnOctetStringCodec(AsnSizeConstraint.UNCONSTRAINED))
         .register(Short.class, AsnUint8Codec::new) // unsigned!
         .register(Integer.class, AsnUint16Codec::new)
-        .register(Long.class, AsnUint32Codec::new) // Make this UnsignedInt or just Int
-        .register(BigInteger.class,
-            AsnUint64Codec::new) // Uint64 should be UnsignedLong or just Long, then AsnUint64 can be BigInteger.
+        .register(Long.class, AsnUint32Codec::new)
+        .register(UnsignedLong.class, AsnUint64Codec::new)
+        .register(BigInteger.class, AsnUintCodec::new)
         .register(String.class, () -> new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED));
 
     final AsnObjectSerializationContext serializers = new AsnObjectSerializationContext()
@@ -75,13 +76,12 @@ public class CodecContextFactory {
         .register(AsnOctetStringBasedObjectCodec.class, new AsnOctetStringOerSerializer())
         .register(AsnSequenceCodec.class, new AsnSequenceOerSerializer())
         .register(AsnSequenceOfSequenceCodec.class, new AsnSequenceOfSequenceOerSerializer())
-        .register(AsnUintCodec.class, new AsnOctetStringOerSerializer())
-        .register(AsnUintCodecUL.class, new AsnOctetStringOerSerializer())
         .register(AsnUint8Codec.class, new AsnOctetStringOerSerializer())
         .register(AsnUint16Codec.class, new AsnOctetStringOerSerializer())
         .register(AsnUint32Codec.class, new AsnOctetStringOerSerializer())
         .register(AsnUint64Codec.class, new AsnOctetStringOerSerializer())
-        .register(AsnUint64CodecUL.class, new AsnOctetStringOerSerializer())
+        .register(AsnUintCodec.class, new AsnOctetStringOerSerializer())
+        .register(AsnUintCodecUL.class, new AsnOctetStringOerSerializer())
         .register(AsnUtf8StringCodec.class, new AsnCharStringOerSerializer())
         .register(AsnUtf8StringBasedObjectCodec.class, new AsnCharStringOerSerializer());
 
