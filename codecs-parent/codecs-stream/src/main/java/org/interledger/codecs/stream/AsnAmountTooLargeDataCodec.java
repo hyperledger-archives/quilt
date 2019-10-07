@@ -1,15 +1,15 @@
 package org.interledger.codecs.stream;
 
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
-import org.interledger.encoding.asn.codecs.AsnUint64CodecUL;
+import org.interledger.encoding.asn.codecs.AsnUint64Codec;
 import org.interledger.stream.AmountTooLargeErrorData;
 
 public class AsnAmountTooLargeDataCodec extends AsnSequenceCodec<AmountTooLargeErrorData> {
 
   public AsnAmountTooLargeDataCodec() {
     super(
-        new AsnUint64CodecUL(),
-        new AsnUint64CodecUL()
+        new AsnUint64Codec(),
+        new AsnUint64Codec()
     );
   }
 

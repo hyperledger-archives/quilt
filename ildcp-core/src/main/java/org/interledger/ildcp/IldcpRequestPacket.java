@@ -9,9 +9,9 @@ package org.interledger.ildcp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,10 @@ import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPreparePacket;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
-import java.math.BigInteger;
 import java.time.Instant;
 
 /**
@@ -56,8 +56,8 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
    * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
    */
   @Override
-  default BigInteger getAmount() {
-    return BigInteger.ZERO;
+  default UnsignedLong getAmount() {
+    return UnsignedLong.ZERO;
   }
 
   /**
@@ -111,8 +111,8 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
 
     @Override
     @Default
-    public BigInteger getAmount() {
-      return BigInteger.ZERO;
+    public UnsignedLong getAmount() {
+      return UnsignedLong.ZERO;
     }
 
     @Override

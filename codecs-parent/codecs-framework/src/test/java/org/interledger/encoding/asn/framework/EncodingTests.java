@@ -23,6 +23,7 @@ package org.interledger.encoding.asn.framework;
 import org.interledger.encoding.MyCustomObject;
 import org.interledger.encoding.asn.AsnMyCustomObjectCodec;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -44,8 +45,8 @@ public class EncodingTests {
         .uint8Property((short) 255)
         .uint16Property(65535)
         .uint32Property(1234567L)
-        .uint64Property(BigInteger.probablePrime(64, new SecureRandom()))
-        .octetStringProperty(new byte[] {})
+        .uint64Property(UnsignedLong.valueOf(BigInteger.probablePrime(64, new SecureRandom())))
+        .octetStringProperty(new byte[0])
         .fixedLengthOctetStringProperty(
             new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4,
                 5, 6, 7, 8, 9, 0, 1,})
@@ -71,8 +72,7 @@ public class EncodingTests {
   @Test
   public void test2() throws Exception {
 
-    CodecContext context = CodecContextFactory.oer()
-        .register(MyCustomObject.class, () -> new AsnMyCustomObjectCodec());
+    CodecContext context = CodecContextFactory.oer().register(MyCustomObject.class, AsnMyCustomObjectCodec::new);
 
     MyCustomObject obj = MyCustomObject.builder()
         .utf8StringProperty("World")
@@ -80,7 +80,7 @@ public class EncodingTests {
         .uint8Property((short) 1)
         .uint16Property(1024)
         .uint32Property(1234567L)
-        .uint64Property(BigInteger.probablePrime(64, new SecureRandom()))
+        .uint64Property(UnsignedLong.valueOf(BigInteger.probablePrime(64, new SecureRandom())))
         .octetStringProperty(new byte[] {0, 1, 2, 4})
         .fixedLengthOctetStringProperty(
             new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4,

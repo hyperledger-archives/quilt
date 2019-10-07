@@ -45,7 +45,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -432,7 +431,7 @@ public class SendMoneyAggregatorTest {
   private InterledgerPreparePacket samplePreparePacket() {
     return InterledgerPreparePacket.builder()
         .destination(destinationAddress)
-        .amount(BigInteger.ONE)
+        .amount(UnsignedLong.ONE)
         .expiresAt(Instant.now())
         .executionCondition(InterledgerCondition.of(new byte[32]))
         .build();

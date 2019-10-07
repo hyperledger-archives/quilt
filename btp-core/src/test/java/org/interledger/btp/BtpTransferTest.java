@@ -9,9 +9,9 @@ package org.interledger.btp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.interledger.btp.BtpSubProtocol.ContentType;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
-
-import java.math.BigInteger;
 
 import java.nio.charset.StandardCharsets;
 
@@ -37,7 +36,7 @@ public class BtpTransferTest {
   private static final BtpSubProtocol SUB_PROTOCOL = BtpSubProtocol.builder()
       .protocolName("TEST")
       .contentType(ContentType.MIME_TEXT_PLAIN_UTF8)
-      .data("Test Data".getBytes(StandardCharsets.UTF_8))
+      .data("Test Data" .getBytes(StandardCharsets.UTF_8))
       .build();
 
   static {
@@ -49,7 +48,7 @@ public class BtpTransferTest {
 
     final BtpTransfer transfer = BtpTransfer.builder()
         .requestId(REQUEST_ID)
-        .amount(BigInteger.TEN)
+        .amount(UnsignedLong.valueOf(10L))
         .subProtocols(SUB_PROTOCOLS)
         .build();
 
@@ -61,11 +60,11 @@ public class BtpTransferTest {
 
     final BtpTransfer transfer = BtpTransfer.builder()
         .requestId(REQUEST_ID)
-        .amount(BigInteger.TEN)
+        .amount(UnsignedLong.valueOf(10L))
         .subProtocols(SUB_PROTOCOLS)
         .build();
 
-    assertEquals(transfer.getAmount(), BigInteger.TEN);
+    assertEquals(transfer.getAmount(), UnsignedLong.valueOf(10L));
     assertEquals(transfer.getPrimarySubProtocol(), SUB_PROTOCOL);
 
   }

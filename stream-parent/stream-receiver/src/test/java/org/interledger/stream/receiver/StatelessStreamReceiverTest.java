@@ -42,7 +42,6 @@ import org.mockito.stubbing.Answer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -179,7 +178,7 @@ public class StatelessStreamReceiverTest {
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
         .destination(connectionDetails.destinationAddress())
-        .amount(BigInteger.valueOf(100L))
+        .amount(UnsignedLong.valueOf(100L))
         .expiresAt(Instant.EPOCH)
         .data(encryptedStreamPacketBytes)
         .executionCondition(executionCondition)
@@ -228,7 +227,7 @@ public class StatelessStreamReceiverTest {
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
         .destination(connectionDetails.destinationAddress())
-        .amount(BigInteger.valueOf(100L))
+        .amount(UnsignedLong.valueOf(100L))
         .expiresAt(Instant.EPOCH)
         .data(encryptedStreamPacketBytes)
         .executionCondition(executionCondition)
@@ -379,7 +378,7 @@ public class StatelessStreamReceiverTest {
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
         .destination(connectionDetails.destinationAddress())
-        .amount(BigInteger.valueOf(100L))
+        .amount(UnsignedLong.valueOf(100L))
         .expiresAt(Instant.EPOCH)
         .data(encryptedStreamPacketBytes)
         .executionCondition(executionCondition)
@@ -422,7 +421,7 @@ public class StatelessStreamReceiverTest {
 
     return InterledgerPreparePacket.builder()
         .destination(connectionDetails.destinationAddress())
-        .amount(BigInteger.valueOf(100L))
+        .amount(UnsignedLong.valueOf(100L))
         .expiresAt(Instant.EPOCH)
         .data(encryptedStreamPacketBytes)
         .executionCondition(executionCondition)
