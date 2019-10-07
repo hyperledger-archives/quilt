@@ -394,6 +394,15 @@ public class SendMoneyAggregatorTest {
   @Test
   public void sendTooMuch() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+    when(congestionControllerMock.hasInFlight()).thenAnswer(new Answer<Boolean>() {
+      AtomicInteger calls = new AtomicInteger(0);
+
+      @Override
+      public Boolean answer(InvocationOnMock invocationOnMock) throws Throwable {
+        return calls.getAndIncrement() == 0;
+      }
+    });
+
     sendMoneyAggregator.setAmountSentForTesting(UnsignedLong.valueOf(11));
     SendMoneyResult result = sendMoneyAggregator.send().get();
 
