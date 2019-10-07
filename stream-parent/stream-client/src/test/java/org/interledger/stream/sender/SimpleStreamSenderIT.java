@@ -2,6 +2,7 @@ package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
@@ -21,7 +22,12 @@ import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.Account;
 import org.interledger.spsp.client.rust.ImmutableAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
+import org.interledger.stream.Denomination;
+import org.interledger.stream.Denominations;
+import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
+import org.interledger.stream.calculators.ExchangeRateCalculator;
+import org.interledger.stream.calculators.NoExchangeRateException;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -56,8 +62,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -156,7 +165,7 @@ public class SimpleStreamSenderIT {
 
   /**
    * One call to {@link SimpleStreamSender#sendMoney(SharedSecret, InterledgerAddress, InterledgerAddress,
-   * UnsignedLong)} that involves a single packet for the entire payment.
+   * UnsignedLong, Denomination)} that involves a single packet for the entire payment.
    */
   @Test
   public void sendMoneySinglePacket() {
@@ -172,7 +181,8 @@ public class SimpleStreamSenderIT {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -185,8 +195,9 @@ public class SimpleStreamSenderIT {
 
   /**
    * In general, calling sendMoney using the same Connection (i.e., SharedSecret) in parallel should not be done.
-   * However, the implementation is smart enough to allow parallel requests to run in parallel, which this test
-   * validates.
+   * However, the implementation is smart enough to queue up parallel requests and only allow one to run at a time.
+   * However, sometimes waiting tasks will timeout, in which case a particular `sendMoney` may throw an exception. This
+   * test does not expect any exceptions.
    */
   @Test
   public void sendMoneyOnSameConnectionInParallel() {
@@ -206,7 +217,8 @@ public class SimpleStreamSenderIT {
           SharedSecret.of(connectionDetails.sharedSecret().key()),
           SENDER_ADDRESS,
           connectionDetails.destinationAddress(),
-          paymentAmount
+          paymentAmount,
+          Denominations.XRP
       );
       results.add(job);
     }
@@ -264,7 +276,8 @@ public class SimpleStreamSenderIT {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -349,11 +362,121 @@ public class SimpleStreamSenderIT {
             SENDER_ADDRESS,
             connectionDetails.destinationAddress(),
             paymentAmount,
+            Denominations.XRP,
             Duration.ofMillis(100)).join();
 
     assertThat(sendMoneyResult.successfulPayment()).isFalse();
 
     logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  @Test(expected = NoExchangeRateException.class)
+  public void sendFailsIfNoExchangeRate() throws Throwable {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
+
+    StreamSender streamSender = new SimpleStreamSender(
+        new JavaxStreamEncryptionService(), link
+    );
+
+    String username = "sendFailsIfNoExchangeRate";
+    InterledgerAddress address = HOST_ADDRESS.with(username);
+    Account account = accountBuilder()
+        .username(username)
+        .ilpAddress(address)
+        .maxPacketAmount(BigInteger.valueOf(100))
+        .amountPerMinuteLimit(BigInteger.valueOf(1))
+        .packetsPerMinuteLimit(BigInteger.valueOf(1))
+        .build();
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+
+    ExchangeRateCalculator noExchangeRateExceptionCalculator =
+        (sendAmount, sendDenomination, expectedReceivedDenomination) -> {
+      throw new NoExchangeRateException("Never stop never calculating");
+    };
+
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .amount(paymentAmount)
+        .denomination(Denominations.XRP)
+        .destinationAddress(connectionDetails.destinationAddress())
+        .exchangeRateCalculator(noExchangeRateExceptionCalculator)
+        .sharedSecret(connectionDetails.sharedSecret())
+        .sourceAddress(SENDER_ADDRESS)
+        .timeout(Duration.ofMillis(100))
+        .build();
+
+    try {
+      streamSender.sendMoney(request).join();
+    } catch (CompletionException e) {
+      throw e.getCause();
+    }
+  }
+
+  @Test
+  public void sendAcceptableDeliveredAmount() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
+
+    StreamSender streamSender = new SimpleStreamSender(link);
+
+    String username = "deliveredAmountRejected";
+    InterledgerAddress address = HOST_ADDRESS.with(username);
+    Account account = accountBuilder()
+        .username(username)
+        .ilpAddress(address)
+        .build();
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+
+    // this should always cause the packet to get rejected because the delivered amount will never exceed the sent amount
+    ExchangeRateCalculator reasonableCalculator =
+        (sendAmount, sendDenomination, expectedReceivedDenomination) -> sendAmount;
+
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .amount(paymentAmount)
+        .denomination(Denominations.XRP)
+        .destinationAddress(connectionDetails.destinationAddress())
+        .exchangeRateCalculator(reasonableCalculator)
+        .sharedSecret(connectionDetails.sharedSecret())
+        .sourceAddress(SENDER_ADDRESS)
+        .timeout(Duration.ofMillis(1000))
+        .build();
+
+    SendMoneyResult result = streamSender.sendMoney(request).join();
+    assertThat(result.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(result.successfulPayment()).isTrue();
+  }
+
+  @Test
+  public void sendFailsIfDeliveredAmountRejected() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
+
+    StreamSender streamSender = new SimpleStreamSender(link);
+
+    String username = "deliveredAmountRejected";
+    InterledgerAddress address = HOST_ADDRESS.with(username);
+    Account account = accountBuilder()
+        .username(username)
+        .ilpAddress(address)
+        .build();
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+
+    // this should always cause the packet to get rejected because the delivered amount will never exceed the sent amount
+    ExchangeRateCalculator unreasonableCalculator =
+        (sendAmount, sendDenomination, expectedReceivedDenomination) -> sendAmount.plus(UnsignedLong.valueOf(1));
+
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .amount(paymentAmount)
+        .denomination(Denominations.XRP)
+        .destinationAddress(connectionDetails.destinationAddress())
+        .exchangeRateCalculator(unreasonableCalculator)
+        .sharedSecret(connectionDetails.sharedSecret())
+        .sourceAddress(SENDER_ADDRESS)
+        .timeout(Duration.ofMillis(1000))
+        .build();
+
+    SendMoneyResult result = streamSender.sendMoney(request).join();
+    assertThat(result.amountDelivered()).isEqualTo(UnsignedLong.ZERO);
   }
 
   @Test
@@ -403,6 +526,7 @@ public class SimpleStreamSenderIT {
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
         paymentAmount,
+        Denominations.XRP,
         Duration.ofMillis(100L)
     ).whenComplete(($, error) -> {
       assertThat(error).isNotNull();
@@ -442,7 +566,8 @@ public class SimpleStreamSenderIT {
         SharedSecret.of(connectionDetails.sharedSecret().key()),
         SENDER_ADDRESS,
         connectionDetails.destinationAddress(),
-        paymentAmount
+        paymentAmount,
+        Denominations.XRP
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
