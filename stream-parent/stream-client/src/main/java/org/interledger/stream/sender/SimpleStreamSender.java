@@ -506,8 +506,7 @@ public class SimpleStreamSender implements StreamSender {
           continue;
         }
 
-        if (amountLeftToSend.get().compareTo(UnsignedLong.ZERO) < 0 ||
-            sentAmount.get().compareTo(originalAmountToSend.get()) > 0) {
+        if (sentAmount.get().compareTo(originalAmountToSend.get()) > 0) {
           sentTooMuch = true;
           continue;
         }
