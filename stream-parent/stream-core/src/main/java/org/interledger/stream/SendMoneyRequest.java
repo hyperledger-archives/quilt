@@ -81,7 +81,7 @@ public interface SendMoneyRequest {
   PaymentTracker<SenderAmountMode> paymentTracker();
 
   /**
-   * Ensures that this request's SenderAmountMode is compatible with {@link #paymentTracker#getSenderAmountMode()}.
+   * Ensures that this request's SenderAmountMode is compatible with {@link PaymentTracker#getOriginalAmountMode()}.
    *
    * @return {@code true} if the SenderAmountMode is compatible with the PaymentTracker; {@code false} otherwise.
    */
