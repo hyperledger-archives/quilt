@@ -1,5 +1,7 @@
 package org.interledger.stream.receiver;
 
+import static org.interledger.stream.UnsignedLongUtils.is;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -138,7 +140,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
     final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
 
     // Return Fulfill or Reject Packet
-    if (isFulfillable && preparePacket.getAmount().compareTo(streamPacket.prepareAmount()) >= 0) {
+    if (isFulfillable && is(preparePacket.getAmount()).greaterThanEqualTo(streamPacket.prepareAmount())) {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
           .sequence(streamPacket.sequence())
           .interledgerPacketType(InterledgerPacketType.FULFILL)
@@ -176,7 +178,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
       if (isFulfillable) {
         logger.debug("Packet is unfulfillable. preparePacket={}", preparePacket);
-      } else if (preparePacket.getAmount().compareTo(streamPacket.prepareAmount()) < 0) {
+      } else if (is(preparePacket.getAmount()).lessThan(streamPacket.prepareAmount())) {
         logger.debug(
             "Received only: {} when we should have received at least: {}",
             preparePacket.getAmount(), streamPacket.prepareAmount()

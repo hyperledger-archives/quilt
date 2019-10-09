@@ -1,7 +1,7 @@
 package org.interledger.stream.sender;
 
 import org.interledger.stream.Denomination;
-import org.interledger.stream.PacketAmounts;
+import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
@@ -55,30 +55,30 @@ public class FixedSenderAmountPaymentTracker implements PaymentTracker {
   }
 
   @Override
-  public PacketAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
-                                            Denomination sendDenomination,
-                                            Optional<Denomination> receiverDenomination) {
+  public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
+                                             Denomination sendDenomination,
+                                             Optional<Denomination> receiverDenomination) {
     final UnsignedLong packetAmountToSend = StreamUtils.min(amountLeftToSend.get(), congestionLimit);
-    return PacketAmounts.of()
+    return PrepareAmounts.of()
         .minimumAmountToAccept(rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination))
         .amountToSend(packetAmountToSend)
         .build();
   }
 
   @Override
-  public void auth(PacketAmounts packetAmounts) {
-    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(packetAmounts.getAmountToSend()));
+  public void auth(PrepareAmounts prepareAmounts) {
+    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
-  public void rollback(PacketAmounts packetAmounts) {
-    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(packetAmounts.getAmountToSend()));
+  public void rollback(PrepareAmounts prepareAmounts, boolean packetRejected) {
+    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
-  public void commit(PacketAmounts packetAmounts) {
-    this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(packetAmounts.getMinimumAmountToAccept()));
-    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(packetAmounts.getAmountToSend()));
+  public void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount) {
+    this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
+    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override

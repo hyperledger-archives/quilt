@@ -22,6 +22,7 @@ public class SendMoneyResultTest {
         .numFulfilledPackets(10)
         .numRejectPackets(5)
         .sendMoneyDuration(Duration.ZERO)
+        .successfulPayment(true)
         .build();
     assertThat(result.totalPackets()).isEqualTo(15);
   }

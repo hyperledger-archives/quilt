@@ -14,16 +14,19 @@ public interface PaymentTracker {
 
   UnsignedLong getDeliveredAmount();
 
-  PacketAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
-                                     Denomination sendDenomination,
-                                     Optional<Denomination> receiverDenomination);
+  PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
+                                      Denomination sendDenomination,
+                                      Optional<Denomination> receiverDenomination);
 
-  void auth(PacketAmounts build);
+  void auth(PrepareAmounts prepareAmounts);
 
-  void rollback(PacketAmounts packetAmounts);
+  void rollback(PrepareAmounts prepareAmounts, boolean packetRejected);
 
-  void commit(PacketAmounts packetAmounts);
+  void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount);
 
   boolean moreToSend();
 
+  default boolean successful() {
+    return !moreToSend();
+  }
 }

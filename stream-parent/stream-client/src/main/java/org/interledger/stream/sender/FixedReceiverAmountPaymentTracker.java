@@ -1,7 +1,9 @@
 package org.interledger.stream.sender;
 
+import static org.interledger.stream.UnsignedLongUtils.is;
+
 import org.interledger.stream.Denomination;
-import org.interledger.stream.PacketAmounts;
+import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
@@ -54,39 +56,57 @@ public class FixedReceiverAmountPaymentTracker implements PaymentTracker {
   }
 
   @Override
-  public PacketAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
-                                            Denomination sendDenomination,
-                                            Optional<Denomination> receiverDenomination) {
+  public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
+                                             Denomination sendDenomination,
+                                             Optional<Denomination> receiverDenomination) {
+    if (congestionLimit.equals(UnsignedLong.ZERO)) {
+      return PrepareAmounts.of().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
+    }
     UnsignedLong amountToSendInSenderUnits =
         rateCalculator.calculateAmountToSend(amountLeftToDeliver.get(), sendDenomination, receiverDenomination.get());
     final UnsignedLong packetAmountToSend = StreamUtils.min(amountToSendInSenderUnits, congestionLimit);
     UnsignedLong minAmountToAcceptInReceiverUnits =
         rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination);
-    return PacketAmounts.of()
+    return PrepareAmounts.of()
         .minimumAmountToAccept(minAmountToAcceptInReceiverUnits)
         .amountToSend(packetAmountToSend)
         .build();
   }
 
   @Override
-  public void auth(PacketAmounts packetAmounts) {
-    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.minus(packetAmounts.getAmountToSend()));
+  public void auth(PrepareAmounts prepareAmounts) {
+    reduceAmountLeftToDeliver(prepareAmounts.getMinimumAmountToAccept());
+  }
+
+  private void reduceAmountLeftToDeliver(UnsignedLong amountToReduce) {
+    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> {
+      if (is(sourceAmount).lessThan(amountToReduce)) {
+        // we've overdelivered so just set the amountToDeliver to 0 since UnsignedLong cannot go negative
+        return UnsignedLong.ZERO;
+      } else {
+        return sourceAmount.minus(amountToReduce);
+      }
+    });
   }
 
   @Override
-  public void rollback(PacketAmounts packetAmounts) {
-    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.plus(packetAmounts.getAmountToSend()));
+  public void rollback(PrepareAmounts prepareAmounts, boolean packetRejected) {
+    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getMinimumAmountToAccept()));
   }
 
   @Override
-  public void commit(PacketAmounts packetAmounts) {
-    this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(packetAmounts.getMinimumAmountToAccept()));
-    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(packetAmounts.getAmountToSend()));
+  public void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount) {
+    if (is(prepareAmounts.getMinimumAmountToAccept()).lessThan(deliveredAmount)) {
+      UnsignedLong overrage = deliveredAmount.minus(prepareAmounts.getMinimumAmountToAccept());
+      reduceAmountLeftToDeliver(overrage);
+    }
+    this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
+    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
   public boolean moreToSend() {
-    return this.deliveredAmount.get().compareTo(this.amountToDeliver) < 0;
+    return is(deliveredAmount.get()).lessThan(this.amountToDeliver);
   }
 
 }

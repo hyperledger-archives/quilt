@@ -19,7 +19,7 @@ import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
-import org.interledger.stream.PacketAmounts;
+import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
@@ -366,6 +366,7 @@ public class SimpleStreamSender implements StreamSender {
             .amountSent(UnsignedLong.ZERO)
             .originalAmount(paymentTracker.getOriginalAmount())
             .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
+            .successfulPayment(paymentTracker.successful())
             .build());
       } catch (Exception e) {
         logger.warn("Preflight check failed", e);
@@ -389,6 +390,7 @@ public class SimpleStreamSender implements StreamSender {
                 .numFulfilledPackets(numFulfilledPackets.get())
                 .numRejectPackets(numRejectedPackets.get())
                 .sendMoneyDuration(Duration.between(start, Instant.now()))
+                .successfulPayment(paymentTracker.successful())
                 .build();
           }, sendMoneyExecutor)
           .whenComplete(($, error) -> {
@@ -487,7 +489,7 @@ public class SimpleStreamSender implements StreamSender {
 
       while (soldierOn(timeoutReached.get())) {
         // Determine the amount to send
-        PacketAmounts amounts = paymentTracker.getSendPacketAmounts(congestionController.getMaxAmount(),
+        PrepareAmounts amounts = paymentTracker.getSendPacketAmounts(congestionController.getMaxAmount(),
             senderDenomination,
             receiverDenomination);
         UnsignedLong amountToSend = amounts.getAmountToSend();
@@ -550,10 +552,10 @@ public class SimpleStreamSender implements StreamSender {
         // capture
         // rollback
 
-        PacketAmounts packetAmounts =
-            PacketAmounts.of().amountToSend(amountToSend).minimumAmountToAccept(streamPacket.prepareAmount()).build();
+        PrepareAmounts prepareAmounts =
+            PrepareAmounts.of().amountToSend(amountToSend).minimumAmountToAccept(streamPacket.prepareAmount()).build();
 
-        paymentTracker.auth(packetAmounts);
+        paymentTracker.auth(prepareAmounts);
 
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
@@ -571,7 +573,7 @@ public class SimpleStreamSender implements StreamSender {
         } catch (Exception e) {
           // Retry this amount on the next run...
           //this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
-          paymentTracker.rollback(packetAmounts);
+          paymentTracker.rollback(prepareAmounts, false);
           logger.error("Submit failed", e);
         }
       }
@@ -583,8 +585,8 @@ public class SimpleStreamSender implements StreamSender {
       try {
         executorService.submit(() -> {
           if (!timeoutReached.get()) {
-            PacketAmounts packetAmounts =
-                PacketAmounts.of().amountToSend(preparePacket.getAmount())
+            PrepareAmounts prepareAmounts =
+                PrepareAmounts.of().amountToSend(preparePacket.getAmount())
                     .minimumAmountToAccept(streamPacket.prepareAmount()).build();
             try {
               InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
@@ -601,7 +603,7 @@ public class SimpleStreamSender implements StreamSender {
                   )
                   .build());
               // this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
-              paymentTracker.rollback(packetAmounts);
+              paymentTracker.rollback(prepareAmounts, false);
             }
           }
         });
@@ -699,15 +701,16 @@ public class SimpleStreamSender implements StreamSender {
 
       final StreamPacket streamPacket = this.fromEncrypted(sharedSecret, fulfillPacket.getData());
 
-      PacketAmounts packetAmounts = PacketAmounts.of()
+      PrepareAmounts prepareAmounts = PrepareAmounts.of()
           .amountToSend(originalPreparePacket.getAmount())
-          .minimumAmountToAccept(streamPacket.prepareAmount())
+          .minimumAmountToAccept(originalStreamPacket.prepareAmount())
           .build();
 
       //if let Ok (packet) = StreamPacket::from_encrypted ( & self.shared_secret, fulfill.into_data()){
       if (streamPacket.interledgerPacketType() == InterledgerPacketType.FULFILL) {
         // TODO check that the sequence matches our outgoing packet
-        paymentTracker.commit(packetAmounts);
+        UnsignedLong deliveredAmount = streamPacket.prepareAmount();
+        paymentTracker.commit(prepareAmounts, deliveredAmount);
       } else {
         logger.warn("Unable to parse STREAM packet from fulfill data. "
                 + "originalPreparePacket={} originalStreamPacket={} fulfillPacket={}",
@@ -747,12 +750,12 @@ public class SimpleStreamSender implements StreamSender {
 
       numRejectedPackets.getAndIncrement();
       //amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
-      PacketAmounts packetAmounts = PacketAmounts.of()
+      PrepareAmounts prepareAmounts = PrepareAmounts.of()
           .amountToSend(originalPreparePacket.getAmount())
           .minimumAmountToAccept(originalStreamPacket.prepareAmount())
           .build();
 
-      paymentTracker.rollback(packetAmounts);
+      paymentTracker.rollback(prepareAmounts, true);
       congestionController.reject(amountToSend, rejectPacket);
 
       logger.debug(
@@ -891,6 +894,7 @@ public class SimpleStreamSender implements StreamSender {
           .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
           .numFulfilledPackets(this.numFulfilledPackets.get())
           .numRejectPackets(this.numRejectedPackets.get())
+          .successfulPayment(paymentTracker.successful())
           .build();
     }
   }
