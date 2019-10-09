@@ -79,6 +79,12 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(10));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.moreToSend()).isFalse();
+
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP,
+        Optional.of(Denominations.XRP));
+
+    assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
   }
 
 }
