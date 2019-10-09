@@ -81,7 +81,7 @@ public interface SendMoneyRequest {
   PaymentTracker<SenderAmountMode> paymentTracker();
 
   /**
-   * Ensures that this request's SenderAmountMode is compatible with {@link #paymentTracker()#getSenderAmountMode()}.
+   * Ensures that this request's SenderAmountMode is compatible with {@link #paymentTracker#getSenderAmountMode()}.
    *
    * @return {@code true} if the SenderAmountMode is compatible with the PaymentTracker; {@code false} otherwise.
    */
@@ -90,7 +90,6 @@ public interface SendMoneyRequest {
     if (this.paymentTracker().getOriginalAmountMode() != this.getSenderAmountMode()) {
       throw new IllegalStateException("PaymentTracker is not compatible with this SenderAmountMode");
     }
-
     return this;
   }
 }
