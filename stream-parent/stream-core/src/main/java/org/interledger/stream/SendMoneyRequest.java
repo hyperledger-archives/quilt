@@ -56,10 +56,11 @@ public interface SendMoneyRequest {
    */
   Optional<Duration> timeout();
 
+
   /**
-   *
-   * @return a calculator to figure out how much money should arrive on the other side of a given payment.
+   * Payment tracker that will monitor payment packets
+   * @return payment tracker
    */
-  ExchangeRateCalculator exchangeRateCalculator();
+  PaymentTracker paymentTracker();
 
 }

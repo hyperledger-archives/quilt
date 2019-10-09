@@ -13,6 +13,6 @@ public class NoOpExchangeRateCalculatorTest {
   @Test
   public void calculate() {
     ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
-    assertThat(calc.calculate(UnsignedLong.ONE, Denominations.USD, Optional.of(Denominations.EUR))).isEqualTo(UnsignedLong.ZERO);
+    assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD, Optional.of(Denominations.EUR))).isEqualTo(UnsignedLong.ZERO);
   }
 }

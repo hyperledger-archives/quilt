@@ -6,9 +6,17 @@ import java.util.Optional;
 
 public class NoOpExchangeRateCalculator implements ExchangeRateCalculator {
 
+
   @Override
-  public UnsignedLong calculate(UnsignedLong sendAmount, Denomination sendDenomination,
-                                Optional<Denomination> expectedReceivedDenomination) {
+  public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive,
+                                            Denomination sendDenomination,
+                                            Denomination receiveDenomination) {
+    return amountToReceive;
+  }
+
+  @Override
+  public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
+                                                 Optional<Denomination> expectedReceivedDenomination) {
     return UnsignedLong.ZERO;
   }
 

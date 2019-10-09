@@ -21,6 +21,7 @@ import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
+import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
@@ -54,7 +55,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -85,6 +85,7 @@ public class SendMoneyAggregatorTest {
   private UnsignedLong originalAmountToSend = UnsignedLong.valueOf(10L);
 
   private SendMoneyAggregator sendMoneyAggregator;
+  private PaymentTracker paymentTracker;
 
   @Before
   public void setUp() {
@@ -95,6 +96,7 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    this.paymentTracker = new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator());
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sharedSecret(sharedSecret)
         .sourceAddress(sourceAddress)
@@ -102,12 +104,11 @@ public class SendMoneyAggregatorTest {
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
         .denomination(Denominations.XRP)
-        .exchangeRateCalculator(new NoOpExchangeRateCalculator())
+        .paymentTracker(paymentTracker)
         .build();
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request
-    );
+        streamEncryptionServiceMock, request);
   }
 
   @Test
@@ -210,7 +211,7 @@ public class SendMoneyAggregatorTest {
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
         .denomination(Denominations.XRP)
-        .exchangeRateCalculator(new NoOpExchangeRateCalculator())
+        .paymentTracker(new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator()))
         .build();
     ExecutorService executor = mock(ExecutorService.class);
     this.sendMoneyAggregator = new SendMoneyAggregator(
@@ -229,7 +230,7 @@ public class SendMoneyAggregatorTest {
         .build();
 
     expectedException.expect(RejectedExecutionException.class);
-    sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket(), UnsignedLong.ONE);
+    sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket());
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
   }
 
@@ -341,7 +342,7 @@ public class SendMoneyAggregatorTest {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
         sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
-        new AtomicReference<>(), congestionControllerMock);
+        congestionControllerMock);
   }
 
   @Test
@@ -349,28 +350,20 @@ public class SendMoneyAggregatorTest {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(samplePreparePacket(), null,
         sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
-        new AtomicReference<>(), congestionControllerMock);
+        congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullReject() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(), null, new AtomicInteger(),
-        new AtomicReference<UnsignedLong>(), congestionControllerMock);
+        congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullNumReject() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(), sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR),
-        null, new AtomicReference<UnsignedLong>(), congestionControllerMock);
-  }
-
-  @Test
-  public void handleRejectHatesNullAmountLeftToSend() {
-    expectedException.expect(NullPointerException.class);
-    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
         null, congestionControllerMock);
   }
 
@@ -379,20 +372,20 @@ public class SendMoneyAggregatorTest {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
         sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
-        new AtomicReference<UnsignedLong>(), null);
+        null);
   }
 
   @Test
   public void handleReject() {
+    UnsignedLong originalAmountToSend = paymentTracker.getOriginalAmountLeft();
     AtomicInteger numReject = new AtomicInteger(0);
-    AtomicReference<UnsignedLong> amountLeftToSend = new AtomicReference<>(UnsignedLong.ONE);
     InterledgerPreparePacket prepare = samplePreparePacket();
     InterledgerRejectPacket reject = sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR);
     sendMoneyAggregator.handleReject(prepare, sampleStreamPacket(),
-        reject, numReject, amountLeftToSend,
+        reject, numReject,
         congestionControllerMock);
     assertThat(numReject.get()).isEqualTo(1);
-    assertThat(amountLeftToSend.get().intValue()).isEqualTo(2);
+    assertThat(paymentTracker.getOriginalAmountLeft()).isEqualTo(originalAmountToSend.plus(prepare.getAmount()));
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, reject);
   }
 
@@ -405,10 +398,11 @@ public class SendMoneyAggregatorTest {
   ) {
     when(congestionControllerMock.hasInFlight()).thenReturn(moneyInFlight);
     when(streamConnectionMock.isClosed()).thenReturn(streamConnectionClosed);
+    FixedSenderAmountPaymentTracker fixedSender = (FixedSenderAmountPaymentTracker) this.paymentTracker;
     if (moreToSend) {
-      sendMoneyAggregator.setAmountSentForTesting(UnsignedLong.ZERO);
+      fixedSender.setSentAmount(UnsignedLong.ZERO);
     } else {
-      sendMoneyAggregator.setAmountSentForTesting(UnsignedLong.valueOf(10L));
+      fixedSender.setSentAmount(UnsignedLong.valueOf(10L));
     }
   }
 

@@ -8,6 +8,22 @@ import java.util.Optional;
 
 public interface ExchangeRateCalculator {
 
+
+  /**
+   * Calculates the amount to send for the ILP packet based on a desired amount to be received by the receiver
+   * (in receiver's units)
+   * @param amountToReceive amount to be received (in receiver's units)
+   * @param sendDenomination sender's denomination
+   * @param receiveDenomination receiver's denomination
+   * @return amount to send in the ILP packet (in sender's denomination)
+   *
+   * @throws NoExchangeRateException if exchange rate could not be calculated
+   */
+  UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive,
+                                     Denomination sendDenomination,
+                                     Denomination receiveDenomination)
+  throws NoExchangeRateException;
+
   /**
    * Calculate the minimum amount a receiver should accept based on the exchange rate applied to the sendAmount.
    * @param sendAmount                   amount to send.
@@ -19,8 +35,8 @@ public interface ExchangeRateCalculator {
    * @return                             the minimum amount the receiver should accept.
    * @throws NoExchangeRateException if exchange rate could not be calculated
    */
-  UnsignedLong calculate(UnsignedLong sendAmount, Denomination sendDenomination,
-                         Optional<Denomination> expectedReceivedDenomination)
+  UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
+                                          Optional<Denomination> expectedReceivedDenomination)
     throws NoExchangeRateException;
 
   /**
