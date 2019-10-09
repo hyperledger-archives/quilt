@@ -428,12 +428,13 @@ public class SimpleStreamSender implements StreamSender {
               // This aggregator supports only a simple stream-id, which is one.
               .streamId(UnsignedLong.ONE)
               .shares(UnsignedLong.ONE)
+              .build(),
+          ConnectionNewAddressFrame.builder()
+              .sourceAddress(sourceAddress)
+              .build(),
+          ConnectionAssetDetailsFrame.builder()
+              .sourceDenomination(senderDenomination)
               .build()
-      );
-
-      frames.add(ConnectionNewAddressFrame.builder()
-          .sourceAddress(sourceAddress)
-          .build()
       );
 
       final StreamPacket streamPacket = StreamPacket.builder()
