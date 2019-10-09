@@ -73,6 +73,7 @@ public class SendMoneyExample {
             .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .amount(UnsignedLong.valueOf(100000))
             .denomination(Denominations.XRP)
+            .destinationAddress(connectionDetails.destinationAddress())
             .timeout(Duration.ofMillis(30000))
             .sharedSecret(SharedSecret.of(connectionDetails.sharedSecret().value()))
             .build()

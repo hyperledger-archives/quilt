@@ -86,7 +86,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   public PrepareAmounts getSendPacketAmounts(
       UnsignedLong congestionLimit, Denomination sendDenomination, Optional<Denomination> receiverDenomination
   ) {
-    if (congestionLimit.equals(UnsignedLong.ZERO)) {
+    if (congestionLimit.equals(UnsignedLong.ZERO) || amountLeftToDeliver.get().equals(UnsignedLong.ZERO)) {
       return PrepareAmounts.of().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
     }
     UnsignedLong amountToSendInSenderUnits =
