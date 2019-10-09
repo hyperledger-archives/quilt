@@ -19,15 +19,14 @@ import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
-import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.PaymentTracker;
+import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
-import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
@@ -65,6 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -126,7 +126,6 @@ public class SimpleStreamSender implements StreamSender {
     this(streamEncryptionService, link, executorService, new StreamConnectionManager());
   }
 
-
   /**
    * Required-args Constructor.
    *
@@ -159,46 +158,6 @@ public class SimpleStreamSender implements StreamSender {
         .setNameFormat("simple-stream-sender-%d")
         .build();
     return Executors.newFixedThreadPool(30, factory);
-  }
-
-  @Override
-  public CompletableFuture<SendMoneyResult> sendMoney(
-      final SharedSecret sharedSecret,
-      final InterledgerAddress sourceAddress,
-      final InterledgerAddress destinationAddress,
-      final UnsignedLong amount,
-      final Denomination denomination
-  ) {
-    SendMoneyRequest request = SendMoneyRequest.builder()
-        .sharedSecret(sharedSecret)
-        .destinationAddress(destinationAddress)
-        .sourceAddress(sourceAddress)
-        .amount(amount)
-        .paymentTracker(new FixedSenderAmountPaymentTracker(amount, new NoOpExchangeRateCalculator()))
-        .denomination(denomination)
-        .build();
-    return sendMoney(request);
-  }
-
-  @Override
-  public CompletableFuture<SendMoneyResult> sendMoney(
-      final SharedSecret sharedSecret,
-      final InterledgerAddress sourceAddress,
-      final InterledgerAddress destinationAddress,
-      final UnsignedLong amount,
-      final Denomination denomination,
-      final Duration timeout
-  ) {
-    SendMoneyRequest request = SendMoneyRequest.builder()
-        .sharedSecret(sharedSecret)
-        .destinationAddress(destinationAddress)
-        .sourceAddress(sourceAddress)
-        .amount(amount)
-        .paymentTracker(new FixedSenderAmountPaymentTracker(amount, new NoOpExchangeRateCalculator()))
-        .denomination(denomination)
-        .timeout(timeout)
-        .build();
-    return sendMoney(request);
   }
 
   @Override
@@ -295,23 +254,22 @@ public class SimpleStreamSender implements StreamSender {
     private final AtomicBoolean shouldSendSourceAddress;
     private final AtomicInteger numFulfilledPackets;
     private final AtomicInteger numRejectedPackets;
-
-    private Optional<Denomination> receiverDenomination = Optional.empty();
     private final PaymentTracker paymentTracker;
+    private Optional<Denomination> receiverDenomination = Optional.empty();
 
 
     /**
      * Required-args Constructor.
      *
-     * @param executorService              An {@link ExecutorService} for sending multiple STREAM frames in parallel.
-     * @param streamConnection             A {@link StreamConnection} that can be used to send packets with.
-     * @param streamCodecContext           A {@link CodecContext} that can encode and decode ASN.1 OER Stream packets
-     *                                     and frames.
-     * @param link                         The {@link Link} used to send ILPv4 packets containing Stream packets.
-     * @param congestionController         A {@link CongestionController} that supports back-pressure for money streams.
-     * @param streamEncryptionService      A {@link StreamEncryptionService} that allows for Stream packet encryption
-     *                                     and decryption.
-     * @param request                      all relevant details about the money to send
+     * @param executorService         An {@link ExecutorService} for sending multiple STREAM frames in parallel.
+     * @param streamConnection        A {@link StreamConnection} that can be used to send packets with.
+     * @param streamCodecContext      A {@link CodecContext} that can encode and decode ASN.1 OER Stream packets and
+     *                                frames.
+     * @param link                    The {@link Link} used to send ILPv4 packets containing Stream packets.
+     * @param congestionController    A {@link CongestionController} that supports back-pressure for money streams.
+     * @param streamEncryptionService A {@link StreamEncryptionService} that allows for Stream packet encryption and
+     *                                decryption.
+     * @param request                 all relevant details about the money to send
      */
     SendMoneyAggregator(
         final ExecutorService executorService,
@@ -593,7 +551,8 @@ public class SimpleStreamSender implements StreamSender {
               InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
               responsePacket.handle(
                   fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets, congestionController)
+                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets,
+                      congestionController)
               );
             } catch (Exception e) {
               logger.error("Link send failed. preparePacket={}", preparePacket, e);
@@ -857,7 +816,8 @@ public class SimpleStreamSender implements StreamSender {
 
       link.sendPacket(preparePacket).handle(
           fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets, congestionController)
+          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets,
+              congestionController)
       );
 
       // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
@@ -877,7 +837,8 @@ public class SimpleStreamSender implements StreamSender {
           .ifPresent($ -> {
             logger.info(
                 "StreamId {} Closed. Delivered: {} ({} packets fulfilled, {} packets rejected)",
-                $.streamId(), paymentTracker.getDeliveredAmount(), this.numFulfilledPackets.get(), this.numRejectedPackets.get()
+                $.streamId(), paymentTracker.getDeliveredAmount(), this.numFulfilledPackets.get(),
+                this.numRejectedPackets.get()
             );
           });
     }

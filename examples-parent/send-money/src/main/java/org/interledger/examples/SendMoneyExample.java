@@ -1,8 +1,10 @@
 package org.interledger.examples;
 
 import static okhttp3.CookieJar.NO_COOKIES;
+
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.link.http.IlpOverHttpLink;
 import org.interledger.link.http.IlpOverHttpLinkSettings;
@@ -13,19 +15,22 @@ import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.Denominations;
+import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.sender.SimpleStreamSender;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.UnsignedLong;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
+
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Example how to use Quilt to send a STREAM payment. See this module's README for more details.
@@ -44,7 +49,7 @@ public class SendMoneyExample {
   private static final InterledgerAddress SENDER_ADDRESS =
       InterledgerAddress.of("test.xpring-dev.rs3").with(SENDER_ACCOUNT_USERNAME);
 
-  public static void main(String args[]) throws ExecutionException, InterruptedException {
+  public static void main(String[] args) throws ExecutionException, InterruptedException {
     // Create SPSP client
     InterledgerRustNodeClient spspClient =
         new InterledgerRustNodeClient(newHttpClient(), SENDER_ACCOUNT_USERNAME + ":" + SENDER_PASS_KEY, TESTNET_URI);
@@ -62,10 +67,16 @@ public class SendMoneyExample {
     System.out.println("Starting balance for sender: " + spspClient.getBalance(SENDER_ACCOUNT_USERNAME));
 
     // Send payment using STREAM
-    SendMoneyResult result = simpleStreamSender.sendMoney(SharedSecret.of(connectionDetails.sharedSecret().value()),
-        SENDER_ADDRESS, connectionDetails.destinationAddress(), UnsignedLong.valueOf(100000), Denominations.XRP,
-        Duration.ofMillis(30000))
-        .get();
+    SendMoneyResult result = simpleStreamSender.sendMoney(
+        SendMoneyRequest.builder()
+            .sourceAddress(SENDER_ADDRESS)
+            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
+            .amount(UnsignedLong.valueOf(100000))
+            .denomination(Denominations.XRP)
+            .timeout(Duration.ofMillis(30000))
+            .sharedSecret(SharedSecret.of(connectionDetails.sharedSecret().value()))
+            .build()
+    ).get();
 
     System.out.println("Send money result: " + result);
     System.out.println("Ending balance for sender: " + spspClient.getBalance(SENDER_ACCOUNT_USERNAME));

@@ -4,16 +4,19 @@ import static org.interledger.stream.UnsignedLongUtils.is;
 
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PrepareAmounts;
-import org.interledger.stream.PaymentTracker;
+import org.interledger.stream.ReceiverAmountPaymentTracker;
+import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
+import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 
 import com.google.common.primitives.UnsignedLong;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FixedReceiverAmountPaymentTracker implements PaymentTracker {
+public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentTracker {
 
   // The original amount, in receiver's units, to send
   private final UnsignedLong amountToDeliver;
@@ -27,10 +30,29 @@ public class FixedReceiverAmountPaymentTracker implements PaymentTracker {
 
   private final ExchangeRateCalculator rateCalculator;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param amountToDeliver An {@link UnsignedLong} representing the amount to send to the receiver, denominated in the
+   *                        receiver's units.
+   */
+  public FixedReceiverAmountPaymentTracker(final UnsignedLong amountToDeliver) {
+    this(amountToDeliver, new NoOpExchangeRateCalculator());
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param amountToDeliver An {@link UnsignedLong} representing the amount to send, in the receiver's units.
+   * @param rateCalculator  An {@link ExchangeRateCalculator} that informs this tracker which amounts to use is
+   *                        subsequent operations, depending on market exchange rates, observed path rates, and possibly
+   *                        other data.
+   */
   public FixedReceiverAmountPaymentTracker(UnsignedLong amountToDeliver, ExchangeRateCalculator rateCalculator) {
-    this.amountToDeliver = amountToDeliver;
+    this.amountToDeliver = Objects.requireNonNull(amountToDeliver);
+    this.rateCalculator = Objects.requireNonNull(rateCalculator);
+
     amountLeftToDeliver = new AtomicReference<>(amountToDeliver);
-    this.rateCalculator = rateCalculator;
     sentAmount = new AtomicReference<>(UnsignedLong.ZERO);
     deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
   }
@@ -38,6 +60,11 @@ public class FixedReceiverAmountPaymentTracker implements PaymentTracker {
   @Override
   public UnsignedLong getOriginalAmount() {
     return amountToDeliver;
+  }
+
+  @Override
+  public SenderAmountMode getOriginalAmountMode() {
+    return SenderAmountMode.RECEIVER_AMOUNT;
   }
 
   @Override
@@ -56,10 +83,10 @@ public class FixedReceiverAmountPaymentTracker implements PaymentTracker {
   }
 
   @Override
-  public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
-                                             Denomination sendDenomination,
-                                             Optional<Denomination> receiverDenomination) {
-    if (congestionLimit.equals(UnsignedLong.ZERO) || amountLeftToDeliver.get().equals(UnsignedLong.ZERO)) {
+  public PrepareAmounts getSendPacketAmounts(
+      UnsignedLong congestionLimit, Denomination sendDenomination, Optional<Denomination> receiverDenomination
+  ) {
+    if (congestionLimit.equals(UnsignedLong.ZERO)) {
       return PrepareAmounts.of().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
     }
     UnsignedLong amountToSendInSenderUnits =

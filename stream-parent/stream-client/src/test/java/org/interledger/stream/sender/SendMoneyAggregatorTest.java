@@ -23,6 +23,7 @@ import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.SendMoneyRequest;
+import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.StreamConnectionId;
@@ -100,6 +101,7 @@ public class SendMoneyAggregatorTest {
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sharedSecret(sharedSecret)
         .sourceAddress(sourceAddress)
+        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
@@ -207,8 +209,9 @@ public class SendMoneyAggregatorTest {
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sharedSecret(sharedSecret)
         .sourceAddress(sourceAddress)
-        .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
+        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
+        .destinationAddress(destinationAddress)
         .timeout(Optional.of(Duration.ofSeconds(60)))
         .denomination(Denominations.XRP)
         .paymentTracker(new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator()))

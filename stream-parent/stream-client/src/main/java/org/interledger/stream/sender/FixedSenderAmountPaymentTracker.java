@@ -2,17 +2,19 @@ package org.interledger.stream.sender;
 
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PrepareAmounts;
-import org.interledger.stream.PaymentTracker;
+import org.interledger.stream.SenderAmountPaymentTracker;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
+import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class FixedSenderAmountPaymentTracker implements PaymentTracker {
+public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTracker {
 
   // The original amount, in sender's units, to send
   private final UnsignedLong amountToSend;
@@ -26,10 +28,29 @@ public class FixedSenderAmountPaymentTracker implements PaymentTracker {
 
   private final ExchangeRateCalculator rateCalculator;
 
-  public FixedSenderAmountPaymentTracker(UnsignedLong amountToSend, ExchangeRateCalculator rateCalculator) {
-    this.amountToSend = amountToSend;
+  /**
+   * Required-args Constructor.
+   *
+   * @param amountToSend An {@link UnsignedLong} representing the amount to send to the receiver, denominated in the
+   *                     sender's units.
+   */
+  public FixedSenderAmountPaymentTracker(final UnsignedLong amountToSend) {
+    this(amountToSend, new NoOpExchangeRateCalculator());
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param amountToSend   An {@link UnsignedLong} representing the amount to send, in the sender's units.
+   * @param rateCalculator An {@link ExchangeRateCalculator} that informs this tracker which amounts to use is
+   *                       subsequent operations, depending on market exchange rates, observed path rates, and possibly
+   *                       other data.
+   */
+  public FixedSenderAmountPaymentTracker(final UnsignedLong amountToSend, final ExchangeRateCalculator rateCalculator) {
+    this.amountToSend = Objects.requireNonNull(amountToSend);
+    this.rateCalculator = Objects.requireNonNull(rateCalculator);
+
     amountLeftToSend = new AtomicReference<>(amountToSend);
-    this.rateCalculator = rateCalculator;
     sentAmount = new AtomicReference<>(UnsignedLong.ZERO);
     deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
   }
@@ -56,11 +77,12 @@ public class FixedSenderAmountPaymentTracker implements PaymentTracker {
 
   @Override
   public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
-                                             Denomination sendDenomination,
-                                             Optional<Denomination> receiverDenomination) {
+      Denomination sendDenomination,
+      Optional<Denomination> receiverDenomination) {
     final UnsignedLong packetAmountToSend = StreamUtils.min(amountLeftToSend.get(), congestionLimit);
     return PrepareAmounts.of()
-        .minimumAmountToAccept(rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination))
+        .minimumAmountToAccept(
+            rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination))
         .amountToSend(packetAmountToSend)
         .build();
   }
