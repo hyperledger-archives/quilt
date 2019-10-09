@@ -1,6 +1,6 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.stream.UnsignedLongUtils.is;
+import static org.interledger.stream.FluentCompareTo.is;
 
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PrepareAmounts;

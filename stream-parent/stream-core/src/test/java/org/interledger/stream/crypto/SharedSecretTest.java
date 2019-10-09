@@ -3,6 +3,7 @@ package org.interledger.stream.crypto;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.SharedSecret;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

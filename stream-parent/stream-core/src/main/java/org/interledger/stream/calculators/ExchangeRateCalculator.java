@@ -21,7 +21,7 @@ public interface ExchangeRateCalculator {
 
   /**
    * Calculates the amount to send for the ILP packet based on a desired amount to be received by the receiver (in
-   * receiver's units)
+   * receiver's units).
    *
    * @param amountToReceive     amount to be received (in receiver's units)
    * @param sendDenomination    sender's denomination

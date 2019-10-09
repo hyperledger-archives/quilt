@@ -20,6 +20,8 @@ package org.interledger.stream;
  * =========================LICENSE_END==================================
  */
 
+import static org.interledger.stream.FluentCompareTo.is;
+
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.stream.frames.StreamFrame;
@@ -113,7 +115,7 @@ public interface StreamPacket {
   @Derived
   default boolean sequenceIsSafeForSingleSharedSecret() {
     // Only return true if the `sequence` is below MAX_FRAMES_PER_CONNECTION. At or above is unsafe.
-    return this.sequence().compareTo(StreamConnection.MAX_FRAMES_PER_CONNECTION) < 0;
+    return is(this.sequence()).lessThan(StreamConnection.MAX_FRAMES_PER_CONNECTION);
   }
 
   /**
