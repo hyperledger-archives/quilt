@@ -59,12 +59,13 @@ public class FixedReceiverAmountPaymentTracker implements PaymentTracker {
   public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
                                              Denomination sendDenomination,
                                              Optional<Denomination> receiverDenomination) {
-    if (congestionLimit.equals(UnsignedLong.ZERO)) {
+    if (congestionLimit.equals(UnsignedLong.ZERO) || amountLeftToDeliver.get().equals(UnsignedLong.ZERO)) {
       return PrepareAmounts.of().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
     }
     UnsignedLong amountToSendInSenderUnits =
         rateCalculator.calculateAmountToSend(amountLeftToDeliver.get(), sendDenomination, receiverDenomination.get());
-    final UnsignedLong packetAmountToSend = StreamUtils.min(amountToSendInSenderUnits, congestionLimit);
+    final UnsignedLong packetAmountToSend = StreamUtils.max(StreamUtils.min(amountToSendInSenderUnits, congestionLimit),
+        UnsignedLong.ONE);
     UnsignedLong minAmountToAcceptInReceiverUnits =
         rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination);
     return PrepareAmounts.of()

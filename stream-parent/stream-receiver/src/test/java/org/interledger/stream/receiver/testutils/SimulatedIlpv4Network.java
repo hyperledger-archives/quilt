@@ -162,7 +162,7 @@ public class SimulatedIlpv4Network {
     Objects.requireNonNull(multiplier);
 
     BigInteger newAmount = multiplier.multiply(new BigDecimal(preparePacket.getAmount().bigIntegerValue()))
-        .toBigIntegerExact();
+        .toBigInteger();
     return InterledgerPreparePacket.builder().from(preparePacket).amount(UnsignedLong.valueOf(newAmount)).build();
   }
 
