@@ -1,10 +1,10 @@
 package org.interledger.spsp;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class PaymentPointerTest {
 
@@ -14,47 +14,47 @@ public class PaymentPointerTest {
   @Test
   public void parseHostAndPath() {
     assertThat(PaymentPointer.of("$example.com/foo"))
-      .isEqualTo(ImmutablePaymentPointer.builder().host("example.com").path("/foo").build());
+        .isEqualTo(ImmutablePaymentPointer.builder().host("example.com").path("/foo").build());
   }
 
   @Test
   public void wellKnownPath() {
     assertThat(PaymentPointer.of("$example.com").path())
-      .isEqualTo("/.well-known/pay");
+        .isEqualTo("/.well-known/pay");
   }
 
   @Test
   public void wellKnownPathWithTrailingSlash() {
     assertThat(PaymentPointer.of("$example.com/").path())
-      .isEqualTo("/.well-known/pay");
+        .isEqualTo("/.well-known/pay");
   }
 
   @Test
   public void builderWithWellKnownPathWithTrailingSlash() {
     assertThat(ImmutablePaymentPointer.builder().host("example.com").path("/").build().path())
-      .isEqualTo("/.well-known/pay");
+        .isEqualTo("/.well-known/pay");
   }
 
   @Test
   public void builderWithWellKnownPathWithoutTrailingSlash() {
     assertThat(ImmutablePaymentPointer.builder().host("example.com").path("").build().path())
-      .isEqualTo("/.well-known/pay");
+        .isEqualTo("/.well-known/pay");
   }
 
   @Test
   public void accountPath() {
     assertThat(PaymentPointer.of("$example.com/foo").path())
-      .isEqualTo("/foo");
+        .isEqualTo("/foo");
   }
 
   @Test
   public void parseHostOnly() {
     assertThat(PaymentPointer.of("$example.com"))
-      .isEqualTo(ImmutablePaymentPointer.builder().host("example.com").path("/").build());
+        .isEqualTo(ImmutablePaymentPointer.builder().host("example.com").path("/").build());
     assertThat(PaymentPointer.of("$bob.example.com"))
-      .isEqualTo(ImmutablePaymentPointer.builder().host("bob.example.com").path("/").build());
+        .isEqualTo(ImmutablePaymentPointer.builder().host("bob.example.com").path("/").build());
     assertThat(PaymentPointer.of("$localhost"))
-      .isEqualTo(ImmutablePaymentPointer.builder().host("localhost").path("/").build());
+        .isEqualTo(ImmutablePaymentPointer.builder().host("localhost").path("/").build());
   }
 
   @Test

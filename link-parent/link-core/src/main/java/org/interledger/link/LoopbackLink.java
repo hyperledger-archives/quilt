@@ -2,7 +2,6 @@ package org.interledger.link;
 
 import static org.interledger.core.InterledgerConstants.ALL_ZEROS_FULFILLMENT;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -10,6 +9,8 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
+
+import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Objects;
 import java.util.Optional;

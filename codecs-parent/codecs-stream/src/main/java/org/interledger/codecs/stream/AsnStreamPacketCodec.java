@@ -32,6 +32,7 @@ public class AsnStreamPacketCodec extends AsnSequenceCodec<StreamPacket> {
   /**
    * Default constructor.
    */
+  @SuppressWarnings("CommentsIndentation")
   public AsnStreamPacketCodec() {
     super(
         new AsnUint8Codec(), // version

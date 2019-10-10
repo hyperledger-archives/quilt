@@ -14,11 +14,11 @@ public class FixedSenderAmountPaymentTrackerTest {
 
   @Test
   public void checkAllInteractions() {
-    FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12l),
+    FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12L),
         new HalfsiesExchangeRateCalculator());
 
-    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.moreToSend()).isTrue();
@@ -36,45 +36,45 @@ public class FixedSenderAmountPaymentTrackerTest {
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
 
     tracker.auth(amounts);
-    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(6));
     assertThat(tracker.moreToSend()).isTrue();
 
     tracker.rollback(amounts, false);
-    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.moreToSend()).isTrue();
 
     tracker.auth(amounts);
     tracker.commit(amounts, UnsignedLong.valueOf(3));
-    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(6));
-    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.valueOf(3));
+    assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.valueOf(6));
+    assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.valueOf(3));
     assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(6));
     assertThat(tracker.moreToSend()).isTrue();
 
     tracker.auth(amounts);
     tracker.commit(amounts, UnsignedLong.valueOf(4));
-    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(12));
-    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.valueOf(7));
+    assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.valueOf(12));
+    assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.valueOf(7));
     assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.moreToSend()).isFalse();
 
     // FIXME add logic to prevent less than 0
-//    tracker.auth(amounts);
-//    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(12));
-//    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.valueOf(7));
-//    assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
-//    assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
-//    assertThat(tracker.moreToSend()).isFalse();
+    //    tracker.auth(amounts);
+    //    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(12));
+    //    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.valueOf(7));
+    //    assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
+    //    assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
+    //    assertThat(tracker.moreToSend()).isFalse();
 
     tracker.setSentAmount(UnsignedLong.valueOf(20));
-    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(20));
+    assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.valueOf(20));
 
   }
 }

@@ -1,14 +1,21 @@
 package org.interledger.link.http.auth;
 
-import okhttp3.HttpUrl;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.interledger.link.http.IlpOverHttpLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
+
+import okhttp3.HttpUrl;
 import org.junit.Test;
 
 import java.time.Duration;
 
-import static org.mockito.Mockito.*;
-
+/**
+ * Unit tests for {@link JwtHs256BearerTokenSupplier}.
+ */
 public class JwtHs256BearerTokenSupplierTest {
 
   @Test

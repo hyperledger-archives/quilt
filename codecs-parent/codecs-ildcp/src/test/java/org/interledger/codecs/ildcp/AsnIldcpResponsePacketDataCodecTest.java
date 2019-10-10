@@ -9,9 +9,9 @@ package org.interledger.codecs.ildcp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,8 @@ package org.interledger.codecs.ildcp;
  * limitations under the License.
  * =========================LICENSE_END==================================
  */
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerFulfillment;
@@ -32,8 +34,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link AsnIldcpResponsePacketDataCodec}.
@@ -61,7 +61,8 @@ public class AsnIldcpResponsePacketDataCodecTest {
   public void encode() {
     codec.encode(packet);
 
-    assertThat((InterledgerFulfillment) codec.getValueAt(0)).isEqualTo(InterledgerFulfillment.of(new byte[32])); // fulfillment
+    assertThat((InterledgerFulfillment) codec.getValueAt(0))
+        .isEqualTo(InterledgerFulfillment.of(new byte[32])); // fulfillment
 
     final byte[] encodedIldcpResponseBytes = codec.getValueAt(1);
     assertThat(Base64.getEncoder().encodeToString(encodedIldcpResponseBytes)).isEqualTo("C2V4YW1wbGUuZm9vCQNCVEM=");

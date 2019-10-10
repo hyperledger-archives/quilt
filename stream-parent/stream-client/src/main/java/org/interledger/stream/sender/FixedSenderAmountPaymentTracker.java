@@ -16,6 +16,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * An implementation of {@link SenderAmountPaymentTracker} that uses a fixed amount to send, denominated in the sender's
+ * units, as reflected in the `amountToDeliver`.
+ */
 public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTracker {
 
   // The original amount, in sender's units, to send
@@ -68,39 +72,50 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   }
 
   @Override
-  public UnsignedLong getAmountSent() {
+  public UnsignedLong getDeliveredAmountInSenderUnits() {
     return sentAmount.get();
   }
 
   @Override
-  public UnsignedLong getDeliveredAmount() {
+  public UnsignedLong getDeliveredAmountInReceiverUnits() {
     return deliveredAmount.get();
   }
 
   @Override
-  public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit,
-      Denomination sendDenomination,
-      Optional<Denomination> receiverDenomination) {
+  public PrepareAmounts getSendPacketAmounts(
+      final UnsignedLong congestionLimit,
+      final Denomination senderDenomination,
+      final Optional<Denomination> receiverDenomination
+  ) {
+    Objects.requireNonNull(congestionLimit);
+    Objects.requireNonNull(senderDenomination);
+    Objects.requireNonNull(receiverDenomination);
+
     final UnsignedLong packetAmountToSend = StreamUtils.min(amountLeftToSend.get(), congestionLimit);
     return PrepareAmounts.builder()
         .minimumAmountToAccept(
-            rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination))
+            rateCalculator.calculateMinAmountToAccept(packetAmountToSend, senderDenomination, receiverDenomination))
         .amountToSend(packetAmountToSend)
         .build();
   }
 
   @Override
-  public void auth(PrepareAmounts prepareAmounts) {
+  public void auth(final PrepareAmounts prepareAmounts) {
+    Objects.requireNonNull(prepareAmounts);
     this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
-  public void rollback(PrepareAmounts prepareAmounts, boolean packetRejected) {
+  public void rollback(final PrepareAmounts prepareAmounts,final  boolean packetRejected) {
+    Objects.requireNonNull(prepareAmounts);
+    Objects.requireNonNull(packetRejected);
     this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
-  public void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount) {
+  public void commit(final PrepareAmounts prepareAmounts,final UnsignedLong deliveredAmount) {
+    Objects.requireNonNull(prepareAmounts);
+    Objects.requireNonNull(deliveredAmount);
     this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
     this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
   }

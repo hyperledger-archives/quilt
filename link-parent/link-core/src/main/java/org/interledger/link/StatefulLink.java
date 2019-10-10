@@ -13,8 +13,8 @@ public interface StatefulLink<LS extends LinkSettings> extends Link<LS>, Connect
   /**
    * Add an event listener to this link.
    *
-   * Care should be taken when adding multiple listeners to ensure that they perform distinct operations, otherwise
-   * duplicate functionality might be unintentionally introduced.
+   * <p>Care should be taken when adding multiple listeners to ensure that they perform distinct operations, otherwise
+   * duplicate functionality might be unintentionally introduced.</p>
    *
    * @param eventListener A {@link LinkConnectionEventListener} that can listen for and response to various types of
    *                      events emitted by this link.

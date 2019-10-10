@@ -88,12 +88,13 @@ public class ValidStreamFrameVectorsTest {
         .getResource("ValidStreamFrameVectorsTest.json").toURI());
 
     Stream<String> lines = Files.lines(path);
-    String data = lines.collect(Collectors.joining("\n"));
     lines.close();
 
     final ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+    String data = lines.collect(Collectors.joining("\n"));
     List<StreamFrameTestVector> vectors = objectMapper
         .readValue(data, new TypeReference<List<StreamFrameTestVector>>() {
         });
@@ -210,6 +211,9 @@ public class ValidStreamFrameVectorsTest {
                 .build())
             .build();
         break;
+      }
+      default: {
+        throw new RuntimeException("Unsupported Frame:" + type);
       }
     }
 

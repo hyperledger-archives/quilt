@@ -12,12 +12,15 @@ public class Ids {
 
   @Value.Immutable
   @Wrapped
-  static abstract class _LinkId extends Wrapper<String> {
+  @SuppressWarnings( {"TypeName"})
+  abstract static class _LinkId extends Wrapper<String> {
+
   }
 
-  @Value.Immutable
   @Wrapped
-  static abstract class _LinkType extends Wrapper<String> {
+  @SuppressWarnings( {"TypeName"})
+  @Value.Immutable
+  abstract static class _LinkType extends Wrapper<String> {
 
     /**
      * Always normalize Link-type String values to full uppercase to avoid casing ambiguity in properties files.

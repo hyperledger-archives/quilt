@@ -20,11 +20,11 @@ package org.interledger.encoding.asn.framework;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class OnValueChangedTest {
 

@@ -36,7 +36,7 @@ public class LinkException extends RuntimeException {
   }
 
   /**
-   * Constructs a new runtime exception with the specified detail message and cause.  <p>Note that the detail message
+   * Constructs a new runtime exception with the specified detail message and cause. Note that the detail message
    * associated with {@code cause} is <i>not</i> automatically incorporated in this runtime exception's detail message.
    *
    * @param message the detail message (which is saved for later retrieval by the {@link #getMessage()} method).
@@ -94,9 +94,9 @@ public class LinkException extends RuntimeException {
   @Override
   public String toString() {
     String linkIdMessage = "LinkId=" + getLinkId();
-    String s = getClass().getName();
+    String className = getClass().getName();
     String message = getLocalizedMessage() == null ? linkIdMessage : getLocalizedMessage() + " " + linkIdMessage;
-    return (s + ": " + message);
+    return (className + ": " + message);
   }
 
 }

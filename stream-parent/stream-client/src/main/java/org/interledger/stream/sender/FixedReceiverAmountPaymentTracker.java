@@ -16,6 +16,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * An implementation of {@link ReceiverAmountPaymentTracker} that uses a fixed amount to send, denominated in the
+ * receiver's units, as reflected in the `amountToDeliver`.
+ */
 public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentTracker {
 
   // The original amount, in receiver's units, to send
@@ -75,28 +79,34 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   }
 
   @Override
-  public UnsignedLong getAmountSent() {
+  public UnsignedLong getDeliveredAmountInSenderUnits() {
     return sentAmount.get();
   }
 
   @Override
-  public UnsignedLong getDeliveredAmount() {
+  public UnsignedLong getDeliveredAmountInReceiverUnits() {
     return deliveredAmount.get();
   }
 
   @Override
   public PrepareAmounts getSendPacketAmounts(
-      UnsignedLong congestionLimit, Denomination sendDenomination, Optional<Denomination> receiverDenomination
+      final UnsignedLong congestionLimit,
+      final Denomination senderDenomination,
+      final Optional<Denomination> receiverDenomination
   ) {
+    Objects.requireNonNull(congestionLimit);
+    Objects.requireNonNull(senderDenomination);
+    Objects.requireNonNull(receiverDenomination);
+
     if (congestionLimit.equals(UnsignedLong.ZERO) || amountLeftToDeliver.get().equals(UnsignedLong.ZERO)) {
       return PrepareAmounts.builder().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
     }
     UnsignedLong amountToSendInSenderUnits =
-        rateCalculator.calculateAmountToSend(amountLeftToDeliver.get(), sendDenomination, receiverDenomination.get());
+        rateCalculator.calculateAmountToSend(amountLeftToDeliver.get(), senderDenomination, receiverDenomination.get());
     final UnsignedLong packetAmountToSend = StreamUtils.max(StreamUtils.min(amountToSendInSenderUnits, congestionLimit),
         UnsignedLong.ONE);
     UnsignedLong minAmountToAcceptInReceiverUnits =
-        rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination);
+        rateCalculator.calculateMinAmountToAccept(packetAmountToSend, senderDenomination, receiverDenomination);
     return PrepareAmounts.builder()
         .minimumAmountToAccept(minAmountToAcceptInReceiverUnits)
         .amountToSend(packetAmountToSend)
@@ -104,11 +114,13 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   }
 
   @Override
-  public void auth(PrepareAmounts prepareAmounts) {
+  public void auth(final PrepareAmounts prepareAmounts) {
+    Objects.requireNonNull(prepareAmounts);
     reduceAmountLeftToDeliver(prepareAmounts.getMinimumAmountToAccept());
   }
 
-  private void reduceAmountLeftToDeliver(UnsignedLong amountToReduce) {
+  private void reduceAmountLeftToDeliver(final UnsignedLong amountToReduce) {
+    Objects.requireNonNull(amountToReduce);
     this.amountLeftToDeliver.getAndUpdate(sourceAmount -> {
       if (is(sourceAmount).lessThan(amountToReduce)) {
         // we've overdelivered so just set the amountToDeliver to 0 since UnsignedLong cannot go negative
@@ -120,12 +132,16 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   }
 
   @Override
-  public void rollback(PrepareAmounts prepareAmounts, boolean packetRejected) {
+  public void rollback(final PrepareAmounts prepareAmounts, final boolean packetRejected) {
+    Objects.requireNonNull(prepareAmounts);
     this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getMinimumAmountToAccept()));
   }
 
   @Override
-  public void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount) {
+  public void commit(final PrepareAmounts prepareAmounts, final UnsignedLong deliveredAmount) {
+    Objects.requireNonNull(prepareAmounts);
+    Objects.requireNonNull(deliveredAmount);
+
     if (is(prepareAmounts.getMinimumAmountToAccept()).lessThan(deliveredAmount)) {
       UnsignedLong overrage = deliveredAmount.minus(prepareAmounts.getMinimumAmountToAccept());
       reduceAmountLeftToDeliver(overrage);

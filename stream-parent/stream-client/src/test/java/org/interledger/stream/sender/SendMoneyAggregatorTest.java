@@ -194,8 +194,8 @@ public class SendMoneyAggregatorTest {
 
       @Override
       public UnsignedLong answer(InvocationOnMock invocationOnMock) throws Throwable {
-        int i = counter.incrementAndGet();
-        if (i > 1) {
+        int incrementedCounter = counter.incrementAndGet();
+        if (incrementedCounter > 1) {
           throw new StreamConnectionClosedException(StreamConnectionId.of("whoops"));
         }
         return UnsignedLong.ONE;
@@ -259,7 +259,7 @@ public class SendMoneyAggregatorTest {
   }
 
   @Test
-  public void preflightCheckRejects() throws Exception{
+  public void preflightCheckRejects() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
     StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
@@ -371,8 +371,9 @@ public class SendMoneyAggregatorTest {
   @Test
   public void handleRejectHatesNullNumReject() {
     expectedException.expect(NullPointerException.class);
-    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR),
-        null, null, congestionControllerMock);
+    sendMoneyAggregator
+        .handleReject(null, sampleStreamPacket(), sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR),
+            null, null, congestionControllerMock);
   }
 
   @Test

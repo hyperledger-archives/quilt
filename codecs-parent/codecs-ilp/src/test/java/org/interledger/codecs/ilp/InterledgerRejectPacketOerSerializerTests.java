@@ -20,6 +20,8 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPacket;
@@ -40,8 +42,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Random;
 import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests to validate the serializer functionality for all {@link InterledgerRejectPacket} packets.
