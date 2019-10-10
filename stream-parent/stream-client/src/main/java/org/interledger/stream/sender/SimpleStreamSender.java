@@ -512,7 +512,7 @@ public class SimpleStreamSender implements StreamSender {
         // rollback
 
         PrepareAmounts prepareAmounts =
-            PrepareAmounts.of().amountToSend(amountToSend).minimumAmountToAccept(streamPacket.prepareAmount()).build();
+            PrepareAmounts.of().amountToSend(preparePacket.getAmount()).minimumAmountToAccept(streamPacket.prepareAmount()).build();
 
         paymentTracker.auth(prepareAmounts);
 
@@ -524,7 +524,7 @@ public class SimpleStreamSender implements StreamSender {
             // controller to not reflect what we've actually scheduled to run, resulting in the loop
             // breaking prematurely
             congestionController.prepare(amountToSend);
-            schedule(timeoutReached, preparePacket, streamPacket);
+            schedule(timeoutReached, preparePacket, streamPacket, prepareAmounts);
           } else {
             logger.error("SoldierOn runLoop had more tasks to schedule but was timed-out");
             continue;
@@ -540,13 +540,11 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    void schedule(AtomicBoolean timeoutReached, InterledgerPreparePacket preparePacket, StreamPacket streamPacket) {
+    void schedule(AtomicBoolean timeoutReached, InterledgerPreparePacket preparePacket, StreamPacket streamPacket,
+                  PrepareAmounts prepareAmounts) {
       try {
         executorService.submit(() -> {
           if (!timeoutReached.get()) {
-            PrepareAmounts prepareAmounts =
-                PrepareAmounts.of().amountToSend(preparePacket.getAmount())
-                    .minimumAmountToAccept(streamPacket.prepareAmount()).build();
             try {
               InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
               responsePacket.handle(
