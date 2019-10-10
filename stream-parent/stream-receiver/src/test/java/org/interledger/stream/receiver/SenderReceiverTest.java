@@ -1,22 +1,25 @@
 package org.interledger.stream.receiver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.interledger.stream.SenderAmountMode.RECEIVER_AMOUNT;
+import static org.interledger.stream.SenderAmountMode.SENDER_AMOUNT;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.Denomination;
-import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
+import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.receiver.testutils.SimulatedIlpv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
+import org.interledger.stream.sender.FixedReceiverAmountPaymentTracker;
+import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 import org.interledger.stream.sender.StreamSender;
 
@@ -30,9 +33,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +69,41 @@ public class SenderReceiverTest {
 
   private SimulatedIlpv4Network simulatedIlpNetwork;
 
+  private static StreamNode initNode(
+      Link link,
+      InterledgerAddress senderAddress,
+      InterledgerAddress receiverAddress
+  ) {
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
+
+    SimpleStreamSender streamSender = new SimpleStreamSender(
+        streamEncryptionService, link
+    );
+
+    StatelessStreamReceiver streamReceiver = new StatelessStreamReceiver(
+        () -> serverSecret,
+        new SpspStreamConnectionGenerator(),
+        streamEncryptionService,
+        StreamCodecContextFactory.oer()
+    );
+
+    return StreamNode.builder()
+        .serverSecret(serverSecret)
+        .senderAddress(senderAddress)
+        .receiverAddress(receiverAddress)
+        .streamSender(streamSender)
+        .streamReceiver(streamReceiver)
+        .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
+        .link(link)
+        .build();
+  }
+
+  private static <T> List<T> awaitResults(List<CompletableFuture<T>> futures) {
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+  }
+
   @Before
   public void setup() {
     this.initIlpNetworkForStream();
@@ -72,7 +113,6 @@ public class SenderReceiverTest {
   public void testSendFromLeftToRight() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
     final SendMoneyResult sendMoneyResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -84,16 +124,142 @@ public class SenderReceiverTest {
   }
 
   @Test
+  public void testSendFromLeftToRightWithFixedReceiverAmountExactPathRate() {
+    final UnsignedLong amountToDeliver = UnsignedLong.valueOf(10000);
+
+    BigDecimal expectedPathRate = new BigDecimal("1.5");
+    BigDecimal actualPathRate = new BigDecimal("1.5");
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+        SimulatedPathConditions.builder().currentExchangeRateSupplier(() -> actualPathRate).build(),
+        SimulatedPathConditions.builder().build()
+    ));
+
+    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
+    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
+
+    SendMoneyResult sendMoneyResult = sender.sendMoney(
+        SendMoneyRequest.builder()
+            .sourceAddress(leftStreamNode.senderAddress())
+            .amount(amountToDeliver)
+            .senderAmountMode(RECEIVER_AMOUNT)
+            .denomination(leftStreamNode.denomination())
+            .destinationAddress(connectionDetails.destinationAddress())
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(
+                new FixedReceiverAmountPaymentTracker(amountToDeliver,
+                    new FixedRateExchangeCalculator(expectedPathRate))
+            )
+            .timeout(Duration.ofMillis(1000L))
+            .build())
+        .join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(amountToDeliver);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(amountToDeliver);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isGreaterThan(1);
+    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
+    assertThat(sendMoneyResult.successfulPayment()).isTrue();
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  @Test
+  public void testSendFromLeftToRightWithFixedReceiverAmountOverestimatedPathRate() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000);
+
+    // simulating get a better exchange rate than we expected in which case payments should get fulfilled because
+    // the receiver gets more than they were supposed to
+    BigDecimal expectedPathExchange = new BigDecimal("1.4");
+    BigDecimal actualPathExchange = new BigDecimal("1.5");
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+        SimulatedPathConditions.builder().currentExchangeRateSupplier(() -> actualPathExchange).build(),
+        SimulatedPathConditions.builder().build()
+    ));
+
+    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
+    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
+
+    SendMoneyResult sendMoneyResult = sender.sendMoney(
+        SendMoneyRequest.builder()
+            .sharedSecret(connectionDetails.sharedSecret())
+            .amount(paymentAmount)
+            .senderAmountMode(RECEIVER_AMOUNT)
+            .denomination(leftStreamNode.denomination())
+            .destinationAddress(connectionDetails.destinationAddress())
+            .sourceAddress(leftStreamNode.senderAddress())
+            .paymentTracker(
+                new FixedReceiverAmountPaymentTracker(paymentAmount,
+                    new FixedRateExchangeCalculator(expectedPathExchange))
+            )
+            .timeout(Duration.ofMillis(1000L))
+            .build()
+    ).join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isGreaterThanOrEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.amountSent()).isLessThan(paymentAmount);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isGreaterThan(1);
+    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
+    assertThat(sendMoneyResult.successfulPayment()).isTrue();
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  @Test
+  public void testSendFromLeftToRightWithFixedReceiverAmountUnderestimatedPathRate() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000);
+
+    // simulating get a worse exchange rate than we expected in which case payments should get rejected because
+    // the receiver gets less than they were supposed to
+    BigDecimal expectedPathExchange = new BigDecimal("1.5");
+    BigDecimal actualPathExchange = new BigDecimal("1.4"); // lower rate than expected
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+        SimulatedPathConditions.builder().currentExchangeRateSupplier(() -> actualPathExchange).build(),
+        SimulatedPathConditions.builder().build()
+    ));
+
+    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
+    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
+
+    SendMoneyResult sendMoneyResult = sender.sendMoney(
+        SendMoneyRequest.builder()
+            .sourceAddress(leftStreamNode.senderAddress())
+            .amount(paymentAmount)
+            .senderAmountMode(RECEIVER_AMOUNT)
+            .denomination(leftStreamNode.denomination())
+            .destinationAddress(connectionDetails.destinationAddress())
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(new FixedReceiverAmountPaymentTracker(paymentAmount,
+                new FixedRateExchangeCalculator(expectedPathExchange)))
+            .timeout(Duration.ofMillis(1000))
+            .build())
+        .join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.amountSent()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(0);
+    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThan(0);
+    assertThat(sendMoneyResult.successfulPayment()).isFalse();
+
+    logger.info("Payment Sent: {}", sendMoneyResult);
+  }
+
+  @Test
   public void testSendFromRightToLeft() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
+    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
     final SendMoneyResult sendMoneyResult = rightStreamNode.streamSender().sendMoney(
-        SharedSecret.of(connectionDetails.sharedSecret().key()),
-        RIGHT_SENDER_ADDRESS,
-        connectionDetails.destinationAddress(),
-        paymentAmount,
-        Denominations.XRP
+        SendMoneyRequest.builder()
+            .sourceAddress(rightStreamNode.senderAddress())
+            .amount(paymentAmount)
+            .senderAmountMode(SENDER_AMOUNT)
+            .denomination(rightStreamNode.denomination())
+            .destinationAddress(connectionDetails.destinationAddress())
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+            .timeout(Duration.ofMillis(10000))
+            .build()
     ).join();
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -173,6 +339,7 @@ public class SenderReceiverTest {
     this.initIlpNetworkForStream(simulatedIlpNetwork);
 
     final SendMoneyResult sendMoneyResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
+
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(100);
@@ -241,28 +408,31 @@ public class SenderReceiverTest {
     });
   }
 
+  /////////////////
+  // Helper Methods
+  /////////////////
+
   private SendMoneyResult sendMoney(StreamNode fromNode, StreamNode toNode, UnsignedLong paymentAmount) {
     return sendMoney(new SimpleStreamSender(fromNode.link()), fromNode, toNode, paymentAmount);
   }
 
-  private SendMoneyResult sendMoney(StreamSender sender, StreamNode fromNode, StreamNode toNode, UnsignedLong paymentAmount) {
+  private SendMoneyResult sendMoney(
+      StreamSender sender, StreamNode fromNode, StreamNode toNode, UnsignedLong paymentAmount
+  ) {
     final StreamConnectionDetails connectionDetails = toNode.getNewStreamConnectionDetails();
     return sender.sendMoney(
         SendMoneyRequest.builder()
-            .sharedSecret(connectionDetails.sharedSecret())
+            .sourceAddress(fromNode.senderAddress())
             .amount(paymentAmount)
+            .senderAmountMode(SENDER_AMOUNT)
             .denomination(fromNode.denomination())
             .destinationAddress(connectionDetails.destinationAddress())
-            .sourceAddress(fromNode.senderAddress())
-            .exchangeRateCalculator(new NoOpExchangeRateCalculator())
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .timeout(Duration.ofMillis(10000))
             .build())
         .join();
   }
-
-  /////////////////
-  // Helper Methods
-  /////////////////
 
   /**
    * Helper method to test lossy ILPv4 network percentages.
@@ -310,39 +480,11 @@ public class SenderReceiverTest {
   }
 
   private StreamNode initLeftNode() {
-    return initNode(simulatedIlpNetwork.getLeftToRightLink(), LEFT_SENDER_ADDRESS, RIGHT_RECEIVER_ADDRESS);
+    return initNode(simulatedIlpNetwork.getLeftToRightLink(), LEFT_SENDER_ADDRESS, LEFT_RECEIVER_ADDRESS);
   }
 
   private StreamNode initRightNode() {
-    return initNode(simulatedIlpNetwork.getRightToLeftLink(), RIGHT_SENDER_ADDRESS, LEFT_RECEIVER_ADDRESS);
-  }
-
-  private static StreamNode initNode(Link link,
-                                     InterledgerAddress senderAddress,
-                                     InterledgerAddress receiverAddress) {
-    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
-    final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
-
-    SimpleStreamSender streamSender = new SimpleStreamSender(
-        streamEncryptionService, link
-    );
-
-    StatelessStreamReceiver streamReceiver = new StatelessStreamReceiver(
-        () -> serverSecret,
-        new SpspStreamConnectionGenerator(),
-        streamEncryptionService,
-        StreamCodecContextFactory.oer()
-    );
-
-    return StreamNode.builder()
-        .serverSecret(serverSecret)
-        .senderAddress(senderAddress)
-        .receiverAddress(receiverAddress)
-        .streamSender(streamSender)
-        .streamReceiver(streamReceiver)
-        .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
-        .link(link)
-        .build();
+    return initNode(simulatedIlpNetwork.getRightToLeftLink(), RIGHT_SENDER_ADDRESS, RIGHT_RECEIVER_ADDRESS);
   }
 
   private <T> List<CompletableFuture<T>> runInParallel(int parallelism, int runCount, Callable<T> task) {
@@ -362,11 +504,6 @@ public class SenderReceiverTest {
         .collect(Collectors.toList());
     executorService.shutdown();
     return tasks;
-  }
-
-  private static <T> List<T> awaitResults(List<CompletableFuture<T>> futures) {
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-    return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
   }
 
   /**
@@ -403,23 +540,65 @@ public class SenderReceiverTest {
 
     /**
      * The {@link Link} that this node uses to communicate to its immediate peer with.
+     *
+     * @return the {@link Link}.
      */
     Link link();
 
     /**
      * The {@link StreamSender} that this node uses to send STREAM payments.
+     *
+     * @return The {@link StreamSender}.
      */
     StreamSender streamSender();
 
     /**
      * The {@link StreamReceiver} that this node uses to receive STREAM payments on.
+     *
+     * @return The {@link StreamReceiver}.
      */
     StreamReceiver streamReceiver();
 
+    /**
+     * Constructs new {@link StreamConnectionDetails} for this node.
+     *
+     * @return An instance of {@link StreamConnectionDetails}.
+     */
     @Derived
     default StreamConnectionDetails getNewStreamConnectionDetails() {
       return new SpspStreamConnectionGenerator().generateConnectionDetails(this::serverSecret, receiverAddress());
     }
 
   }
+
+  /**
+   * An {@link ExchangeRateCalculator} that specifies a fixed exchange rate forever.
+   */
+  static class FixedRateExchangeCalculator implements ExchangeRateCalculator {
+
+    // exchange rate from sender unit's to receiver unit's
+    // if rate = 0.9 then 1 sender unit = 0.9 receiver units
+    private final BigDecimal senderUnitsPerReceiverUnits;
+
+    FixedRateExchangeCalculator(BigDecimal senderUnitsPerReceiverUnits) {
+      this.senderUnitsPerReceiverUnits = senderUnitsPerReceiverUnits;
+    }
+
+    @Override
+    public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive,
+        Denomination sendDenomination,
+        Denomination receiveDenomination) {
+      return UnsignedLong.valueOf(new BigDecimal(amountToReceive.bigIntegerValue())
+          .divide(senderUnitsPerReceiverUnits, RoundingMode.FLOOR).toBigInteger()); // FIXME how to round
+    }
+
+    @Override
+    public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount,
+        Denomination sendDenomination,
+        Optional<Denomination> expectedReceivedDenomination) {
+      return UnsignedLong.valueOf(new BigDecimal(sendAmount.bigIntegerValue())
+          .multiply(senderUnitsPerReceiverUnits).toBigInteger()); // FIXME how to round
+    }
+  }
+
 }

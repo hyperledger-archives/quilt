@@ -1,5 +1,7 @@
 package org.interledger.stream;
 
+import static org.interledger.stream.FluentCompareTo.is;
+
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
@@ -77,7 +79,7 @@ public class StreamUtils {
     Objects.requireNonNull(value1);
     Objects.requireNonNull(value2);
 
-    if (value1.compareTo(value2) < 0) {
+    if (is(value1).lessThan(value2)) {
       return value1;
     } else {
       return value2;
@@ -96,7 +98,7 @@ public class StreamUtils {
     Objects.requireNonNull(value1);
     Objects.requireNonNull(value2);
 
-    if (value1.compareTo(value2) > 0) {
+    if (is(value1).greaterThan(value2)) {
       return value1;
     } else {
       return value2;

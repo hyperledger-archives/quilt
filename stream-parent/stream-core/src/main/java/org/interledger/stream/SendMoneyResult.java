@@ -82,12 +82,10 @@ public interface SendMoneyResult {
   Duration sendMoneyDuration();
 
   /**
-   * Compare the amount delivered to the original amount to see if they match.
+   * Indicates if the payment was completed successfully.
    *
-   * @return true if delivered matches original.
+   * @return true if payment was successful
    */
-  @Value.Derived
-  default boolean successfulPayment() {
-    return amountSent().equals(originalAmount());
-  }
+  boolean successfulPayment();
+
 }
