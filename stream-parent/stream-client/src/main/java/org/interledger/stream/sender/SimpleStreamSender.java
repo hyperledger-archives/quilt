@@ -646,7 +646,7 @@ public class SimpleStreamSender implements StreamSender {
 
       final StreamPacket streamPacket = this.fromEncrypted(sharedSecret, fulfillPacket.getData());
 
-      PrepareAmounts prepareAmounts = PrepareAmounts.of()
+      PrepareAmounts prepareAmounts = PrepareAmounts.builder()
           .amountToSend(originalPreparePacket.getAmount())
           .minimumAmountToAccept(originalStreamPacket.prepareAmount())
           .build();

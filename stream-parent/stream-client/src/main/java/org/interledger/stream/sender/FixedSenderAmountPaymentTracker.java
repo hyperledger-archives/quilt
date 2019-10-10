@@ -82,7 +82,7 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
       Denomination sendDenomination,
       Optional<Denomination> receiverDenomination) {
     final UnsignedLong packetAmountToSend = StreamUtils.min(amountLeftToSend.get(), congestionLimit);
-    return PrepareAmounts.of()
+    return PrepareAmounts.builder()
         .minimumAmountToAccept(
             rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination))
         .amountToSend(packetAmountToSend)

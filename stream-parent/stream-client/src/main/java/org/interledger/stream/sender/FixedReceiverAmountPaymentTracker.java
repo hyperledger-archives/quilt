@@ -89,7 +89,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
       UnsignedLong congestionLimit, Denomination sendDenomination, Optional<Denomination> receiverDenomination
   ) {
     if (congestionLimit.equals(UnsignedLong.ZERO) || amountLeftToDeliver.get().equals(UnsignedLong.ZERO)) {
-      return PrepareAmounts.of().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
+      return PrepareAmounts.builder().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
     }
     UnsignedLong amountToSendInSenderUnits =
         rateCalculator.calculateAmountToSend(amountLeftToDeliver.get(), sendDenomination, receiverDenomination.get());
@@ -97,7 +97,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
         UnsignedLong.ONE);
     UnsignedLong minAmountToAcceptInReceiverUnits =
         rateCalculator.calculateMinAmountToAccept(packetAmountToSend, sendDenomination, receiverDenomination);
-    return PrepareAmounts.of()
+    return PrepareAmounts.builder()
         .minimumAmountToAccept(minAmountToAcceptInReceiverUnits)
         .amountToSend(packetAmountToSend)
         .build();
