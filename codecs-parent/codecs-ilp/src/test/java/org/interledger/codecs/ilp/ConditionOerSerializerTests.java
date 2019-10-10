@@ -20,6 +20,8 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.InterledgerCondition;
 import org.interledger.encoding.asn.framework.CodecContext;
 
@@ -33,8 +35,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Collection;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
 public class ConditionOerSerializerTests {

@@ -21,10 +21,12 @@ package org.interledger.quilt.jackson.sharedsecret;
  */
 
 import org.interledger.core.SharedSecret;
-import java.io.IOException;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+
+import java.io.IOException;
 
 /**
  * Jackson Serializer for {@link SharedSecret}.

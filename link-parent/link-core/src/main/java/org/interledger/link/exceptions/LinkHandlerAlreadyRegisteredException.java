@@ -1,6 +1,5 @@
 package org.interledger.link.exceptions;
 
-
 import org.interledger.link.Link;
 import org.interledger.link.LinkHandler;
 import org.interledger.link.LinkId;
@@ -33,16 +32,17 @@ public class LinkHandlerAlreadyRegisteredException extends LinkException {
   }
 
   /**
-   * Constructs a new runtime exception with the specified detail message and cause.  <p>Note that the detail message
-   * associated with {@code cause} is <i>not</i> automatically incorporated in this runtime exception's detail message.
+   * Constructs a new runtime exception with the specified detail message and cause.
+   *
+   * <p>Note that the detail message associated with {@code cause} is <i>not</i> automatically incorporated in this
+   * runtime exception's detail message.</p>
    *
    * @param message the detail message (which is saved for later retrieval by the {@link #getMessage()} method).
    * @param cause   the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A <tt>null</tt>
    *                value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @param linkId  The {@link LinkId} that triggered this exception.
    */
-  public LinkHandlerAlreadyRegisteredException(String message, Throwable cause,
-      LinkId linkId) {
+  public LinkHandlerAlreadyRegisteredException(String message, Throwable cause, LinkId linkId) {
     super(message, cause, linkId);
   }
 
@@ -56,8 +56,7 @@ public class LinkHandlerAlreadyRegisteredException extends LinkException {
    *               value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @param linkId The {@link LinkId} that triggered this exception.
    */
-  public LinkHandlerAlreadyRegisteredException(Throwable cause,
-      LinkId linkId) {
+  public LinkHandlerAlreadyRegisteredException(Throwable cause, LinkId linkId) {
     super(cause, linkId);
   }
 
@@ -72,10 +71,9 @@ public class LinkHandlerAlreadyRegisteredException extends LinkException {
    * @param writableStackTrace whether or not the stack trace should be writable
    * @param linkId             The {@link LinkId} that triggered this exception.
    */
-  public LinkHandlerAlreadyRegisteredException(String message, Throwable cause,
-      boolean enableSuppression,
-      boolean writableStackTrace,
-      LinkId linkId) {
+  public LinkHandlerAlreadyRegisteredException(
+      String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, LinkId linkId
+  ) {
     super(message, cause, enableSuppression, writableStackTrace, linkId);
   }
 }

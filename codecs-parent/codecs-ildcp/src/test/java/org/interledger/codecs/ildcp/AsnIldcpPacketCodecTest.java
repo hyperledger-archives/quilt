@@ -9,9 +9,9 @@ package org.interledger.codecs.ildcp;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,8 @@ package org.interledger.codecs.ildcp;
  * limitations under the License.
  * =========================LICENSE_END==================================
  */
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.encoding.asn.framework.CodecException;
@@ -30,8 +32,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Unit tests for {@link AsnIldcpPacketCodec}.
  */
@@ -40,13 +40,13 @@ public class AsnIldcpPacketCodecTest {
   private static final InterledgerAddress FOO_ADDRESS = InterledgerAddress.of("example.foo");
   private static final String BTC = "BTC";
 
-  private AsnIldcpPacketCodec codec;
-
-  private IldcpResponse RESPONSE = IldcpResponse.builder()
+  private static final IldcpResponse RESPONSE = IldcpResponse.builder()
       .clientAddress(FOO_ADDRESS)
       .assetScale((short) 9)
       .assetCode(BTC)
       .build();
+
+  private AsnIldcpPacketCodec codec;
 
   @Before
   public void setup() {
