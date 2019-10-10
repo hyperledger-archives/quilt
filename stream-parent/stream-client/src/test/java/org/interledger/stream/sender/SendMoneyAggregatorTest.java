@@ -325,6 +325,46 @@ public class SendMoneyAggregatorTest {
   }
 
   @Test
+  public void breakLoopToPreventOversend() throws Exception {
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
+    PaymentTracker tracker = mock(PaymentTracker.class);
+    PrepareAmounts prepare = PrepareAmounts.builder()
+        .amountToSend(UnsignedLong.valueOf(10l))
+        .minimumAmountToAccept(UnsignedLong.ZERO)
+        .build();
+    when(tracker.getSendPacketAmounts(any(), any(), any())).thenReturn(prepare);
+    when(tracker.auth(any())).thenReturn(false);
+    when(tracker.getOriginalAmountMode()).thenReturn(SenderAmountMode.SENDER_AMOUNT);
+    when(tracker.moreToSend()).thenReturn(true);
+    when(tracker.getDeliveredAmountInReceiverUnits()).thenReturn(UnsignedLong.ZERO);
+    when(tracker.getDeliveredAmountInSenderUnits()).thenReturn(UnsignedLong.ZERO);
+    when(tracker.getOriginalAmount()).thenReturn(UnsignedLong.valueOf(10));
+    when(tracker.getOriginalAmountLeft()).thenReturn(UnsignedLong.valueOf(10));
+    when(tracker.successful()).thenReturn(false);
+
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .sharedSecret(sharedSecret)
+        .sourceAddress(sourceAddress)
+        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
+        .destinationAddress(destinationAddress)
+        .amount(originalAmountToSend)
+        .timeout(Optional.of(Duration.ofSeconds(60)))
+        .denomination(Denominations.XRP)
+        .paymentTracker(tracker)
+        .build();
+    this.sendMoneyAggregator = new SendMoneyAggregator(
+        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+        streamEncryptionServiceMock, request);
+
+    setSoldierOnBooleans(false, false, true);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+    sendMoneyAggregator.send().get();
+    verify(tracker, times(1)).auth(prepare);
+    verify(tracker, times(0)).commit(any(), any());
+  }
+
+  @Test
   public void toEncrypted() throws Exception {
     doThrow(new IOException()).when(streamCodecContextMock).write(any(), any());
     expectedException.expect(StreamSenderException.class);

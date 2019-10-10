@@ -76,4 +76,19 @@ public class FixedSenderAmountPaymentTrackerTest {
     assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.valueOf(20));
 
   }
+
+  @Test
+  public void authFailsWhenAmountLeftToSendLessThanPrepare() {
+    FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12L),
+        new HalfsiesExchangeRateCalculator());
+
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(12), Denominations.XRP,
+        Optional.of(Denominations.XRP));
+    tracker.auth(amounts);
+    tracker.commit(amounts, UnsignedLong.valueOf(12));
+    assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
+    // check amountLeftToSend instead
+    tracker.setSentAmount(UnsignedLong.ZERO);
+    assertThat(tracker.auth(amounts)).isFalse();
+  }
 }
