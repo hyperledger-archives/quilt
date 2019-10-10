@@ -10,7 +10,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Quilt :: IL-DCP Core</name>
+  <name>Quilt :: ILP Core</name>
   <description>Core libraries for implementing the Interledger suite of protocols.</description>
   <artifactId>ilp-core</artifactId>
   <packaging>jar</packaging>
