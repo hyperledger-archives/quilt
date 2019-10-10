@@ -100,20 +100,27 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   }
 
   @Override
-  public void auth(final PrepareAmounts prepareAmounts) {
+  public boolean auth(final PrepareAmounts prepareAmounts) {
     Objects.requireNonNull(prepareAmounts);
-    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
+
+    if (is(amountLeftToSend.get()).lessThan(prepareAmounts.getAmountToSend())) {
+      return false;
+    } else {
+      this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
+      return true;
+    }
+
   }
 
   @Override
-  public void rollback(final PrepareAmounts prepareAmounts,final  boolean packetRejected) {
+  public void rollback(final PrepareAmounts prepareAmounts, final boolean packetRejected) {
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(packetRejected);
     this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
-  public void commit(final PrepareAmounts prepareAmounts,final UnsignedLong deliveredAmount) {
+  public void commit(final PrepareAmounts prepareAmounts, final UnsignedLong deliveredAmount) {
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(deliveredAmount);
     this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));

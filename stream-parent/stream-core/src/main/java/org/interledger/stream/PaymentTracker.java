@@ -74,7 +74,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    * @param prepareAmounts A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
    *                       individual Prepare request.
    */
-  void auth(PrepareAmounts prepareAmounts);
+  boolean auth(PrepareAmounts prepareAmounts);
 
   /**
    * Rollback a packetized payment by properly adding back the values in {@code prepareAmounts} from any internal

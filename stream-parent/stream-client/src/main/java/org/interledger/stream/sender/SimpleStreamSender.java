@@ -427,6 +427,8 @@ public class SimpleStreamSender implements StreamSender {
 
       final ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
 
+      boolean tryingToSendTooMuch = false;
+
       timeout.ifPresent($ -> timeoutMonitor.schedule(
           () -> {
             timeoutReached.set(true);
@@ -435,7 +437,7 @@ public class SimpleStreamSender implements StreamSender {
           $.toMillis(), TimeUnit.MILLISECONDS
       ));
 
-      while (soldierOn(timeoutReached.get())) {
+      while (soldierOn(timeoutReached.get(), tryingToSendTooMuch)) {
         // Determine the amount to send
         PrepareAmounts amounts = paymentTracker.getSendPacketAmounts(
             congestionController.getMaxAmount(), senderDenomination, receiverDenomination
@@ -501,7 +503,11 @@ public class SimpleStreamSender implements StreamSender {
         // rollback
 
         final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
-        paymentTracker.auth(prepareAmounts);
+        if (!paymentTracker.auth(prepareAmounts)) {
+          // if we can't auth, just skip this iteration of the loop until everything else completes
+          tryingToSendTooMuch = true;
+          continue;
+        }
 
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
@@ -573,14 +579,14 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    boolean soldierOn(final boolean timeoutReached) {
+    boolean soldierOn(final boolean timeoutReached, final boolean tryingToSendTooMuch) {
       // if money in flight, always soldier on
       // otherwise, soldier on if
       //   the connection is not closed
       //   and you haven't delivered the full amount
       //   and you haven't timed out
       return this.congestionController.hasInFlight()
-          || (!streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached);
+          || (!streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached && !tryingToSendTooMuch);
     }
 
     /**
