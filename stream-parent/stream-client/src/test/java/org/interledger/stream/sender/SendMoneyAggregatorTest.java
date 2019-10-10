@@ -88,6 +88,7 @@ public class SendMoneyAggregatorTest {
 
   private SendMoneyAggregator sendMoneyAggregator;
   private PaymentTracker paymentTracker;
+  private PrepareAmounts defaultPrepareAmounts;
 
   @Before
   public void setUp() {
@@ -112,6 +113,8 @@ public class SendMoneyAggregatorTest {
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
         streamEncryptionServiceMock, request);
+
+    defaultPrepareAmounts = PrepareAmounts.from(samplePreparePacket(), sampleStreamPacket());
   }
 
   @Test
@@ -235,10 +238,7 @@ public class SendMoneyAggregatorTest {
 
     expectedException.expect(RejectedExecutionException.class);
     sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket(),
-        PrepareAmounts.of()
-            .amountToSend(UnsignedLong.ONE)
-            .minimumAmountToAccept(UnsignedLong.ONE)
-            .build());
+        PrepareAmounts.from(prepare, sampleStreamPacket()));
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
   }
 
@@ -349,7 +349,7 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullPrepare() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
         congestionControllerMock);
   }
 
@@ -357,30 +357,38 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullStreamPacket() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(samplePreparePacket(), null,
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
         congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullReject() {
     expectedException.expect(NullPointerException.class);
-    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), null, new AtomicInteger(),
-        congestionControllerMock);
+    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), null, defaultPrepareAmounts,
+        new AtomicInteger(), congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullNumReject() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(), sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR),
-        null, congestionControllerMock);
+        null, null, congestionControllerMock);
   }
 
   @Test
   public void handleRejectHatesNullCongestionController() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), new AtomicInteger(),
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
         null);
+  }
+
+  @Test
+  public void handleRejectHatesNullPrepareAmountsr() {
+    expectedException.expect(NullPointerException.class);
+    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
+        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), null, new AtomicInteger(),
+        congestionControllerMock);
   }
 
   @Test
@@ -390,8 +398,7 @@ public class SendMoneyAggregatorTest {
     InterledgerPreparePacket prepare = samplePreparePacket();
     InterledgerRejectPacket reject = sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR);
     sendMoneyAggregator.handleReject(prepare, sampleStreamPacket(),
-        reject, numReject,
-        congestionControllerMock);
+        reject, defaultPrepareAmounts, numReject, congestionControllerMock);
     assertThat(numReject.get()).isEqualTo(1);
     assertThat(paymentTracker.getOriginalAmountLeft()).isEqualTo(originalAmountToSend.plus(prepare.getAmount()));
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, reject);

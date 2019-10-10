@@ -536,9 +536,9 @@ public class SimpleStreamSender implements StreamSender {
             try {
               InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
               responsePacket.handle(
-                  fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets,
-                      congestionController)
+                  fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
+                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts,
+                      numRejectedPackets, congestionController)
               );
             } catch (Exception e) {
               logger.error("Link send failed. preparePacket={}", preparePacket, e);
@@ -632,11 +632,13 @@ public class SimpleStreamSender implements StreamSender {
     void handleFulfill(
         final InterledgerPreparePacket originalPreparePacket,
         final StreamPacket originalStreamPacket,
-        final InterledgerFulfillPacket fulfillPacket
+        final InterledgerFulfillPacket fulfillPacket,
+        final PrepareAmounts prepareAmounts
     ) {
       Objects.requireNonNull(originalPreparePacket);
       Objects.requireNonNull(originalStreamPacket);
       Objects.requireNonNull(fulfillPacket);
+      Objects.requireNonNull(prepareAmounts);
 
       this.numFulfilledPackets.getAndIncrement();
 
@@ -645,11 +647,6 @@ public class SimpleStreamSender implements StreamSender {
       this.shouldSendSourceAddress.set(false);
 
       final StreamPacket streamPacket = this.fromEncrypted(sharedSecret, fulfillPacket.getData());
-
-      PrepareAmounts prepareAmounts = PrepareAmounts.builder()
-          .amountToSend(originalPreparePacket.getAmount())
-          .minimumAmountToAccept(originalStreamPacket.prepareAmount())
-          .build();
 
       //if let Ok (packet) = StreamPacket::from_encrypted ( & self.shared_secret, fulfill.into_data()){
       if (streamPacket.interledgerPacketType() == InterledgerPacketType.FULFILL) {
@@ -681,6 +678,7 @@ public class SimpleStreamSender implements StreamSender {
         final InterledgerPreparePacket originalPreparePacket,
         final StreamPacket originalStreamPacket,
         final InterledgerRejectPacket rejectPacket,
+        final PrepareAmounts prepareAmounts,
         final AtomicInteger numRejectedPackets,
         final CongestionController congestionController
     ) {
@@ -689,13 +687,11 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(rejectPacket);
       Objects.requireNonNull(numRejectedPackets);
       Objects.requireNonNull(congestionController);
+      Objects.requireNonNull(prepareAmounts);
 
       final UnsignedLong amountToSend = originalPreparePacket.getAmount();
-      final UnsignedLong amountToDeliver = originalStreamPacket.prepareAmount();
 
       numRejectedPackets.getAndIncrement();
-
-      PrepareAmounts prepareAmounts = PrepareAmounts.from(originalPreparePacket, originalStreamPacket);
 
       paymentTracker.rollback(prepareAmounts, true);
       congestionController.reject(amountToSend, rejectPacket);
@@ -796,9 +792,11 @@ public class SimpleStreamSender implements StreamSender {
           .data(encryptedStreamPacket)
           .build();
 
+      final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
+
       link.sendPacket(preparePacket).handle(
-          fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket),
-          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, numRejectedPackets,
+          fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
+          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts, numRejectedPackets,
               congestionController)
       );
 
