@@ -90,8 +90,12 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   }
 
   @Override
-  public void auth(PrepareAmounts prepareAmounts) {
+  public boolean auth(PrepareAmounts prepareAmounts) {
+    if (is(amountLeftToSend.get()).lessThan(prepareAmounts.getAmountToSend())) {
+      return false;
+    }
     this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
+    return true;
   }
 
   @Override

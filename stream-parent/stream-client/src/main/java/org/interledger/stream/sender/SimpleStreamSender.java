@@ -429,6 +429,8 @@ public class SimpleStreamSender implements StreamSender {
 
       final ScheduledExecutorService timeoutMonitor = Executors.newSingleThreadScheduledExecutor();
 
+      boolean tryingToSendTooMuch = false;
+
       timeout.ifPresent($ -> timeoutMonitor.schedule(
           () -> {
             timeoutReached.set(true);
@@ -437,7 +439,7 @@ public class SimpleStreamSender implements StreamSender {
           $.toMillis(), TimeUnit.MILLISECONDS
       ));
 
-      while (soldierOn(timeoutReached.get())) {
+      while (soldierOn(timeoutReached.get(), tryingToSendTooMuch)) {
         // Determine the amount to send
         PrepareAmounts amounts = paymentTracker.getSendPacketAmounts(congestionController.getMaxAmount(),
             senderDenomination,
@@ -503,7 +505,11 @@ public class SimpleStreamSender implements StreamSender {
         // rollback
 
         final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
-        paymentTracker.auth(prepareAmounts);
+        if (!paymentTracker.auth(prepareAmounts)) {
+          // if we can't auth, just skip this iteration of the loop until everything else completes
+          tryingToSendTooMuch = true;
+          continue;
+        }
 
         try {
           // don't submit new tasks if the timeout was reached within this iteration of the while loop
@@ -567,14 +573,14 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    boolean soldierOn(boolean timeoutReached) {
+    boolean soldierOn(boolean timeoutReached, boolean tryingToSendTooMuch) {
       // if money in flight, always soldier on
       // otherwise, soldier on if
       //   the connection is not closed
       //   and you haven't delivered the full amount
       //   and you haven't timed out
       return this.congestionController.hasInFlight()
-          || (!streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached);
+          || (!streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached && !tryingToSendTooMuch);
     }
 
     /**
@@ -763,81 +769,81 @@ public class SimpleStreamSender implements StreamSender {
     //   ));
     // }
 
-    private void sendStreamFramesInZeroValuePacket(final Collection<StreamFrame> streamFrames)
-        throws StreamConnectionClosedException {
-      Objects.requireNonNull(streamFrames);
+//    private void sendStreamFramesInZeroValuePacket(final Collection<StreamFrame> streamFrames)
+//        throws StreamConnectionClosedException {
+//      Objects.requireNonNull(streamFrames);
+//
+//      if (streamFrames.size() <= 0) {
+//        logger.warn("sendStreamFrames called with 0 frames");
+//        return;
+//      }
+//
+//      final StreamPacket streamPacket = StreamPacket.builder()
+//          .interledgerPacketType(InterledgerPacketType.PREPARE)
+//          .prepareAmount(UnsignedLong.ZERO)
+//          .sequence(streamConnection.nextSequence())
+//          .addAllFrames(streamFrames)
+//          .build();
+//
+//      // Create the ILP Prepare packet using an encrypted StreamPacket as the encryptedStreamPacket payload...
+//      final byte[] encryptedStreamPacket = this.toEncrypted(sharedSecret, streamPacket);
+//      final InterledgerCondition executionCondition;
+//      executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket).getCondition();
+//
+//      final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+//          .destination(destinationAddress)
+//          .amount(UnsignedLong.ZERO)
+//          .executionCondition(executionCondition)
+//          .expiresAt(Instant.now().plusSeconds(30L))
+//          .data(encryptedStreamPacket)
+//          .build();
+//
+//      final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
+//
+//      link.sendPacket(preparePacket).handle(
+//          fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
+//          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts, numRejectedPackets,
+//              congestionController)
+//      );
+//
+//      // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
+//      streamFrames.stream()
+//          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
+//          .findAny()
+//          .ifPresent($ -> {
+//            streamConnection.closeConnection();
+//            logger.info("STREAM Connection closed.");
+//          });
+//
+//      // Emit a log statement if the called supplied a StreamCloseFrame
+//      streamFrames.stream()
+//          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
+//          .findAny()
+//          .map($ -> (StreamCloseFrame) $)
+//          .ifPresent($ -> {
+//            logger.info(
+//                "StreamId {} Closed. Delivered: {} ({} packets fulfilled, {} packets rejected)",
+//                $.streamId(), paymentTracker.getDeliveredAmount(), this.numFulfilledPackets.get(),
+//                this.numRejectedPackets.get()
+//            );
+//          });
+//    }
 
-      if (streamFrames.size() <= 0) {
-        logger.warn("sendStreamFrames called with 0 frames");
-        return;
-      }
-
-      final StreamPacket streamPacket = StreamPacket.builder()
-          .interledgerPacketType(InterledgerPacketType.PREPARE)
-          .prepareAmount(UnsignedLong.ZERO)
-          .sequence(streamConnection.nextSequence())
-          .addAllFrames(streamFrames)
-          .build();
-
-      // Create the ILP Prepare packet using an encrypted StreamPacket as the encryptedStreamPacket payload...
-      final byte[] encryptedStreamPacket = this.toEncrypted(sharedSecret, streamPacket);
-      final InterledgerCondition executionCondition;
-      executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket).getCondition();
-
-      final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
-          .destination(destinationAddress)
-          .amount(UnsignedLong.ZERO)
-          .executionCondition(executionCondition)
-          .expiresAt(Instant.now().plusSeconds(30L))
-          .data(encryptedStreamPacket)
-          .build();
-
-      final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
-
-      link.sendPacket(preparePacket).handle(
-          fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
-          rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts, numRejectedPackets,
-              congestionController)
-      );
-
-      // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
-      streamFrames.stream()
-          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
-          .findAny()
-          .ifPresent($ -> {
-            streamConnection.closeConnection();
-            logger.info("STREAM Connection closed.");
-          });
-
-      // Emit a log statement if the called supplied a StreamCloseFrame
-      streamFrames.stream()
-          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
-          .findAny()
-          .map($ -> (StreamCloseFrame) $)
-          .ifPresent($ -> {
-            logger.info(
-                "StreamId {} Closed. Delivered: {} ({} packets fulfilled, {} packets rejected)",
-                $.streamId(), paymentTracker.getDeliveredAmount(), this.numFulfilledPackets.get(),
-                this.numRejectedPackets.get()
-            );
-          });
-    }
-
-    /**
-     * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
-     *
-     * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
-     */
-    @VisibleForTesting
-    SendMoneyResult collectSendMoneyStatistics() {
-      return SendMoneyResult.builder()
-          .amountDelivered(paymentTracker.getDeliveredAmount())
-          .amountSent(paymentTracker.getAmountSent())
-          .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
-          .numFulfilledPackets(this.numFulfilledPackets.get())
-          .numRejectPackets(this.numRejectedPackets.get())
-          .successfulPayment(paymentTracker.successful())
-          .build();
-    }
+//    /**
+//     * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
+//     *
+//     * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
+//     */
+//    @VisibleForTesting
+//    SendMoneyResult collectSendMoneyStatistics() {
+//      return SendMoneyResult.builder()
+//          .amountDelivered(paymentTracker.getDeliveredAmount())
+//          .amountSent(paymentTracker.getAmountSent())
+//          .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
+//          .numFulfilledPackets(this.numFulfilledPackets.get())
+//          .numRejectPackets(this.numRejectedPackets.get())
+//          .successfulPayment(paymentTracker.successful())
+//          .build();
+//    }
   }
 }

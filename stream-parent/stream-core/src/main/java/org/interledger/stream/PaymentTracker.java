@@ -29,7 +29,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
       Denomination sendDenomination,
       Optional<Denomination> receiverDenomination);
 
-  void auth(PrepareAmounts prepareAmounts);
+  boolean auth(PrepareAmounts prepareAmounts);
 
   void rollback(PrepareAmounts prepareAmounts, boolean packetRejected);
 

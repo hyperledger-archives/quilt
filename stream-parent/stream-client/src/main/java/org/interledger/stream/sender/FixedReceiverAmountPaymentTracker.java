@@ -104,8 +104,10 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   }
 
   @Override
-  public void auth(PrepareAmounts prepareAmounts) {
+  public boolean auth(PrepareAmounts prepareAmounts) {
     reduceAmountLeftToDeliver(prepareAmounts.getMinimumAmountToAccept());
+    // since we guard against going below 0 in the method above but may need to overdeliver to satisfy, just return true
+    return true;
   }
 
   private void reduceAmountLeftToDeliver(UnsignedLong amountToReduce) {

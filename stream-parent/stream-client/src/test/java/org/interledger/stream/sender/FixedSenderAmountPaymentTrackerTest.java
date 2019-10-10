@@ -65,13 +65,12 @@ public class FixedSenderAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.moreToSend()).isFalse();
 
-    // FIXME add logic to prevent less than 0
-//    tracker.auth(amounts);
-//    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(12));
-//    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.valueOf(7));
-//    assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
-//    assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
-//    assertThat(tracker.moreToSend()).isFalse();
+    assertThat(tracker.auth(amounts)).isFalse();
+    assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(12));
+    assertThat(tracker.getDeliveredAmount()).isEqualTo(UnsignedLong.valueOf(7));
+    assertThat(tracker.getOriginalAmount()).isEqualTo(UnsignedLong.valueOf(12));
+    assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(tracker.moreToSend()).isFalse();
 
     tracker.setSentAmount(UnsignedLong.valueOf(20));
     assertThat(tracker.getAmountSent()).isEqualTo(UnsignedLong.valueOf(20));
