@@ -14,19 +14,65 @@ Issues are labelled and prefixed to make it easy to identify which project they 
 
 ### ilp-core
 
-The ilp-core module is the base library for any Interledger projects providing service interfaces, event descriptions,
-exceptions and data models. It also includes an encoding framework and codecs for encoding and decoding ILP objects
-using the Octet Encoding Rules (OER).
+The `ilp-core` module is the base library for any Interledger projects providing service interfaces, event descriptions,
+exceptions and data models supporting ILPv4 as defined in [IL-RFC-27](https://github.com/interledger/rfcs/blob/master/0027-interledger-protocol-4/0027-interledger-protocol-4.md)
 
 [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-core.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-core)
 
 [READ MORE](./ilp-core)
 
+### btp-core
+The `btp-core` module contains primitives to support the Bilateral Transfer Protocol (BTP v2.0) as defined by [IL-RFC-23](https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilateral-transfer-protocol.md).
+
+[READ MORE](./btp-core)
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/btp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Abtp)
+
+### codecs-parent
+The `codecs-parent` module contains an encoding and decoding framework plus serializers for ASN.1 OER formats defined in each IL-RFC. This module supports all primitives for the following protocols: [ILP v4.0](https://github.com/interledger/rfcs/blob/master/0027-interledger-protocol-4/0027-interledger-protocol-4.md), [IL-DCP v1.0](https://github.com/interledger/rfcs/blob/master/0031-dynamic-configuration-protocol/0031-dynamic-configuration-protocol.md), [BTP 2.0](https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilateral-transfer-protocol.md), and [STREAM v1.0](https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md).
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/codecs.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Acodecs)
+
+### ildcp-core
+The `ildcp-core` module contains primitives to support the Interledger Dynamic Configuration Protocol (IL-DCP v1.0) as defined by [IL-RFC-31](https://github.com/interledger/rfcs/blob/master/0031-dynamic-configuration-protocol/0031-dynamic-configuration-protocol.md).
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ildcp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Aildcp)
+
+[READ MORE](./ildcp-core)
+
+### jackson-datatypes
+The `jackson-datatypes` module contains utilities to marshal and unmarshal various Quilt primitives to and from JSON using the [Jackson library](https://github.com/FasterXML/jackson).
+
+[READ MORE](./jackson-datatypes)
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/jackson.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ajackson)
+
+### link-parent
+The `link-parent` module contains libraries that can be used as a network transport for Interledger accounts. Currently supported links are ILP-over-HTTP as defined in [IL-RFC-35](https://github.com/interledger/rfcs/blob/master/0035-ilp-over-http/0035-ilp-over-http.md).
+
+[READ MORE](./link-parent)
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-link.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-link)
+
+### spsp-parent
+The `spsp-parent` module contains libraries that can be used to resolve [Payment Pointers](https://paymentpointers.org/) (as defined in [IL-RFC-26](https://github.com/interledger/rfcs/blob/master/0026-payment-pointers/0026-payment-pointers.md) as well as the broader Simple Payment Setup Protocol (SPSP) as defined in [IL-RFC-009](https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009-simple-payment-setup-protocol.md).
+[READ MORE](./spsp-parent)
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/spsp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Aspsp)
+
+### stream-parent
+The `stream-parent` module contains libraries for sending and receiving packetized payments using the STREAM protocol, defined in [IL-RFC-29](https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md).
+
+[READ MORE](./stream-parent)
+
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/stream.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Astream)
+
 ### examples
+The `examples` modules shows how to use the Quilt library in your code.
 
-The examples modules shows how to use the Quilt library in your code.
+[READ MORE](./examples-parent)
 
-[READ MORE](examples-parent/README.md)
+[![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/examples.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Aexamples)
 
 ## Usage
 
@@ -61,7 +107,7 @@ Next, add the following Maven dependency:
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>java-ilp-core</artifactId>
-    <version>0.19-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
   </dependency>
   ...
 </dependencies>
@@ -83,7 +129,7 @@ Next, import this library as a dependency, like this:
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'java-ilp-core', version: '0.19-SNAPSHOT'
+    compile group: 'org.interledger', name: 'java-ilp-core', version: '1.0-SNAPSHOT'
     ...
 }
 ```
@@ -115,7 +161,6 @@ The project uses checkstyle to keep code style consistent. All Checkstyle checks
 ```bash
 $ mvn checkstyle:checkstyle
 ```
-
 
 [forum-url]: https://forum.interledger.org/tags/java-ilpv4-connector
 [forum-image]: https://img.shields.io/badge/Discuss-Interledger%20Forum-blue.svg
