@@ -28,7 +28,7 @@
   <!-- Signing profile for signed distributions -->
   <profiles>
     <profile>
-      <id>sign</id>
+      <id>release</id>
       <build>
         <plugins>
           <plugin>
@@ -71,6 +71,7 @@
 
   <scm>
     <connection>scm:git:git://github.com/hyperledger/quilt.git</connection>
+    <url>scm:git:git@github.com:hyperledger/quilt.git</url>
     <developerConnection>scm:git:git@github.com:hyperledger/quilt.git</developerConnection>
   </scm>
 
@@ -659,6 +660,10 @@
       <id>ossrh-snapshots-interledger</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
+    <repository>
+      <id>ossrh-snapshots-interledger</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+    </repository>
   </distributionManagement>
 
 </project>
