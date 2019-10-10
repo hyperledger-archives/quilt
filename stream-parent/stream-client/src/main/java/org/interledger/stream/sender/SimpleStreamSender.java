@@ -242,21 +242,12 @@ public class SimpleStreamSender implements StreamSender {
 
     private final InterledgerAddress sourceAddress;
     private final InterledgerAddress destinationAddress;
-    // The original amount, in sender's units, to send
-//    private final AtomicReference<UnsignedLong> originalAmountToSend;
-//    // The amount, in sender's units, left to send (i.e., the unsent amount). On rare error occasions, this value
-//    // _could_ diverge from 1-sentAmount.
-//    private final AtomicReference<UnsignedLong> amountLeftToSend;
-//    // The amount, in sender's units, that was sent.
-//    private final AtomicReference<UnsignedLong> sentAmount;
-//    // The amount, in receiver's units, that was actually delivered to the receiver.
-//    private final AtomicReference<UnsignedLong> deliveredAmount;
+
     private final AtomicBoolean shouldSendSourceAddress;
     private final AtomicInteger numFulfilledPackets;
     private final AtomicInteger numRejectedPackets;
     private final PaymentTracker paymentTracker;
     private Optional<Denomination> receiverDenomination = Optional.empty();
-
 
     /**
      * Required-args Constructor.
@@ -511,8 +502,7 @@ public class SimpleStreamSender implements StreamSender {
         // capture
         // rollback
 
-        PrepareAmounts prepareAmounts =
-            PrepareAmounts.of().amountToSend(amountToSend).minimumAmountToAccept(streamPacket.prepareAmount()).build();
+        final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
 
         paymentTracker.auth(prepareAmounts);
 
@@ -531,7 +521,6 @@ public class SimpleStreamSender implements StreamSender {
           }
         } catch (Exception e) {
           // Retry this amount on the next run...
-          //this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
           paymentTracker.rollback(prepareAmounts, false);
           logger.error("Submit failed", e);
         }
@@ -544,9 +533,6 @@ public class SimpleStreamSender implements StreamSender {
       try {
         executorService.submit(() -> {
           if (!timeoutReached.get()) {
-            PrepareAmounts prepareAmounts =
-                PrepareAmounts.of().amountToSend(preparePacket.getAmount())
-                    .minimumAmountToAccept(streamPacket.prepareAmount()).build();
             try {
               InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
               responsePacket.handle(
@@ -562,8 +548,7 @@ public class SimpleStreamSender implements StreamSender {
                       String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
                   )
                   .build());
-              // this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(amountToSend));
-              paymentTracker.rollback(prepareAmounts, false);
+              paymentTracker.rollback(PrepareAmounts.from(preparePacket, streamPacket), false);
             }
           }
         });

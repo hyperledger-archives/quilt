@@ -48,7 +48,9 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
    *                        subsequent operations, depending on market exchange rates, observed path rates, and possibly
    *                        other data.
    */
-  public FixedReceiverAmountPaymentTracker(UnsignedLong amountToDeliver, ExchangeRateCalculator rateCalculator) {
+  public FixedReceiverAmountPaymentTracker(
+      final UnsignedLong amountToDeliver, final ExchangeRateCalculator rateCalculator
+  ) {
     this.amountToDeliver = Objects.requireNonNull(amountToDeliver);
     this.rateCalculator = Objects.requireNonNull(rateCalculator);
 
