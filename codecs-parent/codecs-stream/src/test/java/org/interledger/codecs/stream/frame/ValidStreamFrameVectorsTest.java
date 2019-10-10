@@ -84,17 +84,17 @@ public class ValidStreamFrameVectorsTest {
    */
   @Parameters(name = "Test Vector {index}: {0}")
   public static Collection<StreamFrameTestVector> testVectorData() throws Exception {
-    Path path = Paths.get(ValidStreamFrameVectorsTest.class.getClassLoader()
-        .getResource("ValidStreamFrameVectorsTest.json").toURI());
-
-    Stream<String> lines = Files.lines(path);
-    lines.close();
 
     final ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
+    Path path = Paths.get(ValidStreamFrameVectorsTest.class.getClassLoader()
+        .getResource("ValidStreamFrameVectorsTest.json").toURI());
+    Stream<String> lines = Files.lines(path);
     String data = lines.collect(Collectors.joining("\n"));
+    lines.close();
+
     List<StreamFrameTestVector> vectors = objectMapper
         .readValue(data, new TypeReference<List<StreamFrameTestVector>>() {
         });
