@@ -1,7 +1,11 @@
 # Hyperledger Quilt [![Discuss][forum-image]][forum-url] [![twitter][twitter-image]][twitter-url]
 [![circle-ci][circle-image]][circle-url] [![codecov][codecov-image]][codecov-url] [![codacy][codacy-image]][codacy-url] [![issues][github-issues-image]][github-issues-url]
 
-Quilt is an implementation of the [Interledger](https://interledger.org) protocol in Java.
+Quilt is a Java implementation of the [Interledger](https://interledger.org) protocol. 
+
+This library can be used to send and receive Interledger payments using STREAM. It also supports a variety of other core Interledger primitives and protocols.
+
+Note that this library does not implement a full Java Connector. For this functionality, see the [Java ILP Connector](https://github.com/sappenin/java-ilpv4-connector) project, which is built using Quilt. 
 
 ## Modules
 
