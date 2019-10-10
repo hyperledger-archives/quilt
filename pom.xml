@@ -618,7 +618,7 @@
           <encoding>UTF-8</encoding>
           <consoleOutput>true</consoleOutput>
           <linkXRef>false</linkXRef>
-          <excludes>**/generated-sources/**/*</excludes>
+          <excludes>**/generated-sources/**/*,**/generated-test-sources/**/*</excludes>
         </configuration>
         <reportSets>
           <reportSet>
@@ -634,7 +634,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <excludes>
-            <exclude>**/generated-sources/**/*</exclude>
+            <exclude>**/generated-sources/**/*,**/generated-test-sources/**/*</exclude>
           </excludes>
         </configuration>
       </plugin>

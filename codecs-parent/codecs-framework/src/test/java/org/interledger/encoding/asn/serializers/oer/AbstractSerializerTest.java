@@ -46,26 +46,26 @@ public abstract class AbstractSerializerTest<T> {
   }
 
   private final T inputValue;
-  private final Class<T> tClass;
+  private final Class<T> clazz;
   private final byte[] asn1OerBytes;
 
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
    * @param inputValue   A {@code T} representing the value to write in OER encoding.
-   * @param tClass       Class of type <tt>T</tt> for use by the CodecContext.
+   * @param clazz        Class of type <tt>T</tt> for use by the CodecContext.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code inputValue}.
    */
-  public AbstractSerializerTest(final T inputValue, Class<T> tClass, final byte[] asn1OerBytes) {
+  public AbstractSerializerTest(final T inputValue, Class<T> clazz, final byte[] asn1OerBytes) {
     this.inputValue = inputValue;
-    this.tClass = tClass;
+    this.clazz = clazz;
     this.asn1OerBytes = asn1OerBytes;
   }
 
   @Test
   public void read() throws Exception {
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(asn1OerBytes);
-    final T actualValue = codecContext.read(tClass, byteArrayInputStream);
+    final T actualValue = codecContext.read(clazz, byteArrayInputStream);
 
     assertThat(actualValue).isEqualTo(inputValue);
   }
@@ -90,7 +90,7 @@ public abstract class AbstractSerializerTest<T> {
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
         byteArrayOutputStream.toByteArray()
     );
-    final T decodedValue = codecContext.read(tClass, byteArrayInputStream);
+    final T decodedValue = codecContext.read(clazz, byteArrayInputStream);
 
     // Write...
     final ByteArrayOutputStream byteArrayOutputStream2 = new ByteArrayOutputStream();

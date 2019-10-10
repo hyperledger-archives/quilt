@@ -11,15 +11,13 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Optional;
-
 /**
  * Unit tests for {@link PingLoopbackLinkFactory}.
  */
 public class PingLoopbackLinkFactoryTest {
 
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.operator");
-  private final LinkId LINK_ID = LinkId.of("foo");
+  private static final LinkId LINK_ID = LinkId.of("foo");
 
   @Mock
   private LinkSettings linkSettingsMock;

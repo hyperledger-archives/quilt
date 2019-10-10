@@ -3,10 +3,10 @@ package org.interledger.stream.sender;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamEncryptionService;
 
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

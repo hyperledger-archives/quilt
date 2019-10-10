@@ -20,6 +20,8 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
@@ -39,8 +41,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 /**
  * Parameterized unit tests for encoding an instance of {@link Short}.
  */
@@ -54,8 +54,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
    *
-   * @param inputValue   A {@code short} representing the unsigned 8bit shorteger to write in OER
-   *                     encoding.
+   * @param inputValue   A {@code short} representing the unsigned 8bit shorteger to write in OER encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code shortValue}.
    */
   public SequenceOfSequenceShortOerSerializerTest(

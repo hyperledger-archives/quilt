@@ -20,7 +20,7 @@ public interface LinkHandler {
    * @param incomingPreparePacket A {@link InterledgerPreparePacket} containing data about an incoming payment.
    *
    * @return A {@link CompletableFuture} that resolves to an optionally-present {@link InterledgerResponsePacket}, which
-   * will be of concrete type {@link InterledgerFulfillPacket} or {@link InterledgerRejectPacket}, if present.
+   *     will be of concrete type {@link InterledgerFulfillPacket} or {@link InterledgerRejectPacket}, if present.
    */
   InterledgerResponsePacket handleIncomingPacket(InterledgerPreparePacket incomingPreparePacket);
 }

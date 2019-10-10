@@ -92,10 +92,10 @@ public class IlpOverHttpLinkTest {
   public void rejectOnNotAuthed() throws Exception {
     mockCall(401);
     expectedException.expect(LinkException.class);
-    expectedException.expectMessage("Unable to connect to remote ILP-over-HTTP Link: " +
-        "Invalid Bearer Token. response=Response{" +
-        "protocol=h2, code=401, message=stop asking me to set stuff, url=https://existentialcrisis.com/" +
-        "}");
+    expectedException.expectMessage("Unable to connect to remote ILP-over-HTTP Link: "
+        + "Invalid Bearer Token. response=Response{"
+        + "protocol=h2, code=401, message=stop asking me to set stuff, url=https://existentialcrisis.com/"
+        + "}");
     link.sendPacket(packet);
   }
 
@@ -103,10 +103,10 @@ public class IlpOverHttpLinkTest {
   public void rejectOnForbidden() throws Exception {
     mockCall(403);
     expectedException.expect(LinkException.class);
-    expectedException.expectMessage("Unable to connect to remote ILP-over-HTTP Link: " +
-        "Invalid Bearer Token. response=Response{" +
-        "protocol=h2, code=403, message=stop asking me to set stuff, url=https://existentialcrisis.com/" +
-        "}");
+    expectedException.expectMessage("Unable to connect to remote ILP-over-HTTP Link: "
+        + "Invalid Bearer Token. response=Response{"
+        + "protocol=h2, code=403, message=stop asking me to set stuff, url=https://existentialcrisis.com/"
+        + "}");
     link.sendPacket(packet);
   }
 
@@ -156,15 +156,15 @@ public class IlpOverHttpLinkTest {
   public void testConnectionFailsOn406() throws Exception {
     mockCall(406);
     expectedException.expect(LinkException.class);
-    expectedException.expectMessage("Remote peer-link DOES NOT support ILP-over-HTTP. " +
-        "tokenSubject=null " +
-        "url=https://cannotspellsurgerywithouturges.com/ " +
-        "response=Response{" +
-        "protocol=h2, " +
-        "code=406, " +
-        "message=stop asking me to set stuff, " +
-        "url=https://existentialcrisis.com/" +
-        "}");
+    expectedException.expectMessage("Remote peer-link DOES NOT support ILP-over-HTTP. "
+        + "tokenSubject=null "
+        + "url=https://cannotspellsurgerywithouturges.com/ "
+        + "response=Response{"
+        + "protocol=h2, "
+        + "code=406, "
+        + "message=stop asking me to set stuff, "
+        + "url=https://existentialcrisis.com/"
+        + "}");
     link.testConnection();
   }
 
@@ -172,15 +172,15 @@ public class IlpOverHttpLinkTest {
   public void testConnectionFailsOn415() throws Exception {
     mockCall(415);
     expectedException.expect(LinkException.class);
-    expectedException.expectMessage("Remote peer-link DOES NOT support ILP-over-HTTP. " +
-        "tokenSubject=null " +
-        "url=https://cannotspellsurgerywithouturges.com/ " +
-        "response=Response{" +
-        "protocol=h2, " +
-        "code=415, " +
-        "message=stop asking me to set stuff, " +
-        "url=https://existentialcrisis.com/" +
-        "}");
+    expectedException.expectMessage("Remote peer-link DOES NOT support ILP-over-HTTP. "
+        + "tokenSubject=null "
+        + "url=https://cannotspellsurgerywithouturges.com/ "
+        + "response=Response{"
+        + "protocol=h2, "
+        + "code=415, "
+        + "message=stop asking me to set stuff, "
+        + "url=https://existentialcrisis.com/"
+        + "}");
     link.testConnection();
   }
 
@@ -188,15 +188,15 @@ public class IlpOverHttpLinkTest {
   public void testConnectionFailsOnOther() throws Exception {
     mockCall(422);
     expectedException.expect(LinkException.class);
-    expectedException.expectMessage("Unable to connect to ILP-over-HTTP. " +
-        "tokenSubject=null " +
-        "url=https://cannotspellsurgerywithouturges.com/ " +
-        "response=Response{" +
-        "protocol=h2, " +
-        "code=422, " +
-        "message=stop asking me to set stuff, " +
-        "url=https://existentialcrisis.com/" +
-        "}");
+    expectedException.expectMessage("Unable to connect to ILP-over-HTTP. "
+        + "tokenSubject=null "
+        + "url=https://cannotspellsurgerywithouturges.com/ "
+        + "response=Response{"
+        + "protocol=h2, "
+        + "code=422, "
+        + "message=stop asking me to set stuff, "
+        + "url=https://existentialcrisis.com/"
+        + "}");
     link.testConnection();
   }
 

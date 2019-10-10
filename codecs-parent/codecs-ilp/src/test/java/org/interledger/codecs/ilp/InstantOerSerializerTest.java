@@ -20,9 +20,9 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
-import com.google.common.io.BaseEncoding;
 import org.interledger.encoding.asn.framework.CodecContext;
 
+import com.google.common.io.BaseEncoding;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
