@@ -1,9 +1,14 @@
 package org.interledger.stream.calculators;
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.stream.Denomination;
+
+import com.google.common.primitives.UnsignedLong;
+
 import java.util.Optional;
 
+/**
+ * Exchange rate calculator that ignores denominations and applies no rate calculations.
+ */
 public class NoOpExchangeRateCalculator implements ExchangeRateCalculator {
 
 

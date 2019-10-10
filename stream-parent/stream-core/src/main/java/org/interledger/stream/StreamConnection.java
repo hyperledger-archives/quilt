@@ -1,5 +1,7 @@
 package org.interledger.stream;
 
+import static org.interledger.stream.FluentCompareTo.is;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
 
@@ -94,7 +96,7 @@ public class StreamConnection implements Closeable {
   boolean sequenceIsSafeForSingleSharedSecret(final UnsignedLong sequence) {
     // Only return true if the Connection is not closed, and the `sequence` is below MAX_FRAMES_PER_CONNECTION (above
     // that value is unsafe).
-    return !isClosed() && Objects.requireNonNull(sequence).compareTo(MAX_FRAMES_PER_CONNECTION) <= 0;
+    return !isClosed() && is(Objects.requireNonNull(sequence)).lessThanOrEqualTo(MAX_FRAMES_PER_CONNECTION);
   }
 
   public Instant getCreationDateTime() {

@@ -503,7 +503,6 @@ public class SimpleStreamSender implements StreamSender {
         // rollback
 
         final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
-
         paymentTracker.auth(prepareAmounts);
 
         try {
@@ -514,7 +513,7 @@ public class SimpleStreamSender implements StreamSender {
             // controller to not reflect what we've actually scheduled to run, resulting in the loop
             // breaking prematurely
             congestionController.prepare(amountToSend);
-            schedule(timeoutReached, preparePacket, streamPacket);
+            schedule(timeoutReached, preparePacket, streamPacket, prepareAmounts);
           } else {
             logger.error("SoldierOn runLoop had more tasks to schedule but was timed-out");
             continue;
@@ -529,7 +528,8 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     @VisibleForTesting
-    void schedule(AtomicBoolean timeoutReached, InterledgerPreparePacket preparePacket, StreamPacket streamPacket) {
+    void schedule(AtomicBoolean timeoutReached, InterledgerPreparePacket preparePacket, StreamPacket streamPacket,
+                  PrepareAmounts prepareAmounts) {
       try {
         executorService.submit(() -> {
           if (!timeoutReached.get()) {
@@ -548,7 +548,7 @@ public class SimpleStreamSender implements StreamSender {
                       String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
                   )
                   .build());
-              paymentTracker.rollback(PrepareAmounts.from(preparePacket, streamPacket), false);
+              paymentTracker.rollback(prepareAmounts, false);
             }
           }
         });
@@ -694,11 +694,8 @@ public class SimpleStreamSender implements StreamSender {
       final UnsignedLong amountToDeliver = originalStreamPacket.prepareAmount();
 
       numRejectedPackets.getAndIncrement();
-      //amountLeftToSend.getAndUpdate(currentAmount -> currentAmount.plus(amountToSend));
-      PrepareAmounts prepareAmounts = PrepareAmounts.of()
-          .amountToSend(originalPreparePacket.getAmount())
-          .minimumAmountToAccept(originalStreamPacket.prepareAmount())
-          .build();
+
+      PrepareAmounts prepareAmounts = PrepareAmounts.from(originalPreparePacket, originalStreamPacket);
 
       paymentTracker.rollback(prepareAmounts, true);
       congestionController.reject(amountToSend, rejectPacket);

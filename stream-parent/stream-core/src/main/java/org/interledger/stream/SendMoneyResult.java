@@ -82,7 +82,7 @@ public interface SendMoneyResult {
   Duration sendMoneyDuration();
 
   /**
-   * Indicates if the payment was completed successfuly
+   * Indicates if the payment was completed successfully.
    *
    * @return true if payment was successful
    */

@@ -1,5 +1,7 @@
 package org.interledger.stream.receiver.testutils;
 
+import static org.interledger.stream.FluentCompareTo.is;
+
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
@@ -210,6 +212,6 @@ public class SimulatedIlpv4Network {
   ) {
     Objects.requireNonNull(simulatedPathConditions);
     Objects.requireNonNull(preparePacket);
-    return preparePacket.getAmount().compareTo(simulatedPathConditions.maxPacketAmount().get()) > 0;
+    return is(preparePacket.getAmount()).greaterThan(simulatedPathConditions.maxPacketAmount().get());
   }
 }

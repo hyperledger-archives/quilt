@@ -1,5 +1,7 @@
 package org.interledger.stream.sender;
 
+import static org.interledger.stream.FluentCompareTo.is;
+
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.SenderAmountPaymentTracker;
@@ -105,7 +107,7 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
 
   @Override
   public boolean moreToSend() {
-    return this.sentAmount.get().compareTo(this.amountToSend) < 0;
+    return is(this.sentAmount.get()).lessThan(this.amountToSend);
   }
 
   @VisibleForTesting

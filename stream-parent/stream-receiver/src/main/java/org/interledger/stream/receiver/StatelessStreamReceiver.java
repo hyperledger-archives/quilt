@@ -1,6 +1,6 @@
 package org.interledger.stream.receiver;
 
-import static org.interledger.stream.UnsignedLongUtils.is;
+import static org.interledger.stream.FluentCompareTo.is;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;

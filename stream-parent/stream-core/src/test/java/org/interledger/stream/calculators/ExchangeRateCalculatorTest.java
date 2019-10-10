@@ -1,13 +1,14 @@
 package org.interledger.stream.calculators;
 
-import com.google.common.primitives.UnsignedLong;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+
 import org.interledger.stream.Denominations;
+
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 public class ExchangeRateCalculatorTest {
 

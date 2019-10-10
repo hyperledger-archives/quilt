@@ -22,6 +22,7 @@ import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.PaymentTracker;
+import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.StreamConnection;
@@ -233,7 +234,11 @@ public class SendMoneyAggregatorTest {
         .build();
 
     expectedException.expect(RejectedExecutionException.class);
-    sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket());
+    sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket(),
+        PrepareAmounts.of()
+            .amountToSend(UnsignedLong.ONE)
+            .minimumAmountToAccept(UnsignedLong.ONE)
+            .build());
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
   }
 

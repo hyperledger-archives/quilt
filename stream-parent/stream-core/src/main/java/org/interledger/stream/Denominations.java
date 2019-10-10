@@ -1,9 +1,8 @@
 package org.interledger.stream;
 
-import org.interledger.stream.Denomination;
-
 public final class Denominations {
-  private Denominations(){}
+  private Denominations() {
+  }
 
   public static final Denomination XRP = Denomination.builder()
       .assetCode("XRP")

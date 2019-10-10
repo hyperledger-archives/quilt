@@ -1,6 +1,7 @@
 package org.interledger.stream.sender;
 
 import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
+import static org.interledger.stream.FluentCompareTo.is;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerErrorCode;
@@ -127,14 +128,14 @@ public class AimdCongestionController implements CongestionController {
     // Once we start getting errors, switch to Additive Increase, Multiplicative Decrease (AIMD) congestion avoidance.
     if (this.congestionState.get() == CongestionState.SLOW_START) {
       // Double the max in flight but don't exceed the u64 max value
-      if (HALF_UNSIGNED_MAX.compareTo(this.maxInFlight.get()) >= 0) {
+      if (is(HALF_UNSIGNED_MAX).greaterThanEqualTo(this.maxInFlight.get())) {
         this.maxInFlight.getAndUpdate(maxInFlight -> maxInFlight.times(TWO));
       } else {
         this.maxInFlight.set(UnsignedLong.MAX_VALUE);
       }
     } else {
       // Add to the max in flight but don't exceed the u64 max value
-      if (UnsignedLong.MAX_VALUE.minus(increaseAmount).compareTo(this.maxInFlight.get()) >= 0) {
+      if (is(UnsignedLong.MAX_VALUE.minus(increaseAmount)).greaterThanEqualTo(this.maxInFlight.get())) {
         this.maxInFlight.getAndUpdate(maxInFlight -> maxInFlight.plus(increaseAmount));
       } else {
         this.maxInFlight.set(UnsignedLong.MAX_VALUE);
@@ -314,7 +315,7 @@ public class AimdCongestionController implements CongestionController {
 
   @Override
   public boolean hasInFlight() {
-    return this.amountInFlight.get().compareTo(UnsignedLong.ZERO) > 0;
+    return is(this.amountInFlight.get()).greaterThan(UnsignedLong.ZERO);
   }
 
   /**
