@@ -9,7 +9,7 @@ Note that this library does not implement a full Java Connector. For this functi
 
 ## Modules
 
-Quilt is organised as a Maven multi-module project. Each module exists in a subdirectory that has its own child POM and README file. Dependency and plugin versions managed in the parent project.
+Quilt is organised as a Maven multi-module project. Each module exists in a subdirectory that has its own child POM and README file. Dependency and plugin versions are managed in the parent project.
 
 Issues are labelled and prefixed to make it easy to identify which project they relate to.
 
