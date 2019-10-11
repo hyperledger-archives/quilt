@@ -1,4 +1,4 @@
-# Interledger Core [![Javadocs](https://www.javadoc.io/badge/org.interledger/ilp-core.svg?label=javadoc ilp-core)](https://www.javadoc.io/doc/org.interledger/ilp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-core.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-core)
+# Interledger Core [![Javadocs](https://www.javadoc.io/badge/org.interledger/ilp-core.svg?color=blue)](https://www.javadoc.io/doc/org.interledger/ilp-core)  [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-core.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-core)
 
 https://www.javadoc.io/doc/org.interledger/ilp-core/1.0.0
 
