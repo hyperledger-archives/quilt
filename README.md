@@ -33,11 +33,11 @@ The `btp-core` module contains primitives to support the Bilateral Transfer Prot
 ### codecs-parent
 The `codecs-parent` module contains an encoding and decoding framework plus serializers for ASN.1 OER formats defined in each IL-RFC. This module supports all primitives for the following protocols: [ILP v4.0](https://github.com/interledger/rfcs/blob/master/0027-interledger-protocol-4/0027-interledger-protocol-4.md), [IL-DCP v1.0](https://github.com/interledger/rfcs/blob/master/0031-dynamic-configuration-protocol/0031-dynamic-configuration-protocol.md), [BTP 2.0](https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilateral-transfer-protocol.md), and [STREAM v1.0](https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-framework)](https://www.javadoc.io/doc/org.interledger/codecs-framework)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-framework.svg?label=javadoc%3Acodecs-framework)](https://www.javadoc.io/doc/org.interledger/codecs-framework)
 [![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-btp)](https://www.javadoc.io/doc/org.interledger/codecs-btp)
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-ilp)](https://www.javadoc.io/doc/org.interledger/codecs-ilp)
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-ildcp)](https://www.javadoc.io/doc/org.interledger/codecs-ildcp)
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-stream)](https://www.javadoc.io/doc/org.interledger/codecs-stream)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-ilp.svg?label=javadoc%3Acodecs-ilp)](https://www.javadoc.io/doc/org.interledger/codecs-ilp)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-ildcp.svg?label=javadoc%3Acodecs-ildcp)](https://www.javadoc.io/doc/org.interledger/codecs-ildcp)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-stream.svg?label=javadoc%3Acodecs-stream)](https://www.javadoc.io/doc/org.interledger/codecs-stream)
 
 ### ildcp-core
 The `ildcp-core` module contains primitives to support the Interledger Dynamic Configuration Protocol (IL-DCP v1.0) as defined by [IL-RFC-31](https://github.com/interledger/rfcs/blob/master/0031-dynamic-configuration-protocol/0031-dynamic-configuration-protocol.md).
@@ -52,7 +52,7 @@ The `jackson-datatypes` module contains utilities to marshal and unmarshal vario
 ### link-parent
 The `link-parent` module contains libraries that can be used as a network transport for Interledger accounts. Currently supported links are ILP-over-HTTP as defined in [IL-RFC-35](https://github.com/interledger/rfcs/blob/master/0035-ilp-over-http/0035-ilp-over-http.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/link-parent.svg?label=javadoc%3Alink-core)](https://www.javadoc.io/doc/org.interledger/link-core) [![Javadocs](https://www.javadoc.io/badge/org.interledger/link-ilp-over-http.svg?label=javadoc%3Alink-ilp-over-http)](https://www.javadoc.io/doc/org.interledger/link-ilp-over-http) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-link.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-link)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/link-core.svg?label=javadoc%3Alink-core)](https://www.javadoc.io/doc/org.interledger/link-core) [![Javadocs](https://www.javadoc.io/badge/org.interledger/link-ilp-over-http.svg?label=javadoc%3Alink-ilp-over-http)](https://www.javadoc.io/doc/org.interledger/link-ilp-over-http) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-link.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-link)
 
 ### spsp-parent
 The `spsp-parent` module contains libraries that can be used to resolve [Payment Pointers](https://paymentpointers.org/) (as defined in [IL-RFC-26](https://github.com/interledger/rfcs/blob/master/0026-payment-pointers/0026-payment-pointers.md) as well as the broader Simple Payment Setup Protocol (SPSP) as defined in [IL-RFC-009](https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009-simple-payment-setup-protocol.md).
@@ -62,7 +62,7 @@ The `spsp-parent` module contains libraries that can be used to resolve [Payment
 ### stream-parent
 The `stream-parent` module contains libraries for sending and receiving packetized payments using the STREAM protocol, defined in [IL-RFC-29](https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-core.svg?label=javadoc%3Astream-sender)](https://www.javadoc.io/doc/org.interledger/stream-core) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-sender.svg?label=javadoc%3Astream-sender)](https://www.javadoc.io/doc/org.interledger/stream-client) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-client.svg?label=javadoc%3Astream-receiver)](https://www.javadoc.io/doc/org.interledger/stream-receiver) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/stream.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Astream)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-core.svg?label=javadoc%3Astream-core)](https://www.javadoc.io/doc/org.interledger/stream-core) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-client.svg?label=javadoc%3Astream-sender)](https://www.javadoc.io/doc/org.interledger/stream-client) [![Javadocs](https://www.javadoc.io/badge/org.interledger/stream-receiver.svg?label=javadoc%3Astream-receiver)](https://www.javadoc.io/doc/org.interledger/stream-receiver) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/stream.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Astream)
 
 ### examples
 The `examples` modules shows how to use the Quilt library in your code.
