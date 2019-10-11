@@ -18,6 +18,7 @@ import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.SenderAmountMode;
+import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,11 +39,11 @@ import java.util.concurrent.TimeUnit;
 public class SendMoneyExample {
 
   // NOTE - replace this with the username for your sender account
-  private static final String SENDER_ACCOUNT_USERNAME = "user_qb4yklwd";
+  private static final String SENDER_ACCOUNT_USERNAME = "user_ju7z53sh";
   // NOTE - replace this with the passkey for your sender account
-  private static final String SENDER_PASS_KEY = "jxelaxvqz2ne6";
+  private static final String SENDER_PASS_KEY = "lzjtsi4ny5f09";
   // NOTE - replace this with the payment pointer for your receiver account
-  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_uk152ktl/spsp";
+  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_f5zfkf4a/spsp";
 
   private static final String TESTNET_URI = "https://rs3.xpring.dev";
 
@@ -75,6 +76,7 @@ public class SendMoneyExample {
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())
             .timeout(Duration.ofMillis(30000))
+            .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(100000)))
             .sharedSecret(SharedSecret.of(connectionDetails.sharedSecret().value()))
             .build()
     ).get();
