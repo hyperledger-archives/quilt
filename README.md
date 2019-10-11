@@ -21,19 +21,19 @@ The `ilp-core` module is the base library for any Interledger Java projects, pro
 
 These primitives form the foundation of the Interledger suite of protocols, and are used throughout the other modules in this project.
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/ilp-core.svg?&label=javadoc)](https://www.javadoc.io/doc/org.interledger/ilp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-core.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-core) 
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/ilp-core.svg?&label=javadoc ilp-core)](https://www.javadoc.io/doc/org.interledger/ilp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ilp-core.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ailp-core) 
 
 [READ MORE](./ilp-core)
 
 ### btp-core
 The `btp-core` module contains primitives to support the Bilateral Transfer Protocol (BTP v2.0) as defined by [IL-RFC-23](https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilateral-transfer-protocol.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/btp-core.svg)](https://www.javadoc.io/doc/org.interledger/btp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/btp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Abtp)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/btp-core.svg?label=javadoc btp-core)](https://www.javadoc.io/doc/org.interledger/btp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/btp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Abtp)
 
 ### codecs-parent
 The `codecs-parent` module contains an encoding and decoding framework plus serializers for ASN.1 OER formats defined in each IL-RFC. This module supports all primitives for the following protocols: [ILP v4.0](https://github.com/interledger/rfcs/blob/master/0027-interledger-protocol-4/0027-interledger-protocol-4.md), [IL-DCP v1.0](https://github.com/interledger/rfcs/blob/master/0031-dynamic-configuration-protocol/0031-dynamic-configuration-protocol.md), [BTP 2.0](https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol/0023-bilateral-transfer-protocol.md), and [STREAM v1.0](https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-framework)](https://www.javadoc.io/doc/org.interledger/codecs-btp)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-framework)](https://www.javadoc.io/doc/org.interledger/codecs-framework)
 [![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-btp)](https://www.javadoc.io/doc/org.interledger/codecs-btp)
 [![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-ilp)](https://www.javadoc.io/doc/org.interledger/codecs-ilp)
 [![Javadocs](https://www.javadoc.io/badge/org.interledger/codecs-btp.svg?label=javadoc%3Acodecs-ildcp)](https://www.javadoc.io/doc/org.interledger/codecs-ildcp)
@@ -42,12 +42,12 @@ The `codecs-parent` module contains an encoding and decoding framework plus seri
 ### ildcp-core
 The `ildcp-core` module contains primitives to support the Interledger Dynamic Configuration Protocol (IL-DCP v1.0) as defined by [IL-RFC-31](https://github.com/interledger/rfcs/blob/master/0031-dynamic-configuration-protocol/0031-dynamic-configuration-protocol.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/ildcp-core.svg?label=javadoc%20ildcp-core)](https://www.javadoc.io/doc/org.interledger/ildcp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ildcp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Aildcp)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/ildcp-core.svg?label=javadoc ildcp-core)](https://www.javadoc.io/doc/org.interledger/ildcp-core) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/ildcp.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Aildcp)
 
 ### jackson-datatypes
 The `jackson-datatypes` module contains utilities to marshal and unmarshal various Quilt primitives to and from JSON using the [Jackson library](https://github.com/FasterXML/jackson).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/ildcp-core.svg?label=javadoc%20jackson-datatypes)](https://www.javadoc.io/doc/org.interledger/jackson-datatypes) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/jackson.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ajackson)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/jackson-datatypes.svg?label=javadoc jackson-datatypes)](https://www.javadoc.io/doc/org.interledger/jackson-datatypes) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/jackson.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Ajackson)
 
 ### link-parent
 The `link-parent` module contains libraries that can be used as a network transport for Interledger accounts. Currently supported links are ILP-over-HTTP as defined in [IL-RFC-35](https://github.com/interledger/rfcs/blob/master/0035-ilp-over-http/0035-ilp-over-http.md).
