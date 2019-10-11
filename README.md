@@ -62,7 +62,7 @@ The `spsp-parent` module contains libraries that can be used to resolve [Payment
 ### stream-parent
 The `stream-parent` module contains libraries for sending and receiving packetized payments using the STREAM protocol, defined in [IL-RFC-29](https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md).
 
-[![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-client.svg?label=javadoc%3Astream-sender)](https://www.javadoc.io/doc/org.interledger/stream-client) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-client.svg?label=javadoc%3Aspsp-core)](https://www.javadoc.io/doc/org.interledger/streamc-core) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-client.svg?label=javadoc%3Aspsp-receiver)](https://www.javadoc.io/doc/org.interledger/streamc-receiver) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/stream.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Astream)
+[![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-core.svg?label=javadoc%3Astream-sender)](https://www.javadoc.io/doc/org.interledger/stream-core) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-sender.svg?label=javadoc%3Astream-sender)](https://www.javadoc.io/doc/org.interledger/stream-client) [![Javadocs](https://www.javadoc.io/badge/org.interledger/spsp-client.svg?label=javadoc%3Astream-receiver)](https://www.javadoc.io/doc/org.interledger/stream-receiver) [![GitHub issues](https://img.shields.io/github/issues-raw/hyperledger/quilt/stream.svg)](https://github.com/hyperledger/quilt/issues?q=is%3Aissue+is%3Aopen+label%3Astream)
 
 ### examples
 The `examples` modules shows how to use the Quilt library in your code.
