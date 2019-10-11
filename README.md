@@ -88,21 +88,56 @@ In order to properly build this project, you must download and install Java Cryp
 [here](http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html). 
 
 #### Maven
+Modules in this library can be included in your Maven project by adding the Maven dependency for the module you would like to use. For example, to import `ilp-core`, use the following coordinates:
+
+```
+<dependencies>
+  ...
+  <dependency>
+    <groupId>org.interledger</groupId>
+    <artifactId>java-ilp-core</artifactId>
+    <version>1.0</version>
+  </dependency>
+  ...
+</dependencies>
+```
+
+#### Gradle
+Modules in this library can be included in your Gradle project by adding the Maven dependency for the module you would like to use. For example, to import `ilp-core`, use the following coordinates:
+
+```
+dependencies {
+    ...
+    compile group: 'org.interledger', name: 'java-ilp-core', version: '1.0'
+    ...
+}
+```
+
+## Development
+We welcome any and all submissions, whether it's a typo, bug fix, or new feature. To get started, first download the code:
+
+``` sh
+git clone https://github.com/hyperledger/quilt
+cd quilt
+```
+
+### Maven
 This project uses Maven to manage dependencies and other aspects of the build. 
 To install Maven, follow the instructions at [https://maven.apache.org/install.html](https://maven.apache.org/install.html).
 
-Modules in this library can be included in your project by first adding a Snapshot Repository to your `pom.xml` file, like this:
+Snapshot dependencies for this library can be included in your project by first adding a Snapshot Repository to your `pom.xml` file, like this:
 
 ```
 <repositories>
     ...
-    <repository>
+    <snapshotRepository>
         <id>sonatype</id>
         <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-    </repository>
+    </snapshotRepository>
     ...
 </repositories>
 ```
+
 Next, add the following Maven dependency:
 
 ```
@@ -111,13 +146,13 @@ Next, add the following Maven dependency:
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>java-ilp-core</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>HEAD-SNAPSHOT</version>
   </dependency>
   ...
 </dependencies>
 ```
 
-#### Gradle
+### Gradle
 To import this library into a project that uses gradle, first add the Snapshot Repository to your `gradle.properties` file, like this:
 
 ```
@@ -128,12 +163,13 @@ repositories {
     }
 }
 ```
+
 Next, import this library as a dependency, like this:
 
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'java-ilp-core', version: '1.0-SNAPSHOT'
+    compile group: 'org.interledger', name: 'java-ilp-core', version: 'HEAD-SNAPSHOT'
     ...
 }
 ```
@@ -144,13 +180,6 @@ skip integration tests using `-DskipITs` (e.g. `mvn clean install -DskipITs`).
 
 Otherwise, to install docker, follow the instructions at [https://docs.docker.com/install/](https://docs.docker.com/install/) 
 
-## Development
-We welcome any and all submissions, whether it's a typo, bug fix, or new feature. To get started, first download the code:
-
-``` sh
-git clone https://github.com/hyperledger/quilt
-cd quilt
-```
 
 ### Build the Project
 To build the project, execute the following command:
@@ -159,7 +188,7 @@ To build the project, execute the following command:
 $ mvn clean install
 ```
 
-#### Checkstyle
+### Checkstyle
 The project uses checkstyle to keep code style consistent. All Checkstyle checks are run by default during the build, but if you would like to run checkstyle checks, use the following command:
 
 ```bash
