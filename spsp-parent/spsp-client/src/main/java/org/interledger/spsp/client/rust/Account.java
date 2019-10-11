@@ -79,7 +79,7 @@ public interface Account {
    *
    * @return token or emmpty for send only accounts
    */
-  @JsonProperty("http_incoming_token")
+  @JsonProperty("ilp_over_http_incoming_token")
   Optional<String> httpIncomingToken();
 
   /**
@@ -87,7 +87,7 @@ public interface Account {
    *
    * @return token or empty for receive only accounts
    */
-  @JsonProperty("http_outgoing_token")
+  @JsonProperty("ilp_over_http_outgoing_token")
   Optional<String> httpOutgoingToken();
 
   /**

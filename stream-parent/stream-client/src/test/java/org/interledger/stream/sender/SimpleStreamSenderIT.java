@@ -53,6 +53,7 @@ import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.zalando.problem.ProblemModule;
 
 import java.io.IOException;
@@ -88,13 +89,24 @@ public class SimpleStreamSenderIT {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+  private final Network network = Network.newNetwork();
+
   // 60 seconds max per method tested
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
 
   @Rule
-  public GenericContainer interledgerNode = new GenericContainer<>("nhartner/interledgerrs-standalone")
+  public GenericContainer redis = new GenericContainer("redis:5.0.6")
+      .withNetwork(network)
+      .withNetworkAliases("redis")
+      .withEnv("REDIS_URL", "redis://redis:6379");
+
+  @Rule
+  public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/node")
       .withExposedPorts(7770)
+      .withNetwork(network)
+      //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
+      .withEnv("ILP_REDIS_URL", "redis://redis:6379")
       .withCommand(""
           + "--admin_auth_token " + AUTH_TOKEN + " "
           + "--ilp_address " + HOST_ADDRESS.getValue() + " "
@@ -129,7 +141,7 @@ public class SimpleStreamSenderIT {
     this.nodeClient = new InterledgerRustNodeClient(httpClient,
         AUTH_TOKEN,
         interledgerNodeBaseUri,
-        (pointer) -> interledgerNodeBaseUri + "/spsp" + pointer.path());
+        (pointer) -> interledgerNodeBaseUri + pointer.path());
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -140,7 +152,7 @@ public class SimpleStreamSenderIT {
             .authType(AuthType.SIMPLE)
             .tokenSubject(SENDER_ACCOUNT_USERNAME)
             .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
-            .encryptedTokenSharedSecret("password")
+            .encryptedTokenSharedSecret(AUTH_TOKEN)
             .build())
         .build();
 
@@ -549,12 +561,10 @@ public class SimpleStreamSenderIT {
     );
     link.setLinkId(LinkId.of(LINK_ID));
 
-    Account sender = accountBuilder()
+    nodeClient.createAccount(accountBuilder()
         .username(connectorAccountUsername)
         .ilpAddress(HOST_ADDRESS.with(connectorAccountUsername))
-        .build();
-
-    nodeClient.createAccount(sender);
+        .build());
 
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
     final StreamSender streamSender = new SimpleStreamSender(
@@ -594,7 +604,8 @@ public class SimpleStreamSenderIT {
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
     }
-    PaymentPointer pointer = PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/" + account.username());
+    PaymentPointer pointer =
+        PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/accounts/" + account.username() + "/spsp");
     return nodeClient.getStreamConnectionDetails(pointer);
   }
 
