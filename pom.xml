@@ -25,8 +25,15 @@
     <name>Hyperledger and its contributors</name>
   </organization>
 
-  <!-- Signing profile for signed distributions -->
   <profiles>
+    <!-- Specify android-compatible dependencies -->
+    <profile>
+      <id>android</id>
+      <properties>
+        <guava.version>28.1-android</guava.version>
+      </properties>
+    </profile>
+    <!-- Signing profile for signed distributions -->
     <profile>
       <id>release</id>
       <build>
@@ -92,9 +99,11 @@
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
+    <guava.version>28.1-jre</guava.version>
     <jackson.version>2.10.0.pr3</jackson.version>
     <okhttp.version>4.2.0</okhttp.version>
     <slf4j.version>1.7.28</slf4j.version>
+
     <skipITs>false</skipITs>
   </properties>
 
@@ -254,7 +263,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>28.1-jre</version>
+        <version>${guava.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.annotation</groupId>
