@@ -69,7 +69,7 @@ jobs:
       # publish the coverage report to codecov.io
       - run: bash <(curl -s https://codecov.io/bash)
 
-  android_build:
+  build_android:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
