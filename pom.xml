@@ -116,6 +116,7 @@
     <module>jackson-datatypes</module>
     <module>spsp-parent</module>
     <module>stream-parent</module>
+    <module>quilt-bom</module>
     <module>examples-parent</module>
   </modules>
 
