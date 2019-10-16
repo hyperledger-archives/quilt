@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -56,7 +57,10 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
         // There should only ever be 1 or 2 tokens in-memory for a given client instance.
         .maximumSize(3)
         // Expire after this duration, which will correspond to the last incoming request from the peer.
-        .expireAfterAccess(this.outgoingLinkSettings.tokenExpiry().orElse(Duration.of(30, ChronoUnit.MINUTES)))
+        .expireAfterAccess(
+            this.outgoingLinkSettings.tokenExpiry().orElse(Duration.of(30, ChronoUnit.MINUTES)).toMinutes(),
+            TimeUnit.MINUTES
+        )
         .removalListener((RemovalListener<String, String>) notification ->
             logger.debug("Removing IlpOverHttp AuthToken from Cache for Principal: {}", notification.getKey())
         )
@@ -75,9 +79,11 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
                   //      )
                   .withSubject(outgoingLinkSettings.tokenSubject()) // account identifier at the remote server.
                   // Expire at the appointed time, or else after 15 minutes.
-                  .withExpiresAt(JwtHs256BearerTokenSupplier.this.outgoingLinkSettings.tokenExpiry()
+                  .withExpiresAt(
+                      JwtHs256BearerTokenSupplier.this.outgoingLinkSettings.tokenExpiry()
                       .map(expiry -> Date.from(Instant.now().plus(expiry)))
-                      .orElseGet(() -> Date.from(Instant.now().plus(15, ChronoUnit.MINUTES))))
+                      .orElseGet(() -> Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                  )
                   .sign(Algorithm.HMAC256(sharedSecretBytes));
             } finally {
               // Zero-out all bytes in the `sharedSecretBytes` array.
