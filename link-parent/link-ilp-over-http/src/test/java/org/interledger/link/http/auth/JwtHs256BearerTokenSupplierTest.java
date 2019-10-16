@@ -1,6 +1,5 @@
 package org.interledger.link.http.auth;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -9,7 +8,10 @@ import org.interledger.link.http.IlpOverHttpLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
 
 import okhttp3.HttpUrl;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.time.Duration;
 
@@ -18,23 +20,37 @@ import java.time.Duration;
  */
 public class JwtHs256BearerTokenSupplierTest {
 
+  private static final byte[] EMPTY_BYTES = new byte[32];
+
+  @Mock
+  private SharedSecretBytesSupplier secretBytesSupplier;
+
+  @Before
+  public void setUp() {
+    MockitoAnnotations.initMocks(this);
+    when(secretBytesSupplier.get()).thenReturn(EMPTY_BYTES);
+  }
+
   @Test
   public void checkCaching() {
-    SharedSecretBytesSupplier secretBytesSupplier = mock(SharedSecretBytesSupplier.class);
-    byte[] muhBytes = new byte[32];
-    when(secretBytesSupplier.get()).thenReturn(muhBytes);
-    OutgoingLinkSettings linkSettings = createOutgoingSettings(Duration.ofSeconds(5));
+    OutgoingLinkSettings linkSettings = createOutgoingSettings(Duration.ofMinutes(5));
     JwtHs256BearerTokenSupplier tokenSupplier = new JwtHs256BearerTokenSupplier(secretBytesSupplier, linkSettings);
     tokenSupplier.get();
     tokenSupplier.get();
-    verify(secretBytesSupplier, times(1)).get();
+    verify(secretBytesSupplier).get();
+  }
+
+  @Test
+  public void checkCachingWithCachingDisabled() {
+    OutgoingLinkSettings linkSettings = createOutgoingSettings(Duration.ofMinutes(0));
+    JwtHs256BearerTokenSupplier tokenSupplier = new JwtHs256BearerTokenSupplier(secretBytesSupplier, linkSettings);
+    tokenSupplier.get();
+    tokenSupplier.get();
+    verify(secretBytesSupplier, times(2)).get();
   }
 
   @Test
   public void checkCacheExpiry() throws Exception {
-    SharedSecretBytesSupplier secretBytesSupplier = mock(SharedSecretBytesSupplier.class);
-    byte[] muhBytes = new byte[32];
-    when(secretBytesSupplier.get()).thenReturn(muhBytes);
     OutgoingLinkSettings linkSettings = createOutgoingSettings(Duration.ofMillis(2));
     JwtHs256BearerTokenSupplier tokenSupplier = new JwtHs256BearerTokenSupplier(secretBytesSupplier, linkSettings);
     tokenSupplier.get();
