@@ -34,7 +34,7 @@ import java.net.URISyntaxException;
 public class InterledgerRustNodeClientTest {
 
   @Rule
-  public WireMockRule wireMockRule = new WireMockRule();
+  public WireMockRule wireMockRule = new WireMockRule(0);
   private InterledgerRustNodeClient client;
 
   @Before
