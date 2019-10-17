@@ -6,10 +6,6 @@ version: 2
 executorType: machine
 jobs:
   build:
-    machine:
-      # specify the version you desire here
-      image: circleci/openjdk:9-jdk
-
     working_directory: ~/repo
 
     environment:
@@ -18,6 +14,10 @@ jobs:
       JAVA_HOME: /usr/lib/jvm/jdk1.9.0/
 
     steps:
+      - run:
+          name: upgrade jdk
+          command: |
+                sudo apt install openjdk-9-jre
 
       # apply the JCE unlimited strength policy to allow the PSK 256 bit key length
       # solution from http://qiita.com/yoskhdia/items/f4702a3abc4467de69b0
