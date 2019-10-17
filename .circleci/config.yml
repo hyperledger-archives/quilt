@@ -11,7 +11,7 @@ jobs:
     environment:
       # Customize the JVM maximum heap limit
       MAVEN_OPTS: -Xmx3200m
-      JAVA_HOME: /usr/lib/jvm/jdk1.9.0/
+      JAVA_HOME: /usr/lib/jvm/java-9-openjdk-amd64/
 
     steps:
       - run:
