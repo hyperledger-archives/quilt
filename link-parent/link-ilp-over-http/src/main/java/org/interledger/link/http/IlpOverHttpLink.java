@@ -14,6 +14,7 @@ import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.AbstractLink;
 import org.interledger.link.Link;
@@ -38,7 +39,6 @@ import org.zalando.problem.ThrowableProblem;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -58,7 +58,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
 
   private static final InterledgerPreparePacket UNFULFILLABLE_PACKET = InterledgerPreparePacket.builder()
       .executionCondition(InterledgerConstants.ALL_ZEROS_CONDITION)
-      .expiresAt(Instant.now().plusSeconds(30))
+      .expiresAt(DateUtils.now().plusSeconds(30))
       .destination(InterledgerAddress.of("peer.ilp_over_http_connection_test_that_should_always_reject"))
       .build();
 

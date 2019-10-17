@@ -43,7 +43,7 @@ public class InterledgerPreparePacketTest {
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
     );
-    Instant expiry = Instant.now().plusSeconds(30);
+    Instant expiry = DateUtils.now().plusSeconds(30);
 
     final InterledgerPreparePacket interledgerPreparePacket =
         InterledgerPreparePacket.builder()
@@ -77,7 +77,7 @@ public class InterledgerPreparePacketTest {
           .destination(mock(InterledgerAddress.class))
           .amount(UnsignedLong.ZERO)
           .executionCondition(mock(InterledgerCondition.class))
-          .expiresAt(Instant.now())
+          .expiresAt(DateUtils.now())
           .build();
     } catch (IllegalStateException e) {
       fail("cannot build packet");
@@ -101,7 +101,7 @@ public class InterledgerPreparePacketTest {
       InterledgerPreparePacket.builder()
           .destination(mock(InterledgerAddress.class))
           .amount(UnsignedLong.ZERO)
-          .expiresAt(Instant.now())
+          .expiresAt(DateUtils.now())
           .build();
       fail("cannot build packet");
     } catch (IllegalStateException e) {
@@ -114,7 +114,7 @@ public class InterledgerPreparePacketTest {
         .builder()
         .destination(mock(InterledgerAddress.class))
         .executionCondition(mock(InterledgerCondition.class))
-        .expiresAt(Instant.now())
+        .expiresAt(DateUtils.now())
         .build();
     assertThat(preparePacket).isNotNull();
     assertThat(preparePacket.getAmount()).isEqualTo(UnsignedLong.ZERO);
@@ -124,7 +124,7 @@ public class InterledgerPreparePacketTest {
       InterledgerPreparePacket.builder()
           .amount(UnsignedLong.ZERO)
           .executionCondition(mock(InterledgerCondition.class))
-          .expiresAt(Instant.now())
+          .expiresAt(DateUtils.now())
           .build();
       fail("cannot build packet");
     } catch (IllegalStateException e) {
@@ -137,7 +137,7 @@ public class InterledgerPreparePacketTest {
             .destination(mock(InterledgerAddress.class))
             .amount(UnsignedLong.ZERO)
             .executionCondition(mock(InterledgerCondition.class))
-            .expiresAt(Instant.now())
+            .expiresAt(DateUtils.now())
             .build();
     assertThat(interledgerPreparePacket).isNotNull();
   }
@@ -151,7 +151,7 @@ public class InterledgerPreparePacketTest {
         new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 01, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6,
             7, 8, 9, 0, 1, 2}
     );
-    Instant expiry = Instant.now().plusSeconds(30);
+    Instant expiry = DateUtils.now().plusSeconds(30);
 
     final InterledgerPreparePacket interledgerPreparePacket1 =
         InterledgerPreparePacket.builder()

@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import org.interledger.btp.BtpSubProtocol.ContentType;
+import org.interledger.core.DateUtils;
 
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -38,7 +38,7 @@ public class BtpResponsePacketTest {
   private static final BtpError BTP_ERROR = BtpError.builder()
       .requestId(REQUEST_ID)
       .subProtocols(SUB_PROTOCOLS)
-      .triggeredAt(Instant.now())
+      .triggeredAt(DateUtils.now())
       .errorCode(BtpErrorCode.F00_NotAcceptedError)
       .build();
 

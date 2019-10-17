@@ -54,7 +54,7 @@ public abstract class AsnObjectCodecBase<T> implements AsnObjectCodec<T> {
   /**
    * Set a listener that will be notified when a value is encoded into this codec.
    *
-   * @param listener The listener that accepts an instance of {@link T}, the new value.
+   * @param listener The listener that accepts an instance of {@code T}, the new value.
    * @throws IllegalStateException if a there is already a listener.
    */
   public final void setValueChangedEventListener(Consumer<AsnObjectCodecBase<T>> listener) {

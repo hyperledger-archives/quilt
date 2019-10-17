@@ -53,7 +53,7 @@ public interface Link<L extends LinkSettings> extends LinkSender {
   /**
    * The settings for this Link.
    *
-   * @return An instance of {@link L}.
+   * @return An instance of {@code L}.
    */
   L getLinkSettings();
 

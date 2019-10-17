@@ -7,12 +7,11 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.time.Instant;
 
 /**
  * Unit tests for {@link PacketRejector}.
@@ -21,7 +20,7 @@ public class PacketRejectorTest {
 
   private static final LinkId LINK_ID = LinkId.of("fooLink");
   private static final InterledgerPreparePacket PREPARE_PACKET = InterledgerPreparePacket.builder()
-      .expiresAt(Instant.now())
+      .expiresAt(DateUtils.now())
       .amount(UnsignedLong.ONE)
       .destination(InterledgerAddress.of("test.destination"))
       .executionCondition(PingLoopbackLink.PING_PROTOCOL_CONDITION)

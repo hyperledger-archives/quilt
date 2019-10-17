@@ -1,5 +1,6 @@
 package org.interledger.link.http.auth;
 
+import org.interledger.core.DateUtils;
 import org.interledger.link.http.OutgoingLinkSettings;
 
 import com.auth0.jwt.JWT;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
@@ -81,8 +81,8 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
                   // Expire at the appointed time, or else after 15 minutes.
                   .withExpiresAt(
                       JwtHs256BearerTokenSupplier.this.outgoingLinkSettings.tokenExpiry()
-                      .map(expiry -> Date.from(Instant.now().plus(expiry)))
-                      .orElseGet(() -> Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                      .map(expiry -> Date.from(DateUtils.now().plus(expiry)))
+                      .orElseGet(() -> Date.from(DateUtils.now().plus(15, ChronoUnit.MINUTES)))
                   )
                   .sign(Algorithm.HMAC256(sharedSecretBytes));
             } finally {

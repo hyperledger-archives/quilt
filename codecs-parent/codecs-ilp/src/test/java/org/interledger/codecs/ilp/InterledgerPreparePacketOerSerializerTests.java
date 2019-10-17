@@ -26,6 +26,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 
 import com.google.common.primitives.UnsignedLong;
@@ -39,6 +40,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
@@ -74,23 +76,27 @@ public class InterledgerPreparePacketOerSerializerTests {
             .destination(InterledgerAddress.of("test3.foo.bar"))
             .amount(UnsignedLong.valueOf(100L))
             .executionCondition(InterledgerCondition.of(conditionBytes))
-            .expiresAt(Instant.now()).build()},
+            .expiresAt(now()).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(UnsignedLong.valueOf(50L))
             .executionCondition(InterledgerCondition.of(conditionBytes))
-            .expiresAt(Instant.now())
+            .expiresAt(now())
             .data(new byte[] {1, 2, 3, 4, 5, 6, 7, 8}).build()},
 
         {InterledgerPreparePacket.builder()
             .destination(InterledgerAddress.builder().value("test1.bar.baz").build())
             .amount(UnsignedLong.valueOf(50L))
             .executionCondition(InterledgerCondition.of(conditionBytes))
-            .expiresAt(Instant.now())
+            .expiresAt(now())
             .data(byteArrayOutputStream.toByteArray()).build()},
 
     });
+  }
+
+  private static Instant now() {
+    return DateUtils.now().truncatedTo(ChronoUnit.MILLIS);
   }
 
   /**

@@ -25,6 +25,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
@@ -86,7 +87,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
    */
   @Override
   default Instant getExpiresAt() {
-    return Instant.now().plusSeconds(30);
+    return DateUtils.now().plusSeconds(30);
   }
 
   /**
@@ -124,7 +125,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
     @Override
     @Default
     public Instant getExpiresAt() {
-      return Instant.now().plusSeconds(30);
+      return DateUtils.now().plusSeconds(30);
     }
 
     @Override
