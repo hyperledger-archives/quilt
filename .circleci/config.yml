@@ -8,7 +8,7 @@ jobs:
   build:
     machine:
       # specify the version you desire here
-      - image: circleci/openjdk:9-jdk
+      image: circleci/openjdk:9-jdk
 
     working_directory: ~/repo
 
