@@ -24,11 +24,11 @@ jobs:
       - run:
           name: Getting JCE unlimited strength policy to allow the 256 bit keys
           command: |
-                java -version
+                $JAVA_HOME/java -version
                 curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
                 unzip -o /tmp/jce_policy.zip -d /tmp
-                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
-                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
+                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/lib/security/US_export_policy.jar
+                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/lib/security/local_policy.jar
 
       - checkout
 
