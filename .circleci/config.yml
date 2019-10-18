@@ -4,6 +4,21 @@
 #
 version: 2
 executorType: machine
+
+_run:
+  jceinstall: &jceinstall
+    name: "Download JCE unlimited strength policy to allow the 256 bit keys"
+    command: |
+      curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
+      unzip -o /tmp/jce_policy.zip -d /tmp
+      sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
+      sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
+
+  javaversion: &javaversion
+    name: "Report Java JDK Version being used"
+    command: |
+      echo ${JAVA_HOME}
+
 jobs:
   build:
     docker:
@@ -21,14 +36,8 @@ jobs:
 
       # apply the JCE unlimited strength policy to allow the PSK 256 bit key length
       # solution from http://qiita.com/yoskhdia/items/f4702a3abc4467de69b0
-      - run:
-          name: Getting JCE unlimited strength policy to allow the 256 bit keys
-          command: |
-                curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
-                unzip -o /tmp/jce_policy.zip -d /tmp
-                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
-                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
-
+      - run: *jceinstall
+      - run: *javaversion
       - checkout
 
       # Download and cache dependencies
@@ -85,14 +94,8 @@ jobs:
 
       # apply the JCE unlimited strength policy to allow the PSK 256 bit key length
       # solution from http://qiita.com/yoskhdia/items/f4702a3abc4467de69b0
-      - run:
-          name: Getting JCE unlimited strength policy to allow the 256 bit keys
-          command: |
-            curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
-            unzip -o /tmp/jce_policy.zip -d /tmp
-            sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
-            sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
-
+      - run: *jceinstall
+      - run: *javaversion
       - checkout
 
       # Download and cache dependencies
@@ -106,6 +109,37 @@ jobs:
           name: Maven Install
           command:  mvn dependency:go-offline install -Pandroid
 
+  build_java9:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-9-openjdk-amd64/
+
+    steps:
+      - run:
+          name: Upgrade JDK to JDK 9
+          command: |
+            sudo apt-get install openjdk-9-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            - # fallback to using latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
+
+
 workflows:
   version: 2
 
@@ -116,3 +150,4 @@ workflows:
     jobs:
       - build
       - build_android
+      - build_java9
