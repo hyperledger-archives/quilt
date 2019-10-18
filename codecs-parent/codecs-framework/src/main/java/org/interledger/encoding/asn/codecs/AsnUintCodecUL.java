@@ -21,28 +21,59 @@ package org.interledger.encoding.asn.codecs;
  */
 
 import com.google.common.primitives.UnsignedLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.Optional;
 
 /**
  * <p>An ASN.1 codec for a variable-size ASN.1 OER integer type, backed by {@link BigInteger}.</p>
  *
  * <p>Per the OER definitions, the integer value is encoded as a length prefix, followed by an
- * unsigned binary integer occupying a variable number of octets; the length prefix contains the
- * number of subsequent octets.</p>
+ * unsigned binary integer occupying a variable number of octets; the length prefix contains the number of subsequent
+ * octets.</p>
  *
  * @see "http://www.oss.com/asn1/resources/books-whitepapers-pubs/Overview_of_OER.pdf"
  */
 public class AsnUintCodecUL extends AsnOctetStringBasedObjectCodec<UnsignedLong> {
 
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  private final Optional<UnsignedLong> defaultValue;
+
   public AsnUintCodecUL() {
     super(AsnSizeConstraint.UNCONSTRAINED);
+    this.defaultValue = Optional.empty();
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param defaultValue An {@link UnsignedLong} that can be used if the ASN.1 OER bytes cannot be decoded into an
+   *                     Unsigned Long.
+   */
+  public AsnUintCodecUL(final UnsignedLong defaultValue) {
+    super(AsnSizeConstraint.UNCONSTRAINED);
+    this.defaultValue = Optional.of(defaultValue);
   }
 
   @Override
   public UnsignedLong decode() {
-    return UnsignedLong.valueOf(new BigInteger(1, getBytes()));
+
+    // If the number is unable to be decoded or otherwise doesn't fit into an UnsignedLong, then an exception will be
+    // thrown. Optionally-present default values can be used, or if absent, an exception will be thrown.
+    try {
+      return UnsignedLong.valueOf(new BigInteger(1, getBytes()));
+    } catch (Exception e) {
+      if (defaultValue.isPresent()) {
+        logger.warn("Variable Unsigned Integer was too big for VarUInt. Returning UnsignedLong.Max");
+        return defaultValue.get();
+      } else {
+        throw e;
+      }
+    }
   }
 
   @Override

@@ -20,7 +20,7 @@ import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
-import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
@@ -129,7 +129,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
           streamPacket.sequence());
       // If the sequence it too high, we should close the Connection.
       responseFrames.add(ConnectionCloseFrame.builder()
-          .errorCode(ErrorCode.ProtocolViolation)
+          .errorCode(ErrorCodes.ProtocolViolation)
           .errorMessage("Sequence number was to too high for safe encryption")
           .build());
     }
