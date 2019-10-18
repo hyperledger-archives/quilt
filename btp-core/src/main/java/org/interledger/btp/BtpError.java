@@ -21,6 +21,7 @@ package org.interledger.btp;
  */
 
 import org.interledger.core.Immutable;
+import org.interledger.core.DateUtils;
 
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
@@ -43,7 +44,7 @@ public interface BtpError extends BtpResponsePacket {
    * The time of emission.
    */
   default Instant getTriggeredAt() {
-    return Instant.now();
+    return DateUtils.now();
   }
 
   /**
@@ -65,7 +66,7 @@ public interface BtpError extends BtpResponsePacket {
     @Override
     @Default
     public Instant getTriggeredAt() {
-      return Instant.now();
+      return DateUtils.now();
     }
 
     @Override

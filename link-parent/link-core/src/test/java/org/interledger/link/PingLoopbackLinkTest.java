@@ -11,6 +11,7 @@ import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
@@ -21,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.Base64;
 
 /**
@@ -107,7 +107,7 @@ public class PingLoopbackLinkTest {
         .amount(UnsignedLong.valueOf(10L))
         .executionCondition(InterledgerCondition.of(new byte[32]))
         .destination(OPERATOR_ADDRESS)
-        .expiresAt(Instant.now())
+        .expiresAt(DateUtils.now())
         .build();
 
     link.sendPacket(preparePacket).handle(fulfillPacket -> {
@@ -133,7 +133,7 @@ public class PingLoopbackLinkTest {
         .amount(UnsignedLong.valueOf(10L))
         .executionCondition(PING_PROTOCOL_CONDITION)
         .destination(InterledgerAddress.of("example.foo"))
-        .expiresAt(Instant.now())
+        .expiresAt(DateUtils.now())
         .build();
 
     link.sendPacket(preparePacket).handle(
@@ -151,7 +151,7 @@ public class PingLoopbackLinkTest {
         .amount(UnsignedLong.valueOf(10L))
         .executionCondition(PING_PROTOCOL_CONDITION)
         .destination(OPERATOR_ADDRESS)
-        .expiresAt(Instant.now())
+        .expiresAt(DateUtils.now())
         .build();
 
     link.sendPacket(preparePacket).handle(

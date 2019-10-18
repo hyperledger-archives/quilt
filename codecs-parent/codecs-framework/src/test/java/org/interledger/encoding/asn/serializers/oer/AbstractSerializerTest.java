@@ -33,7 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link T}.
+ * Parameterized unit tests for encoding an instance of {@code T}.
  */
 public abstract class AbstractSerializerTest<T> {
 

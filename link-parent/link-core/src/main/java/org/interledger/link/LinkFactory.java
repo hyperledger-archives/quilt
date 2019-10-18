@@ -34,7 +34,7 @@ public interface LinkFactory {
    * @param <LS>                    A type that extends {@link LinkSettings}.
    * @param <L>                     A type that extends {@link Link}.
    *
-   * @return An instance of {@link L}.
+   * @return An instance of {@code L}.
    */
   @SuppressWarnings("MethodTypeParameterName")
   default <LS extends LinkSettings, L extends Link<LS>> L constructLink(

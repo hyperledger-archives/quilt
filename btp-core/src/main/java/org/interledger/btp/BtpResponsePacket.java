@@ -84,7 +84,7 @@ public interface BtpResponsePacket extends BtpPacket {
    * @param btpErrorMapper    A {@link Function} to call if this packet is an instance of {@link BtpError}.
    * @param <R>               The return type of this mapping function.
    *
-   * @return An instance of {@link R}.
+   * @return An instance of {@code R}.
    */
   default <R> R map(final Function<BtpResponse, R> btpResponseMapper, final Function<BtpError, R> btpErrorMapper
   ) {

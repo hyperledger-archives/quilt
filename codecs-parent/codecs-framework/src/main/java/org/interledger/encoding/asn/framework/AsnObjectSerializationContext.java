@@ -157,7 +157,7 @@ public class AsnObjectSerializationContext {
   /**
    * Get the {@link AsnObjectSerializer} instance for serializing the given {@link AsnObjectCodec}.
    *
-   * @param instance An instance of {@link T}.
+   * @param instance An instance of {@code T}.
    */
   <T extends AsnObjectCodec> AsnObjectSerializer<T> getSerializer(final T instance) {
 

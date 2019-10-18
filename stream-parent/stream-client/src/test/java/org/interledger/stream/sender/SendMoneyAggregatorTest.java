@@ -17,6 +17,7 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.SharedSecret;
+import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
@@ -48,7 +49,6 @@ import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -467,7 +467,7 @@ public class SendMoneyAggregatorTest {
     return InterledgerPreparePacket.builder()
         .destination(destinationAddress)
         .amount(UnsignedLong.ONE)
-        .expiresAt(Instant.now())
+        .expiresAt(DateUtils.now())
         .executionCondition(InterledgerCondition.of(new byte[32]))
         .build();
   }

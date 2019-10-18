@@ -16,6 +16,7 @@ import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
+import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
@@ -304,12 +305,12 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(sharedSecret);
       Objects.requireNonNull(destinationAddress);
 
-      Instant startPreflight = Instant.now();
+      Instant startPreflight = DateUtils.now();
       try {
         receiverDenomination = preflightCheck();
       } catch (StreamConnectionClosedException e) {
         return CompletableFuture.completedFuture(SendMoneyResult.builder()
-            .sendMoneyDuration(Duration.between(startPreflight, Instant.now()))
+            .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
             .numRejectPackets(1)
             .numFulfilledPackets(0)
             .amountDelivered(UnsignedLong.ZERO)
@@ -325,7 +326,7 @@ public class SimpleStreamSender implements StreamSender {
       // Using a shared executor could cause sendMoneyPacketized to internally get blocked from submitting tasks
       // because the shared executor is already blocked waiting on the results of the call here to sendMoneyPacketized
       ExecutorService sendMoneyExecutor = Executors.newSingleThreadExecutor();
-      final Instant start = Instant.now();
+      final Instant start = DateUtils.now();
       // All futures will run here using the Cached Executor service.
       return CompletableFuture
           .supplyAsync(() -> {
@@ -339,7 +340,7 @@ public class SimpleStreamSender implements StreamSender {
                 .originalAmount(paymentTracker.getOriginalAmount())
                 .numFulfilledPackets(numFulfilledPackets.get())
                 .numRejectPackets(numRejectedPackets.get())
-                .sendMoneyDuration(Duration.between(start, Instant.now()))
+                .sendMoneyDuration(Duration.between(start, DateUtils.now()))
                 .successfulPayment(paymentTracker.successful())
                 .build();
           }, sendMoneyExecutor)
@@ -403,7 +404,7 @@ public class SimpleStreamSender implements StreamSender {
           .destination(destinationAddress)
           .amount(UnsignedLong.ZERO)
           .executionCondition(executionCondition)
-          .expiresAt(Instant.now().plusSeconds(30L))
+          .expiresAt(DateUtils.now().plusSeconds(30L))
           .data(streamPacketData)
           .build();
 
@@ -494,7 +495,7 @@ public class SimpleStreamSender implements StreamSender {
             .destination(destinationAddress)
             .amount(amountToSend)
             .executionCondition(executionCondition)
-            .expiresAt(Instant.now().plusSeconds(30L))
+            .expiresAt(DateUtils.now().plusSeconds(30L))
             .data(streamPacketData)
             .build();
 
@@ -797,7 +798,7 @@ public class SimpleStreamSender implements StreamSender {
     //       .destination(destinationAddress)
     //       .amount(UnsignedLong.ZERO)
     //       .executionCondition(executionCondition)
-    //       .expiresAt(Instant.now().plusSeconds(30L))
+    //       .expiresAt(TimeUtils.now().plusSeconds(30L))
     //       .data(encryptedStreamPacket)
     //       .build();
     //

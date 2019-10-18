@@ -4,6 +4,7 @@ import static org.interledger.stream.FluentCompareTo.is;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
+import org.interledger.core.DateUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
@@ -57,7 +58,7 @@ public class StreamConnection implements Closeable {
    * @param streamConnectionId A {@link StreamConnectionId} that is unique to this JVM.
    */
   public StreamConnection(final StreamConnectionId streamConnectionId) {
-    this.creationDateTime = Instant.now();
+    this.creationDateTime = DateUtils.now();
     this.streamConnectionId = Objects.requireNonNull(streamConnectionId, "streamConnectionId must not be null");
     this.sequence = new AtomicReference<>(UnsignedLong.ONE);
     this.connectionState = new AtomicReference<>(StreamConnectionState.AVAILABLE);

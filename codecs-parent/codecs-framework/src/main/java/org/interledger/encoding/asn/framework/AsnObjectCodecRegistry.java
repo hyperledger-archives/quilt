@@ -63,7 +63,7 @@ public class AsnObjectCodecRegistry {
    * @param type An instance of {@link Class}.
    * @param <T> the type of object that can be encoded/decoded by the returned codec
    *
-   * @return a codec for encoding/decoding objects of type {@link T}
+   * @return a codec for encoding/decoding objects of type {@code T}
    */
   public <T> AsnObjectCodec<T> getAsnObjectForType(final Class<T> type) {
     Objects.requireNonNull(type);

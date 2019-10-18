@@ -22,6 +22,7 @@ package org.interledger.ildcp;
 
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
@@ -74,7 +75,7 @@ public interface IldcpRequest {
     @Override
     @Default
     public Instant getExpiresAt() {
-      return Instant.now().plusSeconds(30);
+      return DateUtils.now().plusSeconds(30);
     }
   }
 
