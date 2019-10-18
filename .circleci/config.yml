@@ -137,8 +137,110 @@ jobs:
 
       - run:
           name: Maven Install
+          command: mvn dependency:go-offline install
+
+  build_java10:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-10-openjdk-amd64/
+
+    steps:
+      - run:
+          name: Upgrade JDK to JDK 10
+          command: |
+            sudo apt install openjdk-10-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            - # fallback to using latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: Maven Install
           command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
 
+
+  build_java11:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run:
+          name: Upgrade JDK to JDK 11
+          command: |
+            sudo apt install openjdk-11-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            - # fallback to using latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
+
+  build_java12:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-12-openjdk-amd64/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run:
+          name: Upgrade JDK to JDK 12
+          command: |
+            sudo apt install openjdk-12-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            - # fallback to using latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
 
 workflows:
   version: 2
@@ -151,3 +253,6 @@ workflows:
       - build
       - build_android
       - build_java9
+      - build_java10
+      - build_java11
+      - build_java12
