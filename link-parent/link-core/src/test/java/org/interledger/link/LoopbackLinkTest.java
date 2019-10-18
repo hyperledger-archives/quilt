@@ -8,6 +8,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerConstants;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.DateUtils;
 
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;
@@ -18,7 +19,6 @@ import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -202,7 +202,7 @@ public class LoopbackLinkTest {
         .amount(UnsignedLong.valueOf(10L))
         .executionCondition(InterledgerConstants.ALL_ZEROS_CONDITION)
         .destination(OPERATOR_ADDRESS)
-        .expiresAt(Instant.now())
+        .expiresAt(DateUtils.now())
         .data(new byte[32])
         .build();
   }

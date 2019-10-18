@@ -31,7 +31,7 @@ public abstract class AbstractStatefulLink<L extends LinkSettings>
    *                                   be uninitialized, for example, in cases where the Link obtains its address from a
    *                                   parent node using IL-DCP. If an ILP address has not been assigned, or it has not
    *                                   been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
-   * @param linkSettings               A {@link L} that specified ledger link options.
+   * @param linkSettings               A {@code L} that specified ledger link options.
    * @param linkConnectionEventEmitter A {@link LinkConnectionEventEmitter} that is used to emit events from this link.
    */
   protected AbstractStatefulLink(

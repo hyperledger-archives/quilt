@@ -20,6 +20,8 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.core.DateUtils;
+
 import java.time.Instant;
 import java.util.Objects;
 
@@ -40,7 +42,7 @@ public class BtpRuntimeException extends RuntimeException {
   public BtpRuntimeException() {
     super("Unknown BTP Runtime Exception");
     this.code = BtpErrorCode.F00_NotAcceptedError;
-    this.triggeredAt = Instant.now();
+    this.triggeredAt = DateUtils.now();
   }
 
   /**
@@ -50,7 +52,7 @@ public class BtpRuntimeException extends RuntimeException {
   public BtpRuntimeException(BtpErrorCode code, String message) {
     super(message);
     this.code = code;
-    this.triggeredAt = Instant.now();
+    this.triggeredAt = DateUtils.now();
   }
 
   /**
@@ -66,7 +68,7 @@ public class BtpRuntimeException extends RuntimeException {
   public BtpRuntimeException(BtpErrorCode code, String message, Throwable cause) {
     super(message, cause);
     this.code = code;
-    this.triggeredAt = Instant.now();
+    this.triggeredAt = DateUtils.now();
   }
 
   /**
@@ -82,7 +84,7 @@ public class BtpRuntimeException extends RuntimeException {
   public BtpRuntimeException(Throwable cause) {
     super(cause);
     this.code = BtpErrorCode.F00_NotAcceptedError;
-    this.triggeredAt = Instant.now();
+    this.triggeredAt = DateUtils.now();
   }
 
   public BtpErrorCode getCode() {

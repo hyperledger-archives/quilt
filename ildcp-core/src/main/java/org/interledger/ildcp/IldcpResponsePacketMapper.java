@@ -41,7 +41,7 @@ public abstract class IldcpResponsePacketMapper<T> {
    * @param responsePacket The generic {@link InterledgerResponsePacket} to be mapped in a type-safe manner for IL-DCP
    *                       purposes.
    *
-   * @return An instance of {@link T}.
+   * @return An instance of {@code T}.
    */
   public final T map(final InterledgerResponsePacket responsePacket) {
     Objects.requireNonNull(responsePacket);
@@ -61,7 +61,7 @@ public abstract class IldcpResponsePacketMapper<T> {
    *
    * @param ildcpResponsePacket A {@link IldcpResponsePacket} to be mapped in a type-safe manner.
    *
-   * @return An instance of {@link T}.
+   * @return An instance of {@code T}.
    */
   protected abstract T mapFulfillPacket(final IldcpResponsePacket ildcpResponsePacket);
 
@@ -70,7 +70,7 @@ public abstract class IldcpResponsePacketMapper<T> {
    *
    * @param ildcpRejectPacket A {@link InterledgerRejectPacket} to be mapped in a type-safe manner.
    *
-   * @return An instance of {@link T}.
+   * @return An instance of {@code T}.
    */
   protected abstract T mapRejectPacket(final InterledgerRejectPacket ildcpRejectPacket);
 }

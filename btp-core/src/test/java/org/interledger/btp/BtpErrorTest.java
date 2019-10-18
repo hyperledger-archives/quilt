@@ -24,6 +24,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import org.interledger.btp.BtpSubProtocol.ContentType;
+import org.interledger.core.DateUtils;
 
 import org.junit.Test;
 
@@ -37,7 +38,7 @@ public class BtpErrorTest {
 
   private static final long REQUEST_ID = 1;
   private static final byte[] ERROR_DATA = new byte[] {0, 1, 2};
-  private static final Instant TRIGGERED_AT = Instant.now();
+  private static final Instant TRIGGERED_AT = DateUtils.now();
   private static final BtpSubProtocols SUB_PROTOCOLS = new BtpSubProtocols();
 
   static {

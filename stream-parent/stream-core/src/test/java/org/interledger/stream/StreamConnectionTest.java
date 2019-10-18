@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
+import org.interledger.core.DateUtils;
 import org.interledger.stream.StreamConnection.StreamConnectionState;
 
 import com.google.common.collect.Lists;
@@ -16,7 +17,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -157,7 +157,7 @@ public class StreamConnectionTest {
   @Test
   public void getCreationDateTime() {
     assertThat(streamConnection.getCreationDateTime()).isNotNull();
-    assertThat(streamConnection.getCreationDateTime()).isBefore(Instant.now().plusSeconds(1));
+    assertThat(streamConnection.getCreationDateTime()).isBefore(DateUtils.now().plusSeconds(1));
   }
 
   @Test

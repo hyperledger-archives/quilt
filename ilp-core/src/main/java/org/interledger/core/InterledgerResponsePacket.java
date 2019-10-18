@@ -97,7 +97,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link InterledgerRejectPacket}.
    * @param <R>           The return type of this mapping function.
    *
-   * @return An instance of {@link R}.
+   * @return An instance of {@code R}.
    */
   default <R> R map(
       final Function<InterledgerFulfillPacket, R> fulfillMapper, final Function<InterledgerRejectPacket, R> rejectMapper

@@ -29,9 +29,9 @@ package org.interledger.encoding.asn.framework;
 public interface AsnObjectCodecSupplier<T> {
 
   /**
-   * Get a new instance of {@link T}.
+   * Get a new instance of {@code T}.
    *
-   * @return a new instance of {@link T}.
+   * @return a new instance of {@code T}.
    */
   AsnObjectCodec<T> get();
 }

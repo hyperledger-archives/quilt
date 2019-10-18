@@ -97,7 +97,7 @@ public class CodecContext {
 
   /**
    * Deserialize an object of the given type from the given stream and use the appropriate ASN.1
-   * codec to decode the deserialized ASN.1 object into an object of type {@link T}.
+   * codec to decode the deserialized ASN.1 object into an object of type {@code T}.
    *
    * @param type        The type of the object to read from the stream.
    * @param inputStream The stream from which to read the object.
