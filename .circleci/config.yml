@@ -19,6 +19,13 @@ _run:
     command: |
       echo ${JAVA_HOME}
 
+  restorecache: &restorecache
+    name: "Download and Cache Dependencies"
+    keys:
+      - v1-dependencies-{{ checksum "pom.xml" }}
+      # fallback to using the latest cache if no exact match is found
+      - v1-dependencies-
+
 jobs:
   build:
     docker:
@@ -41,12 +48,7 @@ jobs:
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
+      - restore_cache: *restorecache
       - run:
           name: Maven Install
           command:  mvn dependency:go-offline install
@@ -99,11 +101,7 @@ jobs:
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+      - restore_cache: *restorecache
 
       - run:
           name: Maven Install
@@ -129,11 +127,7 @@ jobs:
       - run: *javaversion
       - checkout
 
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            - # fallback to using latest cache if no exact match is found
-            - v1-dependencies-
+      - restore_cache: *restorecache
 
       - run:
           name: Maven Install
@@ -159,16 +153,11 @@ jobs:
       - run: *javaversion
       - checkout
 
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            - # fallback to using latest cache if no exact match is found
-            - v1-dependencies-
+      - restore_cache: *restorecache
 
       - run:
           name: Maven Install
           command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
-
 
   build_java11:
     machine:
@@ -196,11 +185,7 @@ jobs:
       - run: *javaversion
       - checkout
 
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            - # fallback to using latest cache if no exact match is found
-            - v1-dependencies-
+      - restore_cache: *restorecache
 
       - run:
           name: Maven Install
@@ -232,11 +217,39 @@ jobs:
       - run: *javaversion
       - checkout
 
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            - # fallback to using latest cache if no exact match is found
-            - v1-dependencies-
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
+
+  build_java13:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-13-openjdk-amd64/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run:
+          name: Upgrade JDK to JDK 13
+          command: |
+            sudo apt install openjdk-13-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
 
       - run:
           name: Maven Install
@@ -256,3 +269,4 @@ workflows:
       - build_java10
       - build_java11
       - build_java12
+      - build_java13
