@@ -419,7 +419,7 @@ public class SendMoneyAggregatorTest {
   }
 
   @Test
-  public void handleRejectHatesNullPrepareAmountsr() {
+  public void handleRejectHatesNullPrepareAmounts() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
         sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), null, new AtomicInteger(),
