@@ -15,6 +15,18 @@ public class StreamMoneyMaxFrameTest {
         .streamId(UnsignedLong.ZERO)
         .build();
     assertThat(frame.totalReceived()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(spy(StreamMoneyMaxFrame.class).totalReceived()).isEqualTo(UnsignedLong.ZERO);
+
+    final StreamMoneyMaxFrame interfaceFrame = new StreamMoneyMaxFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong receiveMax() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.totalReceived()).isEqualTo(UnsignedLong.ZERO);
   }
 }

@@ -58,7 +58,19 @@ public class IldcpResponsePacketTest {
   public void defaults() {
     IldcpResponsePacket packet = IldcpResponsePacket.builder().ildcpResponse(response).build();
     assertThat(packet.getData()).isEqualTo(new byte[0]);
-    assertThat(spy(IldcpResponsePacket.class).getFulfillment()).isEqualTo(IldcpResponsePacket.EXECUTION_FULFILLMENT);
+
+    final IldcpResponsePacket packetInterface = new IldcpResponsePacket(){
+      @Override
+      public byte[] getData() {
+        return new byte[0];
+      }
+
+      @Override
+      public IldcpResponse getIldcpResponse() {
+        return null;
+      }
+    };
+    assertThat(packetInterface.getFulfillment()).isEqualTo(IldcpResponsePacket.EXECUTION_FULFILLMENT);
   }
 
   @Test

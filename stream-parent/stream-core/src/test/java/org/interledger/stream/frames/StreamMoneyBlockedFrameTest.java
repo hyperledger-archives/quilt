@@ -15,6 +15,18 @@ public class StreamMoneyBlockedFrameTest {
         .streamId(UnsignedLong.ZERO)
         .build();
     assertThat(frame.totalSent()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(spy(StreamMoneyBlockedFrame.class).totalSent()).isEqualTo(UnsignedLong.ZERO);
+
+    final StreamMoneyBlockedFrame interfaceFrame = new StreamMoneyBlockedFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong sendMax() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.totalSent()).isEqualTo(UnsignedLong.ZERO);
   }
 }

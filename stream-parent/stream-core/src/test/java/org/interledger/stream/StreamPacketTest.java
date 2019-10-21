@@ -4,7 +4,9 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.spy;
 
 import org.interledger.core.InterledgerPacketType;
+import org.interledger.stream.frames.StreamFrame;
 
+import java.util.List;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
@@ -22,7 +24,28 @@ public class StreamPacketTest {
         .build();
     assertThat(packet.version()).isEqualTo((short) 1);
     // make sure interface default method is exercised
-    assertThat(spy(StreamPacket.class).version()).isEqualTo((short) 1);
+    final StreamPacket interfacePacket = new StreamPacket() {
+      @Override
+      public InterledgerPacketType interledgerPacketType() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong sequence() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong prepareAmount() {
+        return null;
+      }
+
+      @Override
+      public List<StreamFrame> frames() {
+        return null;
+      }
+    };
+    assertThat(interfacePacket.version()).isEqualTo((short) 1);
   }
 
   @Test

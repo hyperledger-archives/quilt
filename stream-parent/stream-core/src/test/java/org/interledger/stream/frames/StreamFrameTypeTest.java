@@ -28,6 +28,7 @@ import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -101,8 +102,13 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionAssetDetails);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionAssetDetailsFrame.class).streamFrameType())
-        .isEqualTo(StreamFrameType.ConnectionAssetDetails);
+    final ConnectionAssetDetailsFrame interfaceFrame = new ConnectionAssetDetailsFrame() {
+      @Override
+      public Denomination sourceDenomination() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionAssetDetails);
   }
 
   @Test
@@ -113,7 +119,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionCloseFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
+    final ConnectionCloseFrame interfaceFrame = new ConnectionCloseFrame() {
+      @Override
+      public ErrorCode errorCode() {
+        return null;
+      }
+
+      @Override
+      public Optional<String> errorMessage() {
+        return Optional.empty();
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
   }
 
   @Test
@@ -123,8 +140,13 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataBlocked);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionDataBlockedFrame.class).streamFrameType())
-        .isEqualTo(StreamFrameType.ConnectionDataBlocked);
+    final ConnectionDataBlockedFrame interfaceFrame = new ConnectionDataBlockedFrame() {
+      @Override
+      public UnsignedLong maxOffset() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataBlocked);
   }
 
   @Test
@@ -134,7 +156,13 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataMax);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionDataMaxFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataMax);
+    final ConnectionDataMaxFrame interfaceFrame = new ConnectionDataMaxFrame() {
+      @Override
+      public UnsignedLong maxOffset() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionDataMax);
   }
 
   @Test
@@ -144,8 +172,13 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionMaxStreamId);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionMaxStreamIdFrame.class).streamFrameType())
-        .isEqualTo(StreamFrameType.ConnectionMaxStreamId);
+    final ConnectionMaxStreamIdFrame interfaceFrame = new ConnectionMaxStreamIdFrame() {
+      @Override
+      public UnsignedLong maxStreamId() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionMaxStreamId);
   }
 
   @Test
@@ -155,7 +188,13 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionNewAddressFrame.class).streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
+    final ConnectionNewAddressFrame interfaceFrame = new ConnectionNewAddressFrame() {
+      @Override
+      public InterledgerAddress sourceAddress() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
   }
 
   @Test
@@ -165,8 +204,13 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionStreamIdBlocked);
     // make sure interface default method is exercised
-    assertThat(spy(ConnectionStreamIdBlockedFrame.class).streamFrameType())
-        .isEqualTo(StreamFrameType.ConnectionStreamIdBlocked);
+    final ConnectionStreamIdBlockedFrame interfaceFrame = new ConnectionStreamIdBlockedFrame() {
+      @Override
+      public UnsignedLong maxStreamId() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionStreamIdBlocked);
   }
 
   @Test
@@ -178,7 +222,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamClose);
     // make sure interface default method is exercised
-    assertThat(spy(StreamCloseFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamClose);
+    final StreamCloseFrame interfaceFrame = new StreamCloseFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public ErrorCode errorCode() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamClose);
   }
 
   @Test
@@ -189,7 +244,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamDataBlocked);
     // make sure interface default method is exercised
-    assertThat(spy(StreamDataBlockedFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamDataBlocked);
+    final StreamDataBlockedFrame interfaceFrame = new StreamDataBlockedFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong maxOffset() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamDataBlocked);
   }
 
   @Test
@@ -201,7 +267,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamData);
     // make sure interface default method is exercised
-    assertThat(spy(StreamDataFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamData);
+    final StreamDataFrame interfaceFrame = new StreamDataFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong offset() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamData);
   }
 
   @Test
@@ -212,7 +289,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamDataMax);
     // make sure interface default method is exercised
-    assertThat(spy(StreamDataMaxFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamDataMax);
+    final StreamDataMaxFrame interfaceFrame = new StreamDataMaxFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong maxOffset() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamDataMax);
   }
 
   @Test
@@ -224,7 +312,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyBlocked);
     // make sure interface default method is exercised
-    assertThat(spy(StreamMoneyBlockedFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyBlocked);
+    final StreamMoneyBlockedFrame interfaceFrame = new StreamMoneyBlockedFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong sendMax() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyBlocked);
   }
 
   @Test
@@ -235,7 +334,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoney);
     // make sure interface default method is exercised
-    assertThat(spy(StreamMoneyFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamMoney);
+    final StreamMoneyFrame interfaceFrame = new StreamMoneyFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong shares() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoney);
   }
 
   @Test
@@ -247,7 +357,18 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyMax);
     // make sure interface default method is exercised
-    assertThat(spy(StreamMoneyMaxFrame.class).streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyMax);
+    final StreamMoneyMaxFrame interfaceFrame = new StreamMoneyMaxFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong receiveMax() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyMax);
 
   }
 }
