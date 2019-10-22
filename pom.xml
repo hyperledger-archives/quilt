@@ -352,7 +352,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.20.1</version>
+          <version>2.22.2</version>
           <configuration>
             <skipITs>${skipITs}</skipITs>
             <argLine>${failsafe.argLine}</argLine>

@@ -4,6 +4,28 @@
 #
 version: 2
 executorType: machine
+
+_run:
+  jceinstall: &jceinstall
+    name: "Download JCE unlimited strength policy to allow the 256 bit keys"
+    command: |
+      curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
+      unzip -o /tmp/jce_policy.zip -d /tmp
+      sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
+      sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
+
+  javaversion: &javaversion
+    name: "Report Java JDK Version being used"
+    command: |
+      echo ${JAVA_HOME}
+
+  restorecache: &restorecache
+    name: "Download and Cache Dependencies"
+    keys:
+      - v1-dependencies-{{ checksum "pom.xml" }}
+      # fallback to using the latest cache if no exact match is found
+      - v1-dependencies-
+
 jobs:
   build:
     docker:
@@ -21,23 +43,12 @@ jobs:
 
       # apply the JCE unlimited strength policy to allow the PSK 256 bit key length
       # solution from http://qiita.com/yoskhdia/items/f4702a3abc4467de69b0
-      - run:
-          name: Getting JCE unlimited strength policy to allow the 256 bit keys
-          command: |
-                curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
-                unzip -o /tmp/jce_policy.zip -d /tmp
-                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
-                sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
-
+      - run: *jceinstall
+      - run: *javaversion
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
+      - restore_cache: *restorecache
       - run:
           name: Maven Install
           command:  mvn dependency:go-offline install
@@ -85,26 +96,164 @@ jobs:
 
       # apply the JCE unlimited strength policy to allow the PSK 256 bit key length
       # solution from http://qiita.com/yoskhdia/items/f4702a3abc4467de69b0
-      - run:
-          name: Getting JCE unlimited strength policy to allow the 256 bit keys
-          command: |
-            curl -L --cookie 'oraclelicense=accept-securebackup-cookie;'  http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip -o /tmp/jce_policy.zip
-            unzip -o /tmp/jce_policy.zip -d /tmp
-            sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/US_export_policy.jar $JAVA_HOME/jre/lib/security/US_export_policy.jar
-            sudo mv -f /tmp/UnlimitedJCEPolicyJDK8/local_policy.jar $JAVA_HOME/jre/lib/security/local_policy.jar
-
+      - run: *jceinstall
+      - run: *javaversion
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "pom.xml" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+      - restore_cache: *restorecache
 
       - run:
           name: Maven Install
           command:  mvn dependency:go-offline install -Pandroid
+
+  build_java9:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-9-openjdk-amd64/
+
+    steps:
+      - run:
+          name: Upgrade JDK to JDK 9
+          command: |
+            sudo apt-get install openjdk-9-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install
+
+  build_java10:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-10-openjdk-amd64/
+
+    steps:
+      - run:
+          name: Upgrade JDK to JDK 10
+          command: |
+            sudo apt install openjdk-10-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
+
+  build_java11:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-11-openjdk-amd64/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run:
+          name: Upgrade JDK to JDK 11
+          command: |
+            sudo apt install openjdk-11-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
+
+  build_java12:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-12-openjdk-amd64/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run:
+          name: Upgrade JDK to JDK 12
+          command: |
+            sudo apt install openjdk-12-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
+
+  build_java13:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/java-13-openjdk-amd64/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run:
+          name: Upgrade JDK to JDK 13
+          command: |
+            sudo apt install openjdk-13-jdk-headless
+
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -Dmaven.javadoc.skip=true
 
 workflows:
   version: 2
@@ -116,3 +265,8 @@ workflows:
     jobs:
       - build
       - build_android
+      - build_java9
+      - build_java10
+      - build_java11
+      - build_java12
+      - build_java13
