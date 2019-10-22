@@ -25,7 +25,7 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
-import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamCloseFrame;
 
 public class AsnStreamCloseFrameDataCodec extends AsnSequenceCodec<StreamCloseFrame> {
@@ -45,7 +45,7 @@ public class AsnStreamCloseFrameDataCodec extends AsnSequenceCodec<StreamCloseFr
   public StreamCloseFrame decode() {
     return StreamCloseFrame.builder()
         .streamId(getValueAt(0))
-        .errorCode(ErrorCode.of(getValueAt(1)))
+        .errorCode(ErrorCodes.of(getValueAt(1)))
         .errorMessage(getValueAt(2))
         .build();
   }
@@ -53,7 +53,7 @@ public class AsnStreamCloseFrameDataCodec extends AsnSequenceCodec<StreamCloseFr
   @Override
   public void encode(StreamCloseFrame value) {
     setValueAt(0, value.streamId());
-    setValueAt(1, value.errorCode().getCode());
+    setValueAt(1, value.errorCode().code());
     setValueAt(2, value.errorMessage());
   }
 }

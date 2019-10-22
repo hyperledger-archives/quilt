@@ -58,7 +58,7 @@ public interface StreamCloseFrame extends StreamFrame {
   /**
    * Machine-readable {@link ErrorCode} indicating why the Stream was closed.
    *
-   * @return A {@link ErrorCode}.
+   * @return An {@link ErrorCode}.
    */
   ErrorCode errorCode();
 

@@ -22,6 +22,7 @@ package org.interledger.codecs.stream.frame;
 
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.ErrorCodes;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -51,13 +52,13 @@ public class AsnConnectionCloseFrameCodecTest extends AbstractAsnFrameCodecTest<
         // empty message
         {
             ConnectionCloseFrame.builder()
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .build()
         },
         // full frame
         {
             ConnectionCloseFrame.builder()
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("present")
                 .build()
         },

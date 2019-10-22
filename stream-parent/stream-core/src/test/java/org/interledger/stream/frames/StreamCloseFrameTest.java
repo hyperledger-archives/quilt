@@ -12,7 +12,7 @@ public class StreamCloseFrameTest {
   public void emptyMessage() {
     StreamCloseFrame frame = StreamCloseFrame.builder()
         .streamId(UnsignedLong.ZERO)
-        .errorCode(ErrorCode.NoError)
+        .errorCode(ErrorCodes.NoError)
         .build();
     assertThat(frame.errorMessage()).isEmpty();
     assertThat(spy(StreamCloseFrame.class).errorMessage()).isEmpty();

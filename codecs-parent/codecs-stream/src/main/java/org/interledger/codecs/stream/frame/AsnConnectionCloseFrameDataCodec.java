@@ -25,7 +25,7 @@ import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.stream.frames.ConnectionCloseFrame;
-import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.ErrorCodes;
 
 import java.util.Optional;
 
@@ -44,14 +44,14 @@ public class AsnConnectionCloseFrameDataCodec extends AsnSequenceCodec<Connectio
   @Override
   public ConnectionCloseFrame decode() {
     return ConnectionCloseFrame.builder()
-        .errorCode(ErrorCode.of(getValueAt(0)))
+        .errorCode(ErrorCodes.of(getValueAt(0)))
         .errorMessage(Optional.<String>ofNullable(getValueAt(1)).filter($ -> !"".equals($)))
         .build();
   }
 
   @Override
   public void encode(ConnectionCloseFrame value) {
-    setValueAt(0, value.errorCode().getCode());
+    setValueAt(0, value.errorCode().code());
     setValueAt(1, value.errorMessage().orElse(""));
   }
 }

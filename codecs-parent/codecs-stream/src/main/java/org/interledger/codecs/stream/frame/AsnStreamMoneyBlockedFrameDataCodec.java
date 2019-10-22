@@ -24,6 +24,8 @@ import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUintCodecUL;
 import org.interledger.stream.frames.StreamMoneyBlockedFrame;
 
+import com.google.common.primitives.UnsignedLong;
+
 public class AsnStreamMoneyBlockedFrameDataCodec extends AsnSequenceCodec<StreamMoneyBlockedFrame> {
 
   /**
@@ -32,7 +34,7 @@ public class AsnStreamMoneyBlockedFrameDataCodec extends AsnSequenceCodec<Stream
   public AsnStreamMoneyBlockedFrameDataCodec() {
     super(
         new AsnUintCodecUL(),
-        new AsnUintCodecUL(),
+        new AsnUintCodecUL(UnsignedLong.MAX_VALUE),
         new AsnUintCodecUL()
     );
   }

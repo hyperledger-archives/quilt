@@ -20,13 +20,22 @@
 
 package org.interledger.codecs.stream.frame;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
+import org.interledger.codecs.stream.StreamCodecContextFactory;
+import org.interledger.stream.frames.StreamFrameType;
+import org.interledger.stream.frames.StreamMoneyBlockedFrame;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
 
 import com.google.common.primitives.UnsignedLong;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -169,6 +178,88 @@ public class AsnStreamMoneyMaxFrameCodecTest extends AbstractAsnFrameCodecTest<S
         },
 
     });
+  }
+
+  @Test
+  public void convertMaxAmountThatIsTooLargeToDefault() throws IOException {
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    // StreamFrametype
+    byteArrayOutputStream.write(StreamFrameType.StreamMoneyMax.code());
+
+    // numSequence bytes for the rest per OER
+    byteArrayOutputStream.write(14);
+
+    // streamId
+    byteArrayOutputStream.write(1);
+    byteArrayOutputStream.write(122);
+
+    // receiveMax
+    byteArrayOutputStream.write(9);  // Num bytes
+    byteArrayOutputStream.write(1);
+    byteArrayOutputStream.write(2);
+    byteArrayOutputStream.write(3);
+    byteArrayOutputStream.write(4);
+    byteArrayOutputStream.write(5);
+    byteArrayOutputStream.write(6);
+    byteArrayOutputStream.write(7);
+    byteArrayOutputStream.write(8);
+    byteArrayOutputStream.write(9);
+
+    // totalReceived
+    byteArrayOutputStream.write(1);
+    byteArrayOutputStream.write(123);
+
+    final StreamMoneyMaxFrame frame = StreamCodecContextFactory.oer().read(
+        StreamMoneyMaxFrame.class,
+        new ByteArrayInputStream(byteArrayOutputStream.toByteArray())
+    );
+
+    assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyMax);
+    assertThat(frame.streamId()).isEqualTo(UnsignedLong.valueOf(122L));
+    assertThat(frame.receiveMax()).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(frame.totalReceived()).isEqualTo(UnsignedLong.valueOf(123L));
+  }
+
+  @Test
+  public void convertMaxMoneyBlockedAmountWithMaxTooLarge() throws IOException {
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+    // StreamFrametype
+    byteArrayOutputStream.write(StreamFrameType.StreamMoneyBlocked.code());
+
+    // numSequence bytes for the rest per OER
+    byteArrayOutputStream.write(14);
+
+    // streamId
+    byteArrayOutputStream.write(1);
+    byteArrayOutputStream.write(122);
+
+    // receiveMax
+    byteArrayOutputStream.write(9);  // Num bytes
+    byteArrayOutputStream.write(1);
+    byteArrayOutputStream.write(2);
+    byteArrayOutputStream.write(3);
+    byteArrayOutputStream.write(4);
+    byteArrayOutputStream.write(5);
+    byteArrayOutputStream.write(6);
+    byteArrayOutputStream.write(7);
+    byteArrayOutputStream.write(8);
+    byteArrayOutputStream.write(9);
+
+    // totalReceived
+    byteArrayOutputStream.write(1);
+    byteArrayOutputStream.write(123);
+
+    final StreamMoneyBlockedFrame frame = StreamCodecContextFactory.oer().read(
+        StreamMoneyBlockedFrame.class,
+        new ByteArrayInputStream(byteArrayOutputStream.toByteArray())
+    );
+
+    assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamMoneyBlocked);
+    assertThat(frame.streamId()).isEqualTo(UnsignedLong.valueOf(122L));
+    assertThat(frame.sendMax()).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(frame.totalSent()).isEqualTo(UnsignedLong.valueOf(123L));
   }
 
 }

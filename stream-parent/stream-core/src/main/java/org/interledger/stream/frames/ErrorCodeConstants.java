@@ -2,6 +2,7 @@ package org.interledger.stream.frames;
 
 public interface ErrorCodeConstants {
 
+  short UNSUPPORTED_ERROR = (short) 0x0;
   short NO_ERROR = (short) 0x01;
   short INTERNAL_ERROR = (short) 0x02;
   short ENDPOINT_BUSY = (short) 0x03;
@@ -11,5 +12,4 @@ public interface ErrorCodeConstants {
   short FRAME_FORMAT_ERROR = (short) 0x07;
   short PROTOCOL_VIOLATION = (short) 0x08;
   short APPLICATION_ERROR = (short) 0x09;
-
 }

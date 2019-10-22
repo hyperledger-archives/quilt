@@ -109,7 +109,7 @@ public class StreamFrameTypeTest {
   public void connectionCloseFrame() {
     ConnectionCloseFrame frame = ConnectionCloseFrame.builder()
         .errorMessage("too many cooks!")
-        .errorCode(ErrorCode.ApplicationError)
+        .errorCode(ErrorCodes.ApplicationError)
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
     // make sure interface default method is exercised
@@ -174,7 +174,7 @@ public class StreamFrameTypeTest {
     StreamCloseFrame frame = StreamCloseFrame.builder()
         .streamId(UnsignedLong.ZERO)
         .errorMessage("i'm all out of love")
-        .errorCode(ErrorCode.ApplicationError)
+        .errorCode(ErrorCodes.ApplicationError)
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.StreamClose);
     // make sure interface default method is exercised

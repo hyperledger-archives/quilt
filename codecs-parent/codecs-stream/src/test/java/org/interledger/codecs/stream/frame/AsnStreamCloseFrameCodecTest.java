@@ -21,6 +21,7 @@
 package org.interledger.codecs.stream.frame;
 
 import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamCloseFrame;
 
 import com.google.common.primitives.UnsignedLong;
@@ -52,7 +53,7 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.ZERO)
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("the error")
                 .build()
         },
@@ -60,7 +61,7 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.ONE)
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("the error")
                 .build()
         },
@@ -68,7 +69,7 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.valueOf(10L))
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("the error")
                 .build()
         },
@@ -76,7 +77,7 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.MAX_VALUE.minus(UnsignedLong.ONE))
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("the error")
                 .build()
         },
@@ -84,7 +85,7 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.MAX_VALUE)
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("the error")
                 .build()
         },
@@ -92,14 +93,14 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.valueOf(10L))
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .build()
         },
         // longErrorMessage
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.ZERO)
-                .errorCode(ErrorCode.NoError)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.NoError).build())
                 .errorMessage("the error the error the error the error the error the error the error the error the "
                     + "error the error the error the error the error the error the error the error the error the error "
                     + "the error the error the error the error the error the error the error the error the error the "
@@ -112,7 +113,7 @@ public class AsnStreamCloseFrameCodecTest extends AbstractAsnFrameCodecTest<Stre
         {
             StreamCloseFrame.builder()
                 .streamId(UnsignedLong.ZERO)
-                .errorCode(ErrorCode.ProtocolViolation)
+                .errorCode(ErrorCode.builder().from(ErrorCodes.ProtocolViolation).build())
                 .errorMessage("the error")
                 .build()
         },
