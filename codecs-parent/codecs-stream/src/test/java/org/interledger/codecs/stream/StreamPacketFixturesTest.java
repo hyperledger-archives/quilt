@@ -1,4 +1,4 @@
-package org.interledger.codecs.stream.frame;
+package org.interledger.codecs.stream;
 
 /*-
  * ========================LICENSE_START=================================
@@ -22,7 +22,6 @@ package org.interledger.codecs.stream.frame;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.codecs.stream.frame.helpers.StreamFrameFixture;
 import org.interledger.codecs.stream.frame.helpers.StreamTestFixture;
 import org.interledger.core.InterledgerAddress;

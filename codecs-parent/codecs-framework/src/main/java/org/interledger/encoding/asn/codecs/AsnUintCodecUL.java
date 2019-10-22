@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.Base64;
 import java.util.Optional;
 
 /**
@@ -68,7 +69,10 @@ public class AsnUintCodecUL extends AsnOctetStringBasedObjectCodec<UnsignedLong>
       return UnsignedLong.valueOf(new BigInteger(1, getBytes()));
     } catch (Exception e) {
       if (defaultValue.isPresent()) {
-        logger.warn("Variable Unsigned Integer was too big for VarUInt. Returning UnsignedLong.Max");
+        logger.warn(
+            "Variable Unsigned Integer was too big for VarUInt: {}. Returning UnsignedLong.Max",
+            Base64.getEncoder().encodeToString(getBytes())
+        );
         return defaultValue.get();
       } else {
         throw e;
