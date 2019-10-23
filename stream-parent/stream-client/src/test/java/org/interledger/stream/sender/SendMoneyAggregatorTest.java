@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
@@ -17,7 +18,6 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.SharedSecret;
-import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;
@@ -326,11 +326,9 @@ public class SendMoneyAggregatorTest {
 
   @Test
   public void breakLoopToPreventOversend() throws Exception {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-
     PaymentTracker tracker = mock(PaymentTracker.class);
     PrepareAmounts prepare = PrepareAmounts.builder()
-        .amountToSend(UnsignedLong.valueOf(10l))
+        .amountToSend(UnsignedLong.valueOf(10L))
         .minimumAmountToAccept(UnsignedLong.ZERO)
         .build();
     when(tracker.getSendPacketAmounts(any(), any(), any())).thenReturn(prepare);
@@ -353,6 +351,9 @@ public class SendMoneyAggregatorTest {
         .denomination(Denominations.XRP)
         .paymentTracker(tracker)
         .build();
+
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
         streamEncryptionServiceMock, request);

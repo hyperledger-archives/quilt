@@ -5,6 +5,7 @@ import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDI
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
+import org.interledger.core.DateUtils;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
@@ -16,7 +17,6 @@ import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
-import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.stream.Denomination;

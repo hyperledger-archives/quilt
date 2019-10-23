@@ -48,6 +48,9 @@ public class BtpRuntimeException extends RuntimeException {
   /**
    * Constructs a new runtime exception with the given code and detail message.  The cause is not initialized, and may
    * subsequently be initialized by a call to {@link #initCause}.
+   *
+   * @param code A {@link BtpErrorCode} for creating the instance of the exception.
+   * @param message An error {@code String} message.
    */
   public BtpRuntimeException(BtpErrorCode code, String message) {
     super(message);
@@ -61,8 +64,9 @@ public class BtpRuntimeException extends RuntimeException {
    * <p>Note that the detail message associated with {@code cause} is <i>not</i> automatically
    * incorporated in this runtime exception's detail message.
    *
+   * @param code A {@link BtpErrorCode} value to create the exception.
    * @param message the detail message (which is saved for later retrieval by the {@link #getMessage()} method).
-   * @param cause   the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A <tt>null</tt>
+   * @param cause   the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A {@code null}
    *                value is permitted, and indicates that the cause is nonexistent or unknown.)
    */
   public BtpRuntimeException(BtpErrorCode code, String message, Throwable cause) {
@@ -73,12 +77,12 @@ public class BtpRuntimeException extends RuntimeException {
 
   /**
    * Constructs a new runtime exception with the specified cause and with {@code F00 Not Accepted Error} as its error
-   * code and a detail message of <tt>(cause==null ? null : cause.toString())</tt> (which typically contains the class
+   * code and a detail message of {@code (cause==null ? null : cause.toString())} (which typically contains the class
    * and detail message of
-   * <tt>cause</tt>).  This constructor is useful for runtime exceptions that are little more than
+   * {@code cause}).  This constructor is useful for runtime exceptions that are little more than
    * wrappers for other throwables.
    *
-   * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method). (A <tt>null</tt>
+   * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method). (A {@code null}
    *              value is permitted, and indicates that the cause is nonexistent or unknown.)
    */
   public BtpRuntimeException(Throwable cause) {
@@ -98,6 +102,8 @@ public class BtpRuntimeException extends RuntimeException {
   /**
    * Build an error message from the given exception.
    *
+   * @param requestId A {@code long} request ID
+   *
    * @return a BTP Error message
    */
   public BtpError toBtpError(long requestId) {
@@ -106,6 +112,9 @@ public class BtpRuntimeException extends RuntimeException {
 
   /**
    * Build an error message from the given exception.
+   *
+   * @param requestId A {@code long} request ID
+   * @param subProtocols An instance of {@link BtpSubProtocols}.
    *
    * @return a BTP Error message
    */

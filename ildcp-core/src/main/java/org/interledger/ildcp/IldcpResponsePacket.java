@@ -46,7 +46,7 @@ public interface IldcpResponsePacket extends InterledgerFulfillPacket {
   }
 
   /**
-   * The {@link IldcpResponse} encoded into the <tt>data</tt> field of this packet.
+   * The {@link IldcpResponse} encoded into the {@code data} field of this packet.
    *
    * @return The {@link IldcpResponse}.
    */

@@ -38,16 +38,17 @@ public interface BtpSessionCredentials {
   }
 
   /**
-   * <p>The `auth_username` for a BTP client. Enables multiple accounts over a single BTP WebSocket connection.</p>
+   * <p>The {@code auth_username} for a BTP client. Enables multiple accounts over a single
+   * BTP WebSocket connection.</p>
    *
-   * @return
+   * @return An {@code Optional<String>} type containing the {@code auth_username}.
    */
   Optional<String> getAuthUsername();
 
   /**
-   * The <tt>auth_token</tt> for a BTP client, as specified in IL-RFC-23.
+   * The {@code auth_token} for a BTP client, as specified in IL-RFC-23.
    *
-   * @return
+   * @return A {@code String} containing the {@code auth_token}.
    *
    * @see "https://github.com/interledger/rfcs/blob/master/0023-bilateral-transfer-protocol
    *     /0023-bilateral-transfer-protocol.md#authentication"

@@ -130,6 +130,8 @@ public class BtpSession {
 
   /**
    * Accessor for the unique identifier of this session.
+   *
+   * @return A {@code String} containing the accessor the unique identifier of this session.
    */
   public String getWebsocketSessionId() {
     return this.websocketSessionId;

@@ -390,6 +390,7 @@
             <excludes>
               <exclude>**/generated-sources/**/*</exclude>
             </excludes>
+            <source>8</source>
           </configuration>
           <executions>
             <execution>
