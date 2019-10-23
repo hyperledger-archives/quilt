@@ -56,7 +56,7 @@ public class IldcpResponsePacketHandlerTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   @Before
-  public void setup() {
+  public void setUp() {
     fulfillPacket = IldcpResponsePacket.builder().ildcpResponse(RESPONSE).data(new byte[32]).build();
 
     rejectPacket = InterledgerRejectPacket.builder().triggeredBy(InterledgerAddress.of("test.foo"))
@@ -101,6 +101,7 @@ public class IldcpResponsePacketHandlerTest {
 
       @Override
       protected void handleIldcpErrorPacket(InterledgerRejectPacket ildcpErrorPacket) {
+        fail("Cannot handle fulfill packets");
         throw new RuntimeException("Should not reject!");
       }
 
@@ -113,6 +114,7 @@ public class IldcpResponsePacketHandlerTest {
 
       @Override
       protected void handleIldcpResponsePacket(IldcpResponsePacket ildcpResponsePacket) {
+        fail("Cannot handle reject packet");
         throw new RuntimeException("Should not fulfill!");
       }
 
@@ -130,6 +132,7 @@ public class IldcpResponsePacketHandlerTest {
 
       @Override
       protected void handleIldcpResponsePacket(IldcpResponsePacket ildcpResponsePacket) {
+        fail("Cannot handle expired packet");
         throw new RuntimeException("Should not fulfill!");
       }
 
