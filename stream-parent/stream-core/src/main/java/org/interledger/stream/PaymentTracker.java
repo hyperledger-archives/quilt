@@ -73,6 +73,8 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    *
    * @param prepareAmounts A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
    *                       individual Prepare request.
+   *
+   * @return A {@code true} that indicate the authorization of the packetized payment; else {@code false}
    */
   boolean auth(PrepareAmounts prepareAmounts);
 
@@ -82,6 +84,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    *
    * @param prepareAmounts A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
    *                       individual Prepare request.
+   * @param packetRejected A {@code boolean} that contains the status of the rollback.
    */
   void rollback(PrepareAmounts prepareAmounts, boolean packetRejected);
 
@@ -90,6 +93,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    *
    * @param prepareAmounts A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
    *                       individual Prepare request.
+   * @param deliveredAmount A {@link UnsignedLong} that contains the amount delivered which needs to be committed.
    */
   void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount);
 

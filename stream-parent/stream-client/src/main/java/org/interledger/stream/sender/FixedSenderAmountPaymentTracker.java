@@ -103,8 +103,8 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   public boolean auth(final PrepareAmounts prepareAmounts) {
     Objects.requireNonNull(prepareAmounts);
 
-    if (is(sentAmount.get().plus(prepareAmounts.getAmountToSend())).greaterThan(amountToSend) ||
-        is(amountLeftToSend.get()).lessThan(prepareAmounts.getAmountToSend())) {
+    if (is(sentAmount.get().plus(prepareAmounts.getAmountToSend())).greaterThan(amountToSend)
+        || is(amountLeftToSend.get()).lessThan(prepareAmounts.getAmountToSend())) {
       return false;
     } else {
       this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));

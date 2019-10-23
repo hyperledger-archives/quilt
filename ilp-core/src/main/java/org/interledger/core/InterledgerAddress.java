@@ -32,10 +32,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * <p>Interledger Protocol (ILP) Addresses serve as both an <tt>identifier</tt> and a <tt>locator</tt> for ILP nodes
+ * <p>Interledger Protocol (ILP) Addresses serve as both an {@code identifier} and a {@code locator} for ILP nodes
  * (e.g., connectors, mini-connectors, clients, senders, receivers, listeners, etc.)</p>
  *
- * <p>Interledger is a graph where <tt>Nodes</tt> are the vertices and <tt>Accounts</tt> are the edges. A fulfilled ILP
+ * <p>Interledger is a graph where {@code Nodes} are the vertices and {@code Accounts} are the edges. A fulfilled ILP
  * packet will modify the balances for all accounts along the path between a sending Node and a receiving Node. This is
  * no different for a connector than for an SPSP receiver (both are ILP nodes and in both cases, the accounts whose
  * balances change are all accounts along the path).</p>
@@ -43,12 +43,12 @@ import java.util.stream.Collectors;
  * <p>The identifier+locator primitive defined by an InterledgerAddress also provides a way to route ILP packets to
  * their intended destination through a series of Nodes, including any number of ILP Connectors (this happens after
  * address-lookup using a higher-level protocol such as
- * <tt>SPSP</tt>).</p>
+ * {@code SPSP}).</p>
  *
- * <p>Addresses are <tt>not</tt> meant to be user-facing, but allow several ASCII
+ * <p>Addresses are {@code not} meant to be user-facing, but allow several ASCII
  * characters for easy debugging.</p>
  *
- * <p>Note that because an InterledgerAddress represents an Interledger <tt>Node</tt>, ILP payments are always
+ * <p>Note that because an InterledgerAddress represents an Interledger {@code Node}, ILP payments are always
  * addressed to a Node, and _not_ to an account. For example, there will usually be a 1:1 relationship between a
  * receiver and the receiver's account (e.g., if a node is running a local moneyd). However, even in these cases, it is
  * important to note that a payment is still addressed to the receiver Node, and not to the account. This is because
@@ -85,7 +85,7 @@ public interface InterledgerAddress {
    *
    * @return an {@link InterledgerAddress} instance.
    *
-   * @throws NullPointerException if {@code value} is <tt>null</tt>.
+   * @throws NullPointerException if {@code value} is {@code null}.
    */
   static InterledgerAddress of(final String value) {
     Objects.requireNonNull(value, "value must not be null!");
@@ -175,9 +175,9 @@ public interface InterledgerAddress {
    * returns {@link Optional#empty()}. Otherwise, this method returns a new {@link InterledgerAddress} containing the
    * characters inside of {@link #getValue()}, up-to but excluding last period.</p>
    *
-   * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
-   * address prefix containing <tt>g.example</tt>. Likewise, calling this method on an address like
-   * <tt>g.example</tt> would yield <tt>g</tt>.</p>
+   * <p>For example, calling this method on an address {@code g.example.alice} would yield a new
+   * address prefix containing {@code g.example}. Likewise, calling this method on an address like
+   * {@code g.example} would yield {@code g}.</p>
    *
    * @return An optionally present parent-prefix as an {@link InterledgerAddressPrefix}.
    */
@@ -214,7 +214,7 @@ public interface InterledgerAddress {
      *
      * @return an {@link AllocationScheme} instance.
      *
-     * @throws NullPointerException if {@code value} is <tt>null</tt>.
+     * @throws NullPointerException if {@code value} is {@code null}.
      */
     static AllocationScheme of(final String value) {
       Objects.requireNonNull(value, "value must not be null!");
@@ -333,7 +333,7 @@ public interface InterledgerAddress {
 
     /**
      * Validation of an ILP address occurs via Regex, so we don't need to aggressively compute this value. Thus, it is
-     * marked <tt>Lazy</tt> so that immutables will not generate this value unless it is called.
+     * marked {@code Lazy} so that immutables will not generate this value unless it is called.
      */
     @Override
     @Lazy

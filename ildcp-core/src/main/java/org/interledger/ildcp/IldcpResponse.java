@@ -55,7 +55,7 @@ public interface IldcpResponse {
    *
    * <p>This value is the order of magnitude used to express one full currency unit in this
    * account's base units. More formally, an integer (..., -2, -1, 0, 1, 2, ...), such that one of the account's base
-   * units equals 10^-<tt>currencyScale</tt> <tt>currencyCode</tt></p>
+   * units equals 10^-{@code currencyScale} {@code currencyCode}</p>
    *
    * <p>For example, if the integer values represented on the system are to be interpreted
    * as dollar-cents (for the purpose of settling a user's account balance, for instance), then the account's

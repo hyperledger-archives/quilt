@@ -39,15 +39,15 @@ import java.util.regex.Pattern;
  * restricted variant of ISO 8601 encoding. Once the date string is derived it is encoded as a variable-length octet
  * string.</p>
  *
- * <p>When encoding an <tt>ISO-8601</tt> timestamp, the hyphens, colons and T character MUST be
+ * <p>When encoding an {@code ISO-8601} timestamp, the hyphens, colons and T character MUST be
  * removed. The date MUST end in Z, denoting UTC time, local timezones are not allowed. Timestamps MAY use up to
  * millisecond precision. The period . MUST be used as the decimal separator. If the millisecond part is zero, it MUST
  * be left out. Trailing zeros in the millisecond part MUST be left out. Years MUST be given as four digits and MUST NOT
  * be left out. Months, day, hours, minutes and seconds MUST be given as two digits and MUST NOT be left out. Midnight
  * MUST be encoded as 000000 on the following day. Leap seconds MUST be encoded using 60 as the value for seconds.</p>
  *
- * <p>Note that BTP times are encoded slightly different from Interledger timestamps. See <tt>AsnTimestampCodec</tt> in
- * <tt>ilp-core</tt> for more details.</p>
+ * <p>Note that BTP times are encoded slightly different from Interledger timestamps. See {@code AsnTimestampCodec} in
+ * {@code ilp-core} for more details.</p>
  */
 public class AsnBtpGeneralizedTimeCodec extends AsnPrintableStringBasedObjectCodec<Instant> {
 
