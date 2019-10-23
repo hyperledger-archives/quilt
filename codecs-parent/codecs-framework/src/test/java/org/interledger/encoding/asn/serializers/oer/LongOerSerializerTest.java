@@ -22,8 +22,6 @@ package org.interledger.encoding.asn.serializers.oer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.encoding.asn.codecs.AsnUint32Codec;
-
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.junit.Test;
@@ -37,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link AsnUint32Codec}.
+ * Parameterized unit tests for encoding an instance of {@link org.interledger.encoding.asn.codecs.AsnUint32Codec}.
  */
 @RunWith(Parameterized.class)
 public class LongOerSerializerTest extends AbstractSerializerTest<Long> {
