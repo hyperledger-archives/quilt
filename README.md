@@ -212,8 +212,8 @@ $ mvn checkstyle:checkstyle
 [circle-url]: https://circleci.com/gh/hyperledger/quilt
 [codecov-image]: https://codecov.io/gh/hyperledger/quilt/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/hyperledger/quilt
-[codacy-image]: https://api.codacy.com/project/badge/Grade/02e8d6c0d9d8482e9e8d9725ceb64d9f
-[codacy-url]: https://www.codacy.com/app/sappenin/quilt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hyperledger/quilt&amp;utm_campaign=Badge_Grade
+[codacy-image]: https://api.codacy.com/project/badge/Grade/875a1b0b076a4a7399fa43d0c6f27748
+[codacy-url]: https://www.codacy.com/manual/xpring/quilt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hyperledger/quilt&amp;utm_campaign=Badge_Grade
 [twitter-image]: https://img.shields.io/twitter/follow/interledger.svg?style=social
 [twitter-url]: https://twitter.com/intent/follow?screen_name=interledger
 [github-issues-image]: https://img.shields.io/github/issues/hyperledger/quilt.svg
