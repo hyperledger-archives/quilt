@@ -26,6 +26,13 @@ _run:
       # fallback to using the latest cache if no exact match is found
       - v1-dependencies-
 
+  installjava14: &installjava14
+    name: "Download and install Java 14 from source OpenJDK"
+    command: |
+      wget https://download.java.net/java/early_access/jdk14/19/GPL/openjdk-14-ea+19_linux-x64_bin.tar.gz -O /tmp/openjdk14.tar.gz
+      tar -xvzf /tmp/openjdk14.tar.gz
+      sudo mv jdk-14/ /usr/lib/jvm/
+
 jobs:
   build:
     docker:
@@ -255,6 +262,34 @@ jobs:
           name: Maven Install
           command: mvn dependency:go-offline install
 
+  build_java14:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/jdk-14/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run: *installjava14
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install -DskipTests
+
 workflows:
   version: 2
 
@@ -263,10 +298,4 @@ workflows:
   # config in order for CircleCI to also build on every commit.
   commit:
     jobs:
-      - build
-      - build_android
-      - build_java9
-      - build_java10
-      - build_java11
-      - build_java12
-      - build_java13
+      - build_java14
