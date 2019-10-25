@@ -2,9 +2,9 @@ package org.interledger.stream;
 
 import static org.interledger.stream.FluentCompareTo.is;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
-import org.interledger.core.DateUtils;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;

@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
-import org.interledger.core.DateUtils;
 import org.interledger.stream.StreamConnection.StreamConnectionState;
 
 import com.google.common.collect.Lists;

@@ -20,12 +20,12 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
@@ -54,7 +54,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   }
 
   /**
-   * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
+   * The destination of an ILP packet for IL-DCP is {@code 0} by default, but can be adjusted.
    */
   @Override
   default UnsignedLong getAmount() {
@@ -63,7 +63,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
 
   /**
    * The execution_condition of an ILP packet for IL-DCP is always
-   * <tt>Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=</tt> in Base64 format, which is the SHA-256 hash of a 32-byte
+   * {@code Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=} in Base64 format, which is the SHA-256 hash of a 32-byte
    * array with all 0 values.
    */
   @Override
@@ -72,7 +72,7 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   }
 
   /**
-   * The destination of an ILP packet for IL-DCP is always <tt>peer.config</tt>.
+   * The destination of an ILP packet for IL-DCP is always {@code peer.config}.
    */
   @Override
   default InterledgerAddress getDestination() {

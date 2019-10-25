@@ -63,7 +63,7 @@ public interface InterledgerAddressPrefix {
    *
    * @return an {@link InterledgerAddressPrefix} instance.
    *
-   * @throws NullPointerException if {@code value} is <tt>null</tt>.
+   * @throws NullPointerException if {@code value} is {@code null}.
    */
   static InterledgerAddressPrefix of(final String value) {
     Objects.requireNonNull(value, "value must not be null!");
@@ -160,9 +160,9 @@ public interface InterledgerAddressPrefix {
    * InterledgerAddressPrefix} containing the characters inside of {@link #getValue()}, up-to but
    * excluding last period.</p>
    *
-   * <p>For example, calling this method on an address <tt>g.example.alice</tt> would yield a new
-   * address containing <tt>g.example</tt>. However, calling this method on an address like
-   * <tt>g.example</tt> would yield {@link Optional#empty()}.</p>
+   * <p>For example, calling this method on an address {@code g.example.alice} would yield a new
+   * address containing {@code g.example}. However, calling this method on an address like
+   * {@code g.example} would yield {@link Optional#empty()}.</p>
    *
    * @return An optionally present parent-prefix as an {@link InterledgerAddressPrefix}.
    */

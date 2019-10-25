@@ -20,9 +20,9 @@ package org.interledger.ildcp;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerCondition;
-import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
@@ -46,7 +46,10 @@ public interface IldcpRequest {
   }
 
   /**
-   * The destination of an ILP packet for IL-DCP is <tt>0</tt> by default, but can be adjusted.
+   * The destination of an ILP packet for IL-DCP is {@code 0} by default, but can be adjusted.
+   *
+   * @return An {@link UnsignedLong} value containing the amount in the {@link IldcpRequest}
+   *         if an amount value exists, else default at {@code UnsignedLong.ZERO}.
    */
   default UnsignedLong getAmount() {
     return UnsignedLong.ZERO;

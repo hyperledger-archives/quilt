@@ -61,7 +61,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that each scheme is validly created.
    */
   @Test
-  public void test_allocation_scheme_() {
+  public void testAllocationScheme() {
     final AllocationScheme allocationScheme = InterledgerAddress.AllocationScheme
         .builder()
         .value(this.allocationScheme)
@@ -73,7 +73,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that something like "g.foo" is invalid.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void test_allocation_scheme__with_too_much() {
+  public void testAllocationSchemeWithTooMuch() {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".foo").build();
     } catch (IllegalArgumentException e) {
@@ -87,7 +87,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that something like "g.foo." is invalid.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void test_allocation_scheme__with_too_much_plus_trailing_dot() {
+  public void testAllocationSchemeWithTooMuchPlusTrailingDot() {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".foo.").build();
     } catch (IllegalArgumentException e) {
@@ -101,7 +101,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that creating an address with something like "g." is invalid.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void test_allocation_scheme__with_trailing_dot() {
+  public void testAllocationSchemeWithTrailingDot() {
     try {
       AllocationScheme.builder().value(this.allocationScheme + ".").build();
     } catch (IllegalArgumentException e) {
@@ -112,7 +112,7 @@ public class InterledgerAddressSchemeTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_allocation_scheme_address_with_invalid_scheme() {
+  public void testAllocationSchemeAddressWithInvalidAddressScheme() {
     try {
       AllocationScheme.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {
@@ -130,7 +130,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that something like "g.foo.bob" is valid.
    */
   @Test
-  public void test_scheme_with_neighborhood_and_account_as_address() {
+  public void testSchemeWithNeighborhoodAndAccountAsAddress() {
     final InterledgerAddress address =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo.bob").build();
     assertThat(address.getValue()).isEqualTo(this.allocationScheme + ".foo.bob");
@@ -140,7 +140,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that something like "g.foo.bar" is valid.
    */
   @Test
-  public void test_scheme_with_only_address() {
+  public void testSchemeWithOnlyAddress() {
     final InterledgerAddress address =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo.bar").build();
     assertThat(address.getValue()).isEqualTo(this.allocationScheme + ".foo.bar");
@@ -150,7 +150,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that something like "g.foo" is valid.
    */
   @Test
-  public void test_scheme_with_neighborhood_as_prefix() {
+  public void testSchemeWithNeighbourhoodAsPrefix() {
     final InterledgerAddress addressPrefix =
         InterledgerAddress.builder().value(this.allocationScheme + ".foo").build();
     assertThat(addressPrefix.getValue()).isEqualTo(this.allocationScheme + ".foo");
@@ -160,7 +160,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that creating an address with something like "g." is invalid.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void test_address_with_only_scheme_and_dot() {
+  public void testAddressWithOnlySchemeAndDot() {
     try {
       InterledgerAddress.builder().value(this.allocationScheme + ".").build();
     } catch (IllegalArgumentException e) {
@@ -173,7 +173,7 @@ public class InterledgerAddressSchemeTest {
    * Assert that creating an address with something like "g" is invalid.
    */
   @Test(expected = IllegalArgumentException.class)
-  public void test_address_with_only_scheme() {
+  public void testAddressWithOnlyScheme() {
     try {
       InterledgerAddress.builder().value(this.allocationScheme).build();
     } catch (IllegalArgumentException e) {
@@ -183,7 +183,7 @@ public class InterledgerAddressSchemeTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void test_address_with_invalid_scheme() {
+  public void testAddressWithInvalidScheme() {
     try {
       InterledgerAddress.builder().value(this.allocationScheme + "1.foo").build();
     } catch (IllegalArgumentException e) {

@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * <p>The wire format is four digits for the year, two digits for the month, two digits for the day, two digits for the
  * hour, two digits for the minutes, two digits for the seconds and three digits for the milliseconds.</p>
  *
- * <p>I.e. the wire format is: <tt>YYYYMMDDHHmmSSfff</tt></p>
+ * <p>I.e. the wire format is: {@code YYYYMMDDHHmmSSfff}</p>
  *
  * <p>All date-time values MUST be expressed in UTC time.</p>
  */

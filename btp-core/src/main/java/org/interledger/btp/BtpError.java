@@ -20,8 +20,8 @@ package org.interledger.btp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.Immutable;
 import org.interledger.core.DateUtils;
+import org.interledger.core.Immutable;
 
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
@@ -37,18 +37,24 @@ public interface BtpError extends BtpResponsePacket {
 
   /**
    * A standardized {@link BtpErrorCode} for this error.
+   *
+   * @return A standardized {@link BtpErrorCode} for this error.
    */
   BtpErrorCode getErrorCode();
 
   /**
-   * The time of emission.
+   * An {@link Instant} when the error was triggered.
+   *
+   * @return A {@link Instant} time of emission of the error.
    */
   default Instant getTriggeredAt() {
     return DateUtils.now();
   }
 
   /**
-   * Additional data for this BTP Error.
+   * A {@code byte[]} containing the error data.
+   *
+   * @return Additional data for this BTP Error as a {@code byte[]}
    */
   default byte[] getErrorData() {
     return new byte[0];

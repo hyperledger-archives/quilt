@@ -40,11 +40,15 @@ public interface BtpSubProtocol {
 
   /**
    * The name of this side protocol. ILP-level information must be named toBtpSubprotocol.
+   *
+   * @return A {@code String} containing the protocol name.
    */
   String getProtocolName();
 
   /**
    * The content-type of this sub-protocol.
+   *
+   * @return A default {@link ContentType} containing the {@code MIME_APPLICATION_OCTET_STREAM} value.
    */
   default ContentType getContentType() {
     return ContentType.MIME_APPLICATION_OCTET_STREAM;
@@ -52,6 +56,8 @@ public interface BtpSubProtocol {
 
   /**
    * The actual protocol data for this sub-protocol.
+   *
+   * @return A default response for data in case there is no data {@code byte[]}.
    */
   default byte[] getData() {
     return new byte[0];

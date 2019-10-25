@@ -41,7 +41,7 @@ public class ErrorCodesTest {
             .map(ErrorCode.builder()::from)
             .map(ErrorCodeBuilder::build)
             .collect(Collectors.toList())
-        );
+      );
   }
 
   @Test
