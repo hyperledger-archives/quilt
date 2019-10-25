@@ -9,9 +9,9 @@ package org.interledger.core;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -271,8 +271,7 @@ public class InterledgerAddressPrefixTest {
   }
 
   /**
-   * Validates adding a destination address (as an InterledgerAddressPrefix) to a destination
-   * address.
+   * Validates adding a destination address (as an InterledgerAddressPrefix) to a destination address.
    */
   @Test
   public void testDestinationAddressWithDestinationAddress() {
@@ -355,6 +354,7 @@ public class InterledgerAddressPrefixTest {
     assertThat(InterledgerAddressPrefix.of("test1.1.1").hasPrefix()).isTrue();
     assertThat(InterledgerAddressPrefix.of("test2.1.1").hasPrefix()).isTrue();
     assertThat(InterledgerAddressPrefix.of("test3.1.1").hasPrefix()).isTrue();
+    assertThat(InterledgerAddressPrefix.of("local.1.1").hasPrefix()).isTrue();
   }
 
   @Test
@@ -392,114 +392,92 @@ public class InterledgerAddressPrefixTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_02() {
-    assertValidationErrorThenThrow(".self",
-        INVALID_SCHEME_PREFIX);
+    assertValidationErrorThenThrow(".self", INVALID_SCHEME_PREFIX);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_04() {
-    assertValidationErrorThenThrow(".foo",
-        INVALID_SCHEME_PREFIX);
+    assertValidationErrorThenThrow(".foo", INVALID_SCHEME_PREFIX);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_05() {
-    assertValidationErrorThenThrow("gg",
-        INVALID_SCHEME_PREFIX,
-        "gg");
+    assertValidationErrorThenThrow("gg", INVALID_SCHEME_PREFIX, "gg");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_06() {
-    assertValidationErrorThenThrow(" g",
-        INVALID_SCHEME_PREFIX,
-        " g");
+    assertValidationErrorThenThrow(" g", INVALID_SCHEME_PREFIX, " g");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_07() {
-    assertValidationErrorThenThrow("g ",
-        INVALID_SCHEME_PREFIX,
-        "g ");
+    assertValidationErrorThenThrow("g ", INVALID_SCHEME_PREFIX, "g ");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSchemePrefix_08() {
-    assertValidationErrorThenThrow("@@@",
-        INVALID_SCHEME_PREFIX,
-        "@@@");
+    assertValidationErrorThenThrow("@@@", INVALID_SCHEME_PREFIX, "@@@");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_01() {
-    assertValidationErrorThenThrow("g.@@@",
-        INVALID_SEGMENT, "@@@");
+    assertValidationErrorThenThrow("g.@@@", INVALID_SEGMENT, "@@@");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_02() {
-    assertValidationErrorThenThrow("g. ",
-        INVALID_SEGMENT, " ");
+    assertValidationErrorThenThrow("g. ", INVALID_SEGMENT, " ");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_03() {
-    assertValidationErrorThenThrow("g.é",
-        INVALID_SEGMENT, "é");
+    assertValidationErrorThenThrow("g.é", INVALID_SEGMENT, "é");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_04() {
-    assertValidationErrorThenThrow("g.", ILLEGAL_ENDING,
-        "");
+    assertValidationErrorThenThrow("g.", ILLEGAL_ENDING, "");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_04b() {
-    assertValidationErrorThenThrow("g.foo.",
-        ILLEGAL_ENDING, "");
+    assertValidationErrorThenThrow("g.foo.", ILLEGAL_ENDING, "");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_05() {
-    assertValidationErrorThenThrow("g..bar",
-        INVALID_SEGMENT, "");
+    assertValidationErrorThenThrow("g..bar", INVALID_SEGMENT, "");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_06() {
-    assertValidationErrorThenThrow("g.foo.@.baz",
-        INVALID_SEGMENT, "@");
+    assertValidationErrorThenThrow("g.foo.@.baz", INVALID_SEGMENT, "@");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_07() {
-    assertValidationErrorThenThrow("g.foo.bar.a@1",
-        INVALID_SEGMENT, "a@1");
+    assertValidationErrorThenThrow("g.foo.bar.a@1", INVALID_SEGMENT, "a@1");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_08() {
-    assertValidationErrorThenThrow("g.foo.bar.baz ",
-        INVALID_SEGMENT, "baz ");
+    assertValidationErrorThenThrow("g.foo.bar.baz ", INVALID_SEGMENT, "baz ");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithInvalidSegment_09() {
-    assertValidationErrorThenThrow("g.foo.bar.baz\r\n",
-        INVALID_SEGMENT, "baz\r\n");
+    assertValidationErrorThenThrow("g.foo.bar.baz\r\n", INVALID_SEGMENT, "baz\r\n");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithSegmentsUnderflow() {
-    assertValidationErrorThenThrow("",
-        INVALID_SCHEME_PREFIX);
+    assertValidationErrorThenThrow("", INVALID_SCHEME_PREFIX);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testValidateWithLengthOverflow() {
-    assertValidationErrorThenThrow(TOO_LONG,
-        ADDRESS_OVERFLOW);
+    assertValidationErrorThenThrow(TOO_LONG, ADDRESS_OVERFLOW);
   }
 
   private void assertValidationErrorThenThrow(final String actualAddressString,
@@ -546,8 +524,7 @@ public class InterledgerAddressPrefixTest {
 
   @Test
   public void testFromAddressWithAddress() {
-    final InterledgerAddressPrefix prefix = InterledgerAddressPrefix
-        .from(InterledgerAddress.of(G_FOO));
+    final InterledgerAddressPrefix prefix = InterledgerAddressPrefix.from(InterledgerAddress.of(G_FOO));
     assertThat(prefix.getValue()).isEqualTo(G_FOO);
   }
 
@@ -567,8 +544,7 @@ public class InterledgerAddressPrefixTest {
 
   @Test
   public void testFromAddressWithAllocationScheme() {
-    final InterledgerAddressPrefix allocationScheme = InterledgerAddressPrefix
-        .from(AllocationScheme.GLOBAL);
+    final InterledgerAddressPrefix allocationScheme = InterledgerAddressPrefix.from(AllocationScheme.GLOBAL);
     assertThat(allocationScheme).isEqualTo(InterledgerAddressPrefix.GLOBAL);
   }
 
@@ -583,5 +559,6 @@ public class InterledgerAddressPrefixTest {
     assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST1)).isEqualTo(InterledgerAddressPrefix.TEST1);
     assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST2)).isEqualTo(InterledgerAddressPrefix.TEST2);
     assertThat(InterledgerAddressPrefix.from(AllocationScheme.TEST3)).isEqualTo(InterledgerAddressPrefix.TEST3);
+    assertThat(InterledgerAddressPrefix.from(AllocationScheme.LOCAL)).isEqualTo(InterledgerAddressPrefix.LOCAL);
   }
 }

@@ -54,6 +54,7 @@ public interface InterledgerAddressPrefix {
   InterledgerAddressPrefix TEST1 = InterledgerAddressPrefix.from(AllocationScheme.TEST1);
   InterledgerAddressPrefix TEST2 = InterledgerAddressPrefix.from(AllocationScheme.TEST2);
   InterledgerAddressPrefix TEST3 = InterledgerAddressPrefix.from(AllocationScheme.TEST3);
+  InterledgerAddressPrefix LOCAL = InterledgerAddressPrefix.from(AllocationScheme.LOCAL);
 
   /**
    * Constructor to allow quick construction from a {@link String}.

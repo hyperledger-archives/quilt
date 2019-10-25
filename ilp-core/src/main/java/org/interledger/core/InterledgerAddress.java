@@ -205,6 +205,7 @@ public interface InterledgerAddress {
     AllocationScheme TEST1 = AllocationScheme.of("test1");
     AllocationScheme TEST2 = AllocationScheme.of("test2");
     AllocationScheme TEST3 = AllocationScheme.of("test3");
+    AllocationScheme LOCAL = AllocationScheme.of("local");
 
     /**
      * Constructor to allow quick construction from a {@link String} representation of an ILP address allocation
@@ -263,7 +264,7 @@ public interface InterledgerAddress {
         defaults = @Value.Immutable(intern = true))
     abstract class AbstractAllocationScheme implements AllocationScheme {
 
-      private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)$";
+      private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?|local)$";
       private static final Pattern SCHEME_PREFIX_ONLY_PATTERN = Pattern.compile(SCHEME_REGEX);
 
       /**
@@ -315,7 +316,7 @@ public interface InterledgerAddress {
 
     static final String SEPARATOR_REGEX = "[.]";
 
-    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?)";
+    private static final String SCHEME_REGEX = "(g|private|example|peer|self|test[1-3]?|local)";
     static final Pattern SCHEME_PATTERN = Pattern.compile(SCHEME_REGEX);
 
     private static final String VALID_ADDRESS_REGEX
