@@ -16,6 +16,17 @@ public class StreamDataFrameTest {
         .build();
     assertThat(frame.data()).isEqualTo(new byte[0]);
     // make sure interface default method is exercised
-    assertThat(spy(StreamDataFrame.class).data()).isEqualTo(new byte[0]);
+    final StreamDataFrame interfaceFrame = new StreamDataFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public UnsignedLong offset() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.data()).isEqualTo(new byte[0]);
   }
 }

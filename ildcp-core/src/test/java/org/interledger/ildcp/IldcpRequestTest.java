@@ -20,7 +20,14 @@ public class IldcpRequestTest {
     Thread.sleep(1);
     Instant afterPlus30 = DateUtils.now().plusSeconds(30);
     assertThat(request.getAmount()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(spy(IldcpRequest.class).getAmount()).isEqualTo(UnsignedLong.ZERO);
+
+    final IldcpRequest interfaceRequest = new IldcpRequest(){
+      @Override
+      public Instant getExpiresAt() {
+        return null;
+      }
+    };
+    assertThat(interfaceRequest.getAmount()).isEqualTo(UnsignedLong.ZERO);
     assertThat(request.getExpiresAt()).isAfter(nowPlus30);
     assertThat(request.getExpiresAt()).isBefore(afterPlus30);
   }

@@ -15,6 +15,18 @@ public class StreamCloseFrameTest {
         .errorCode(ErrorCodes.NoError)
         .build();
     assertThat(frame.errorMessage()).isEmpty();
-    assertThat(spy(StreamCloseFrame.class).errorMessage()).isEmpty();
+
+    final StreamCloseFrame interfaceFrame = new StreamCloseFrame() {
+      @Override
+      public UnsignedLong streamId() {
+        return null;
+      }
+
+      @Override
+      public ErrorCode errorCode() {
+        return null;
+      }
+    };
+    assertThat(interfaceFrame.errorMessage()).isEmpty();
   }
 }
