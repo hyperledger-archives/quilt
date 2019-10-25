@@ -160,12 +160,6 @@ public class InterledgerAddressTest {
     assertThat(InterledgerAddress.of("g.foo.bob").getValue()).isEqualTo("g.foo.bob");
   }
 
-  @Test
-  public void testAllocationScheme() {
-    assertThat(InterledgerAddress.of("g.foo.bob").getAllocationScheme())
-        .isEqualTo(AllocationScheme.builder().value("g").build());
-  }
-
   @Test(expected = NullPointerException.class)
   public void testOfWithNull() {
     try {
@@ -354,68 +348,6 @@ public class InterledgerAddressTest {
   }
 
   @Test
-  public void testInterledgerAddressCreationWithCorrectAllocationScheme() {
-    InterledgerAddress globalAddress = AllocationScheme.GLOBAL.with("bob.baz");
-    InterledgerAddress exampleAddress = AllocationScheme.EXAMPLE.with("bob.baz");
-    InterledgerAddress peerAddress = AllocationScheme.PEER.with("bob.baz");
-    InterledgerAddress privateAddress = AllocationScheme.PRIVATE.with("bob.baz");
-    InterledgerAddress selfAddress = AllocationScheme.SELF.with("bob.baz");
-    InterledgerAddress testAddress = AllocationScheme.TEST.with("bob.baz");
-    InterledgerAddress test1Address = AllocationScheme.TEST1.with("bob.baz");
-    InterledgerAddress test2Address = AllocationScheme.TEST2.with("bob.baz");
-    InterledgerAddress test3Address = AllocationScheme.TEST3.with("bob.baz");
-
-    assertThat(globalAddress.getAllocationScheme()).isEqualTo(AllocationScheme.GLOBAL);
-    assertThat(globalAddress.getValue()).isEqualTo("g.bob.baz");
-
-    assertThat(exampleAddress.getAllocationScheme()).isEqualTo(AllocationScheme.EXAMPLE);
-    assertThat(exampleAddress.getValue()).isEqualTo("example.bob.baz");
-
-    assertThat(peerAddress.getAllocationScheme()).isEqualTo(AllocationScheme.PEER);
-    assertThat(peerAddress.getValue()).isEqualTo("peer.bob.baz");
-
-    assertThat(privateAddress.getAllocationScheme()).isEqualTo(AllocationScheme.PRIVATE);
-    assertThat(privateAddress.getValue()).isEqualTo("private.bob.baz");
-
-    assertThat(selfAddress.getAllocationScheme()).isEqualTo(AllocationScheme.SELF);
-    assertThat(selfAddress.getValue()).isEqualTo("self.bob.baz");
-
-    assertThat(testAddress.getAllocationScheme()).isEqualTo(AllocationScheme.TEST);
-    assertThat(testAddress.getValue()).isEqualTo("test.bob.baz");
-
-    assertThat(test1Address.getAllocationScheme()).isEqualTo(AllocationScheme.TEST1);
-    assertThat(test1Address.getValue()).isEqualTo("test1.bob.baz");
-
-    assertThat(test2Address.getAllocationScheme()).isEqualTo(AllocationScheme.TEST2);
-    assertThat(test2Address.getValue()).isEqualTo("test2.bob.baz");
-
-    assertThat(test3Address.getAllocationScheme()).isEqualTo(AllocationScheme.TEST3);
-    assertThat(test3Address.getValue()).isEqualTo("test3.bob.baz");
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testInterledgerAddressCreationWithNull() {
-    try {
-      AllocationScheme.GLOBAL.with(null);
-      fail("should have failed and the error been caught");
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage()).isEqualTo("value must not be null!");
-      throw e;
-    }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testInterledgerAddressCreationWithEmpty() {
-    try {
-      AllocationScheme.GLOBAL.with("");
-      fail("should have failed and the error been caught");
-    } catch (IllegalArgumentException e) {
-      assertThat(e.getMessage()).isEqualTo(ILLEGAL_ENDING.getMessageFormat());
-      throw e;
-    }
-  }
-
-  @Test
   public void testGetPrefixFromShortPrefix() {
     assertThat(InterledgerAddress.of("g.1").getPrefix().getValue().isEmpty()).isFalse();
     assertThat(InterledgerAddress.of("g.1").getPrefix()).isEqualTo(InterledgerAddressPrefix.of("g"));
@@ -585,6 +517,4 @@ public class InterledgerAddressTest {
       throw e;
     }
   }
-
-
 }

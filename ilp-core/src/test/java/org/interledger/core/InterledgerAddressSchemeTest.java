@@ -53,7 +53,7 @@ public class InterledgerAddressSchemeTest {
   @Parameters(name = "{index}: allocationScheme({0})")
   public static Iterable<Object[]> schemes() {
     return Arrays.asList(new Object[][] {
-        {"g"}, {"private"}, {"example"}, {"peer"}, {"self"}, {"test1"}, {"test2"}, {"test3"}
+        {"g"}, {"private"}, {"example"}, {"peer"}, {"self"}, {"test1"}, {"test2"}, {"test3"}, {"local"}
     });
   }
 
