@@ -6,7 +6,7 @@
   <groupId>org.interledger</groupId>
   <artifactId>quilt-parent</artifactId>
   <packaging>pom</packaging>
-  <version>HEAD-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <name>Hyperledger Quilt Parent</name>
   <description>Parent project for Hyperledger Quilt modules.</description>
