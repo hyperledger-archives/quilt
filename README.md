@@ -210,6 +210,7 @@ The project uses checkstyle to keep code style consistent. All Checkstyle checks
 $ mvn checkstyle:checkstyle
 ```
 
+
 [forum-url]: https://forum.interledger.org/tags/java
 [forum-image]: https://img.shields.io/badge/Interledger%20Forum-java-blue.svg
 [circle-image]: https://circleci.com/gh/hyperledger/quilt.svg?style=shield
