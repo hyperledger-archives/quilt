@@ -148,7 +148,7 @@ public class AsnBtpInstantBadValuesDecodingTest {
     final byte[] lengthByte = new byte[1];
     final byte[] stringBytes = value.getBytes(StandardCharsets.US_ASCII);
     final byte[] lengthPrefixed = new byte[stringBytes.length + 1];
-    lengthByte[0] = Byte.valueOf(stringBytes.length + "");
+    lengthByte[0] = Byte.parseByte(stringBytes.length + "");
     System.arraycopy(lengthByte, 0, lengthPrefixed, 0, lengthByte.length);
     System.arraycopy(stringBytes, 0, lengthPrefixed, lengthByte.length, stringBytes.length);
     return lengthPrefixed;
