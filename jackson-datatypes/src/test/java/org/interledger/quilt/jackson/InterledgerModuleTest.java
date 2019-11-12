@@ -23,6 +23,7 @@ package org.interledger.quilt.jackson;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
@@ -124,13 +125,16 @@ public class InterledgerModuleTest {
 
     final InterledgerAddress expectedAddress = InterledgerAddress.of("test1.ledger.foo");
 
+    final InterledgerAddressPrefix expectedPrefix = InterledgerAddressPrefix.of("test1.ledger");
+
     final InterledgerContainer expectedContainer
-        = new InterledgerContainer(expectedAddress, condition);
+        = new InterledgerContainer(expectedAddress, expectedPrefix, condition);
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json).isEqualTo(
-        String.format("{\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\"}",
+        String.format("{\"ledger_address\":\"%s\",\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\"}",
             expectedContainer.getInterledgerAddress().getValue(),
+            expectedContainer.getInterledgerAddressPrefix().getValue(),
             expectedEncodedValue)
     );
 
@@ -138,6 +142,7 @@ public class InterledgerModuleTest {
         .readValue(json, InterledgerContainer.class);
 
     assertThat(actualAddressContainer).isEqualTo(expectedContainer);
+    assertThat(actualAddressContainer.getInterledgerAddressPrefix()).isEqualTo(expectedPrefix);
     assertThat(actualAddressContainer.getCondition()).isEqualTo(condition);
   }
 
@@ -166,23 +171,32 @@ public class InterledgerModuleTest {
 
   private static class InterledgerContainer {
 
-    @JsonProperty("ledger_prefix")
+    @JsonProperty("ledger_address")
     private final InterledgerAddress interledgerAddress;
+
+    @JsonProperty("ledger_prefix")
+    private final InterledgerAddressPrefix interledgerAddressPrefix;
 
     @JsonProperty("execution_condition")
     private final InterledgerCondition condition;
 
     @JsonCreator
     public InterledgerContainer(
-        @JsonProperty("ledger_prefix") final InterledgerAddress interledgerAddress,
+        @JsonProperty("ledger_address") final InterledgerAddress interledgerAddress,
+        @JsonProperty("ledger_prefix") final InterledgerAddressPrefix interledgerAddressPrefix,
         @JsonProperty("execution_condition") final InterledgerCondition condition
     ) {
       this.interledgerAddress = Objects.requireNonNull(interledgerAddress);
+      this.interledgerAddressPrefix = Objects.requireNonNull(interledgerAddressPrefix);
       this.condition = Objects.requireNonNull(condition);
     }
 
     public InterledgerAddress getInterledgerAddress() {
       return interledgerAddress;
+    }
+
+    public InterledgerAddressPrefix getInterledgerAddressPrefix() {
+      return interledgerAddressPrefix;
     }
 
     public InterledgerCondition getCondition() {
@@ -203,6 +217,9 @@ public class InterledgerModuleTest {
       if (!interledgerAddress.equals(that.interledgerAddress)) {
         return false;
       }
+      if (!interledgerAddressPrefix.equals(that.interledgerAddressPrefix)) {
+        return false;
+      }
       return condition.equals(that.condition);
     }
 
@@ -217,6 +234,7 @@ public class InterledgerModuleTest {
     public String toString() {
       return "InterledgerContainer{"
           + "interledgerAddress=" + interledgerAddress
+          + ", interledgerAddressPrefix=" + interledgerAddressPrefix
           + ", condition=" + condition
           + '}';
     }

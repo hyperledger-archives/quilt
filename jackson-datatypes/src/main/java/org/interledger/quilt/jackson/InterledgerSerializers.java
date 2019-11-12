@@ -21,10 +21,12 @@ package org.interledger.quilt.jackson;
  */
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
 import org.interledger.quilt.jackson.address.InterledgerAddressSerializer;
+import org.interledger.quilt.jackson.addressprefix.InterledgerAddressPrefixSerializer;
 import org.interledger.quilt.jackson.conditions.ConditionSerializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.quilt.jackson.conditions.FulfillmentSerializer;
@@ -56,6 +58,9 @@ public class InterledgerSerializers extends Serializers.Base {
     final Class<?> raw = type.getRawClass();
     if (InterledgerAddress.class.isAssignableFrom(raw)) {
       return InterledgerAddressSerializer.INSTANCE;
+    }
+    if (InterledgerAddressPrefix.class.isAssignableFrom(raw)) {
+      return new InterledgerAddressPrefixSerializer();
     }
     if (InterledgerCondition.class.isAssignableFrom(raw)) {
       return new ConditionSerializer(cryptoConditionEncoding);
