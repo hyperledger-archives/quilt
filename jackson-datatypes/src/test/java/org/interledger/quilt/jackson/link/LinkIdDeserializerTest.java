@@ -13,6 +13,7 @@ import java.util.UUID;
 /**
  * Unit tests for {@link LinkIdDeserializer}.
  */
+@SuppressWarnings({"checkstyle:AbbreviationAsWordInName", "checkstyle:MemberName"})
 public class LinkIdDeserializerTest {
 
   private LinkId LINK_ID = LinkId.of(UUID.randomUUID().toString());

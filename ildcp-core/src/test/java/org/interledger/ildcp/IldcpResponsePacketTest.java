@@ -21,7 +21,6 @@ package org.interledger.ildcp;
  */
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 import org.interledger.core.InterledgerAddress;
 
@@ -59,7 +58,7 @@ public class IldcpResponsePacketTest {
     IldcpResponsePacket packet = IldcpResponsePacket.builder().ildcpResponse(response).build();
     assertThat(packet.getData()).isEqualTo(new byte[0]);
 
-    final IldcpResponsePacket packetInterface = new IldcpResponsePacket(){
+    final IldcpResponsePacket packetInterface = new IldcpResponsePacket() {
       @Override
       public byte[] getData() {
         return new byte[0];

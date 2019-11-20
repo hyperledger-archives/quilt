@@ -12,6 +12,7 @@ import java.math.BigInteger;
 /**
  * Unit tests for {@link AsnUintCodecUL}.
  */
+@SuppressWarnings({"checkstyle:AbbreviationAsWordInName"})
 public class AsnUintCodecULTest {
 
   @Rule
@@ -33,12 +34,13 @@ public class AsnUintCodecULTest {
   }
 
   @Test
-  public void decodeValueTooLarge(){
+  public void decodeValueTooLarge() {
     codec = new AsnUintCodecUL(UnsignedLong.ONE);
     byte[] bytes = new BigInteger("18446744073709551616").toByteArray();
     codec.setBytes(bytes);
     assertThat(codec.decode()).isEqualTo(UnsignedLong.ONE);
   }
+
   @Test
   public void encode() {
     codec = new AsnUintCodecUL();

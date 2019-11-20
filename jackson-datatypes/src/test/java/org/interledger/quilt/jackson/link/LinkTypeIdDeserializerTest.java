@@ -13,8 +13,8 @@ import java.util.UUID;
 /**
  * Unit tests for {@link LinkTypeDeserializer}.
  */
+@SuppressWarnings({"checkstyle:AbbreviationAsWordInName", "checkstyle:MemberName"})
 public class LinkTypeIdDeserializerTest {
-
   private LinkType LINK_TYPE = LinkType.of(UUID.randomUUID().toString());
 
   private ObjectMapper objectMapper = new ObjectMapper()

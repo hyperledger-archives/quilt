@@ -3,11 +3,11 @@ package org.interledger.link;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;

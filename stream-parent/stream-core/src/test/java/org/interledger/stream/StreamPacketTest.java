@@ -1,14 +1,14 @@
 package org.interledger.stream;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.spy;
 
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.stream.frames.StreamFrame;
 
-import java.util.List;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Unit tests for {@link StreamPacket}.
