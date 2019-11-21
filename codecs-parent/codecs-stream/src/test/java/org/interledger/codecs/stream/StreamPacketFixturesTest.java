@@ -115,9 +115,6 @@ public class StreamPacketFixturesTest {
 
     StreamTestFixture fixture = this.streamTestFixture;
 
-    // Base64-encoded Bytes...
-    String wantBuffer = fixture.buffer();
-
     StreamPacket wantPacket = StreamPacket.builder()
         .sequence(UnsignedLong.valueOf(fixture.packet().sequence()))
         .interledgerPacketType(InterledgerPacketType.fromCode(fixture.packet().packetType()))
@@ -142,6 +139,9 @@ public class StreamPacketFixturesTest {
     // Serialize...
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     StreamCodecContextFactory.oer().write(wantPacket, byteArrayOutputStream);
+
+    // Base64-encoded Bytes...
+    String wantBuffer = fixture.buffer();
 
     assertThat(Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())).isEqualTo(wantBuffer);
   }

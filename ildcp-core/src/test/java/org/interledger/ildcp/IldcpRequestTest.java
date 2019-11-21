@@ -21,7 +21,7 @@ public class IldcpRequestTest {
     Instant afterPlus30 = DateUtils.now().plusSeconds(30);
     assertThat(request.getAmount()).isEqualTo(UnsignedLong.ZERO);
 
-    final IldcpRequest interfaceRequest = new IldcpRequest(){
+    final IldcpRequest interfaceRequest = new IldcpRequest() {
       @Override
       public Instant getExpiresAt() {
         return null;

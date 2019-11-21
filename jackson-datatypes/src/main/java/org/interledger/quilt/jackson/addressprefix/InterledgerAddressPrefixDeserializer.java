@@ -35,7 +35,7 @@ public class InterledgerAddressPrefixDeserializer extends StdDeserializer<Interl
   }
 
   @Override
-  public InterledgerAddressPrefix deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-    return InterledgerAddressPrefix.of(p.getText());
+  public InterledgerAddressPrefix deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
+    return InterledgerAddressPrefix.of(parser.getText());
   }
 }

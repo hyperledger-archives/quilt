@@ -1,13 +1,14 @@
 package org.interledger.link;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
-import java.util.Optional;
+
 import org.junit.Test;
+
+import java.util.Optional;
 
 /**
  * Unit tests for {@link Link}.
@@ -16,7 +17,7 @@ public class LinkTest {
 
   @Test
   public void defaults() {
-    final Link linkInterface = new Link(){
+    final Link linkInterface = new Link() {
       @Override
       public InterledgerResponsePacket sendPacket(InterledgerPreparePacket preparePacket) {
         return null;
