@@ -104,7 +104,7 @@ public class BtpSession {
         .compareAndSet(Optional.empty(), Optional.of(btpSessionCredentials)) == UNSUCCESSFUL_ASSIGNMENT
     ) {
       // If this happens, it indicates a bug.
-      new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, "BtpSessionCredentials may only be set once!");
+      throw new BtpRuntimeException(BtpErrorCode.F00_NotAcceptedError, "BtpSessionCredentials may only be set once!");
     }
   }
 

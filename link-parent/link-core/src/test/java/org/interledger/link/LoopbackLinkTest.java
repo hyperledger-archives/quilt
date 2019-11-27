@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.link.LoopbackLink.SIMULATED_REJECT_ERROR_CODE;
 import static org.junit.Assert.fail;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerConstants;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.core.DateUtils;
 
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;

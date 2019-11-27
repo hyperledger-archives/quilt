@@ -113,6 +113,6 @@ public class StreamConnectionClosedException extends Exception {
   public String toString() {
     String str = getClass().getName();
     String message = getLocalizedMessage() + " streamConnectionId=" + streamConnectionId.value();
-    return (message != null) ? (str + ": " + message) : str;
+    return str + ": " + message;
   }
 }

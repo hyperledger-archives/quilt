@@ -5,13 +5,13 @@ import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_CONDITION;
 import static org.interledger.link.PingLoopbackLink.PING_PROTOCOL_FULFILLMENT;
 import static org.junit.Assert.fail;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.DateUtils;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;

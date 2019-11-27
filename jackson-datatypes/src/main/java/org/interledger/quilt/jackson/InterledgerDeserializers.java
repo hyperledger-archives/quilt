@@ -21,10 +21,12 @@ package org.interledger.quilt.jackson;
  */
 
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
 import org.interledger.quilt.jackson.address.InterledgerAddressDeserializer;
+import org.interledger.quilt.jackson.addressprefix.InterledgerAddressPrefixDeserializer;
 import org.interledger.quilt.jackson.conditions.ConditionDeserializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.quilt.jackson.conditions.FulfillmentDeserializer;
@@ -56,6 +58,10 @@ public class InterledgerDeserializers extends Deserializers.Base {
   ) {
     if (type.hasRawClass(InterledgerAddress.class)) {
       return new InterledgerAddressDeserializer();
+    }
+
+    if (type.hasRawClass(InterledgerAddressPrefix.class)) {
+      return new InterledgerAddressPrefixDeserializer();
     }
 
     if (type.hasRawClass(InterledgerCondition.class)) {

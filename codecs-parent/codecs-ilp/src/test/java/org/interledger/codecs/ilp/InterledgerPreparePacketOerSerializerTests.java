@@ -22,11 +22,11 @@ package org.interledger.codecs.ilp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.core.DateUtils;
 import org.interledger.encoding.asn.framework.CodecContext;
 
 import com.google.common.primitives.UnsignedLong;
