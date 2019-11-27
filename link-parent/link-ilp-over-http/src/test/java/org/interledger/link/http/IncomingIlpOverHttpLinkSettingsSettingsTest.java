@@ -47,6 +47,8 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+    assertThat(incomingLinksettings.tokenAudience().isPresent()).isFalse();
+    assertThat(incomingLinksettings.tokenIssuer().isPresent()).isFalse();
   }
 
   /**
@@ -77,6 +79,8 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+    assertThat(incomingLinksettings.tokenAudience().isPresent()).isFalse();
+    assertThat(incomingLinksettings.tokenIssuer().isPresent()).isFalse();
   }
 
   @Test
