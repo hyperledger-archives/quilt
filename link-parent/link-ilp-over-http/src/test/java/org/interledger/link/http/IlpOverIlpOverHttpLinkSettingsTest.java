@@ -26,6 +26,10 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
 
     assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().authType())
         .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+    assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().tokenIssuer().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+    assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().tokenAudience().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
     assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().encryptedTokenSharedSecret())
         .isEqualTo("incoming-credential");
     assertThat(ilpOverHttpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow())
@@ -50,7 +54,7 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
    */
   @Test
   public void applyCustomSettingsWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsHeirarchical();
+    final Map<String, Object> customSettings = this.customSettingsHierarchical();
 
     final ImmutableIlpOverHttpLinkSettings.Builder builder = IlpOverHttpLinkSettings.builder();
     final ImmutableIlpOverHttpLinkSettings httpLinkSettings =
@@ -58,6 +62,10 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
 
     assertThat(httpLinkSettings.incomingHttpLinkSettings().authType())
         .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+    assertThat(httpLinkSettings.incomingHttpLinkSettings().tokenIssuer().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+    assertThat(httpLinkSettings.incomingHttpLinkSettings().tokenAudience().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
     assertThat(httpLinkSettings.incomingHttpLinkSettings().encryptedTokenSharedSecret())
         .isEqualTo("incoming-credential");
     assertThat(httpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));

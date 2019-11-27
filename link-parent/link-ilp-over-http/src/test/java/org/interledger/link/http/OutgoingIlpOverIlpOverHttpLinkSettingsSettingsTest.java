@@ -37,7 +37,7 @@ public class OutgoingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
    */
   @Test
   public void applyCustomSettingsWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsHeirarchical();
+    final Map<String, Object> customSettings = this.customSettingsHierarchical();
     final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(outgoingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);

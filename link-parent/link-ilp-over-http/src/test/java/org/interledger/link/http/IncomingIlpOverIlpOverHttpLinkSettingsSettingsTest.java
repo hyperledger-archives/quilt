@@ -27,6 +27,24 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+    assertThat(incomingLinksettings.tokenIssuer().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+    assertThat(incomingLinksettings.tokenAudience().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+    assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
+    assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+  }
+
+  /**
+   * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation,
+   * ignoring properties not applicable to SIMPLE auth
+   */
+  @Test
+  public void applyCustomSettingsWithFlatDottedNotationSimpleAuth() {
+    final Map<String, Object> customSettings = this.customSettingsFlat(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
+
+    assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
@@ -35,11 +53,28 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
    * Tests the builder when customAttributes is a Map of Maps.
    */
   @Test
-  public void applyCustomSettingsWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsHeirarchical();
+  public void applyCustomSettingsWithMapHierarchy() {
+    final Map<String, Object> customSettings = this.customSettingsHierarchical();
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+    assertThat(incomingLinksettings.tokenIssuer().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+    assertThat(incomingLinksettings.tokenAudience().get())
+      .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+    assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
+    assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+  }
+
+  /**
+   * Tests the builder when customAttributes is a Map of Maps, ignoring properties not applicable to SIMPLE auth
+   */
+  @Test
+  public void applyCustomSettingsWithMapHierarchySimpleAuth() {
+    final Map<String, Object> customSettings = this.customSettingsHierarchical(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
+
+    assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
