@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link IncomingLinkSettings}.
  */
-public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   // This value doesn't _strictly_ need to be encrypted for purposes of this test. It could easily be plain-text, but
   // for completeness we use the encrypted test-variant.
@@ -49,6 +49,8 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
     assertThat(incomingLinksettings.tokenAudience()).isEmpty();
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+    assertThat(incomingLinksettings.tokenAudience().isPresent()).isFalse();
+    assertThat(incomingLinksettings.tokenIssuer().isPresent()).isFalse();
   }
 
   /**
@@ -81,6 +83,8 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
     assertThat(incomingLinksettings.tokenAudience()).isEmpty();
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+    assertThat(incomingLinksettings.tokenAudience().isPresent()).isFalse();
+    assertThat(incomingLinksettings.tokenIssuer().isPresent()).isFalse();
   }
 
   @Test

@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link OutgoingLinkSettings}.
  */
-public class OutgoingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class OutgoingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   /**
    * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation.
