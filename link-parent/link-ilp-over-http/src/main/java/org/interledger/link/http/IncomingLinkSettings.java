@@ -5,10 +5,7 @@ import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.ILP_OVER_HTTP;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.INCOMING;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.SHARED_SECRET;
-import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_AUDIENCE;
-import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_ISSUER;
 
-import okhttp3.HttpUrl;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Modifiable;
 
@@ -27,8 +24,6 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
 
   String HTTP_INCOMING_AUTH_TYPE = ILP_OVER_HTTP + DOT + INCOMING + DOT + AUTH_TYPE;
 
-  String HTTP_INCOMING_TOKEN_ISSUER = ILP_OVER_HTTP + DOT + INCOMING + DOT + TOKEN_ISSUER;
-  String HTTP_INCOMING_TOKEN_AUDIENCE = ILP_OVER_HTTP + DOT + INCOMING + DOT + TOKEN_AUDIENCE;
   String HTTP_INCOMING_SHARED_SECRET = ILP_OVER_HTTP + DOT + INCOMING + DOT + SHARED_SECRET;
 
   static ImmutableIncomingLinkSettings.Builder builder() {
@@ -81,15 +76,6 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
                   .map(Object::toString)
                   .ifPresent(builder::encryptedTokenSharedSecret);
 
-              Optional.ofNullable(incomingSettings.get(TOKEN_ISSUER))
-                  .map(Object::toString)
-                  .map(HttpUrl::parse)
-                  .ifPresent(builder::tokenIssuer);
-
-              Optional.ofNullable(incomingSettings.get(TOKEN_AUDIENCE))
-                  .map(Object::toString)
-                  .map(HttpUrl::parse)
-                  .ifPresent(builder::tokenAudience);
             }));
 
     Optional.ofNullable(customSettings.get(HTTP_INCOMING_AUTH_TYPE))
@@ -97,16 +83,6 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
         .map(String::toUpperCase)
         .map(IlpOverHttpLinkSettings.AuthType::valueOf)
         .ifPresent(builder::authType);
-
-    Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_ISSUER))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::tokenIssuer);
-
-    Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_AUDIENCE))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::tokenAudience);
 
     Optional.ofNullable(customSettings.get(HTTP_INCOMING_SHARED_SECRET))
         .map(Object::toString)

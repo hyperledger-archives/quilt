@@ -12,8 +12,6 @@ import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_SUBJECT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.URL;
 import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_AUTH_TYPE;
 import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_SHARED_SECRET;
-import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_TOKEN_AUDIENCE;
-import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_TOKEN_ISSUER;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_AUTH_TYPE;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_SHARED_SECRET;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_TOKEN_AUDIENCE;
@@ -33,9 +31,7 @@ public abstract class AbstractHttpLinkSettingsTest {
   protected Map<String, Object> customSettingsFlat() {
     return ImmutableMap.<String, Object>builder()
         .put(HTTP_INCOMING_AUTH_TYPE, IlpOverHttpLinkSettings.AuthType.JWT_HS_256.name())
-        .put(HTTP_INCOMING_TOKEN_ISSUER, "https://incoming-issuer.example.com/")
         .put(HTTP_INCOMING_SHARED_SECRET, "incoming-credential")
-        .put(HTTP_INCOMING_TOKEN_AUDIENCE, "https://incoming-audience.example.com/")
 
         .put(HTTP_OUTGOING_AUTH_TYPE, IlpOverHttpLinkSettings.AuthType.SIMPLE.name())
         .put(HTTP_OUTGOING_TOKEN_SUBJECT, "outgoing-subject")
@@ -53,8 +49,6 @@ public abstract class AbstractHttpLinkSettingsTest {
     incomingMap.put(AUTH_TYPE, IlpOverHttpLinkSettings.AuthType.JWT_HS_256.name());
     incomingMap.put(TOKEN_SUBJECT, "incoming-subject");
     incomingMap.put(SHARED_SECRET, "incoming-credential");
-    incomingMap.put(TOKEN_ISSUER, "https://incoming-issuer.example.com/");
-    incomingMap.put(TOKEN_AUDIENCE, "https://incoming-audience.example.com/");
 
     final Map<String, Object> outgoingMap = new HashMap<>();
     outgoingMap.put(AUTH_TYPE, IlpOverHttpLinkSettings.AuthType.SIMPLE.name());

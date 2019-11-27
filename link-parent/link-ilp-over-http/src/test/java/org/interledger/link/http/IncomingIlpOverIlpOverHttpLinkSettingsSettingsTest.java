@@ -27,10 +27,6 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
-    assertThat(incomingLinksettings.tokenIssuer().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
-    assertThat(incomingLinksettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
@@ -44,10 +40,6 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
-    assertThat(incomingLinksettings.tokenIssuer().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
-    assertThat(incomingLinksettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
