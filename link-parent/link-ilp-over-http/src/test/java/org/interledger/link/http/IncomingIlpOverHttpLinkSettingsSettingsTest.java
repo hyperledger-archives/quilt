@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link IncomingLinkSettings}.
  */
-public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   // This value doesn't _strictly_ need to be encrypted for purposes of this test. It could easily be plain-text, but
   // for completeness we use the encrypted test-variant.

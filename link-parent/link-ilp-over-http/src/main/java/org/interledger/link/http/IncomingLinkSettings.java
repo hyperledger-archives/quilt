@@ -80,14 +80,14 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
 
                     if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
                       Optional.ofNullable(incomingSettings.get(TOKEN_ISSUER))
-                        .map(Object::toString)
-                        .map(HttpUrl::parse)
-                        .ifPresent(builder::tokenIssuer);
+                          .map(Object::toString)
+                          .map(HttpUrl::parse)
+                          .ifPresent(builder::tokenIssuer);
 
                       Optional.ofNullable(incomingSettings.get(TOKEN_AUDIENCE))
-                        .map(Object::toString)
-                        .map(HttpUrl::parse)
-                        .ifPresent(builder::tokenAudience);
+                          .map(Object::toString)
+                          .map(HttpUrl::parse)
+                          .ifPresent(builder::tokenAudience);
                     }
                   });
 
@@ -106,14 +106,14 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
 
           if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
             Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_ISSUER))
-              .map(Object::toString)
-              .map(HttpUrl::parse)
-              .ifPresent(builder::tokenIssuer);
+                .map(Object::toString)
+                .map(HttpUrl::parse)
+                .ifPresent(builder::tokenIssuer);
 
             Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_AUDIENCE))
-              .map(Object::toString)
-              .map(HttpUrl::parse)
-              .ifPresent(builder::tokenAudience);
+                .map(Object::toString)
+                .map(HttpUrl::parse)
+                .ifPresent(builder::tokenAudience);
           }
         });
 

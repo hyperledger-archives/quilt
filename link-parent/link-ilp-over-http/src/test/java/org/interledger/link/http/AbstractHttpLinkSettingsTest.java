@@ -36,20 +36,20 @@ public abstract class AbstractHttpLinkSettingsTest {
 
   protected Map<String, Object> customSettingsFlat(IlpOverHttpLinkSettings.AuthType incomingAuthType) {
     return ImmutableMap.<String, Object>builder()
-      .put(HTTP_INCOMING_AUTH_TYPE, incomingAuthType.name())
-      .put(HTTP_INCOMING_TOKEN_ISSUER, "https://incoming-issuer.example.com/")
-      .put(HTTP_INCOMING_SHARED_SECRET, "incoming-credential")
-      .put(HTTP_INCOMING_TOKEN_AUDIENCE, "https://incoming-audience.example.com/")
+        .put(HTTP_INCOMING_AUTH_TYPE, incomingAuthType.name())
+        .put(HTTP_INCOMING_TOKEN_ISSUER, "https://incoming-issuer.example.com/")
+        .put(HTTP_INCOMING_SHARED_SECRET, "incoming-credential")
+        .put(HTTP_INCOMING_TOKEN_AUDIENCE, "https://incoming-audience.example.com/")
 
-      .put(HTTP_OUTGOING_AUTH_TYPE, IlpOverHttpLinkSettings.AuthType.SIMPLE.name())
-      .put(HTTP_OUTGOING_TOKEN_SUBJECT, "outgoing-subject")
-      .put(HTTP_OUTGOING_SHARED_SECRET, "outgoing-credential")
-      .put(HTTP_OUTGOING_TOKEN_ISSUER, "https://outgoing-issuer.example.com/")
-      .put(HTTP_OUTGOING_TOKEN_AUDIENCE, "https://outgoing-audience.example.com/")
-      .put(HTTP_OUTGOING_TOKEN_EXPIRY, Duration.ofDays(1).toString())
-      .put(HTTP_OUTGOING_URL, "https://outgoing.example.com")
+        .put(HTTP_OUTGOING_AUTH_TYPE, IlpOverHttpLinkSettings.AuthType.SIMPLE.name())
+        .put(HTTP_OUTGOING_TOKEN_SUBJECT, "outgoing-subject")
+        .put(HTTP_OUTGOING_SHARED_SECRET, "outgoing-credential")
+        .put(HTTP_OUTGOING_TOKEN_ISSUER, "https://outgoing-issuer.example.com/")
+        .put(HTTP_OUTGOING_TOKEN_AUDIENCE, "https://outgoing-audience.example.com/")
+        .put(HTTP_OUTGOING_TOKEN_EXPIRY, Duration.ofDays(1).toString())
+        .put(HTTP_OUTGOING_URL, "https://outgoing.example.com")
 
-      .build();
+        .build();
   }
 
   protected Map<String, Object> customSettingsHierarchical() {
