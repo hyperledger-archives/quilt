@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link IncomingLinkSettings}.
  */
-public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   // This value doesn't _strictly_ need to be encrypted for purposes of this test. It could easily be plain-text, but
   // for completeness we use the encrypted test-variant.
@@ -28,9 +28,26 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(incomingLinksettings.tokenIssuer().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+      .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
     assertThat(incomingLinksettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+      .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+    assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
+    assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+  }
+
+  /**
+   * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation,
+   * ignoring properties not applicable to SIMPLE auth
+   */
+  @Test
+  public void applyCustomSettingsWithFlatDottedNotationSimpleAuth() {
+    final Map<String, Object> customSettings = this.customSettingsFlat(IlpOverHttpLinkSettings.AuthType.SIMPLE,
+      IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
+
+    assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    assertThat(incomingLinksettings.tokenIssuer()).isEmpty();
+    assertThat(incomingLinksettings.tokenAudience()).isEmpty();
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
@@ -39,15 +56,31 @@ public class IncomingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
    * Tests the builder when customAttributes is a Map of Maps.
    */
   @Test
-  public void applyCustomSettingsWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsHeirarchical();
+  public void applyCustomSettingsWithMapHierarchy() {
+    final Map<String, Object> customSettings = this.customSettingsHierarchical();
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(incomingLinksettings.tokenIssuer().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+      .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
     assertThat(incomingLinksettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+      .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+    assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
+    assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
+  }
+
+  /**
+   * Tests the builder when customAttributes is a Map of Maps, ignoring properties not applicable to SIMPLE auth
+   */
+  @Test
+  public void applyCustomSettingsWithMapHierarchySimpleAuth() {
+    final Map<String, Object> customSettings = this.customSettingsHierarchical(IlpOverHttpLinkSettings.AuthType.SIMPLE,
+      IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
+
+    assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    assertThat(incomingLinksettings.tokenIssuer()).isEmpty();
+    assertThat(incomingLinksettings.tokenAudience()).isEmpty();
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }

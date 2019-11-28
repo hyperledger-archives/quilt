@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link OutgoingLinkSettings}.
  */
-public class OutgoingIlpOverIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
+public class OutgoingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLinkSettingsTest {
 
   /**
    * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation.
@@ -21,7 +21,7 @@ public class OutgoingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
     final Map<String, Object> customSettings = this.customSettingsFlat();
     final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(outgoingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    assertThat(outgoingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(outgoingLinksettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(outgoingLinksettings.tokenAudience().get())
@@ -33,18 +33,55 @@ public class OutgoingIlpOverIlpOverHttpLinkSettingsSettingsTest extends Abstract
   }
 
   /**
-   * Tests the builder when customAttributes is a Map of Maps.
+   * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation,
+   * ignoring properties not applicable to SIMPLE auth
    */
   @Test
-  public void applyCustomSettingsWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsHeirarchical();
+  public void applyCustomSettingsWithFlatDottedNotationWithSimpleAuth() {
+    final Map<String, Object> customSettings = this.customSettingsFlat(IlpOverHttpLinkSettings.AuthType.SIMPLE,
+      IlpOverHttpLinkSettings.AuthType.SIMPLE);
     final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(outgoingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    assertThat(outgoingLinksettings.tokenIssuer()).isEmpty();
+    assertThat(outgoingLinksettings.tokenAudience()).isEmpty();
+    assertThat(outgoingLinksettings.tokenSubject()).isEqualTo("outgoing-subject");
+    assertThat(outgoingLinksettings.encryptedTokenSharedSecret()).isEqualTo("outgoing-credential");
+    assertThat(outgoingLinksettings.tokenExpiry().get()).isEqualTo(Duration.ofHours(24));
+    assertThat(outgoingLinksettings.url()).isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
+  }
+
+  /**
+   * Tests the builder when customAttributes is a Map of Maps.
+   */
+  @Test
+  public void applyCustomSettingsWithMapHierarchy() {
+    final Map<String, Object> customSettings = this.customSettingsHierarchical();
+    final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
+
+    assertThat(outgoingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(outgoingLinksettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(outgoingLinksettings.tokenAudience().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-audience.example.com/"));
+    assertThat(outgoingLinksettings.tokenSubject()).isEqualTo("outgoing-subject");
+    assertThat(outgoingLinksettings.encryptedTokenSharedSecret()).isEqualTo("outgoing-credential");
+    assertThat(outgoingLinksettings.tokenExpiry().get()).isEqualTo(Duration.ofHours(48));
+    assertThat(outgoingLinksettings.url()).isEqualTo(HttpUrl.parse("https://outgoing.example.com"));
+  }
+
+  /**
+   * Tests the builder when customAttributes is a Map of Maps, ignoring properties not applicable to simple auth
+   */
+  @Test
+  public void applyCustomSettingsWithMapHierarchyWithSimpleAuth() {
+    final Map<String, Object> customSettings = this.customSettingsHierarchical(IlpOverHttpLinkSettings.AuthType.SIMPLE,
+      IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final OutgoingLinkSettings outgoingLinksettings = OutgoingLinkSettings.fromCustomSettings(customSettings).build();
+
+    assertThat(outgoingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    assertThat(outgoingLinksettings.tokenIssuer()).isEmpty();
+    assertThat(outgoingLinksettings.tokenAudience()).isEmpty();
     assertThat(outgoingLinksettings.tokenSubject()).isEqualTo("outgoing-subject");
     assertThat(outgoingLinksettings.encryptedTokenSharedSecret()).isEqualTo("outgoing-credential");
     assertThat(outgoingLinksettings.tokenExpiry().get()).isEqualTo(Duration.ofHours(48));

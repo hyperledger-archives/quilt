@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Unit tests for {@link IlpOverHttpLinkSettings}.
  */
-public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
+public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
 
   /**
    * Tests the builder when customAttributes is a flat collection of key/value pairs using dotted-notation.
@@ -36,7 +36,7 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
         .isEqualTo(Duration.ofMillis(2500));
 
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().tokenAudience().get())
@@ -54,7 +54,7 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
    */
   @Test
   public void applyCustomSettingsWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsHeirarchical();
+    final Map<String, Object> customSettings = this.customSettingsHierarchical();
 
     final ImmutableIlpOverHttpLinkSettings.Builder builder = IlpOverHttpLinkSettings.builder();
     final ImmutableIlpOverHttpLinkSettings httpLinkSettings =
@@ -71,7 +71,7 @@ public class IlpOverIlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettings
     assertThat(httpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
 
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().tokenAudience().get())

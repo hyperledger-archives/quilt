@@ -75,38 +75,47 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
                   .map(Object::toString)
                   .map(String::toUpperCase)
                   .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-                  .ifPresent(builder::authType);
+                  .ifPresent((authType) -> {
+                    builder.authType(authType);
+
+                    if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
+                      Optional.ofNullable(incomingSettings.get(TOKEN_ISSUER))
+                          .map(Object::toString)
+                          .map(HttpUrl::parse)
+                          .ifPresent(builder::tokenIssuer);
+
+                      Optional.ofNullable(incomingSettings.get(TOKEN_AUDIENCE))
+                          .map(Object::toString)
+                          .map(HttpUrl::parse)
+                          .ifPresent(builder::tokenAudience);
+                    }
+                  });
 
               Optional.ofNullable(incomingSettings.get(SHARED_SECRET))
                   .map(Object::toString)
                   .ifPresent(builder::encryptedTokenSharedSecret);
 
-              Optional.ofNullable(incomingSettings.get(TOKEN_ISSUER))
-                  .map(Object::toString)
-                  .map(HttpUrl::parse)
-                  .ifPresent(builder::tokenIssuer);
-
-              Optional.ofNullable(incomingSettings.get(TOKEN_AUDIENCE))
-                  .map(Object::toString)
-                  .map(HttpUrl::parse)
-                  .ifPresent(builder::tokenAudience);
             }));
 
     Optional.ofNullable(customSettings.get(HTTP_INCOMING_AUTH_TYPE))
         .map(Object::toString)
         .map(String::toUpperCase)
         .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-        .ifPresent(builder::authType);
+        .ifPresent((authType) -> {
+          builder.authType(authType);
 
-    Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_ISSUER))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::tokenIssuer);
+          if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
+            Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_ISSUER))
+                .map(Object::toString)
+                .map(HttpUrl::parse)
+                .ifPresent(builder::tokenIssuer);
 
-    Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_AUDIENCE))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::tokenAudience);
+            Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_AUDIENCE))
+                .map(Object::toString)
+                .map(HttpUrl::parse)
+                .ifPresent(builder::tokenAudience);
+          }
+        });
 
     Optional.ofNullable(customSettings.get(HTTP_INCOMING_SHARED_SECRET))
         .map(Object::toString)
