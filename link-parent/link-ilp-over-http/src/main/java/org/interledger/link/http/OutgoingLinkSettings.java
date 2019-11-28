@@ -78,21 +78,25 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
                     .map(Object::toString)
                     .ifPresent(builder::tokenSubject);
 
-                Optional.ofNullable(outgoingSettings.get(TOKEN_ISSUER))
-                    .map(Object::toString)
-                    .map(HttpUrl::parse)
-                    .ifPresent(builder::tokenIssuer);
-
-                Optional.ofNullable(outgoingSettings.get(TOKEN_AUDIENCE))
-                    .map(Object::toString)
-                    .map(HttpUrl::parse)
-                    .ifPresent(builder::tokenAudience);
-
                 Optional.ofNullable(outgoingSettings.get(AUTH_TYPE))
-                    .map(Object::toString)
-                    .map(String::toUpperCase)
-                    .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-                    .ifPresent(builder::authType);
+                  .map(Object::toString)
+                  .map(String::toUpperCase)
+                  .map(IlpOverHttpLinkSettings.AuthType::valueOf)
+                  .ifPresent((authType) -> {
+                    builder.authType(authType);
+
+                    if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
+                      Optional.ofNullable(outgoingSettings.get(TOKEN_ISSUER))
+                        .map(Object::toString)
+                        .map(HttpUrl::parse)
+                        .ifPresent(builder::tokenIssuer);
+
+                      Optional.ofNullable(outgoingSettings.get(TOKEN_AUDIENCE))
+                        .map(Object::toString)
+                        .map(HttpUrl::parse)
+                        .ifPresent(builder::tokenAudience);
+                    }
+                  });
 
                 Optional.ofNullable(outgoingSettings.get(SHARED_SECRET))
                     .map(Object::toString)
@@ -111,21 +115,24 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
               });
         });
 
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_ISSUER))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::tokenIssuer);
-
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::tokenAudience);
-
     Optional.ofNullable(customSettings.get(HTTP_OUTGOING_AUTH_TYPE))
-        .map(Object::toString)
-        .map(String::toUpperCase)
-        .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-        .ifPresent(builder::authType);
+      .map(Object::toString)
+      .map(String::toUpperCase)
+      .map(IlpOverHttpLinkSettings.AuthType::valueOf)
+      .ifPresent((authType) -> {
+        builder.authType(authType);
+        if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
+          Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_ISSUER))
+            .map(Object::toString)
+            .map(HttpUrl::parse)
+            .ifPresent(builder::tokenIssuer);
+
+          Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
+            .map(Object::toString)
+            .map(HttpUrl::parse)
+            .ifPresent(builder::tokenAudience);
+        }
+      });
 
     Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_SUBJECT))
         .map(Object::toString)
