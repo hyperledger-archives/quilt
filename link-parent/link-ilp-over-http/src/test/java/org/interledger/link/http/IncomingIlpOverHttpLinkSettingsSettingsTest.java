@@ -41,7 +41,8 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
    */
   @Test
   public void applyCustomSettingsWithFlatDottedNotationSimpleAuth() {
-    final Map<String, Object> customSettings = this.customSettingsFlat(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final Map<String, Object> customSettings = this.customSettingsFlat(IlpOverHttpLinkSettings.AuthType.SIMPLE,
+      IlpOverHttpLinkSettings.AuthType.SIMPLE);
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
@@ -49,8 +50,6 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     assertThat(incomingLinksettings.tokenAudience()).isEmpty();
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
-    assertThat(incomingLinksettings.tokenAudience().isPresent()).isFalse();
-    assertThat(incomingLinksettings.tokenIssuer().isPresent()).isFalse();
   }
 
   /**
@@ -75,7 +74,8 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
    */
   @Test
   public void applyCustomSettingsWithMapHierarchySimpleAuth() {
-    final Map<String, Object> customSettings = this.customSettingsHierarchical(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+    final Map<String, Object> customSettings = this.customSettingsHierarchical(IlpOverHttpLinkSettings.AuthType.SIMPLE,
+      IlpOverHttpLinkSettings.AuthType.SIMPLE);
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
@@ -83,8 +83,6 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     assertThat(incomingLinksettings.tokenAudience()).isEmpty();
     assertThat(incomingLinksettings.encryptedTokenSharedSecret()).isEqualTo("incoming-credential");
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
-    assertThat(incomingLinksettings.tokenAudience().isPresent()).isFalse();
-    assertThat(incomingLinksettings.tokenIssuer().isPresent()).isFalse();
   }
 
   @Test

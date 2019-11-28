@@ -36,7 +36,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
         .isEqualTo(Duration.ofMillis(2500));
 
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().tokenAudience().get())
@@ -71,7 +71,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(httpLinkSettings.incomingHttpLinkSettings().getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
 
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(httpLinkSettings.outgoingHttpLinkSettings().tokenAudience().get())
