@@ -9,6 +9,8 @@ import org.immutables.value.Value.Modifiable;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * An extension of {@link LinkSettings} for ILP-over-HTTP links.
@@ -67,8 +69,14 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     final ImmutableOutgoingLinkSettings.Builder outgoingLinkSettingsBuilder =
         OutgoingLinkSettings.fromCustomSettings(customSettings);
 
-    builder.incomingHttpLinkSettings(incomingLinkSettingsBuilder.build());
-    builder.outgoingHttpLinkSettings(outgoingLinkSettingsBuilder.build());
+    ImmutableIncomingLinkSettings incoming = incomingLinkSettingsBuilder.build();
+    builder.incomingLinkSettings(incoming);
+    ImmutableOutgoingLinkSettings outgoing = outgoingLinkSettingsBuilder.build();
+    builder.outgoingLinkSettings(outgoing);
+
+    // FIXME initialize in deprecated as well until removed
+    builder.incomingHttpLinkSettings(incoming);
+    builder.outgoingHttpLinkSettings(outgoing);
 
     builder.customSettings(customSettings);
 
@@ -81,18 +89,38 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
   }
 
   /**
+   * @deprecated use {@link #incomingLinkSettings()}. To be removed in 1.0.4
    * Link settings for the incoming HTTP link.
    *
    * @return A {@link IncomingLinkSettings}.
    */
+  @Deprecated
+  @Nullable
   IncomingLinkSettings incomingHttpLinkSettings();
 
   /**
+   * @deprecated use {@link #outgoingLinkSettings()}. To be removed in 1.0.4
    * Link settings for the outgoing HTTP link.
    *
    * @return A {@link OutgoingLinkSettings}.
    */
+  @Deprecated
+  @Nullable
   OutgoingLinkSettings outgoingHttpLinkSettings();
+
+  /**
+   * Optional link settings for the incoming HTTP link.
+   *
+   * @return An {@link Optional} {@link IncomingLinkSettings}.
+   */
+  Optional<IncomingLinkSettings> incomingLinkSettings();
+
+  /**
+   * Optional link settings for the outgoing HTTP link.
+   *
+   * @return An {@link Optional} {@link OutgoingLinkSettings}.
+   */
+  Optional<OutgoingLinkSettings> outgoingLinkSettings();
 
   /**
    * <p>Defines currently-supported ILP-over-HTTP authentication profiles.</p>
