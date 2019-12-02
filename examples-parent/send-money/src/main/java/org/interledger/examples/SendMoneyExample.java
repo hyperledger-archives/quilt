@@ -88,11 +88,11 @@ public class SendMoneyExample {
   private static Link newIlpOverHttpLink() {
     String sharedSecret = "some random secret here";
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingHttpLinkSettings(IncomingLinkSettings.builder()
+        .incomingLinkSettings(IncomingLinkSettings.builder()
             .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
             .encryptedTokenSharedSecret(sharedSecret)
             .build())
-        .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
+        .outgoingLinkSettings(OutgoingLinkSettings.builder()
             .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
             .tokenSubject(SENDER_ACCOUNT_USERNAME)
             .url(HttpUrl.parse(TESTNET_URI + "/ilp"))

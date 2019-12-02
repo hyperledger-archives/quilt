@@ -60,11 +60,11 @@ We can create a link using the following code:
 ```java
 String sharedSecret = "some random secret you generated";
 IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-    .incomingHttpLinkSettings(IncomingLinkSettings.builder()
+    .incomingLinkSettings(IncomingLinkSettings.builder()
         .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
         .encryptedTokenSharedSecret(sharedSecret)
         .build())
-    .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
+    .outgoingLinkSettings(OutgoingLinkSettings.builder()
         .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
         .tokenSubject(SENDER_ACCOUNT_USERNAME)
         .url(HttpUrl.parse(TESTNET_URI + "/ilp"))
