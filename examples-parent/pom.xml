@@ -29,5 +29,6 @@
 
   <modules>
     <module>send-money</module>
+    <module>ilp-emitters</module>
   </modules>
 </project>
