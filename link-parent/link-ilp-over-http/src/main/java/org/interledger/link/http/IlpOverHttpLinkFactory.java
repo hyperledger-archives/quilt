@@ -14,6 +14,8 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -27,6 +29,8 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
   private final Decryptor decryptor;
   private final ObjectMapper objectMapper;
   private final CodecContext ilpCodecContext;
+
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   /**
    * Required-args Constructor.
@@ -77,11 +81,17 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
         IlpOverHttpLinkSettings.applyCustomSettings(builder, linkSettings.getCustomSettings()).build();
 
     final BearerTokenSupplier bearerTokenSupplier;
-    if (ilpOverHttpLinkSettings.outgoingHttpLinkSettings().authType().equals(IlpOverHttpLinkSettings.AuthType.SIMPLE)) {
+    OutgoingLinkSettings outgoingLinkSettings = ilpOverHttpLinkSettings.outgoingLinkSettings()
+      .orElseGet(() -> {
+        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
+          "Please switch to using outgoingLinkSettings() instead");
+        return ilpOverHttpLinkSettings.outgoingHttpLinkSettings();
+      });
+    if (outgoingLinkSettings.authType().equals(IlpOverHttpLinkSettings.AuthType.SIMPLE)) {
       // Decrypt whatever is inside of the encryptedTokenSharedSecret. For the SIMPLE profile, this will decrypt to the
       // actual bearer token.
       bearerTokenSupplier = new SimpleBearerTokenSupplier(new String(
-          decryptor.decrypt(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().encryptedTokenSharedSecret().getBytes())
+        decryptor.decrypt(outgoingLinkSettings.encryptedTokenSharedSecret().getBytes())
       ));
     } else {
       // TODO: For now, we assume the bytes are a String that conform to the Crypt CLI. However, this should be made
@@ -91,10 +101,10 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
       // NOTE: This supplier will always create a copy of the decrypted bytes so that the consumer of each call can
       // safely wipe the bytes from memory without affecting other callers.
       final SharedSecretBytesSupplier sharedSecretSupplier = () -> decryptor
-          .decrypt(ilpOverHttpLinkSettings.outgoingHttpLinkSettings().encryptedTokenSharedSecret().getBytes());
+        .decrypt(outgoingLinkSettings.encryptedTokenSharedSecret().getBytes());
 
       bearerTokenSupplier = new JwtHs256BearerTokenSupplier(
-          sharedSecretSupplier, ilpOverHttpLinkSettings.outgoingHttpLinkSettings()
+        sharedSecretSupplier, outgoingLinkSettings
       );
     }
 

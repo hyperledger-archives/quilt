@@ -177,7 +177,12 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    * the endpoint does not support ILP-over-HTTP requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>
    */
   public void testConnection() {
-    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingHttpLinkSettings();
+    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingLinkSettings()
+      .orElseGet(() -> {
+        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
+          "Please switch to using outgoingLinkSettings() instead");
+        return this.getLinkSettings().outgoingHttpLinkSettings();
+      });
     final String tokenSubject = outgoingLinkSettings.tokenSubject();
     try {
 
@@ -282,6 +287,12 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    */
   private Request constructSendPacketRequest(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket);
+    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingLinkSettings()
+      .orElseGet(() -> {
+        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
+          "Please switch to using outgoingLinkSettings() instead");
+        return this.getLinkSettings().outgoingHttpLinkSettings();
+      });
 
     try {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -289,7 +300,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
 
       return new Builder()
           .headers(constructHttpRequestHeaders())
-          .url(this.getLinkSettings().outgoingHttpLinkSettings().url())
+          .url(outgoingLinkSettings.url())
           .post(
               RequestBody.create(byteArrayOutputStream.toByteArray(), APPLICATION_OCTET_STREAM)
           )
@@ -299,4 +310,5 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
       throw new LinkException(e.getMessage(), e, getLinkId());
     }
   }
+
 }
