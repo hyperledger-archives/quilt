@@ -93,7 +93,7 @@ public class SimpleStreamSenderIT {
       .withEnv("REDIS_URL", "redis://redis:6379");
 
   @Rule
-  public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/node")
+  public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/ilp-node")
       .withExposedPorts(7770)
       .withNetwork(network)
       //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
