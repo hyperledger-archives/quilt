@@ -136,7 +136,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
           // If this code is returned, we know the Link is misconfigured, so throw a LinkException Exception.
           throw new LinkException(String.format(
               "Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer Token. response=%s", response
-          ), this.getLinkId());
+          ), this.getLinkId(), response.code());
         } else if (response.code() >= 400 && response.code() < 500) {
           // The request was bad for some reason, likely due to whatever is in the packet.
           rejectPacket = InterledgerRejectPacket.builder()

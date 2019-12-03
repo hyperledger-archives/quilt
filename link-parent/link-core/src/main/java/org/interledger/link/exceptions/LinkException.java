@@ -2,6 +2,8 @@ package org.interledger.link.exceptions;
 
 import org.interledger.link.LinkId;
 
+import java.util.Optional;
+
 /**
  * A root exception for all exceptions relating to ILPv4 Links.
  */
@@ -11,6 +13,12 @@ public class LinkException extends RuntimeException {
    * The account-address of the link that threw this exception.
    */
   private final LinkId linkId;
+
+  /**
+   * An optionally defined status code from the response in the event that the exception is throw due to an HTTP
+   * response outside of successful ranges.
+   */
+  private Optional<Integer> responseStatusCode = Optional.empty();
 
   /**
    * Constructs a new runtime exception with {@code null} as its detail message.  The cause is not initialized, and may
@@ -36,6 +44,21 @@ public class LinkException extends RuntimeException {
   }
 
   /**
+   * Constructs a new runtime exception with the specified detail message. The cause is not initialized, and may
+   * subsequently be initialized by a call to {@link #initCause}.
+   *
+   * @param message             the detail message. The detail message is saved for later retrieval by the {@link #getMessage()}
+   *                            method.
+   * @param linkId              The {@link LinkId} that triggered this exception.
+   * @param responseStatusCode  The HTTP response status code causing the exception
+   */
+  public LinkException(String message, LinkId linkId, int responseStatusCode) {
+    super(message);
+    this.linkId = linkId;
+    this.responseStatusCode = Optional.of(responseStatusCode);
+  }
+
+  /**
    * Constructs a new runtime exception with the specified detail message and cause. Note that the detail message
    * associated with {@code cause} is <i>not</i> automatically incorporated in this runtime exception's detail message.
    *
@@ -47,6 +70,22 @@ public class LinkException extends RuntimeException {
   public LinkException(String message, Throwable cause, LinkId linkId) {
     super(message, cause);
     this.linkId = linkId;
+  }
+
+  /**
+   * Constructs a new runtime exception with the specified detail message and cause. Note that the detail message
+   * associated with {@code cause} is <i>not</i> automatically incorporated in this runtime exception's detail message.
+   *
+   * @param message             the detail message (which is saved for later retrieval by the {@link #getMessage()} method).
+   * @param cause               the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A
+   *                            {@code null} value is permitted, and indicates that the cause is nonexistent or unknown.)
+   * @param linkId              The {@link LinkId} that triggered this exception.
+   * @param responseStatusCode  The HTTP response status code causing the exception
+   */
+  public LinkException(String message, Throwable cause, LinkId linkId, int responseStatusCode) {
+    super(message, cause);
+    this.linkId = linkId;
+    this.responseStatusCode = Optional.of(responseStatusCode);
   }
 
   /**
@@ -82,8 +121,33 @@ public class LinkException extends RuntimeException {
     this.linkId = linkId;
   }
 
+  /**
+   * Constructs a new runtime exception with the specified detail message, cause, suppression enabled or disabled, and
+   * writable stack trace enabled or disabled.
+   *
+   * @param message            the detail message.
+   * @param cause              the cause.  (A {@code null} value is permitted, and indicates that the cause is
+   *                           nonexistent or unknown.)
+   * @param enableSuppression  whether or not suppression is enabled or disabled
+   * @param writableStackTrace whether or not the stack trace should be writable
+   * @param linkId             The {@link LinkId} that triggered this exception.
+   * @param responseStatusCode The HTTP response status code causing the exception
+   */
+  public LinkException(
+    String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, LinkId linkId,
+    int responseStatusCode
+  ) {
+    super(message, cause, enableSuppression, writableStackTrace);
+    this.linkId = linkId;
+    this.responseStatusCode = Optional.of(responseStatusCode);
+  }
+
   public LinkId getLinkId() {
     return linkId;
+  }
+
+  public Optional<Integer> getResponseStatusCode() {
+    return responseStatusCode;
   }
 
   /**
@@ -94,8 +158,10 @@ public class LinkException extends RuntimeException {
   @Override
   public String toString() {
     String linkIdMessage = "LinkId=" + getLinkId();
+    String statusCodeMessage = responseStatusCode.map(s -> ", ResponseStatusCode=" + s).orElse("");
     String className = getClass().getName();
-    String message = getLocalizedMessage() == null ? linkIdMessage : getLocalizedMessage() + " " + linkIdMessage;
+    String message = getLocalizedMessage() == null ? linkIdMessage : getLocalizedMessage() + " " + linkIdMessage +
+      statusCodeMessage;
     return (className + ": " + message);
   }
 
