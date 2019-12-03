@@ -18,12 +18,12 @@ import java.util.Optional;
  * @see "https://github.com/interledger-rs/interledger-rs/blob/master/docs/api.md"
  */
 @Value.Immutable
-@JsonSerialize(as = ImmutableAccount.class)
-@JsonDeserialize(builder = ImmutableAccount.Builder.class)
-public interface Account {
+@JsonSerialize(as = ImmutableRustNodeAccount.class)
+@JsonDeserialize(builder = ImmutableRustNodeAccount.Builder.class)
+public interface RustNodeAccount {
 
-  static ImmutableAccount.Builder builder() {
-    return ImmutableAccount.builder();
+  static ImmutableRustNodeAccount.Builder builder() {
+    return ImmutableRustNodeAccount.builder();
   }
 
   /**
