@@ -111,13 +111,24 @@ public class SimpleStreamSenderIT {
   public void setUp() throws IOException {
     OkHttpClient httpClient = this.constructOkHttpClient();
 
-    String interledgerNodeBaseUri = this.getInterledgerBaseUri();
-    this.nodeClient = new InterledgerRustNodeClient(httpClient,
+    final HttpUrl interledgerNodeBaseUrl = this.getInterledgerBaseUri();
+    this.nodeClient = new InterledgerRustNodeClient(
+        httpClient,
         AUTH_TOKEN,
-        interledgerNodeBaseUri);
+        interledgerNodeBaseUrl
+    );
 
-    this.spspClient = new SimpleSpspClient(httpClient,
-        (pointer) -> interledgerNodeBaseUri + pointer.path(), SpspClientDefaults.MAPPER);
+    this.spspClient = new SimpleSpspClient(
+        httpClient,
+        (pointer) -> {
+          String pointerPath = pointer.path();
+          if (pointerPath.startsWith("/")) {
+            pointerPath = pointerPath.substring(1);
+          }
+          return interledgerNodeBaseUrl.newBuilder().addPathSegments(pointerPath).build();
+        },
+        SpspClientDefaults.MAPPER
+    );
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -127,7 +138,7 @@ public class SimpleStreamSenderIT {
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
             .tokenSubject(SENDER_ACCOUNT_USERNAME)
-            .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
+            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
             .encryptedTokenSharedSecret(AUTH_TOKEN)
             .build())
         .build();
@@ -138,7 +149,7 @@ public class SimpleStreamSenderIT {
         httpClient,
         SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),
-        new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + AUTH_TOKEN)
+        () -> AUTH_TOKEN
     );
     link.setLinkId(LinkId.of(LINK_ID));
 
@@ -504,7 +515,6 @@ public class SimpleStreamSenderIT {
   public void sendMoneyWithWrongLinkPassword() throws IOException {
     final String connectorAccountUsername = UUID.randomUUID().toString().replace("-", "");
 
-    final String interledgerNodeBaseUri = this.getInterledgerBaseUri();
     final OkHttpClient httpClient = this.constructOkHttpClient();
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -514,7 +524,7 @@ public class SimpleStreamSenderIT {
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
             .tokenSubject(connectorAccountUsername)
-            .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
+            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
             .encryptedTokenSharedSecret("wrong-password")
             .build())
         .build();
@@ -613,8 +623,34 @@ public class SimpleStreamSenderIT {
         .routingRelation(RustNodeAccount.RoutingRelation.PEER);
   }
 
-  private String getInterledgerBaseUri() {
-    return "http://" + interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
+  /**
+   * Helper method to return the base URL for the Rust Connector.
+   *
+   * @return An {@link HttpUrl} to communicate with.
+   */
+  private HttpUrl getInterledgerBaseUri() {
+    return new HttpUrl.Builder()
+        .scheme("http")
+        .host(interledgerNode.getContainerIpAddress())
+        .port(interledgerNode.getFirstMappedPort())
+        .build();
+  }
+
+  /**
+   * Helper method to construct the ILP-over-HTTP endpoint method for a given account in the Rust Connector.
+   *
+   * @param accountId The account identifier to send ILP packets to.
+   *
+   * @return An {@link HttpUrl} to use with ILP-over-HTTP using {@code accountId}.
+   *
+   * @see "https://github.com/interledger-rs/interledger-rs/pull/553"
+   */
+  private HttpUrl constructIlpOverHttpUrl(final String accountId) {
+    return getInterledgerBaseUri().newBuilder()
+        .addPathSegment("accounts")
+        .addPathSegment(accountId)
+        .addPathSegment("ilp")
+        .build();
   }
 
   private OkHttpClient constructOkHttpClient() {

@@ -11,6 +11,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Basic implementation of an {@link SpspClient} that uses default okhttp3 client and jackson mapper.
@@ -27,22 +28,27 @@ public class SimpleSpspClient implements SpspClient {
     this(SpspClientDefaults.OK_HTTP_CLIENT, PaymentPointerResolver.defaultResolver(), SpspClientDefaults.MAPPER);
   }
 
-  public SimpleSpspClient(OkHttpClient httpClient,
-                          PaymentPointerResolver paymentPointerResolver,
-                          ObjectMapper objectMapper) {
-    this.httpClient = httpClient;
-    this.paymentPointerResolver = paymentPointerResolver;
-    this.objectMapper = objectMapper;
+  public SimpleSpspClient(
+      final OkHttpClient httpClient, final PaymentPointerResolver paymentPointerResolver,
+      final ObjectMapper objectMapper
+  ) {
+    this.httpClient = Objects.requireNonNull(httpClient);
+    this.paymentPointerResolver = Objects.requireNonNull(paymentPointerResolver);
+    this.objectMapper = Objects.requireNonNull(objectMapper);
   }
 
   @Override
-  public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+  public StreamConnectionDetails getStreamConnectionDetails(final PaymentPointer paymentPointer)
       throws InvalidReceiverClientException {
-    return getStreamConnectionDetails(HttpUrl.parse(paymentPointerResolver.resolve(paymentPointer)));
+    Objects.requireNonNull(paymentPointer);
+    return getStreamConnectionDetails(paymentPointerResolver.resolveHttpUrl(paymentPointer));
   }
 
   @Override
-  public StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl) throws InvalidReceiverClientException {
+  public StreamConnectionDetails getStreamConnectionDetails(final HttpUrl spspUrl)
+      throws InvalidReceiverClientException {
+    Objects.requireNonNull(spspUrl);
+
     return execute(new Request.Builder()
         .url(spspUrl)
         .header("Accept", ACCEPT_SPSP_JSON)

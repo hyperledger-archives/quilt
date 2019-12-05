@@ -1,7 +1,7 @@
 package org.interledger.spsp.client.rust;
 
-import org.interledger.spsp.client.SpspClientDefaults;
 import org.interledger.spsp.client.InvalidReceiverClientException;
+import org.interledger.spsp.client.SpspClientDefaults;
 import org.interledger.spsp.client.SpspClientException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +19,7 @@ import org.immutables.value.Value.Immutable;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * Client for interacting with API on a Rust Interledger Node.
@@ -30,20 +31,43 @@ public class InterledgerRustNodeClient {
   private final OkHttpClient httpClient;
   private final String authToken;
   private final ObjectMapper objectMapper;
-  private final String baseUri;
+  private final HttpUrl baseUrl;
 
-  public InterledgerRustNodeClient(OkHttpClient okHttpClient,
-                                   String authToken,
-                                   String baseUri) {
-    this.httpClient = okHttpClient;
-    this.authToken = authToken;
-    this.objectMapper = SpspClientDefaults.MAPPER;
-    this.baseUri = baseUri;
+  /**
+   * Required-args constructor.
+   *
+   * @param okHttpClient A {@link OkHttpClient}.
+   * @param authToken    An authentication token for the Rust Connector.
+   * @param baseUrl      An {@link String} that contains the Connector's base URL.
+   *
+   * @deprecated Use the constructor that accepts a {@link HttpUrl} instead.
+   */
+  @Deprecated
+  public InterledgerRustNodeClient(OkHttpClient okHttpClient, String authToken, String baseUrl) {
+    this(okHttpClient, authToken, HttpUrl.parse(baseUrl));
+  }
+
+  /**
+   * Required-args constructor.
+   *
+   * @param okHttpClient A {@link OkHttpClient}.
+   * @param authToken    An authentication token for the Rust Connector.
+   * @param baseUrl      An {@link HttpUrl} that contains the Connector's base URL.
+   *
+   * @deprecated Use the constructor that accepts a {@link HttpUrl} instead.
+   */
+  public InterledgerRustNodeClient(
+    final OkHttpClient okHttpClient, final String authToken, final HttpUrl baseUrl
+  ) {
+    this.httpClient = Objects.requireNonNull(okHttpClient);
+    this.authToken = Objects.requireNonNull(authToken);
+    this.objectMapper = Objects.requireNonNull(SpspClientDefaults.MAPPER);
+    this.baseUrl = Objects.requireNonNull(baseUrl);
   }
 
   public RustNodeAccount createAccount(RustNodeAccount rustNodeAccount) throws IOException {
     return execute(requestBuilder()
-      .url(HttpUrl.parse(baseUri + "/accounts"))
+      .url(baseUrl.newBuilder().addPathSegment("accounts").build())
       .post(RequestBody.create(objectMapper.writeValueAsString(rustNodeAccount), JSON))
       .build(), RustNodeAccount.class);
   }
@@ -55,7 +79,9 @@ public class InterledgerRustNodeClient {
 
   public BigDecimal getBalance(String accountName) throws SpspClientException {
     return execute(requestBuilder()
-      .url(HttpUrl.parse(baseUri + "/accounts/" + accountName + "/balance"))
+      .url(
+        baseUrl.newBuilder().addPathSegment("accounts").addPathSegment(accountName).addPathSegment("balance").build()
+      )
       .get()
       .build(), BalanceResponse.class)
       .getBalance();
@@ -80,6 +106,7 @@ public class InterledgerRustNodeClient {
   @JsonDeserialize(builder = ImmutableBalanceResponse.Builder.class)
   @JsonSerialize(as = ImmutableBalanceResponse.class)
   public interface BalanceResponse {
+
     BigDecimal getBalance();
   }
 
