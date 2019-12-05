@@ -548,7 +548,7 @@ public class SendMoneyAggregatorTest {
       .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, UnsignedLong.valueOf(9l), 1, false);
     // depending on execution order, we may halt sooner than trying all 10 potential times
     assertThat(result.numRejectPackets()).isLessThanOrEqualTo(9);
-    verify(congestionControllerMock, atMost(10)).getMaxAmount();
+    verify(congestionControllerMock, atMost(11)).getMaxAmount();
     verify(linkMock, atMost(11)).sendPacket(any());
   }
 
