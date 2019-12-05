@@ -166,11 +166,12 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
 
     this.abandonedAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
     this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
+    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getMinimumAmountToAccept()));
   }
 
   @Override
   public boolean moreToSend() {
-    return is(deliveredAmount.get()).lessThan(this.amountToDeliver);
+    return is(deliveredAmount.get().plus(abandonedAmount.get())).lessThan(this.amountToDeliver);
   }
 
 }
