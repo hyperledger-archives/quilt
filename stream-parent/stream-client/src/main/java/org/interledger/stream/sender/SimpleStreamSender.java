@@ -20,7 +20,7 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
-import org.interledger.link.exceptions.LinkException;
+import org.interledger.link.exceptions.LinkRetriesExceededException;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.PrepareAmounts;
@@ -87,6 +87,7 @@ public class SimpleStreamSender implements StreamSender {
   private final StreamEncryptionService streamEncryptionService;
   private final ExecutorService executorService;
   private final StreamConnectionManager streamConnectionManager;
+  private final BackoffController backoffController;
 
   /**
    * Required-args Constructor.
@@ -141,6 +142,28 @@ public class SimpleStreamSender implements StreamSender {
       final ExecutorService executorService,
       final StreamConnectionManager streamConnectionManager
   ) {
+    this(streamEncryptionService, link, executorService, streamConnectionManager, new DefaultBackoffController());
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param streamEncryptionService A {@link StreamEncryptionService} used to encrypt and decrypted end-to-end STREAM
+   *                                packet data (i.e., packets that should only be visible between sender and
+   *                                receiver).
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param executorService         A {@link ExecutorService} to run the payments.
+   * @param streamConnectionManager A {@link StreamConnectionManager} that manages connections for all senders and
+   *                                receivers in this JVM.
+   * @param backoffController       A {@link BackoffController} that manages retries in the event of temporary failures
+   */
+  public SimpleStreamSender(
+    final StreamEncryptionService streamEncryptionService,
+    final Link link,
+    final ExecutorService executorService,
+    final StreamConnectionManager streamConnectionManager,
+    final BackoffController backoffController
+  ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
 
@@ -148,9 +171,10 @@ public class SimpleStreamSender implements StreamSender {
     // created using {@link ThreadPoolExecutor} constructors.
     this.executorService = Objects.requireNonNull(executorService);
     this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
+    this.backoffController = Objects.requireNonNull(backoffController);
   }
 
-  private static ExecutorService newDefaultExecutor() {
+  public static ExecutorService newDefaultExecutor() {
     ThreadFactory factory = new ThreadFactoryBuilder()
         .setDaemon(true)
         .setNameFormat("simple-stream-sender-%d")
@@ -167,13 +191,14 @@ public class SimpleStreamSender implements StreamSender {
     );
 
     return new SendMoneyAggregator(
-        this.executorService,
-        streamConnection,
-        StreamCodecContextFactory.oer(),
-        this.link,
-        new AimdCongestionController(),
-        this.streamEncryptionService,
-        request
+      this.executorService,
+      streamConnection,
+      StreamCodecContextFactory.oer(),
+      this.link,
+      new AimdCongestionController(),
+      this.streamEncryptionService,
+      request,
+      this.backoffController
     ).send();
   }
 
@@ -234,6 +259,7 @@ public class SimpleStreamSender implements StreamSender {
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
     private final Link link;
+    private final BackoffController backoffController;
 
     private final SharedSecret sharedSecret;
     private final Optional<Duration> timeout;
@@ -272,7 +298,8 @@ public class SimpleStreamSender implements StreamSender {
         final Link link,
         final CongestionController congestionController,
         final StreamEncryptionService streamEncryptionService,
-        final SendMoneyRequest request
+        final SendMoneyRequest request,
+        final BackoffController backoffController
     ) {
       this.executorService = Objects.requireNonNull(executorService);
       this.streamConnection = Objects.requireNonNull(streamConnection);
@@ -281,6 +308,7 @@ public class SimpleStreamSender implements StreamSender {
       this.link = Objects.requireNonNull(link);
       this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
       this.congestionController = Objects.requireNonNull(congestionController);
+      this.backoffController = Objects.requireNonNull(backoffController);
       this.shouldSendSourceAddress = new AtomicBoolean(true);
 
       this.sharedSecret = request.sharedSecret();
@@ -428,32 +456,21 @@ public class SimpleStreamSender implements StreamSender {
     }
 
     /**
-     * Send the packet but check to see if an error in the HTTP 4XX range was encountered so that we know if we
+     * Send the packet with backoff but check to see if a F00_BAD_REQUEST was encountered so that we know if we
      * should stop retrying
      * @param preparePacket
      * @return the returned response packet
      */
     @VisibleForTesting
     protected InterledgerResponsePacket sendPacketAndCheckForFailure(InterledgerPreparePacket preparePacket) {
-      try {
-        InterledgerResponsePacket response = link.sendPacket(preparePacket);
-        response.handle((fulfill) -> {}, (reject) -> {
-          if (reject.getCode().equals(F00_BAD_REQUEST)) {
-            unrecoverableErrorEncountered.set(true);
-          }
-        });
-        return response;
-      }
-      catch (Exception e) {
-        if (e instanceof LinkException) {
-          ((LinkException) e).getResponseStatusCode().ifPresent(s -> {
-            if (s >= 400 && s < 500) {
-              unrecoverableErrorEncountered.set(true);
-            }
-          });
+      InterledgerResponsePacket response = backoffController.sendWithBackoff(link, preparePacket, numRejectedPackets);
+//      InterledgerResponsePacket response = link.sendPacket(preparePacket);
+      response.handle((fulfill) -> {}, (reject) -> {
+        if (reject.getCode().equals(F00_BAD_REQUEST)) {
+          unrecoverableErrorEncountered.set(true);
         }
-        throw e;
-      }
+      });
+      return response;
     }
 
     private void sendMoneyPacketized() {
@@ -474,6 +491,12 @@ public class SimpleStreamSender implements StreamSender {
 
       while (soldierOn(timeoutReached.get(), tryingToSendTooMuch)) {
         // Determine the amount to send
+
+        /**
+         * Exponentially back off if there's a T04 and the max amount is 1
+         *
+         * Exponentially back off on all other TXX cases
+         */
         PrepareAmounts amounts = paymentTracker.getSendPacketAmounts(
             congestionController.getMaxAmount(), senderDenomination, receiverDenomination
         );
@@ -588,6 +611,7 @@ public class SimpleStreamSender implements StreamSender {
                       numRejectedPackets, congestionController)
               );
             } catch (Exception e) {
+              // FIXME we can't just simply roll back here; if we exceeded retries we need to just not send again
               logger.error("Link send failed. preparePacket={}", preparePacket, e);
               congestionController.reject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
                   .code(InterledgerErrorCode.F00_BAD_REQUEST)
@@ -595,7 +619,12 @@ public class SimpleStreamSender implements StreamSender {
                       String.format("Link send failed. preparePacket=%s error=%s", preparePacket, e.getMessage())
                   )
                   .build());
-              paymentTracker.rollback(prepareAmounts, false);
+
+              if (!(e instanceof LinkRetriesExceededException)) {
+                // if we attempted to retry too many times, we shouldn't roll back the amount; consider it lost due
+                // to exceeding the exponential backoff threshold
+                paymentTracker.rollback(prepareAmounts, false);
+              }
             }
           }
         });

@@ -2,15 +2,7 @@ package org.interledger.link.exceptions;
 
 import org.interledger.link.LinkId;
 
-/**
- * A root exception for all exceptions relating to ILPv4 Links.
- */
-public class LinkException extends RuntimeException {
-
-  /**
-   * The account-address of the link that threw this exception.
-   */
-  private final LinkId linkId;
+public class LinkRetriesExceededException extends LinkException {
 
   /**
    * Constructs a new runtime exception with {@code null} as its detail message.  The cause is not initialized, and may
@@ -18,8 +10,8 @@ public class LinkException extends RuntimeException {
    *
    * @param linkId The {@link LinkId} that triggered this exception.
    */
-  public LinkException(LinkId linkId) {
-    this.linkId = linkId;
+  public LinkRetriesExceededException(LinkId linkId) {
+    super(linkId);
   }
 
   /**
@@ -30,23 +22,23 @@ public class LinkException extends RuntimeException {
    *                method.
    * @param linkId  The {@link LinkId} that triggered this exception.
    */
-  public LinkException(String message, LinkId linkId) {
-    super(message);
-    this.linkId = linkId;
+  public LinkRetriesExceededException(String message, LinkId linkId) {
+    super(message, linkId);
   }
 
   /**
-   * Constructs a new runtime exception with the specified detail message and cause. Note that the detail message
-   * associated with {@code cause} is <i>not</i> automatically incorporated in this runtime exception's detail message.
+   * Constructs a new runtime exception with the specified detail message and cause.
+   *
+   * <p>Note that the detail message associated with {@code cause} is <i>not</i> automatically incorporated in this
+   * runtime exception's detail message.</p>
    *
    * @param message the detail message (which is saved for later retrieval by the {@link #getMessage()} method).
-   * @param cause   the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A
-   *                {@code null} value is permitted, and indicates that the cause is nonexistent or unknown.)
+   * @param cause   the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A {@code null}
+   *                value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @param linkId  The {@link LinkId} that triggered this exception.
    */
-  public LinkException(String message, Throwable cause, LinkId linkId) {
-    super(message, cause);
-    this.linkId = linkId;
+  public LinkRetriesExceededException(String message, Throwable cause, LinkId linkId) {
+    super(message, cause, linkId);
   }
 
   /**
@@ -59,9 +51,8 @@ public class LinkException extends RuntimeException {
    *               value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @param linkId The {@link LinkId} that triggered this exception.
    */
-  public LinkException(Throwable cause, LinkId linkId) {
-    super(cause);
-    this.linkId = linkId;
+  public LinkRetriesExceededException(Throwable cause, LinkId linkId) {
+    super(cause, linkId);
   }
 
   /**
@@ -75,28 +66,10 @@ public class LinkException extends RuntimeException {
    * @param writableStackTrace whether or not the stack trace should be writable
    * @param linkId             The {@link LinkId} that triggered this exception.
    */
-  public LinkException(
-      String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace, LinkId linkId
-  ) {
-    super(message, cause, enableSuppression, writableStackTrace);
-    this.linkId = linkId;
-  }
-
-  public LinkId getLinkId() {
-    return linkId;
-  }
-
-  /**
-   * Overridden to emit the Link Id.
-   *
-   * @return A {@link String} representation of this Exception.
-   */
-  @Override
-  public String toString() {
-    String linkIdMessage = "LinkId=" + getLinkId();
-    String className = getClass().getName();
-    String message = getLocalizedMessage() == null ? linkIdMessage : getLocalizedMessage() + " " + linkIdMessage;
-    return (className + ": " + message);
+  public LinkRetriesExceededException(String message, Throwable cause, boolean enableSuppression,
+                                      boolean writableStackTrace, LinkId linkId) {
+    super(message, cause, enableSuppression, writableStackTrace, linkId);
   }
 
 }
+

@@ -18,9 +18,12 @@ import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.receiver.testutils.SimulatedIlpv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
+import org.interledger.stream.sender.BackoffController;
+import org.interledger.stream.sender.DefaultBackoffController;
 import org.interledger.stream.sender.FixedReceiverAmountPaymentTracker;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
+import org.interledger.stream.sender.StreamConnectionManager;
 import org.interledger.stream.sender.StreamSender;
 
 import com.google.common.collect.Lists;
@@ -77,9 +80,7 @@ public class SenderReceiverTest {
     final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
     final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
 
-    SimpleStreamSender streamSender = new SimpleStreamSender(
-        streamEncryptionService, link
-    );
+    SimpleStreamSender streamSender = new SimpleStreamSender(streamEncryptionService, link);
 
     StatelessStreamReceiver streamReceiver = new StatelessStreamReceiver(
         () -> serverSecret,
@@ -443,7 +444,13 @@ public class SenderReceiverTest {
         SimulatedPathConditions.builder().build()
     ));
 
-    final SendMoneyResult sendMoneyResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
+//    BackoffController backoffController = (link, prepare) -> link.sendPacket(prepare);
+    BackoffController backoffController = new DefaultBackoffController(Duration.ofMillis(10), 1.0, 500);
+    SimpleStreamSender sender = new SimpleStreamSender(
+      new JavaxStreamEncryptionService(), leftStreamNode.link(), SimpleStreamSender.newDefaultExecutor(),
+      new StreamConnectionManager(), backoffController
+    );
+    final SendMoneyResult sendMoneyResult = sendMoney(sender, leftStreamNode, rightStreamNode, paymentAmount);
 
     assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);

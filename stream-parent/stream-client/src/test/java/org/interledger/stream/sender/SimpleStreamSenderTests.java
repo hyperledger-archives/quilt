@@ -30,6 +30,12 @@ public class SimpleStreamSenderTests {
   @Mock
   private Link linkMock;
 
+  @Mock
+  private StreamConnectionManager connectionManager;
+
+  @Mock
+  private BackoffController backoffController;
+
   private SimpleStreamSender simpleStreamSender;
 
   @Before
@@ -66,6 +72,65 @@ public class SimpleStreamSenderTests {
   public void constructThreeArgWithNullExecutor() {
     expectedException.expect(NullPointerException.class);
     new SimpleStreamSender(streamEncryptionServiceMock, linkMock, null);
+  }
+
+  @Test
+  public void constructFourArgWithNullEncryptionService() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(null, linkMock, mock(ExecutorService.class), connectionManager);
+  }
+
+  @Test
+  public void constructFourArgWithNullLink() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, null, mock(ExecutorService.class), connectionManager);
+  }
+
+  @Test
+  public void constructFourArgWithNullExecutor() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, null, connectionManager);
+  }
+
+  @Test
+  public void constructFourArgWithNullConnectionManager() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, mock(ExecutorService.class), null);
+  }
+
+  @Test
+  public void constructFiveArgWithNullEncryptionService() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(null, linkMock, mock(ExecutorService.class), connectionManager,
+      backoffController);
+  }
+
+  @Test
+  public void constructFiveArgWithNullLink() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, null, mock(ExecutorService.class), connectionManager,
+      backoffController);
+  }
+
+  @Test
+  public void constructFiveArgWithNullExecutor() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, null, connectionManager,
+      backoffController);
+  }
+
+  @Test
+  public void constructFiveArgWithNullConnectionManager() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, mock(ExecutorService.class), null,
+      backoffController);
+  }
+
+  @Test
+  public void constructFiveArgWithNullBackoffController() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, mock(ExecutorService.class), connectionManager,
+      null);
   }
 
   @Test

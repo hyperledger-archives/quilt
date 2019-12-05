@@ -2,11 +2,13 @@ package org.interledger.stream.sender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.DateUtils;
@@ -22,8 +24,6 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
-import org.interledger.link.LinkId;
-import org.interledger.link.exceptions.LinkException;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.PaymentTracker;
@@ -47,7 +47,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -70,7 +69,7 @@ public class SendMoneyAggregatorTest {
 
   // 5 seconds max per method tested
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(600);
+  public Timeout globalTimeout = Timeout.seconds(5);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -85,6 +84,8 @@ public class SendMoneyAggregatorTest {
   private StreamEncryptionService streamEncryptionServiceMock;
   @Mock
   private StreamConnection streamConnectionMock;
+  @Mock
+  private BackoffController backoffController;
 
   private SharedSecret sharedSecret = SharedSecret.of(new byte[32]);
   private InterledgerAddress sourceAddress = InterledgerAddress.of("example.source");
@@ -103,6 +104,7 @@ public class SendMoneyAggregatorTest {
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
     when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any())).thenReturn(mock(InterledgerRejectPacket.class));
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.paymentTracker = new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator());
     SendMoneyRequest request = SendMoneyRequest.builder()
@@ -117,7 +119,7 @@ public class SendMoneyAggregatorTest {
         .build();
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request);
+        streamEncryptionServiceMock, request, backoffController);
 
     defaultPrepareAmounts = PrepareAmounts.from(samplePreparePacket(), sampleStreamPacket());
   }
@@ -132,7 +134,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    verify(backoffController, times(1)).sendWithBackoff(eq(linkMock), any(), any());
   }
 
   @Test
@@ -145,7 +147,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    verify(backoffController, times(1)).sendWithBackoff(eq(linkMock), any(), any());
   }
 
   @Test
@@ -158,7 +160,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    verify(backoffController, times(1)).sendWithBackoff(eq(linkMock), any(), any());
   }
 
   @Test
@@ -172,7 +174,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    verify(backoffController, times(1)).sendWithBackoff(eq(linkMock), any(), any());
   }
 
   @Test
@@ -186,7 +188,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 0 link calls
-    Mockito.verifyNoMoreInteractions(linkMock);
+    verifyNoMoreInteractions(linkMock);
   }
 
   @Test
@@ -210,7 +212,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    verify(backoffController, times(1)).sendWithBackoff(eq(linkMock), any(), any());
   }
 
   @Test
@@ -228,7 +230,7 @@ public class SendMoneyAggregatorTest {
     ExecutorService executor = mock(ExecutorService.class);
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request);
+        streamEncryptionServiceMock, request, backoffController);
 
     when(executor.submit(any(Runnable.class))).thenThrow(new RejectedExecutionException());
 
@@ -250,7 +252,7 @@ public class SendMoneyAggregatorTest {
   @Test
   public void preflightCheckFindsNoDenomination() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
-    when(linkMock.sendPacket(any())).thenReturn(sampleFulfillPacket());
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any())).thenReturn(sampleFulfillPacket());
     StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
         .addFrames(StreamMoneyFrame.builder()
             .shares(UnsignedLong.ONE)
@@ -266,7 +268,8 @@ public class SendMoneyAggregatorTest {
   @Test
   public void preflightCheckRejects() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any()))
+      .thenReturn(sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
     StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
         .addFrames(StreamMoneyFrame.builder()
             .shares(UnsignedLong.ONE)
@@ -316,7 +319,8 @@ public class SendMoneyAggregatorTest {
     allSoldierOnsTrue();
 
     // flip flag on unrecoverable error
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any()))
+      .thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
     sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
     setSoldierOnBooleans(false, false, false);
     allSoldierOnsFalse();
@@ -370,7 +374,7 @@ public class SendMoneyAggregatorTest {
 
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request);
+        streamEncryptionServiceMock, request, backoffController);
 
     setSoldierOnBooleans(false, false, true);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
@@ -456,29 +460,18 @@ public class SendMoneyAggregatorTest {
 
   @Test
   public void sendPacketAndCheckForFailureMarksUnrecoverableForF00() {
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any()))
+      .thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
     sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
   }
 
   @Test
-  public void sendPacketAndCheckForFailureMarksUnrecoverableForLinkExceptionWithStatus() {
-    when(linkMock.sendPacket(any())).thenThrow(new LinkException("troll toll", LinkId.of("thenightman"), 401));
-    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
-    try {
-      sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
-    }
-    catch (Exception e) {
-      assertThat(e).isInstanceOf(LinkException.class).extracting("responseStatusCode").isEqualTo(Optional.of(401));
-    }
-    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
-  }
-
-  @Test
   public void preflightCheckFlagsAsUnrecoverable() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any()))
+      .thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
     StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
       .addFrames(StreamMoneyFrame.builder()
         .shares(UnsignedLong.ONE)
@@ -508,7 +501,7 @@ public class SendMoneyAggregatorTest {
 
     this.sendMoneyAggregator = new SendMoneyAggregator(
       executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-      streamEncryptionServiceMock, request);
+      streamEncryptionServiceMock, request, backoffController);
 
     when(congestionControllerMock.hasInFlight()).thenAnswer(new Answer<Boolean>() {
 
@@ -524,7 +517,7 @@ public class SendMoneyAggregatorTest {
     when(congestionControllerMock.getMaxAmount()).thenReturn(UnsignedLong.ONE);
 
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
-    when(linkMock.sendPacket(any())).thenAnswer(new Answer<InterledgerResponsePacket>() {
+    when(backoffController.sendWithBackoff(eq(linkMock), any(), any())).thenAnswer(new Answer<InterledgerResponsePacket>() {
       private AtomicInteger invocations = new AtomicInteger(0);
 
       @Override
