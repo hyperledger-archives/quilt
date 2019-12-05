@@ -15,16 +15,15 @@ import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.spsp.client.SpspClientDefaults;
 import org.interledger.spsp.client.SimpleSpspClient;
-import org.interledger.spsp.client.rust.RustNodeAccount;
+import org.interledger.spsp.client.SpspClientDefaults;
 import org.interledger.spsp.client.rust.ImmutableRustNodeAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
+import org.interledger.spsp.client.rust.RustNodeAccount;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoExchangeRateException;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
@@ -169,7 +168,6 @@ public class SimpleStreamSenderIT {
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -204,7 +202,6 @@ public class SimpleStreamSenderIT {
             .sourceAddress(SENDER_ADDRESS)
             .amount(paymentAmount)
             .denomination(Denominations.XRP)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .destinationAddress(connectionDetails.destinationAddress())
             .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .sharedSecret(connectionDetails.sharedSecret())
@@ -244,7 +241,6 @@ public class SimpleStreamSenderIT {
               .sourceAddress(SENDER_ADDRESS)
               .amount(paymentAmount)
               .denomination(Denominations.XRP)
-              .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
               .destinationAddress(connectionDetails.destinationAddress())
               .sharedSecret(connectionDetails.sharedSecret())
               .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
@@ -305,7 +301,6 @@ public class SimpleStreamSenderIT {
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
             .amount(paymentAmount)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())
             .sharedSecret(connectionDetails.sharedSecret())
@@ -395,7 +390,6 @@ public class SimpleStreamSenderIT {
                 .sourceAddress(SENDER_ADDRESS)
                 .amount(paymentAmount)
                 .denomination(Denominations.XRP)
-                .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
                 .destinationAddress(connectionDetails.destinationAddress())
                 .sharedSecret(connectionDetails.sharedSecret())
                 .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
@@ -434,7 +428,6 @@ public class SimpleStreamSenderIT {
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, noExchangeRateExceptionCalculator))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -467,7 +460,6 @@ public class SimpleStreamSenderIT {
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -498,7 +490,6 @@ public class SimpleStreamSenderIT {
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new GreedyExchangeRateCalculator()))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -555,7 +546,6 @@ public class SimpleStreamSenderIT {
             .destinationAddress(connectionDetails.destinationAddress())
             .amount(paymentAmount)
             .denomination(Denominations.XRP)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .sharedSecret(connectionDetails.sharedSecret())
             .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .timeout(Duration.ofMillis(100L))
@@ -599,7 +589,6 @@ public class SimpleStreamSenderIT {
             .destinationAddress(connectionDetails.destinationAddress())
             .amount(paymentAmount)
             .denomination(Denominations.XRP)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .sharedSecret(connectionDetails.sharedSecret())
             .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .build()
