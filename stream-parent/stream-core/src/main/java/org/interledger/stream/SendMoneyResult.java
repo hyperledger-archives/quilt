@@ -3,7 +3,6 @@ package org.interledger.stream;
 import org.interledger.core.Immutable;
 
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value;
 
 import java.time.Duration;
 
@@ -48,6 +47,14 @@ public interface SendMoneyResult {
    * @return An {@link UnsignedLong} representing the amount left to send.
    */
   UnsignedLong amountLeftToSend();
+
+  /**
+   * The amount, in the sender's units, that have been abandoned due to failures in sending them exceeding any
+   * conditions that would allow for retry.
+   *
+   * @return An {@link UnsignedLong} representing the amount abandoned.
+   */
+  UnsignedLong amountAbandoned();
 
   /**
    * Metadata representing the number of fulfilled packets in a request to send money. Note that STREAM implementations

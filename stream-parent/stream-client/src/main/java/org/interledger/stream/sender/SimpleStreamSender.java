@@ -343,15 +343,16 @@ public class SimpleStreamSender implements StreamSender {
         receiverDenomination = preflightCheck();
       } catch (StreamConnectionClosedException e) {
         return CompletableFuture.completedFuture(SendMoneyResult.builder()
-            .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
-            .numRejectPackets(1)
-            .numFulfilledPackets(0)
-            .amountDelivered(UnsignedLong.ZERO)
-            .amountSent(UnsignedLong.ZERO)
-            .originalAmount(paymentTracker.getOriginalAmount())
-            .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
-            .successfulPayment(paymentTracker.successful())
-            .build());
+          .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
+          .numRejectPackets(1)
+          .numFulfilledPackets(0)
+          .amountDelivered(UnsignedLong.ZERO)
+          .amountSent(UnsignedLong.ZERO)
+          .originalAmount(paymentTracker.getOriginalAmount())
+          .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
+          .successfulPayment(paymentTracker.successful())
+          .amountAbandoned(paymentTracker.getAbandonedAmount())
+          .build());
       } catch (Exception e) {
         logger.warn("Preflight check failed", e);
       }
@@ -367,15 +368,16 @@ public class SimpleStreamSender implements StreamSender {
             // Do all the work of sending packetized money for this Stream/sendMoney request.
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
-                .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
-                .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
-                .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
-                .originalAmount(paymentTracker.getOriginalAmount())
-                .numFulfilledPackets(numFulfilledPackets.get())
-                .numRejectPackets(numRejectedPackets.get())
-                .sendMoneyDuration(Duration.between(start, DateUtils.now()))
-                .successfulPayment(paymentTracker.successful())
-                .build();
+              .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
+              .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
+              .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
+              .originalAmount(paymentTracker.getOriginalAmount())
+              .numFulfilledPackets(numFulfilledPackets.get())
+              .numRejectPackets(numRejectedPackets.get())
+              .sendMoneyDuration(Duration.between(start, DateUtils.now()))
+              .successfulPayment(paymentTracker.successful())
+              .amountAbandoned(paymentTracker.getAbandonedAmount())
+              .build();
           }, sendMoneyExecutor)
           .whenComplete(($, error) -> {
             sendMoneyExecutor.shutdown();
@@ -611,7 +613,6 @@ public class SimpleStreamSender implements StreamSender {
                       numRejectedPackets, congestionController)
               );
             } catch (Exception e) {
-              // FIXME we can't just simply roll back here; if we exceeded retries we need to just not send again
               logger.error("Link send failed. preparePacket={}", preparePacket, e);
               congestionController.reject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
                   .code(InterledgerErrorCode.F00_BAD_REQUEST)
@@ -620,9 +621,12 @@ public class SimpleStreamSender implements StreamSender {
                   )
                   .build());
 
-              if (!(e instanceof LinkRetriesExceededException)) {
+              if (e instanceof LinkRetriesExceededException) {
                 // if we attempted to retry too many times, we shouldn't roll back the amount; consider it lost due
                 // to exceeding the exponential backoff threshold
+                paymentTracker.abandon(prepareAmounts);
+              }
+              else {
                 paymentTracker.rollback(prepareAmounts, false);
               }
             }

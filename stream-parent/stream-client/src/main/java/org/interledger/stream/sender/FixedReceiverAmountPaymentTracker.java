@@ -31,6 +31,8 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   private final AtomicReference<UnsignedLong> sentAmount;
   // The amount, in receiver's units, that was actually delivered to the receiver.
   private final AtomicReference<UnsignedLong> deliveredAmount;
+  // The amount abandoned in the sender's units
+  private final AtomicReference<UnsignedLong> abandonedAmount;
 
   private final ExchangeRateCalculator rateCalculator;
 
@@ -61,6 +63,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
     amountLeftToDeliver = new AtomicReference<>(amountToDeliver);
     sentAmount = new AtomicReference<>(UnsignedLong.ZERO);
     deliveredAmount = new AtomicReference<>(UnsignedLong.ZERO);
+    abandonedAmount = new AtomicReference<>(UnsignedLong.ZERO);
   }
 
   @Override
@@ -86,6 +89,11 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   @Override
   public UnsignedLong getDeliveredAmountInReceiverUnits() {
     return deliveredAmount.get();
+  }
+
+  @Override
+  public UnsignedLong getAbandonedAmount() {
+    return abandonedAmount.get();
   }
 
   @Override
@@ -149,6 +157,14 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
       reduceAmountLeftToDeliver(overrage);
     }
     this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
+    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
+  }
+
+  @Override
+  public void abandon(PrepareAmounts prepareAmounts) {
+    Objects.requireNonNull(prepareAmounts);
+
+    this.abandonedAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
     this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
   }
 

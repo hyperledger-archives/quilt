@@ -357,6 +357,7 @@ public class SendMoneyAggregatorTest {
     when(tracker.getDeliveredAmountInSenderUnits()).thenReturn(UnsignedLong.ZERO);
     when(tracker.getOriginalAmount()).thenReturn(UnsignedLong.valueOf(10));
     when(tracker.getOriginalAmountLeft()).thenReturn(UnsignedLong.valueOf(10));
+    when(tracker.getAbandonedAmount()).thenReturn(UnsignedLong.ZERO);
     when(tracker.successful()).thenReturn(false);
 
     SendMoneyRequest request = SendMoneyRequest.builder()

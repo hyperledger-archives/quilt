@@ -327,6 +327,34 @@ public class SenderReceiverTest {
     assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
   }
 
+  /**
+   * Simulate a left-to-right STREAM with 90% packet loss due to T03 errors that fails due to exponential backoff logic
+   */
+  @Test
+  public void testSendFromLeftToRightWith100PercentLossFailsFromRetriesExceeded() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(2000);
+    final float rejectionPercentage = 1.0f;
+
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().packetRejectionPercentage(rejectionPercentage).build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    BackoffController backoffController = new DefaultBackoffController(Duration.ofMillis(10), 1.0, 1);
+    SimpleStreamSender sender = new SimpleStreamSender(
+      new JavaxStreamEncryptionService(), leftStreamNode.link(), SimpleStreamSender.newDefaultExecutor(),
+      new StreamConnectionManager(), backoffController
+    );
+    final SendMoneyResult sendMoneyResult = sendMoney(sender, leftStreamNode, rightStreamNode, paymentAmount);
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(sendMoneyResult.amountAbandoned()).isEqualTo(paymentAmount);
+
+    assertThat(sendMoneyResult.numFulfilledPackets()).isZero();
+    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
+  }
+
   @Test
   public void testSendFromLeftToRightWithSmallMaxPacketValueInNetwork() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
@@ -444,7 +472,7 @@ public class SenderReceiverTest {
         SimulatedPathConditions.builder().build()
     ));
 
-//    BackoffController backoffController = (link, prepare) -> link.sendPacket(prepare);
+    // arbitrarily high number of max attempts to ensure success
     BackoffController backoffController = new DefaultBackoffController(Duration.ofMillis(10), 1.0, 500);
     SimpleStreamSender sender = new SimpleStreamSender(
       new JavaxStreamEncryptionService(), leftStreamNode.link(), SimpleStreamSender.newDefaultExecutor(),

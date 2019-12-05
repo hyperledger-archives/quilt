@@ -51,6 +51,11 @@ public interface PaymentTracker<T extends SenderAmountMode> {
   UnsignedLong getDeliveredAmountInReceiverUnits();
 
   /**
+   * The amount abandoned due to failures that prevented successful pyament.
+   */
+  UnsignedLong getAbandonedAmount();
+
+  /**
    * Computes the values that should be used to Prepare a Stream packet, based upon the supplied inputs.
    *
    * @param congestionLimit      An {@link UnsignedLong} representing the number of units that the congestion controller
@@ -98,6 +103,13 @@ public interface PaymentTracker<T extends SenderAmountMode> {
   void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount);
 
   /**
+   * Abandon some amount of the payment due to failures that prevented the payment from being submitted successfully.
+   * @param prepareAmounts  A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
+   *                        individual Prepare request.
+   */
+  void abandon(PrepareAmounts prepareAmounts);
+
+  /**
    * Determine if there is more value to send for a given Stream Payment.
    *
    * @return {@code true} if there is still more value to send; {@code false}.
@@ -110,6 +122,6 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    * @return {@code true} if payment was successful; {@code false}.
    */
   default boolean successful() {
-    return !moreToSend();
+    return !moreToSend() && UnsignedLong.ZERO.equals(getAbandonedAmount());
   }
 }
