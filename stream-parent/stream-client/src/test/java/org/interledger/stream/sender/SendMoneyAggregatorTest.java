@@ -543,11 +543,13 @@ public class SendMoneyAggregatorTest {
     SendMoneyResult result = sendMoneyAggregator.send().get();
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
     assertThat(result)
-      .extracting("amountDelivered", "amountSent", "amountLeftToSend", "numFulfilledPackets",
+      .extracting("amountDelivered", "amountSent", "numFulfilledPackets",
         "successfulPayment")
-      .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, UnsignedLong.valueOf(9l), 1, false);
+      .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, 1, false);
     // depending on execution order, we may halt sooner than trying all 10 potential times
     assertThat(result.numRejectPackets()).isLessThanOrEqualTo(9);
+    // due to circle's slower build hosts, this number may be lower
+    assertThat(result.amountLeftToSend()).isLessThanOrEqualTo(UnsignedLong.valueOf(9L));
     verify(congestionControllerMock, atMost(11)).getMaxAmount();
     verify(linkMock, atMost(11)).sendPacket(any());
   }
