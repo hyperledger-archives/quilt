@@ -89,12 +89,19 @@ public class StatelessStreamReceiver implements StreamReceiver {
         .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
     final SharedSecret streamSharedSecret = SharedSecret.of(spspSharedSecret.key());
 
-    // Try to parse the STREAM data from the payload.
-    final byte[] streamPacketBytes = streamEncryptionService.decrypt(streamSharedSecret, preparePacket.getData());
     final StreamPacket streamPacket;
     try {
+      if (preparePacket.getData().length == 0) {
+        return InterledgerRejectPacket.builder()
+          .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
+          .message("No STREAM packet bytes available to decrypt")
+          .triggeredBy(receiverAddress)
+          .build();
+      }
+      // Try to parse the STREAM data from the payload.
+      final byte[] streamPacketBytes = streamEncryptionService.decrypt(streamSharedSecret, preparePacket.getData());
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.error(
           "Unable to decrypt packet. preparePacket={} receiverAddress={} error={}",
           preparePacket, receiverAddress, e

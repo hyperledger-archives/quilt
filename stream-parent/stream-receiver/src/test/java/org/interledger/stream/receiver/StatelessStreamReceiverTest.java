@@ -347,7 +347,35 @@ public class StatelessStreamReceiverTest {
   }
 
   @Test
-  public void receiveMoneyWithSequencTooHighForSafeEncryption() throws Exception {
+  public void receiveMoneyWithEmptyStreamPacketRejects() throws Exception {
+    this.connectionDetails = streamConnectionGenerator.generateConnectionDetails(serverSecretSupplier, CLIENT_ADDRESS);
+
+    streamReceiver = new StatelessStreamReceiver(
+      serverSecretSupplier, streamConnectionGenerator, streamEncryptionService, StreamCodecContextFactory.oer()
+    );
+
+    InterledgerPreparePacket prepare = InterledgerPreparePacket.builder()
+      .destination(connectionDetails.destinationAddress())
+      .amount(UnsignedLong.valueOf(100L))
+      .expiresAt(Instant.EPOCH)
+      .data(new byte[0])
+      .executionCondition(InterledgerCondition.of(new byte[32]))
+      .build();
+
+    this.streamReceiver.receiveMoney(prepare, CLIENT_ADDRESS, DENOMINATION).handle(
+      fulfillPacket -> {
+        throw new RuntimeException("should have rejected");
+      },
+      rejectPacket -> assertThat(rejectPacket).extracting("code", "message", "triggeredBy")
+        .containsExactly(
+          InterledgerErrorCode.F06_UNEXPECTED_PAYMENT,
+          "No STREAM packet bytes available to decrypt",
+          Optional.of(CLIENT_ADDRESS)
+        ));
+  }
+
+  @Test
+  public void receiveMoneyWithSequenceTooHighForSafeEncryption() throws Exception {
 
     streamReceiver = new StatelessStreamReceiver(
         serverSecretSupplier, streamConnectionGenerator, streamEncryptionService, StreamCodecContextFactory.oer()
