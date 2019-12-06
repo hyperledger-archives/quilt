@@ -94,7 +94,11 @@ public class IlpOverHttpLinkTest {
     mockCall(401);
     InterledgerResponsePacket responsePacket = link.sendPacket(packet);
     assertThat(responsePacket).extracting("code", "message")
-      .containsExactly(InterledgerErrorCode.F00_BAD_REQUEST, "{}");
+      .containsExactly(
+        InterledgerErrorCode.F00_BAD_REQUEST,
+        "Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer Token. response=Response{protocol=h2, " +
+          "code=401, message=stop asking me to set stuff, url=https://existentialcrisis.com/}"
+      );
   }
 
   @Test
@@ -102,7 +106,10 @@ public class IlpOverHttpLinkTest {
     mockCall(403);
     InterledgerResponsePacket responsePacket = link.sendPacket(packet);
     assertThat(responsePacket).extracting("code", "message")
-      .containsExactly(InterledgerErrorCode.F00_BAD_REQUEST, "{}");
+      .containsExactly(InterledgerErrorCode.F00_BAD_REQUEST,
+        "Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer Token. response=Response{protocol=h2, " +
+          "code=403, message=stop asking me to set stuff, url=https://existentialcrisis.com/}"
+      );
   }
 
   @Test

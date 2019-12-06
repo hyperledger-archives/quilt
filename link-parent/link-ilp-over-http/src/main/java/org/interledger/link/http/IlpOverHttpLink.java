@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * <p>An extension of {@link AbstractLink} that handles HTTP (aka, ILP over HTTP) connections, both incoming and
@@ -133,15 +134,27 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
         final InterledgerRejectPacket rejectPacket;
 
         if (response.code() >= 400 && response.code() < 500) {
+          String customErrorMessage = null;
           if (response.code() == 401 || response.code() == 403) {
             // If this code is returned, we know the Link is misconfigured
-            logger.error("Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer Token. response={}", response);
+            customErrorMessage = String.format("Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer " +
+              "Token. response=%s", response);
+            logger.error(customErrorMessage);
           }
+
+          String message = Stream.of(
+            customErrorMessage,
+            problem.map(Problem::getTitle).orElse(null),
+            errorResponseBody
+          )
+          .filter(Objects::nonNull)
+          .findFirst()
+          .get();
           // The request was bad for some reason, likely due to whatever is in the packet.
           rejectPacket = InterledgerRejectPacket.builder()
               .triggeredBy(getOperatorAddressSupplier().get())
               .code(InterledgerErrorCode.F00_BAD_REQUEST)
-              .message(problem.map(Problem::getTitle).orElse(errorResponseBody))
+              .message(message)
               .build();
         } else {
           // Something else went wrong on the server...try again later.
