@@ -5,10 +5,10 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
 
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Check;
 
 import java.time.Duration;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 @Immutable
 public interface SendMoneyRequest {
@@ -41,17 +41,20 @@ public interface SendMoneyRequest {
   InterledgerAddress destinationAddress();
 
   /**
-   * The amount of units to send. The denomination of this unit depends on the value of {@link #getSenderAmountMode()}.
+   * The amount of units to send.
    *
    * @return An {@link UnsignedLong} containing the amount of this payment.
    */
   UnsignedLong amount();
 
   /**
+   * @deprecated ascertained via the type of payment tracker used for sending.
    * Returns the {@link SenderAmountMode} for this payment tracker.
    *
    * @return A {@link SenderAmountMode} that indicates the meaning of {@link #amount()}.
    */
+  @Deprecated
+  @Nullable
   SenderAmountMode getSenderAmountMode();
 
   /**
@@ -81,15 +84,12 @@ public interface SendMoneyRequest {
   PaymentTracker<SenderAmountMode> paymentTracker();
 
   /**
-   * Ensures that this request's SenderAmountMode is compatible with {@link PaymentTracker#getOriginalAmountMode()}.
+   * @deprecated no longer performs a check on compatible SenderAmountMode since payment tracker is the authority
    *
-   * @return {@code true} if the SenderAmountMode is compatible with the PaymentTracker; {@code false} otherwise.
+   * @return this instance
    */
-  @Check
+  @Deprecated
   default SendMoneyRequest check() {
-    if (this.paymentTracker().getOriginalAmountMode() != this.getSenderAmountMode()) {
-      throw new IllegalStateException("PaymentTracker is not compatible with this SenderAmountMode");
-    }
     return this;
   }
 }

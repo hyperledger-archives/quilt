@@ -13,31 +13,22 @@ import org.interledger.link.http.IlpOverHttpLinkSettings.AuthType;
 import org.interledger.link.http.IncomingLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
-import org.interledger.quilt.jackson.InterledgerModule;
-import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.spsp.client.rust.Account;
-import org.interledger.spsp.client.rust.ImmutableAccount;
+import org.interledger.spsp.client.SimpleSpspClient;
+import org.interledger.spsp.client.SpspClientDefaults;
+import org.interledger.spsp.client.rust.ImmutableRustNodeAccount;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
+import org.interledger.spsp.client.rust.RustNodeAccount;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoExchangeRateException;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.primitives.UnsignedLong;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import okhttp3.ConnectionPool;
@@ -54,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.zalando.problem.ProblemModule;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -102,7 +92,7 @@ public class SimpleStreamSenderIT {
       .withEnv("REDIS_URL", "redis://redis:6379");
 
   @Rule
-  public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/node")
+  public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/ilp-node")
       .withExposedPorts(7770)
       .withNetwork(network)
       //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
@@ -115,33 +105,30 @@ public class SimpleStreamSenderIT {
       );
   private Link link;
   private InterledgerRustNodeClient nodeClient;
-
-  private static ObjectMapper objectMapperForTesting() {
-    final ObjectMapper objectMapper = JsonMapper.builder()
-        .enable(JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS)
-        .build()
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule())
-        .registerModule(new GuavaModule())
-        .registerModule(new ProblemModule())
-        .registerModule(new InterledgerModule(Encoding.BASE64)
-        );
-
-    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-    objectMapper.configure(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN, true);
-
-    return objectMapper;
-  }
+  private SimpleSpspClient spspClient;
 
   @Before
   public void setUp() throws IOException {
     OkHttpClient httpClient = this.constructOkHttpClient();
 
-    String interledgerNodeBaseUri = this.getInterledgerBaseUri();
-    this.nodeClient = new InterledgerRustNodeClient(httpClient,
+    final HttpUrl interledgerNodeBaseUrl = this.getInterledgerBaseUri();
+    this.nodeClient = new InterledgerRustNodeClient(
+        httpClient,
         AUTH_TOKEN,
-        interledgerNodeBaseUri,
-        (pointer) -> interledgerNodeBaseUri + pointer.path());
+        interledgerNodeBaseUrl
+    );
+
+    this.spspClient = new SimpleSpspClient(
+        httpClient,
+        (pointer) -> {
+          String pointerPath = pointer.path();
+          if (pointerPath.startsWith("/")) {
+            pointerPath = pointerPath.substring(1);
+          }
+          return interledgerNodeBaseUrl.newBuilder().addPathSegments(pointerPath).build();
+        },
+        SpspClientDefaults.MAPPER
+    );
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -151,7 +138,7 @@ public class SimpleStreamSenderIT {
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
             .tokenSubject(SENDER_ACCOUNT_USERNAME)
-            .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
+            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
             .encryptedTokenSharedSecret(AUTH_TOKEN)
             .build())
         .build();
@@ -160,13 +147,13 @@ public class SimpleStreamSenderIT {
         () -> SENDER_ADDRESS,
         linkSettings,
         httpClient,
-        objectMapperForTesting(),
+        SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),
-        new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + AUTH_TOKEN)
+        () -> AUTH_TOKEN
     );
     link.setLinkId(LinkId.of(LINK_ID));
 
-    Account sender = accountBuilder()
+    RustNodeAccount sender = accountBuilder()
         .username(SENDER_ACCOUNT_USERNAME)
         .ilpAddress(SENDER_ADDRESS)
         .build();
@@ -192,7 +179,6 @@ public class SimpleStreamSenderIT {
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -227,7 +213,6 @@ public class SimpleStreamSenderIT {
             .sourceAddress(SENDER_ADDRESS)
             .amount(paymentAmount)
             .denomination(Denominations.XRP)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .destinationAddress(connectionDetails.destinationAddress())
             .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .sharedSecret(connectionDetails.sharedSecret())
@@ -267,7 +252,6 @@ public class SimpleStreamSenderIT {
               .sourceAddress(SENDER_ADDRESS)
               .amount(paymentAmount)
               .denomination(Denominations.XRP)
-              .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
               .destinationAddress(connectionDetails.destinationAddress())
               .sharedSecret(connectionDetails.sharedSecret())
               .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
@@ -328,7 +312,6 @@ public class SimpleStreamSenderIT {
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
             .amount(paymentAmount)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())
             .sharedSecret(connectionDetails.sharedSecret())
@@ -402,7 +385,7 @@ public class SimpleStreamSenderIT {
 
     String username = "sendMoneyHonorsTimeout";
     InterledgerAddress address = HOST_ADDRESS.with(username);
-    Account account = accountBuilder()
+    RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
         .maxPacketAmount(BigInteger.valueOf(100))
@@ -410,7 +393,7 @@ public class SimpleStreamSenderIT {
         .packetsPerMinuteLimit(BigInteger.valueOf(1))
         .build();
 
-    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
     final SendMoneyResult sendMoneyResult = streamSender
         .sendMoney(
@@ -418,7 +401,6 @@ public class SimpleStreamSenderIT {
                 .sourceAddress(SENDER_ADDRESS)
                 .amount(paymentAmount)
                 .denomination(Denominations.XRP)
-                .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
                 .destinationAddress(connectionDetails.destinationAddress())
                 .sharedSecret(connectionDetails.sharedSecret())
                 .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
@@ -441,7 +423,7 @@ public class SimpleStreamSenderIT {
 
     String username = "sendFailsIfNoExchangeRate";
     InterledgerAddress address = HOST_ADDRESS.with(username);
-    Account account = accountBuilder()
+    RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
         .maxPacketAmount(BigInteger.valueOf(100))
@@ -449,7 +431,7 @@ public class SimpleStreamSenderIT {
         .packetsPerMinuteLimit(BigInteger.valueOf(1))
         .build();
 
-    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
     ExchangeRateCalculator noExchangeRateExceptionCalculator = new CrankyExchangeRateCalculator();
 
@@ -457,7 +439,6 @@ public class SimpleStreamSenderIT {
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, noExchangeRateExceptionCalculator))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -479,18 +460,17 @@ public class SimpleStreamSenderIT {
 
     String username = "deliveredAmountRejected";
     InterledgerAddress address = HOST_ADDRESS.with(username);
-    Account account = accountBuilder()
+    RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
         .build();
 
-    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -510,18 +490,17 @@ public class SimpleStreamSenderIT {
 
     String username = "deliveredAmountRejected";
     InterledgerAddress address = HOST_ADDRESS.with(username);
-    Account account = accountBuilder()
+    RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
         .build();
 
-    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(account);
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sourceAddress(SENDER_ADDRESS)
         .amount(paymentAmount)
         .denomination(Denominations.XRP)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(connectionDetails.destinationAddress())
         .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new GreedyExchangeRateCalculator()))
         .sharedSecret(connectionDetails.sharedSecret())
@@ -536,7 +515,6 @@ public class SimpleStreamSenderIT {
   public void sendMoneyWithWrongLinkPassword() throws IOException {
     final String connectorAccountUsername = UUID.randomUUID().toString().replace("-", "");
 
-    final String interledgerNodeBaseUri = this.getInterledgerBaseUri();
     final OkHttpClient httpClient = this.constructOkHttpClient();
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingHttpLinkSettings(IncomingLinkSettings.builder()
@@ -546,7 +524,7 @@ public class SimpleStreamSenderIT {
         .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
             .authType(AuthType.SIMPLE)
             .tokenSubject(connectorAccountUsername)
-            .url(HttpUrl.parse(interledgerNodeBaseUri + "/ilp"))
+            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
             .encryptedTokenSharedSecret("wrong-password")
             .build())
         .build();
@@ -555,7 +533,7 @@ public class SimpleStreamSenderIT {
         () -> SENDER_ADDRESS,
         linkSettings,
         httpClient,
-        objectMapperForTesting(),
+        SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),
         new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + "wrong-password")
     );
@@ -578,7 +556,6 @@ public class SimpleStreamSenderIT {
             .destinationAddress(connectionDetails.destinationAddress())
             .amount(paymentAmount)
             .denomination(Denominations.XRP)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .sharedSecret(connectionDetails.sharedSecret())
             .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .timeout(Duration.ofMillis(100L))
@@ -598,15 +575,15 @@ public class SimpleStreamSenderIT {
         .build());
   }
 
-  private StreamConnectionDetails getStreamConnectionDetails(Account account) {
+  private StreamConnectionDetails getStreamConnectionDetails(RustNodeAccount rustNodeAccount) {
     try {
-      nodeClient.createAccount(account);
+      nodeClient.createAccount(rustNodeAccount);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
     }
     PaymentPointer pointer =
-        PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/accounts/" + account.username() + "/spsp");
-    return nodeClient.getStreamConnectionDetails(pointer);
+        PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/accounts/" + rustNodeAccount.username() + "/spsp");
+    return spspClient.getStreamConnectionDetails(pointer);
   }
 
   private SendMoneyResult sendMoney(UnsignedLong paymentAmount, int taskId, ThreadPoolExecutor executor) {
@@ -622,7 +599,6 @@ public class SimpleStreamSenderIT {
             .destinationAddress(connectionDetails.destinationAddress())
             .amount(paymentAmount)
             .denomination(Denominations.XRP)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .sharedSecret(connectionDetails.sharedSecret())
             .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
             .build()
@@ -636,19 +612,45 @@ public class SimpleStreamSenderIT {
     return sendMoneyResult;
   }
 
-  private ImmutableAccount.Builder accountBuilder() {
-    return Account.builder()
+  private ImmutableRustNodeAccount.Builder accountBuilder() {
+    return RustNodeAccount.builder()
         .httpIncomingToken(AUTH_TOKEN)
         .httpOutgoingToken(AUTH_TOKEN)
         .assetCode("XRP")
         .assetScale(6)
         .minBalance(new BigInteger("-10000000000"))
         .roundTripTime(new BigInteger("500"))
-        .routingRelation(Account.RoutingRelation.PEER);
+        .routingRelation(RustNodeAccount.RoutingRelation.PEER);
   }
 
-  private String getInterledgerBaseUri() {
-    return "http://" + interledgerNode.getContainerIpAddress() + ":" + interledgerNode.getFirstMappedPort();
+  /**
+   * Helper method to return the base URL for the Rust Connector.
+   *
+   * @return An {@link HttpUrl} to communicate with.
+   */
+  private HttpUrl getInterledgerBaseUri() {
+    return new HttpUrl.Builder()
+        .scheme("http")
+        .host(interledgerNode.getContainerIpAddress())
+        .port(interledgerNode.getFirstMappedPort())
+        .build();
+  }
+
+  /**
+   * Helper method to construct the ILP-over-HTTP endpoint method for a given account in the Rust Connector.
+   *
+   * @param accountId The account identifier to send ILP packets to.
+   *
+   * @return An {@link HttpUrl} to use with ILP-over-HTTP using {@code accountId}.
+   *
+   * @see "https://github.com/interledger-rs/interledger-rs/pull/553"
+   */
+  private HttpUrl constructIlpOverHttpUrl(final String accountId) {
+    return getInterledgerBaseUri().newBuilder()
+        .addPathSegment("accounts")
+        .addPathSegment(accountId)
+        .addPathSegment("ilp")
+        .build();
   }
 
   private OkHttpClient constructOkHttpClient() {

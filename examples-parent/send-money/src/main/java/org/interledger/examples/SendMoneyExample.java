@@ -13,11 +13,12 @@ import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
+import org.interledger.spsp.client.SimpleSpspClient;
+import org.interledger.spsp.client.SpspClient;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 
@@ -39,11 +40,11 @@ import java.util.concurrent.TimeUnit;
 public class SendMoneyExample {
 
   // NOTE - replace this with the username for your sender account
-  private static final String SENDER_ACCOUNT_USERNAME = "user_ju7z53sh";
+  private static final String SENDER_ACCOUNT_USERNAME = "user_9wgfsfte";
   // NOTE - replace this with the passkey for your sender account
-  private static final String SENDER_PASS_KEY = "lzjtsi4ny5f09";
+  private static final String SENDER_PASS_KEY = "w6uwvg42ogktl";
   // NOTE - replace this with the payment pointer for your receiver account
-  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_f5zfkf4a/spsp";
+  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_e8zprn59/spsp";
 
   private static final String TESTNET_URI = "https://rs3.xpring.dev";
 
@@ -51,8 +52,10 @@ public class SendMoneyExample {
       InterledgerAddress.of("test.xpring-dev.rs3").with(SENDER_ACCOUNT_USERNAME);
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
-    // Create SPSP client
-    InterledgerRustNodeClient spspClient =
+    SpspClient spspClient = new SimpleSpspClient();
+
+    // Create rust client
+    InterledgerRustNodeClient rustClient =
         new InterledgerRustNodeClient(newHttpClient(), SENDER_ACCOUNT_USERNAME + ":" + SENDER_PASS_KEY, TESTNET_URI);
 
     // Fetch shared secret and destination address using SPSP client
@@ -65,13 +68,12 @@ public class SendMoneyExample {
     // Create SimpleStreamSender for sending STREAM payments
     SimpleStreamSender simpleStreamSender = new SimpleStreamSender(link);
 
-    System.out.println("Starting balance for sender: " + spspClient.getBalance(SENDER_ACCOUNT_USERNAME));
+    System.out.println("Starting balance for sender: " + rustClient.getBalance(SENDER_ACCOUNT_USERNAME));
 
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .amount(UnsignedLong.valueOf(100000))
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())
@@ -82,7 +84,7 @@ public class SendMoneyExample {
     ).get();
 
     System.out.println("Send money result: " + result);
-    System.out.println("Ending balance for sender: " + spspClient.getBalance(SENDER_ACCOUNT_USERNAME));
+    System.out.println("Ending balance for sender: " + rustClient.getBalance(SENDER_ACCOUNT_USERNAME));
   }
 
   private static Link newIlpOverHttpLink() {

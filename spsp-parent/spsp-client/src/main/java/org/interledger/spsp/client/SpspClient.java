@@ -3,6 +3,8 @@ package org.interledger.spsp.client;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 
+import okhttp3.HttpUrl;
+
 /**
  * Client operations related to SPSP.
  *
@@ -22,5 +24,17 @@ public interface SpspClient {
    */
   StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
       throws InvalidReceiverClientException;
+
+  /**
+   * Calls SPSP endpoint to obtain address and secret needed to setup a payment (for the given SPSP url).
+   * Typically used for setting up a STREAM connection.
+   * @see "https://github.com/interledger/rfcs/blob/master/0009-simple-payment-setup-protocol/0009-simple-payment-setup-protocol.md#query-get-spsp-endpoint"
+   * @param spspUrl url for the SPSP account endpoint
+   * @return stream connection details
+   * @throws InvalidReceiverClientException thrown if the payment pointer does not point to a valid account
+   */
+  StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl)
+      throws InvalidReceiverClientException;
+
 
 }

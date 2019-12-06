@@ -12,12 +12,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
-import org.interledger.spsp.PaymentPointer;
-import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.spsp.client.InvalidReceiverClientException;
-import org.interledger.spsp.client.SpspClient;
-import org.interledger.spsp.client.SpspClientException;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import okhttp3.OkHttpClient;
@@ -39,8 +33,7 @@ public class InterledgerRustNodeClientTest {
 
   @Before
   public void setup() {
-    client = new InterledgerRustNodeClient(new OkHttpClient(), "passwordin", wireMockRule.baseUrl(),
-        (pointer) -> wireMockRule.baseUrl() + "/spsp" + pointer.path());
+    client = new InterledgerRustNodeClient(new OkHttpClient(), "passwordin", wireMockRule.baseUrl());
   }
 
   @Test
@@ -66,7 +59,7 @@ public class InterledgerRustNodeClientTest {
             .withBody(accountBody)
         ));
 
-    client.createAccount(Account.builder()
+    client.createAccount(RustNodeAccount.builder()
         .ilpAddress(InterledgerAddress.of("test.xpring-dev.rs1").with(testClient))
         .username(testClient)
         .assetCode("XRP")
@@ -78,67 +71,12 @@ public class InterledgerRustNodeClientTest {
         .httpEndpoint(new URI("https://foo.com"))
         .btpUri(new URI("btp+ws://foo.com:8000"))
         .roundTripTime(new BigInteger("500"))
-        .routingRelation(Account.RoutingRelation.PEER)
+        .routingRelation(RustNodeAccount.RoutingRelation.PEER)
         .build()
     );
 
     verify(postRequestedFor(urlMatching("/accounts"))
         .withRequestBody(equalTo(accountBody)));
-  }
-
-  @Test
-  public void getStreamConnectionDetails() {
-    String testClient = "testClient";
-    String sharedSecret = "Nf9wCXI1OZLM/QIWdZZ2Q39limh6+Yxhm/FB1bUpZLA=";
-
-    stubFor(get(urlEqualTo("/spsp/" + testClient))
-        .withHeader("Authorization", equalTo("Bearer passwordin"))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_SPSP_JSON))
-
-        .willReturn(aResponse()
-            .withStatus(200)
-            .withBody("{\"destination_account\":\"test.xpring-dev.rs1." + testClient + "\","
-                + "\"shared_secret\":\"" + sharedSecret + "\"}")
-        ));
-
-    StreamConnectionDetails response =
-        client.getStreamConnectionDetails(PaymentPointer.of("$test.xpring-dev.rs1/" + testClient));
-
-    assertThat(response)
-        .isEqualTo(StreamConnectionDetails.builder()
-            .destinationAddress(InterledgerAddress.of("test.xpring-dev.rs1." + testClient))
-            .sharedSecret(SharedSecret.of(sharedSecret))
-            .build());
-  }
-
-  @Test(expected = InvalidReceiverClientException.class)
-  public void getStreamConnectionDetails404ThrowsInvalidReceiver() {
-    String testClient = "testClient";
-
-    stubFor(get(urlEqualTo("/spsp/" + testClient))
-        .withHeader("Authorization", equalTo("Bearer passwordin"))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_SPSP_JSON))
-
-        .willReturn(aResponse()
-            .withStatus(404)
-        ));
-
-    client.getStreamConnectionDetails(PaymentPointer.of("$test.xpring-dev.rs1/" + testClient));
-  }
-
-  @Test(expected = SpspClientException.class)
-  public void getStreamConnectionDetails500ThrowsSpspClientException() {
-    String testClient = "testClient";
-
-    stubFor(get(urlEqualTo("/spsp/" + testClient))
-        .withHeader("Authorization", equalTo("Bearer passwordin"))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_SPSP_JSON))
-
-        .willReturn(aResponse()
-            .withStatus(503)
-        ));
-
-    client.getStreamConnectionDetails(PaymentPointer.of("$test.xpring-dev.rs1/" + testClient));
   }
 
   @Test

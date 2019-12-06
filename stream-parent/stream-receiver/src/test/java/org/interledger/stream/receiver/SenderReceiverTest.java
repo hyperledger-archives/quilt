@@ -1,8 +1,6 @@
 package org.interledger.stream.receiver;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.SenderAmountMode.RECEIVER_AMOUNT;
-import static org.interledger.stream.SenderAmountMode.SENDER_AMOUNT;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
@@ -141,7 +139,6 @@ public class SenderReceiverTest {
         SendMoneyRequest.builder()
             .sourceAddress(leftStreamNode.senderAddress())
             .amount(amountToDeliver)
-            .senderAmountMode(RECEIVER_AMOUNT)
             .denomination(leftStreamNode.denomination())
             .destinationAddress(connectionDetails.destinationAddress())
             .sharedSecret(connectionDetails.sharedSecret())
@@ -182,7 +179,6 @@ public class SenderReceiverTest {
         SendMoneyRequest.builder()
             .sharedSecret(connectionDetails.sharedSecret())
             .amount(paymentAmount)
-            .senderAmountMode(RECEIVER_AMOUNT)
             .denomination(leftStreamNode.denomination())
             .destinationAddress(connectionDetails.destinationAddress())
             .sourceAddress(leftStreamNode.senderAddress())
@@ -224,7 +220,6 @@ public class SenderReceiverTest {
         SendMoneyRequest.builder()
             .sourceAddress(leftStreamNode.senderAddress())
             .amount(paymentAmount)
-            .senderAmountMode(RECEIVER_AMOUNT)
             .denomination(leftStreamNode.denomination())
             .destinationAddress(connectionDetails.destinationAddress())
             .sharedSecret(connectionDetails.sharedSecret())
@@ -253,7 +248,6 @@ public class SenderReceiverTest {
         SendMoneyRequest.builder()
             .sourceAddress(rightStreamNode.senderAddress())
             .amount(paymentAmount)
-            .senderAmountMode(SENDER_AMOUNT)
             .denomination(rightStreamNode.denomination())
             .destinationAddress(connectionDetails.destinationAddress())
             .sharedSecret(connectionDetails.sharedSecret())
@@ -424,7 +418,6 @@ public class SenderReceiverTest {
         SendMoneyRequest.builder()
             .sourceAddress(fromNode.senderAddress())
             .amount(paymentAmount)
-            .senderAmountMode(SENDER_AMOUNT)
             .denomination(fromNode.denomination())
             .destinationAddress(connectionDetails.destinationAddress())
             .sharedSecret(connectionDetails.sharedSecret())
