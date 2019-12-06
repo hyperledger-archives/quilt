@@ -20,7 +20,6 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
-import org.interledger.link.exceptions.LinkException;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PaymentTracker;
 import org.interledger.stream.PrepareAmounts;
@@ -435,25 +434,13 @@ public class SimpleStreamSender implements StreamSender {
      */
     @VisibleForTesting
     protected InterledgerResponsePacket sendPacketAndCheckForFailure(InterledgerPreparePacket preparePacket) {
-      try {
-        InterledgerResponsePacket response = link.sendPacket(preparePacket);
-        response.handle((fulfill) -> {}, (reject) -> {
-          if (reject.getCode().equals(F00_BAD_REQUEST)) {
-            unrecoverableErrorEncountered.set(true);
-          }
-        });
-        return response;
-      }
-      catch (Exception e) {
-        if (e instanceof LinkException) {
-          ((LinkException) e).getResponseStatusCode().ifPresent(s -> {
-            if (s >= 400 && s < 500) {
-              unrecoverableErrorEncountered.set(true);
-            }
-          });
+      InterledgerResponsePacket response = link.sendPacket(preparePacket);
+      response.handle((fulfill) -> {}, (reject) -> {
+        if (reject.getCode().equals(F00_BAD_REQUEST)) {
+          unrecoverableErrorEncountered.set(true);
         }
-        throw e;
-      }
+      });
+      return response;
     }
 
     private void sendMoneyPacketized() {

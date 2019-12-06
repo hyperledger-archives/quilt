@@ -22,8 +22,6 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
-import org.interledger.link.LinkId;
-import org.interledger.link.exceptions.LinkException;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.PaymentTracker;
@@ -459,19 +457,6 @@ public class SendMoneyAggregatorTest {
     when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
     sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
-    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
-  }
-
-  @Test
-  public void sendPacketAndCheckForFailureMarksUnrecoverableForLinkExceptionWithStatus() {
-    when(linkMock.sendPacket(any())).thenThrow(new LinkException("troll toll", LinkId.of("thenightman"), 401));
-    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
-    try {
-      sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
-    }
-    catch (Exception e) {
-      assertThat(e).isInstanceOf(LinkException.class).extracting("responseStatusCode").isEqualTo(Optional.of(401));
-    }
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
   }
 
