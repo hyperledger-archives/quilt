@@ -28,7 +28,7 @@ public class SimpleSpspClientTest {
   @Before
   public void setUp() {
     client = new SimpleSpspClient(SpspClientDefaults.OK_HTTP_CLIENT,
-        (pointer) -> wireMockRule.baseUrl() + pointer.path(),
+        (pointer) -> HttpUrl.parse(wireMockRule.baseUrl() + pointer.path()),
         SpspClientDefaults.MAPPER);
   }
 
