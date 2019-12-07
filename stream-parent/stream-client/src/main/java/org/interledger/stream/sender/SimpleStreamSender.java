@@ -1,5 +1,6 @@
 package org.interledger.stream.sender;
 
+import static org.interledger.core.InterledgerErrorCode.F00_BAD_REQUEST;
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
 import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
@@ -62,7 +63,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -249,6 +249,8 @@ public class SimpleStreamSender implements StreamSender {
 
     private Optional<Denomination> receiverDenomination;
 
+    private final AtomicBoolean unrecoverableErrorEncountered;
+
     /**
      * Required-args Constructor.
      *
@@ -294,6 +296,8 @@ public class SimpleStreamSender implements StreamSender {
       this.paymentTracker = request.paymentTracker();
 
       this.receiverDenomination = Optional.empty();
+
+      this.unrecoverableErrorEncountered = new AtomicBoolean(false);
     }
 
     /**
@@ -408,7 +412,7 @@ public class SimpleStreamSender implements StreamSender {
           .data(streamPacketData)
           .build();
 
-      InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+      InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
 
       final Function<InterledgerResponsePacket, Optional<Denomination>> readDetails = (p) -> {
         final StreamPacket packet = this.fromEncrypted(sharedSecret, p.getData());
@@ -420,6 +424,23 @@ public class SimpleStreamSender implements StreamSender {
       };
 
       return responsePacket.map(readDetails::apply, readDetails::apply);
+    }
+
+    /**
+     * Send the packet but check to see if an error in the HTTP 4XX range was encountered so that we know if we
+     * should stop retrying
+     * @param preparePacket
+     * @return the returned response packet
+     */
+    @VisibleForTesting
+    protected InterledgerResponsePacket sendPacketAndCheckForFailure(InterledgerPreparePacket preparePacket) {
+      InterledgerResponsePacket response = link.sendPacket(preparePacket);
+      response.handle((fulfill) -> {}, (reject) -> {
+        if (reject.getCode().equals(F00_BAD_REQUEST)) {
+          unrecoverableErrorEncountered.set(true);
+        }
+      });
+      return response;
     }
 
     private void sendMoneyPacketized() {
@@ -446,7 +467,7 @@ public class SimpleStreamSender implements StreamSender {
         UnsignedLong amountToSend = amounts.getAmountToSend();
         UnsignedLong receiverMinimum = amounts.getMinimumAmountToAccept();
 
-        if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get()) {
+        if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get() || unrecoverableErrorEncountered.get()) {
           try {
             // Don't send any more, but wait a bit for outstanding requests to complete so we don't cycle needlessly in
             // a while loop that doesn't do anything useful.
@@ -547,7 +568,7 @@ public class SimpleStreamSender implements StreamSender {
         executorService.submit(() -> {
           if (!timeoutReached.get()) {
             try {
-              InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+              InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
               responsePacket.handle(
                   fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
                   rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts,
@@ -586,8 +607,12 @@ public class SimpleStreamSender implements StreamSender {
       //   the connection is not closed
       //   and you haven't delivered the full amount
       //   and you haven't timed out
+      //   and you're not trying to send to much
+      //   and we haven't hit an unrecoverable error
       return this.congestionController.hasInFlight()
-          || (!streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached && !tryingToSendTooMuch);
+          || (
+            !streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached && !tryingToSendTooMuch &&
+              !unrecoverableErrorEncountered.get());
     }
 
     /**
@@ -740,6 +765,11 @@ public class SimpleStreamSender implements StreamSender {
           break;
         }
       }
+    }
+
+    @VisibleForTesting
+    protected boolean isUnrecoverableErrorEncountered() {
+      return this.unrecoverableErrorEncountered.get();
     }
 
     ///**
