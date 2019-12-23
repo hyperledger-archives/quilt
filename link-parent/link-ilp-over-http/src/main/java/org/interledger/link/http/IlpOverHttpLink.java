@@ -193,11 +193,10 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
       .orElseGet(() -> {
         logger.warn("Falling back to deprecated means of loading outgoing settings. " +
           "Please switch to using outgoingLinkSettings() instead");
-        return this.getLinkSettings().outgoingHttpLinkSettings();
+        return this.getLinkSettings().outgoingLinkSettings().get();
       });
-    final String tokenSubject = outgoingLinkSettings.tokenSubject();
-    try {
 
+    try {
       final Request okHttpRequest = this.constructSendPacketRequest(UNFULFILLABLE_PACKET);
 
       try (Response response = okHttpClient.newCall(okHttpRequest).execute()) {
@@ -211,26 +210,26 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
               .isPresent();
 
           if (responseHasOctetStreamContentType) {
-            logger.info("Remote peer-link supports ILP-over-HTTP. tokenSubject={} url={} responseHeaders={}",
-                outgoingLinkSettings.tokenSubject(), outgoingLinkSettings.url(), response
+            logger.info("Remote peer-link supports ILP-over-HTTP. authType={} url={} responseHeaders={}",
+                outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
             );
           } else {
-            logger.warn("Remote peer-link supports ILP-over-HTTP but uses wrong ContentType. tokenSubject={} url={} "
+            logger.warn("Remote peer-link supports ILP-over-HTTP but uses wrong ContentType. authType={} url={} "
                     + "response={}",
-                outgoingLinkSettings.tokenSubject(), outgoingLinkSettings.url(), response
+                outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
             );
           }
         } else {
           if (response.code() == 406 || response.code() == 415) { // NOT_ACCEPTABLE || UNSUPPORTED_MEDIA_TYPE
             throw new LinkException(
-                String.format("Remote peer-link DOES NOT support ILP-over-HTTP. tokenSubject=%s url=%s response=%s",
-                    tokenSubject, outgoingLinkSettings.url(), response
+                String.format("Remote peer-link DOES NOT support ILP-over-HTTP. authType=%s url=%s response=%s",
+                    outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
                 ), getLinkId()
             );
           } else {
             throw new LinkException(
-                String.format("Unable to connect to ILP-over-HTTP. tokenSubject=%s url=%s response=%s",
-                    tokenSubject, outgoingLinkSettings.url(), response
+                String.format("Unable to connect to ILP-over-HTTP. authType=%s url=%s response=%s",
+                    outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
                 ), getLinkId()
             );
           }
@@ -303,7 +302,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
       .orElseGet(() -> {
         logger.warn("Falling back to deprecated means of loading outgoing settings. " +
           "Please switch to using outgoingLinkSettings() instead");
-        return this.getLinkSettings().outgoingHttpLinkSettings();
+        return this.getLinkSettings().outgoingLinkSettings().get();
       });
 
     try {

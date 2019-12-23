@@ -12,6 +12,7 @@ import org.interledger.link.http.IlpOverHttpLinkSettings;
 import org.interledger.link.http.IlpOverHttpLinkSettings.AuthType;
 import org.interledger.link.http.IncomingLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
+import org.interledger.link.http.SimpleAuthSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
@@ -37,6 +38,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.assertj.core.data.Offset;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -95,10 +97,10 @@ public class SimpleStreamSenderIT {
   public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/ilp-node")
       .withExposedPorts(7770)
       .withNetwork(network)
-      //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
-      .withEnv("ILP_REDIS_URL", "redis://redis:6379")
+      .withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
       .withCommand(""
           + "--admin_auth_token " + AUTH_TOKEN + " "
+          + "--database_url redis://redis:6379 "
           + "--ilp_address " + HOST_ADDRESS.getValue() + " "
           + "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d "
           + "--http_bind_address 0.0.0.0:7770"
@@ -131,15 +133,9 @@ public class SimpleStreamSenderIT {
     );
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingHttpLinkSettings(IncomingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .encryptedTokenSharedSecret(AUTH_TOKEN)
-            .build())
-        .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .tokenSubject(SENDER_ACCOUNT_USERNAME)
+        .outgoingLinkSettings(OutgoingLinkSettings.builder()
+            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(AUTH_TOKEN))
             .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
-            .encryptedTokenSharedSecret(AUTH_TOKEN)
             .build())
         .build();
 
@@ -517,15 +513,12 @@ public class SimpleStreamSenderIT {
 
     final OkHttpClient httpClient = this.constructOkHttpClient();
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingHttpLinkSettings(IncomingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .encryptedTokenSharedSecret(AUTH_TOKEN)
+        .incomingLinkSettings(IncomingLinkSettings.builder()
+            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(AUTH_TOKEN))
             .build())
-        .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .tokenSubject(connectorAccountUsername)
+        .outgoingLinkSettings(OutgoingLinkSettings.builder()
+            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(("wrong-password")))
             .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
-            .encryptedTokenSharedSecret("wrong-password")
             .build())
         .build();
 

@@ -1,6 +1,7 @@
 package org.interledger.link.http.auth;
 
 import org.interledger.core.DateUtils;
+import org.interledger.link.http.JwtAuthSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
 
 import com.auth0.jwt.JWT;
@@ -17,6 +18,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -57,10 +59,7 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
         // There should only ever be 1 or 2 tokens in-memory for a given client instance.
         .maximumSize(3)
         // Expire after this duration, which will correspond to the last incoming request from the peer.
-        .expireAfterAccess(
-            this.outgoingLinkSettings.tokenExpiry().orElse(Duration.of(30, ChronoUnit.MINUTES)).toMinutes(),
-            TimeUnit.MINUTES
-        )
+        .expireAfterAccess(getExpiryInMinutes(Duration.of(30, ChronoUnit.MINUTES)))
         .removalListener((RemovalListener<String, String>) notification ->
             logger.debug("Removing IlpOverHttp AuthToken from Cache for Principal: {}", notification.getKey())
         )
@@ -77,12 +76,10 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
                   //        .map(HttpUrl::toString)
                   //        .orElseThrow(() -> new RuntimeException("JWT Blast Senders require an Outgoing Issuer!"))
                   //      )
-                  .withSubject(outgoingLinkSettings.tokenSubject()) // account identifier at the remote server.
+                  .withSubject(outgoingLinkSettings.jwtAuthSettings().get().tokenSubject()) // account identifier at the remote server.
                   // Expire at the appointed time, or else after 15 minutes.
                   .withExpiresAt(
-                      JwtHs256BearerTokenSupplier.this.outgoingLinkSettings.tokenExpiry()
-                      .map(expiry -> Date.from(DateUtils.now().plus(expiry)))
-                      .orElseGet(() -> Date.from(DateUtils.now().plus(15, ChronoUnit.MINUTES)))
+                      Date.from(DateUtils.now().plus(getExpiryInMinutes(Duration.of(15, ChronoUnit.MINUTES))))
                   )
                   .sign(Algorithm.HMAC256(sharedSecretBytes));
             } finally {
@@ -91,6 +88,14 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
             }
           }
         });
+  }
+
+  private Duration getExpiryInMinutes(Duration defaultExpiry) {
+    return this.outgoingLinkSettings.jwtAuthSettings()
+        .map(JwtAuthSettings::tokenExpiry)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .orElse(defaultExpiry);
   }
 
   /**
@@ -102,7 +107,7 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
   @Override
   public String get() {
     try {
-      return this.ilpOverHttpAuthTokens.get(outgoingLinkSettings.tokenSubject());
+      return this.ilpOverHttpAuthTokens.get(outgoingLinkSettings.jwtAuthSettings().get().tokenSubject());
     } catch (ExecutionException e) {
       throw new RuntimeException(e);
     }

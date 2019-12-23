@@ -159,7 +159,7 @@ public class IlpOverHttpLinkTest {
     mockCall(406);
     expectedException.expect(LinkException.class);
     expectedException.expectMessage("Remote peer-link DOES NOT support ILP-over-HTTP. "
-        + "tokenSubject=null "
+        + "authType=null "
         + "url=https://cannotspellsurgerywithouturges.com/ "
         + "response=Response{"
         + "protocol=h2, "
@@ -175,7 +175,7 @@ public class IlpOverHttpLinkTest {
     mockCall(415);
     expectedException.expect(LinkException.class);
     expectedException.expectMessage("Remote peer-link DOES NOT support ILP-over-HTTP. "
-        + "tokenSubject=null "
+        + "authType=null "
         + "url=https://cannotspellsurgerywithouturges.com/ "
         + "response=Response{"
         + "protocol=h2, "
@@ -191,7 +191,7 @@ public class IlpOverHttpLinkTest {
     mockCall(422);
     expectedException.expect(LinkException.class);
     expectedException.expectMessage("Unable to connect to ILP-over-HTTP. "
-        + "tokenSubject=null "
+        + "authType=null "
         + "url=https://cannotspellsurgerywithouturges.com/ "
         + "response=Response{"
         + "protocol=h2, "

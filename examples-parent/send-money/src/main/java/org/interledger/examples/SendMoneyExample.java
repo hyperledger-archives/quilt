@@ -10,6 +10,7 @@ import org.interledger.link.http.IlpOverHttpLink;
 import org.interledger.link.http.IlpOverHttpLinkSettings;
 import org.interledger.link.http.IncomingLinkSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
+import org.interledger.link.http.SimpleAuthSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
@@ -90,15 +91,10 @@ public class SendMoneyExample {
   private static Link newIlpOverHttpLink() {
     String sharedSecret = "some random secret here";
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingLinkSettings(IncomingLinkSettings.builder()
-            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-            .encryptedTokenSharedSecret(sharedSecret)
-            .build())
         .outgoingLinkSettings(OutgoingLinkSettings.builder()
             .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-            .tokenSubject(SENDER_ACCOUNT_USERNAME)
-            .url(HttpUrl.parse(TESTNET_URI + "/ilp"))
-            .encryptedTokenSharedSecret(sharedSecret)
+            .url(HttpUrl.parse(TESTNET_URI + "/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp"))
+            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(sharedSecret))
             .build())
         .build();
 

@@ -1,10 +1,12 @@
 package org.interledger.link.http;
 
-import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TYPE;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TOKEN;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.ILP_OVER_HTTP;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.JWT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.OUTGOING;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.SHARED_SECRET;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.SIMPLE;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_AUDIENCE;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_EXPIRY;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_ISSUER;
@@ -20,16 +22,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
+@Value.Immutable
+@Modifiable
+public interface OutgoingLinkSettings {
 
-  String HTTP_OUTGOING_AUTH_TYPE = ILP_OVER_HTTP + DOT + OUTGOING + DOT + AUTH_TYPE;
+  String HTTP_OUTGOING_TOKEN_ISSUER = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_ISSUER;
+  String HTTP_OUTGOING_TOKEN_AUDIENCE = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_AUDIENCE;
+  String HTTP_OUTGOING_TOKEN_SUBJECT = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_SUBJECT;
+  String HTTP_OUTGOING_TOKEN_EXPIRY = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_EXPIRY;
+  String HTTP_OUTGOING_SHARED_SECRET = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + SHARED_SECRET;
 
-  String HTTP_OUTGOING_TOKEN_ISSUER = ILP_OVER_HTTP + DOT + OUTGOING + DOT + TOKEN_ISSUER;
-  String HTTP_OUTGOING_TOKEN_AUDIENCE = ILP_OVER_HTTP + DOT + OUTGOING + DOT + TOKEN_AUDIENCE;
-  String HTTP_OUTGOING_TOKEN_SUBJECT = ILP_OVER_HTTP + DOT + OUTGOING + DOT + TOKEN_SUBJECT;
-  String HTTP_OUTGOING_TOKEN_EXPIRY = ILP_OVER_HTTP + DOT + OUTGOING + DOT + TOKEN_EXPIRY;
-
-  String HTTP_OUTGOING_SHARED_SECRET = ILP_OVER_HTTP + DOT + OUTGOING + DOT + SHARED_SECRET;
+  String HTTP_OUTGOING_SIMPLE_AUTH_TOKEN = ILP_OVER_HTTP + DOT + OUTGOING + DOT + SIMPLE + DOT + AUTH_TOKEN;
   String HTTP_OUTGOING_URL = ILP_OVER_HTTP + DOT + OUTGOING + DOT + URL;
 
   static ImmutableOutgoingLinkSettings.Builder builder() {
@@ -37,10 +40,38 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
   }
 
   /**
-   * Constructs a new builder with the correct custom settings, as found in {@code customSettings}.
+   * Constructs a new builder with the correct custom settings, as found in {@code customSettings}. Custom settings
+   * are expected to follow 1 of the following sets of properties.
+   * <p>
+   *   Simple
+   * </p>
+   * <pre>
+   *   "ilpOverHttp.outgoing.simple.auth_token": "password",
+   *   "ilpOverHttp.outgoing.url": "http://java1.connector.com/accounts/foo/ilp"
+   * </pre>
+   *
+   * <p>
+   *   JWT (using HS256)
+   * </p>
+   * <pre>
+   *   "ilpOverHttp.incoming.jwt.shared_secret": "some-key-used-for-symmetric-encryption",
+   *   "ilpOverHttp.outgoing.jwt.subject": "foo@them",
+   *   "ilpOverHttp.outgoing.jwt.expiryDuration":  "pt30m",
+   *   "ilpOverHttp.outgoing.url": "http://java1.connector.com/accounts/foo/ilp"
+   * </pre>
+   *
+   * <p>
+   *   JWT (using RS256)
+   * </p>
+   * <pre>
+   *   "ilpOverHttp.outgoing.jwt.issuer": "http://me.example.com",
+   *   "ilpOverHttp.outgoing.jwt.audience": "https://me.example.com",
+   *   "ilpOverHttp.outgoing.jwt.subject": "foo@me",
+   *   "ilpOverHttp.outgoing.jwt.expiryDuration": "pt500s",
+   *   "ilpOverHttp.outgoing.url": "http://java1.connector.com/accounts/foo/ilp"
+   * </pre>
    *
    * @param customSettings A {@link Map} of custom settings to apply.
-   *
    * @return A {@link ImmutableOutgoingLinkSettings.Builder} with applied custom settings.
    */
   static ImmutableOutgoingLinkSettings.Builder fromCustomSettings(Map<String, Object> customSettings) {
@@ -52,9 +83,8 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
   /**
    * Populate a supplied builder with the correct custom settings, as found in {@code customSettings}.
    *
-   * @param builder        A {@link ImmutableIncomingLinkSettings.Builder} to apply custom settings to.
+   * @param builder        A {@link ImmutableOutgoingLinkSettings.Builder} to apply custom settings to.
    * @param customSettings A {@link Map} of custom settings to apply.
-   *
    * @return A {@link ImmutableOutgoingLinkSettings.Builder} with applied custom settings.
    */
   static ImmutableOutgoingLinkSettings.Builder applyCustomSettings(
@@ -63,112 +93,60 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
     Objects.requireNonNull(builder);
     Objects.requireNonNull(customSettings);
 
-    // When loaded from a properties file, the properties are hierarchical in a Map. However, in Java, they are not, so
-    // consider both options. Generally only one will be present, but if for some reason both are present, the String
-    // values will win.
-    Optional.ofNullable(customSettings.get(ILP_OVER_HTTP))
-        .map(val -> (Map<String, Object>) val)
-        .ifPresent(blastSettings -> {
+    Optional.ofNullable(LinkSettingsUtils.flattenSettings(customSettings))
+        .ifPresent(settings ->
+            LinkSettingsUtils.getAuthType(settings)
+                .ifPresent((authType) -> {
+                  Optional.of(settings.get(HTTP_OUTGOING_URL))
+                      .map(Object::toString)
+                      .map(HttpUrl::parse)
+                      .ifPresent(builder::url);
 
-          Optional.ofNullable(blastSettings.get(OUTGOING))
-              .map(val -> (Map<String, Object>) val)
-              .ifPresent(outgoingSettings -> {
+                  if (authType == IlpOverHttpLinkSettings.AuthType.JWT) {
+                    ImmutableJwtAuthSettings.Builder authSettingsBuilder = JwtAuthSettings.builder();
 
-                Optional.ofNullable(outgoingSettings.get(TOKEN_SUBJECT))
-                    .map(Object::toString)
-                    .ifPresent(builder::tokenSubject);
-
-                Optional.ofNullable(outgoingSettings.get(AUTH_TYPE))
-                  .map(Object::toString)
-                  .map(String::toUpperCase)
-                  .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-                  .ifPresent((authType) -> {
-                    builder.authType(authType);
-
-                    if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
-                      Optional.ofNullable(outgoingSettings.get(TOKEN_ISSUER))
+                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_ISSUER))
                         .map(Object::toString)
                         .map(HttpUrl::parse)
-                        .ifPresent(builder::tokenIssuer);
-
-                      Optional.ofNullable(outgoingSettings.get(TOKEN_AUDIENCE))
+                        .ifPresent(authSettingsBuilder::tokenIssuer);
+                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
                         .map(Object::toString)
                         .map(HttpUrl::parse)
-                        .ifPresent(builder::tokenAudience);
-                    }
-                  });
-
-                Optional.ofNullable(outgoingSettings.get(SHARED_SECRET))
-                    .map(Object::toString)
-                    .ifPresent(builder::encryptedTokenSharedSecret);
-
-                Optional.ofNullable(outgoingSettings.get(TOKEN_EXPIRY))
-                    .map(Object::toString)
-                    .map(Duration::parse)
-                    .ifPresent(builder::tokenExpiry);
-
-                Optional.ofNullable(outgoingSettings.get(URL))
-                    .map(Object::toString)
-                    .map(HttpUrl::parse)
-                    .ifPresent(builder::url);
-
-              });
-        });
-
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_AUTH_TYPE))
-      .map(Object::toString)
-      .map(String::toUpperCase)
-      .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-      .ifPresent((authType) -> {
-        builder.authType(authType);
-        if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
-          Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_ISSUER))
-            .map(Object::toString)
-            .map(HttpUrl::parse)
-            .ifPresent(builder::tokenIssuer);
-
-          Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
-            .map(Object::toString)
-            .map(HttpUrl::parse)
-            .ifPresent(builder::tokenAudience);
-        }
-      });
-
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_SUBJECT))
-        .map(Object::toString)
-        .ifPresent(builder::tokenSubject);
-
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_SHARED_SECRET))
-        .map(Object::toString)
-        .ifPresent(builder::encryptedTokenSharedSecret);
-
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_TOKEN_EXPIRY))
-        .map(Object::toString)
-        .map(Duration::parse)
-        .ifPresent(builder::tokenExpiry);
-
-    Optional.ofNullable(customSettings.get(HTTP_OUTGOING_URL))
-        .map(Object::toString)
-        .map(HttpUrl::parse)
-        .ifPresent(builder::url);
+                        .ifPresent(authSettingsBuilder::tokenAudience);
+                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_SUBJECT))
+                        .map(Object::toString)
+                        .ifPresent(authSettingsBuilder::tokenSubject);
+                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_EXPIRY))
+                        .map(Object::toString)
+                        .map(Duration::parse)
+                        .ifPresent(authSettingsBuilder::tokenExpiry);
+                    Optional.ofNullable(settings.get(HTTP_OUTGOING_SHARED_SECRET))
+                        .map(Object::toString)
+                        .ifPresent(authSettingsBuilder::encryptedTokenSharedSecret);
+                    builder.jwtAuthSettings(authSettingsBuilder.build());
+                  } else {
+                    builder.simpleAuthSettings(
+                        SimpleAuthSettings.forAuthToken(settings.get(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN).toString()));
+                  }
+                })
+        );
 
     return builder;
   }
 
   /**
-   * The expected `sub` value of an ILP-over-HTTP authentication token. This values identifies the principal that the
-   * token is authenticating.
+   * Auth settings if using SIMPLE scheme.
    *
-   * @return A {@link String} with the token subject.
+   * @return settings
    */
-  String tokenSubject();
+  Optional<SimpleAuthSettings> simpleAuthSettings();
 
   /**
-   * If present, determines how often to sign a new token for auth. Optional to support the shared-secret use-case.
+   * Auth settings if using JWT scheme.
    *
-   * @return An optionally present {@link Duration} representing the token expiry.
+   * @return settings
    */
-  Optional<Duration> tokenExpiry();
+  Optional<JwtAuthSettings> jwtAuthSettings();
 
   /**
    * endpoint to POST packets to. If url contains a percent and the link is in `multi` mode, then the segment after this
@@ -178,13 +156,22 @@ public interface OutgoingLinkSettings extends SharedSecretTokenSettings {
    */
   HttpUrl url();
 
-  @Value.Immutable
-  @Modifiable
-  abstract class AbstractOutgoingLinkSettings implements OutgoingLinkSettings {
-
-    @Override
-    @Value.Redacted
-    public abstract String encryptedTokenSharedSecret();
-
+  /**
+   * The type of Auth to support for outgoing HTTP connections.
+   *
+   * @return A {@link IlpOverHttpLinkSettings.AuthType} for this shared secret token settings.
+   */
+  @Value.Default
+  default IlpOverHttpLinkSettings.AuthType authType() {
+    if (simpleAuthSettings().isPresent()) {
+      return IlpOverHttpLinkSettings.AuthType.SIMPLE;
+    }
+    else if (jwtAuthSettings().isPresent()) {
+      return  IlpOverHttpLinkSettings.AuthType.JWT;
+    }
+    else {
+      return null;
+    }
   }
+
 }

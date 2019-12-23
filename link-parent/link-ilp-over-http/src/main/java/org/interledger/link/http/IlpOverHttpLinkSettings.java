@@ -22,8 +22,8 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
 
   String OUTGOING = "outgoing";
   String INCOMING = "incoming";
-
-  String AUTH_TYPE = "auth_type";
+  String SIMPLE = "simple";
+  String JWT = "jwt";
 
   String TOKEN_ISSUER = "token_issuer";
   String TOKEN_AUDIENCE = "token_audience";
@@ -32,6 +32,7 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
 
   // Used to grab the auth credential from custom settings...
   String SHARED_SECRET = "shared_secret";
+  String AUTH_TOKEN = "auth_token";
   String URL = "url";
 
   static ImmutableIlpOverHttpLinkSettings.Builder builder() {
@@ -74,10 +75,6 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     ImmutableOutgoingLinkSettings outgoing = outgoingLinkSettingsBuilder.build();
     builder.outgoingLinkSettings(outgoing);
 
-    // FIXME initialize in deprecated as well until removed
-    builder.incomingHttpLinkSettings(incoming);
-    builder.outgoingHttpLinkSettings(outgoing);
-
     builder.customSettings(customSettings);
 
     return builder;
@@ -87,26 +84,6 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
   default LinkType getLinkType() {
     return IlpOverHttpLink.LINK_TYPE;
   }
-
-  /**
-   * @deprecated use {@link #incomingLinkSettings()}. To be removed in 1.0.4
-   * Link settings for the incoming HTTP link.
-   *
-   * @return A {@link IncomingLinkSettings}.
-   */
-  @Deprecated
-  @Nullable
-  IncomingLinkSettings incomingHttpLinkSettings();
-
-  /**
-   * @deprecated use {@link #outgoingLinkSettings()}. To be removed in 1.0.4
-   * Link settings for the outgoing HTTP link.
-   *
-   * @return A {@link OutgoingLinkSettings}.
-   */
-  @Deprecated
-  @Nullable
-  OutgoingLinkSettings outgoingHttpLinkSettings();
 
   /**
    * Optional link settings for the incoming HTTP link.
@@ -135,14 +112,9 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     SIMPLE,
 
     /**
-     * Use shared-secret symmetric keys to create and verify JWT_HS_256 tokens.
+     * Use JWTs to autheticate using RS256 or HS256
      */
-    JWT_HS_256,
-
-    /**
-     * Use RSA asymmetric keys to create aand verify JWT_RS_256 tokens.
-     */
-    //JWT_RS_256
+    JWT
   }
 
   @Value.Immutable

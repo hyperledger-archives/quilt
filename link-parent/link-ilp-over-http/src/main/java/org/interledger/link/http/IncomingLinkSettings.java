@@ -1,12 +1,15 @@
 package org.interledger.link.http;
 
-import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TYPE;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TOKEN;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.ILP_OVER_HTTP;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.INCOMING;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.JWT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.SHARED_SECRET;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.SIMPLE;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_AUDIENCE;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_ISSUER;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_SUBJECT;
 
 import okhttp3.HttpUrl;
 import org.immutables.value.Value;
@@ -23,22 +26,50 @@ import java.util.Optional;
  * purposefully does not define a `sub` claim because the `accountId` for any given account should always be used
  * instead for verification purposes.
  */
-public interface IncomingLinkSettings extends SharedSecretTokenSettings {
+@Value.Immutable
+@Modifiable
+public interface IncomingLinkSettings {
 
-  String HTTP_INCOMING_AUTH_TYPE = ILP_OVER_HTTP + DOT + INCOMING + DOT + AUTH_TYPE;
-
-  String HTTP_INCOMING_TOKEN_ISSUER = ILP_OVER_HTTP + DOT + INCOMING + DOT + TOKEN_ISSUER;
-  String HTTP_INCOMING_TOKEN_AUDIENCE = ILP_OVER_HTTP + DOT + INCOMING + DOT + TOKEN_AUDIENCE;
-  String HTTP_INCOMING_SHARED_SECRET = ILP_OVER_HTTP + DOT + INCOMING + DOT + SHARED_SECRET;
+  String INCOMING_JWT_SETINGS_PREFIX = ILP_OVER_HTTP + DOT + INCOMING + DOT + JWT;
+  String INCOMING_SIMPLE_SETINGS_PREFIX = ILP_OVER_HTTP + DOT + INCOMING + DOT + SIMPLE;
+  String HTTP_INCOMING_TOKEN_ISSUER = INCOMING_JWT_SETINGS_PREFIX + DOT + TOKEN_ISSUER;
+  String HTTP_INCOMING_TOKEN_AUDIENCE = INCOMING_JWT_SETINGS_PREFIX + DOT + TOKEN_AUDIENCE;
+  String HTTP_INCOMING_SHARED_SECRET = INCOMING_JWT_SETINGS_PREFIX + DOT + SHARED_SECRET;
+  String HTTP_INCOMING_TOKEN_SUBJECT = INCOMING_JWT_SETINGS_PREFIX + DOT + TOKEN_SUBJECT;
+  String HTTP_INCOMING_SIMPLE_AUTH_TOKEN = INCOMING_SIMPLE_SETINGS_PREFIX + DOT + AUTH_TOKEN;
 
   static ImmutableIncomingLinkSettings.Builder builder() {
     return ImmutableIncomingLinkSettings.builder();
   }
 
   /**
-   * Constructs a new builder with the correct custom settings, as found in {@code customSettings}.
+   * Constructs a new builder with the correct custom settings, as found in {@code customSettings}. Custom settings
+   * are expected to follow 1 of the following sets of properties.
+   * <p>
+   *   Simple
+   * </p>
+   * <pre>
+   *   "ilpOverHttp.incoming.simple.auth_token": "password"
+   * </pre>
    *
-   * @param customSettings A {@link Map} of custom settings to apply.
+   * <p>
+   *   JWT (using HS256)
+   * </p>
+   * <pre>
+   *   "ilpOverHttp.incoming.jwt.shared_secret": "some-key-used-for-symmetric-encryption",
+   *   "ilpOverHttp.incoming.jwt.subject": "foo@me"
+   * </pre>
+   *
+   * <p>
+   *   JWT (using RS256)
+   * </p>
+   * <pre>
+   *   "ilpOverHttp.incoming.jwt.issuer": "http://them.example.com",
+   *   "ilpOverHttp.incoming.jwt.audience": "https://me.example.com",
+   *   "ilpOverHttp.incoming.jwt.subject": "foo@me"
+   * </pre>
+   *
+   * * @param customSettings A {@link Map} of custom settings to apply.
    *
    * @return A {@link ImmutableIncomingLinkSettings.Builder} with applied custom settings.
    */
@@ -62,64 +93,34 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
     Objects.requireNonNull(builder);
     Objects.requireNonNull(customSettings);
 
-    // When loaded from a properties file, the properties are hierarchical in a Map. However, in Java, they are not, so
-    // consider both options. Generally only one will be present, but if for some reason both are present, the String
-    // values will win.
-    Optional.ofNullable(customSettings.get(ILP_OVER_HTTP))
-        .map(val -> (Map<String, Object>) val)
-        .ifPresent(blastSettings -> Optional.ofNullable(blastSettings.get(INCOMING))
-            .map(val -> (Map<String, Object>) val)
-            .ifPresent(incomingSettings -> {
-
-              Optional.ofNullable(incomingSettings.get(AUTH_TYPE))
-                  .map(Object::toString)
-                  .map(String::toUpperCase)
-                  .map(IlpOverHttpLinkSettings.AuthType::valueOf)
+    Optional.ofNullable(LinkSettingsUtils.flattenSettings(customSettings))
+        .ifPresent(settings ->
+              LinkSettingsUtils.getAuthType(settings)
                   .ifPresent((authType) -> {
-                    builder.authType(authType);
-
-                    if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
-                      Optional.ofNullable(incomingSettings.get(TOKEN_ISSUER))
+                    if (authType == IlpOverHttpLinkSettings.AuthType.JWT) {
+                      ImmutableJwtAuthSettings.Builder authSettingsBuilder = JwtAuthSettings.builder();
+                      Optional.ofNullable(settings.get(HTTP_INCOMING_TOKEN_ISSUER))
                           .map(Object::toString)
                           .map(HttpUrl::parse)
-                          .ifPresent(builder::tokenIssuer);
-
-                      Optional.ofNullable(incomingSettings.get(TOKEN_AUDIENCE))
+                          .ifPresent(authSettingsBuilder::tokenIssuer);
+                      Optional.ofNullable(settings.get(HTTP_INCOMING_TOKEN_AUDIENCE))
                           .map(Object::toString)
                           .map(HttpUrl::parse)
-                          .ifPresent(builder::tokenAudience);
+                          .ifPresent(authSettingsBuilder::tokenAudience);
+                      Optional.ofNullable(settings.get(HTTP_INCOMING_TOKEN_SUBJECT))
+                          .map(Object::toString)
+                          .ifPresent(authSettingsBuilder::tokenSubject);
+                      Optional.ofNullable(settings.get(HTTP_INCOMING_SHARED_SECRET))
+                          .map(Object::toString)
+                          .ifPresent(authSettingsBuilder::encryptedTokenSharedSecret);
+                      builder.jwtAuthSettings(authSettingsBuilder.build());
                     }
-                  });
-
-              Optional.ofNullable(incomingSettings.get(SHARED_SECRET))
-                  .map(Object::toString)
-                  .ifPresent(builder::encryptedTokenSharedSecret);
-
-            }));
-
-    Optional.ofNullable(customSettings.get(HTTP_INCOMING_AUTH_TYPE))
-        .map(Object::toString)
-        .map(String::toUpperCase)
-        .map(IlpOverHttpLinkSettings.AuthType::valueOf)
-        .ifPresent((authType) -> {
-          builder.authType(authType);
-
-          if (authType != IlpOverHttpLinkSettings.AuthType.SIMPLE) {
-            Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_ISSUER))
-                .map(Object::toString)
-                .map(HttpUrl::parse)
-                .ifPresent(builder::tokenIssuer);
-
-            Optional.ofNullable(customSettings.get(HTTP_INCOMING_TOKEN_AUDIENCE))
-                .map(Object::toString)
-                .map(HttpUrl::parse)
-                .ifPresent(builder::tokenAudience);
-          }
-        });
-
-    Optional.ofNullable(customSettings.get(HTTP_INCOMING_SHARED_SECRET))
-        .map(Object::toString)
-        .ifPresent(builder::encryptedTokenSharedSecret);
+                    else {
+                      builder.simpleAuthSettings(
+                          SimpleAuthSettings.forAuthToken(settings.get(HTTP_INCOMING_SIMPLE_AUTH_TOKEN).toString()));
+                    }
+                  })
+            );
 
     return builder;
   }
@@ -133,23 +134,41 @@ public interface IncomingLinkSettings extends SharedSecretTokenSettings {
    *
    * @return A {@link Duration}.
    */
+  @Value.Default
   default Duration getMinMessageWindow() {
     return Duration.of(2500, ChronoUnit.MILLIS);
   }
 
-  @Value.Immutable
-  @Modifiable
-  abstract class AbstractIncomingLinkSettings implements IncomingLinkSettings {
-
-    @Override
-    @Value.Default
-    public Duration getMinMessageWindow() {
-      return Duration.of(2500, ChronoUnit.MILLIS);
+  /**
+   * The type of Auth to support for outgoing HTTP connections.
+   *
+   * @return A {@link IlpOverHttpLinkSettings.AuthType} for this shared secret token settings.
+   */
+  @Value.Default
+  default IlpOverHttpLinkSettings.AuthType authType() {
+    if (simpleAuthSettings().isPresent()) {
+      return IlpOverHttpLinkSettings.AuthType.SIMPLE;
     }
-
-    @Override
-    @Value.Redacted
-    public abstract String encryptedTokenSharedSecret();
-
+    else if (jwtAuthSettings().isPresent()) {
+      return  IlpOverHttpLinkSettings.AuthType.JWT;
+    }
+    else {
+      return null;
+    }
   }
+
+  /**
+   * Auth settings if using SIMPLE scheme.
+   *
+   * @return settings
+   */
+  Optional<SimpleAuthSettings> simpleAuthSettings();
+
+  /**
+   * Auth settings if using JWT scheme.
+   *
+   * @return settings
+   */
+  Optional<JwtAuthSettings> jwtAuthSettings();
+
 }

@@ -85,13 +85,13 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
       .orElseGet(() -> {
         logger.warn("Falling back to deprecated means of loading outgoing settings. " +
           "Please switch to using outgoingLinkSettings() instead");
-        return ilpOverHttpLinkSettings.outgoingHttpLinkSettings();
+        return ilpOverHttpLinkSettings.outgoingLinkSettings().get();
       });
     if (outgoingLinkSettings.authType().equals(IlpOverHttpLinkSettings.AuthType.SIMPLE)) {
       // Decrypt whatever is inside of the encryptedTokenSharedSecret. For the SIMPLE profile, this will decrypt to the
       // actual bearer token.
       bearerTokenSupplier = new SimpleBearerTokenSupplier(new String(
-        decryptor.decrypt(outgoingLinkSettings.encryptedTokenSharedSecret().getBytes())
+        decryptor.decrypt(outgoingLinkSettings.simpleAuthSettings().get().authToken().getBytes())
       ));
     } else {
       // TODO: For now, we assume the bytes are a String that conform to the Crypt CLI. However, this should be made
@@ -101,7 +101,7 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
       // NOTE: This supplier will always create a copy of the decrypted bytes so that the consumer of each call can
       // safely wipe the bytes from memory without affecting other callers.
       final SharedSecretBytesSupplier sharedSecretSupplier = () -> decryptor
-        .decrypt(outgoingLinkSettings.encryptedTokenSharedSecret().getBytes());
+        .decrypt(outgoingLinkSettings.jwtAuthSettings().get().encryptedTokenSharedSecret().get().getBytes());
 
       bearerTokenSupplier = new JwtHs256BearerTokenSupplier(
         sharedSecretSupplier, outgoingLinkSettings
