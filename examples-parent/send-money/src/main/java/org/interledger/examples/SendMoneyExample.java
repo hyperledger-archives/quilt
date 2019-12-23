@@ -20,6 +20,7 @@ import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
+import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 
@@ -75,6 +76,7 @@ public class SendMoneyExample {
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
+            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .amount(UnsignedLong.valueOf(100000))
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())
@@ -92,9 +94,9 @@ public class SendMoneyExample {
     String sharedSecret = "some random secret here";
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .outgoingLinkSettings(OutgoingLinkSettings.builder()
-            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-            .url(HttpUrl.parse(TESTNET_URI + "/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp"))
             .simpleAuthSettings(SimpleAuthSettings.forAuthToken(sharedSecret))
+//             .url(HttpUrl.parse(TESTNET_URI + "/ilp")) // new simple auth uri not yet deployed to testnet
+            .url(HttpUrl.parse(TESTNET_URI + "/ilp")) // old simple auth uri
             .build())
         .build();
 
