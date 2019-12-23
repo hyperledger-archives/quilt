@@ -10,7 +10,6 @@ import org.immutables.value.Value.Modifiable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * An extension of {@link LinkSettings} for ILP-over-HTTP links.
