@@ -59,7 +59,7 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
         // There should only ever be 1 or 2 tokens in-memory for a given client instance.
         .maximumSize(3)
         // Expire after this duration, which will correspond to the last incoming request from the peer.
-        .expireAfterAccess(getExpiryInMinutes(Duration.of(30, ChronoUnit.MINUTES)))
+        .expireAfterAccess(getExpiryInMinutes(Duration.of(30, ChronoUnit.MINUTES)).toMinutes(), TimeUnit.MINUTES)
         .removalListener((RemovalListener<String, String>) notification ->
             logger.debug("Removing IlpOverHttp AuthToken from Cache for Principal: {}", notification.getKey())
         )
