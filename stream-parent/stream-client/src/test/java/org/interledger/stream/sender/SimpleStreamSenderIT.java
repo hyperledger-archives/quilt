@@ -96,7 +96,7 @@ public class SimpleStreamSenderIT {
   public GenericContainer interledgerNode = new GenericContainer<>("interledgerrs/ilp-node")
       .withExposedPorts(7770)
       .withNetwork(network)
-      .withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
+      //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
       .withCommand(""
           + "--admin_auth_token " + AUTH_TOKEN + " "
           + "--database_url redis://redis:6379 "
