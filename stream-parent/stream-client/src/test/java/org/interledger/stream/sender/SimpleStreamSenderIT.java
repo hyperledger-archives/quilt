@@ -38,7 +38,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.assertj.core.data.Offset;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -134,6 +133,7 @@ public class SimpleStreamSenderIT {
 
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .outgoingLinkSettings(OutgoingLinkSettings.builder()
+            .authType(AuthType.SIMPLE)
             .simpleAuthSettings(SimpleAuthSettings.forAuthToken(AUTH_TOKEN))
             .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
             .build())
@@ -514,9 +514,11 @@ public class SimpleStreamSenderIT {
     final OkHttpClient httpClient = this.constructOkHttpClient();
     final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
         .incomingLinkSettings(IncomingLinkSettings.builder()
+            .authType(AuthType.SIMPLE)
             .simpleAuthSettings(SimpleAuthSettings.forAuthToken(AUTH_TOKEN))
             .build())
         .outgoingLinkSettings(OutgoingLinkSettings.builder()
+            .authType(AuthType.SIMPLE)
             .simpleAuthSettings(SimpleAuthSettings.forAuthToken(("wrong-password")))
             .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
             .build())

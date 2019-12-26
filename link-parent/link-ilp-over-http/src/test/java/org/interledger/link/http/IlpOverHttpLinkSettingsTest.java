@@ -36,6 +36,8 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(outgoingSimpleSettings.authToken()).isEqualTo("outgoing-secret");
     assertThat(ilpOverHttpLinkSettings.outgoingLinkSettings().get().url())
         .isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
+
+    assertThat(ilpOverHttpLinkSettings.toCustomSettingsMap()).isEqualTo(flattenedCustomSettings);
   }
 
   /**
@@ -43,11 +45,11 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
    */
   @Test
   public void applyCustomSettingsSimpleWithMapHeirarchy() {
-    final Map<String, Object> flattenedCustomSettings = this.customSettingsSimpleHierarchical();
+    final Map<String, Object> hierchicalSettings = this.customSettingsSimpleHierarchical();
 
     final ImmutableIlpOverHttpLinkSettings.Builder builder = IlpOverHttpLinkSettings.builder();
     final IlpOverHttpLinkSettings ilpOverHttpLinkSettings =
-        IlpOverHttpLinkSettings.applyCustomSettings(builder, flattenedCustomSettings).build();
+        IlpOverHttpLinkSettings.applyCustomSettings(builder, hierchicalSettings).build();
 
     assertThat(ilpOverHttpLinkSettings.incomingLinkSettings().get().authType())
         .isEqualTo(IlpOverHttpLinkSettings.AuthType.SIMPLE);
@@ -60,6 +62,9 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(outgoingSimpleSettings.authToken()).isEqualTo("outgoing-secret");
     assertThat(ilpOverHttpLinkSettings.outgoingLinkSettings().get().url())
         .isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
+
+    assertThat(ilpOverHttpLinkSettings.toCustomSettingsMap())
+        .isEqualTo(LinkSettingsUtils.flattenSettings(hierchicalSettings));
   }
 
   /**
@@ -67,14 +72,15 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
    */
   @Test
   public void applyCustomSettingsJwtWithFlatDottedNotation() {
-    final Map<String, Object> flattenedCustomSettings = this.customSettingsJwtFlat();
+    final Map<String, Object> flattenedCustomSettings =
+        this.customSettingsJwtFlat(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
 
     final ImmutableIlpOverHttpLinkSettings.Builder builder = IlpOverHttpLinkSettings.builder();
     final IlpOverHttpLinkSettings ilpOverHttpLinkSettings =
         IlpOverHttpLinkSettings.applyCustomSettings(builder, flattenedCustomSettings).build();
 
     assertThat(ilpOverHttpLinkSettings.incomingLinkSettings().get().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT);
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     JwtAuthSettings incomingJwtSettings = ilpOverHttpLinkSettings.incomingLinkSettings().get().jwtAuthSettings().get();
     assertThat(incomingJwtSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
@@ -88,7 +94,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(ilpOverHttpLinkSettings.incomingLinkSettings().get().getMinMessageWindow())
         .isEqualTo(Duration.ofMillis(2500));
     assertThat(ilpOverHttpLinkSettings.outgoingLinkSettings().get().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT);
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(outgoingJwtSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(outgoingJwtSettings.tokenAudience().get())
@@ -100,6 +106,8 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
       .isEqualTo(Duration.ofHours(24));
     assertThat(ilpOverHttpLinkSettings.outgoingLinkSettings().get().url())
         .isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
+
+    assertThat(ilpOverHttpLinkSettings.toCustomSettingsMap()).isEqualTo(flattenedCustomSettings);
   }
 
   /**
@@ -107,42 +115,49 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
    */
   @Test
   public void applyCustomSettingsJwtWithMapHeirarchy() {
-    final Map<String, Object> customSettings = this.customSettingsJwtHierarchical();
+    final Map<String, Object> customSettings =
+        this.customSettingsJwtFlat(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+
 
     final ImmutableIlpOverHttpLinkSettings.Builder builder = IlpOverHttpLinkSettings.builder();
     final ImmutableIlpOverHttpLinkSettings httpLinkSettings =
         IlpOverHttpLinkSettings.applyCustomSettings(builder, customSettings).build();
 
     assertThat(httpLinkSettings.incomingLinkSettings().get().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT);
-    assertThat(httpLinkSettings.incomingLinkSettings().get().jwtAuthSettings().get().tokenIssuer().get())
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+    JwtAuthSettings incomingJwtAuthSettings = httpLinkSettings.incomingLinkSettings().get().jwtAuthSettings().get();
+    assertThat(incomingJwtAuthSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
-    assertThat(httpLinkSettings.incomingLinkSettings().get().jwtAuthSettings().get().tokenAudience().get())
+    assertThat(incomingJwtAuthSettings.tokenAudience().get())
         .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
-    assertThat(httpLinkSettings.incomingLinkSettings().get().jwtAuthSettings().get().encryptedTokenSharedSecret())
+    assertThat(incomingJwtAuthSettings.encryptedTokenSharedSecret())
         .isEqualTo(Optional.of("incoming-credential"));
     assertThat(httpLinkSettings.incomingLinkSettings().get().getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
 
     assertThat(httpLinkSettings.outgoingLinkSettings().get().authType())
-        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT);
-    assertThat(httpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get().tokenIssuer().get())
+        .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
+    JwtAuthSettings outgoingJwtAuthSettings = httpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get();
+    assertThat(outgoingJwtAuthSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
-    assertThat(httpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get().tokenAudience().get())
+    assertThat(outgoingJwtAuthSettings.tokenAudience().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-audience.example.com/"));
-    assertThat(httpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get().tokenSubject()).isEqualTo("outgoing-subject");
-    assertThat(httpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get().encryptedTokenSharedSecret())
+    assertThat(outgoingJwtAuthSettings.tokenSubject()).isEqualTo("outgoing-subject");
+    assertThat(outgoingJwtAuthSettings.encryptedTokenSharedSecret())
         .isEqualTo(Optional.of("outgoing-credential"));
-    assertThat(httpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get().tokenExpiry().get()).isEqualTo(Duration.ofHours(48));
+    assertThat(outgoingJwtAuthSettings.tokenExpiry().get()).isEqualTo(Duration.ofHours(24));
     assertThat(httpLinkSettings.outgoingLinkSettings().get().url())
         .isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
+
+    assertThat(httpLinkSettings.toCustomSettingsMap())
+        .isEqualTo(LinkSettingsUtils.flattenSettings(customSettings));
   }
 
   @Test
   public void testWithoutCustomSettings() {
     final IncomingLinkSettings incomingLinksettings =
         IncomingLinkSettings.builder()
-            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
             .minMessageWindow(Duration.ofMillis(30))
+            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
             .simpleAuthSettings(
                 SimpleAuthSettings.forAuthToken("incoming-credential")
             )
@@ -178,4 +193,5 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(ilpOverHttpLinkSettings.outgoingLinkSettings().get().url())
         .isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
   }
+
 }

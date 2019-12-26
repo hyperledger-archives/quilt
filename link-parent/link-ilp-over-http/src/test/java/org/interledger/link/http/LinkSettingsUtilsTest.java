@@ -48,38 +48,69 @@ public class LinkSettingsUtilsTest {
   }
 
   @Test
-  public void getAuthTypeWithSimple() {
-    assertThat(LinkSettingsUtils.getAuthType(AbstractHttpLinkSettingsTest.customSettingsSimpleFlat()))
+  public void getIncomingAuthTypeWithSimple() {
+    assertThat(LinkSettingsUtils.getIncomingAuthType(AbstractHttpLinkSettingsTest.customSettingsSimpleFlat()))
         .isEqualTo(Optional.of(IlpOverHttpLinkSettings.AuthType.SIMPLE));
-    assertThat(LinkSettingsUtils.getAuthType(AbstractHttpLinkSettingsTest.customSettingsSimpleHierarchical()))
+    assertThat(LinkSettingsUtils.getIncomingAuthType(AbstractHttpLinkSettingsTest.customSettingsSimpleHierarchical()))
         .isEqualTo(Optional.of(IlpOverHttpLinkSettings.AuthType.SIMPLE));
   }
 
   @Test
-  public void getAuthTypeWithJwt() {
-    assertThat(LinkSettingsUtils.getAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtFlat()))
-        .isEqualTo(Optional.of(IlpOverHttpLinkSettings.AuthType.JWT));
-    assertThat(LinkSettingsUtils.getAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtHierarchical()))
-        .isEqualTo(Optional.of(IlpOverHttpLinkSettings.AuthType.JWT));
+  public void getOutgoingAuthTypeWithSimple() {
+    assertThat(LinkSettingsUtils.getOutgoingAuthType(AbstractHttpLinkSettingsTest.customSettingsSimpleFlat()))
+        .isEqualTo(Optional.of(IlpOverHttpLinkSettings.AuthType.SIMPLE));
+    assertThat(LinkSettingsUtils.getOutgoingAuthType(AbstractHttpLinkSettingsTest.customSettingsSimpleHierarchical()))
+        .isEqualTo(Optional.of(IlpOverHttpLinkSettings.AuthType.SIMPLE));
+  }
+
+  @Test
+  public void getIncomingAuthTypeWithJwtHs256() {
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_HS_256;
+    assertThat(
+        LinkSettingsUtils.getIncomingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtFlat(authType)))
+        .isEqualTo(Optional.of(authType));
+    assertThat(
+        LinkSettingsUtils.getIncomingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtHierarchical(authType)))
+        .isEqualTo(Optional.of(authType));
+  }
+
+  @Test
+  public void getOutgoingAuthTypeWithJwtHs256() {
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_HS_256;
+    assertThat(
+        LinkSettingsUtils.getOutgoingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtFlat(authType)))
+        .isEqualTo(Optional.of(authType));
+    assertThat(
+        LinkSettingsUtils.getOutgoingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtHierarchical(authType)))
+        .isEqualTo(Optional.of(authType));
+  }
+
+  @Test
+  public void getIncomingAuthTypeWithJwtRs256() {
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_RS_256;
+    assertThat(
+        LinkSettingsUtils.getIncomingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtFlat(authType)))
+        .isEqualTo(Optional.of(authType));
+    assertThat(
+        LinkSettingsUtils.getIncomingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtHierarchical(authType)))
+        .isEqualTo(Optional.of(authType));
+  }
+
+  @Test
+  public void getOutgoingAuthTypeWithJwtRs256() {
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_RS_256;
+    assertThat(
+        LinkSettingsUtils.getOutgoingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtFlat(authType)))
+        .isEqualTo(Optional.of(authType));
+    assertThat(
+        LinkSettingsUtils.getOutgoingAuthType(AbstractHttpLinkSettingsTest.customSettingsJwtHierarchical(authType)))
+        .isEqualTo(Optional.of(authType));
   }
 
   @Test
   public void getAuthTypeWithMissing() {
-    assertThat(LinkSettingsUtils.getAuthType(new HashMap<>())).isEqualTo(Optional.empty());
+    assertThat(LinkSettingsUtils.getIncomingAuthType(new HashMap<>())).isEqualTo(Optional.empty());
+    assertThat(LinkSettingsUtils.getOutgoingAuthType(new HashMap<>())).isEqualTo(Optional.empty());
   }
-
-  @Test
-  public void getAuthTypeWithDuplicate() {
-    Map<String, Object> tooManyAuthTypes = new HashMap<>();
-    tooManyAuthTypes.putAll(AbstractHttpLinkSettingsTest.customSettingsSimpleFlat());
-    tooManyAuthTypes.putAll(AbstractHttpLinkSettingsTest.customSettingsJwtFlat());
-
-    expectedException.expect(IllegalArgumentException.class);
-    LinkSettingsUtils.getAuthType(tooManyAuthTypes);
-  }
-
-
-
-
 
 }

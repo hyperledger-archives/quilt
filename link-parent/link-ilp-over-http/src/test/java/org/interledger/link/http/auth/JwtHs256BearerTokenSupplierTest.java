@@ -62,7 +62,7 @@ public class JwtHs256BearerTokenSupplierTest {
 
   private OutgoingLinkSettings createOutgoingSettings(Duration duration) {
     return OutgoingLinkSettings.builder()
-        .authType(IlpOverHttpLinkSettings.AuthType.JWT)
+        .authType(IlpOverHttpLinkSettings.AuthType.JWT_HS_256)
         .jwtAuthSettings(
             JwtAuthSettings.builder()
                 .encryptedTokenSharedSecret("i am a terrible bowler")

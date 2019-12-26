@@ -24,10 +24,11 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
    */
   @Test
   public void applyCustomSettingsWithFlatDottedNotation() {
-    final Map<String, Object> customSettings = this.customSettingsJwtFlat();
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_HS_256;
+    final Map<String, Object> customSettings = this.customSettingsJwtFlat(authType);
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT);
+    assertThat(incomingLinksettings.authType()).isEqualTo(authType);
     JwtAuthSettings jwtAuthSettings = incomingLinksettings.jwtAuthSettings().get();
     assertThat(jwtAuthSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
@@ -55,10 +56,11 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
    */
   @Test
   public void applyCustomSettingsWithMapHierarchy() {
-    final Map<String, Object> customSettings = this.customSettingsJwtHierarchical();
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_HS_256;
+    final Map<String, Object> customSettings = this.customSettingsJwtHierarchical(authType);
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
-    assertThat(incomingLinksettings.authType()).isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT);
+    assertThat(incomingLinksettings.authType()).isEqualTo(authType);
     assertThat(incomingLinksettings.jwtAuthSettings().get().tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
     assertThat(incomingLinksettings.jwtAuthSettings().get().tokenAudience().get())

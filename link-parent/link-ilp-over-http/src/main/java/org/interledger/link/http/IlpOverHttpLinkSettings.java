@@ -3,6 +3,7 @@ package org.interledger.link.http;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 
+import com.google.common.collect.ImmutableMap;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Derived;
 import org.immutables.value.Value.Modifiable;
@@ -21,6 +22,8 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
 
   String OUTGOING = "outgoing";
   String INCOMING = "incoming";
+
+  String AUTH_TYPE = "auth_type";
   String SIMPLE = "simple";
   String JWT = "jwt";
 
@@ -64,15 +67,12 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     Objects.requireNonNull(builder);
     Objects.requireNonNull(customSettings);
 
-    final ImmutableIncomingLinkSettings.Builder incomingLinkSettingsBuilder =
-        IncomingLinkSettings.fromCustomSettings(customSettings);
-    final ImmutableOutgoingLinkSettings.Builder outgoingLinkSettingsBuilder =
-        OutgoingLinkSettings.fromCustomSettings(customSettings);
-
-    ImmutableIncomingLinkSettings incoming = incomingLinkSettingsBuilder.build();
-    builder.incomingLinkSettings(incoming);
-    ImmutableOutgoingLinkSettings outgoing = outgoingLinkSettingsBuilder.build();
-    builder.outgoingLinkSettings(outgoing);
+    if (LinkSettingsUtils.getIncomingAuthType(customSettings).isPresent()) {
+      builder.incomingLinkSettings(IncomingLinkSettings.fromCustomSettings(customSettings).build());
+    }
+    if (LinkSettingsUtils.getOutgoingAuthType(customSettings).isPresent()) {
+      builder.outgoingLinkSettings(OutgoingLinkSettings.fromCustomSettings(customSettings).build());
+    }
 
     builder.customSettings(customSettings);
 
@@ -111,9 +111,22 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     SIMPLE,
 
     /**
-     * Use JWTs to autheticate using RS256 or HS256
+     * Use shared-secret symmetric keys to create and verify JWT_HS_256 tokens.
      */
-    JWT
+    JWT_HS_256,
+
+    /**
+     * Use RSA asymmetric keys to create and verify JWT_RS_256 tokens.
+     */
+    JWT_RS_256
+  }
+
+  @Value.Derived
+  default Map<String, Object> toCustomSettingsMap() {
+    ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
+    incomingLinkSettings().ifPresent(settings -> mapBuilder.putAll(settings.toCustomSettingsMap()));
+    outgoingLinkSettings().ifPresent(settings -> mapBuilder.putAll(settings.toCustomSettingsMap()));
+    return mapBuilder.build();
   }
 
   @Value.Immutable

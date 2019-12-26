@@ -1,6 +1,7 @@
 package org.interledger.link.http;
 
 import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TOKEN;
+import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TYPE;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.ILP_OVER_HTTP;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.JWT;
@@ -13,6 +14,7 @@ import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_ISSUER;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_SUBJECT;
 import static org.interledger.link.http.IlpOverHttpLinkSettings.URL;
 
+import com.google.common.collect.ImmutableMap;
 import okhttp3.HttpUrl;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Modifiable;
@@ -24,8 +26,9 @@ import java.util.Optional;
 
 @Value.Immutable
 @Modifiable
-public interface OutgoingLinkSettings {
+public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
 
+  String HTTP_OUTGOING_AUTH_TYPE = ILP_OVER_HTTP + DOT + OUTGOING + DOT + AUTH_TYPE;
   String HTTP_OUTGOING_TOKEN_ISSUER = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_ISSUER;
   String HTTP_OUTGOING_TOKEN_AUDIENCE = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_AUDIENCE;
   String HTTP_OUTGOING_TOKEN_SUBJECT = ILP_OVER_HTTP + DOT + OUTGOING + DOT + JWT + DOT + TOKEN_SUBJECT;
@@ -43,7 +46,7 @@ public interface OutgoingLinkSettings {
    * Constructs a new builder with the correct custom settings, as found in {@code customSettings}. Custom settings
    * are expected to follow 1 of the following sets of properties.
    * <p>
-   *   Simple
+   * Simple
    * </p>
    * <pre>
    *   "ilpOverHttp.outgoing.simple.auth_token": "password",
@@ -51,7 +54,7 @@ public interface OutgoingLinkSettings {
    * </pre>
    *
    * <p>
-   *   JWT (using HS256)
+   * JWT (using HS256)
    * </p>
    * <pre>
    *   "ilpOverHttp.incoming.jwt.shared_secret": "some-key-used-for-symmetric-encryption",
@@ -61,7 +64,7 @@ public interface OutgoingLinkSettings {
    * </pre>
    *
    * <p>
-   *   JWT (using RS256)
+   * JWT (using RS256)
    * </p>
    * <pre>
    *   "ilpOverHttp.outgoing.jwt.issuer": "http://me.example.com",
@@ -95,38 +98,28 @@ public interface OutgoingLinkSettings {
 
     Optional.ofNullable(LinkSettingsUtils.flattenSettings(customSettings))
         .ifPresent(settings ->
-            LinkSettingsUtils.getAuthType(settings)
+            LinkSettingsUtils.getOutgoingAuthType(settings)
                 .ifPresent((authType) -> {
+
+                  builder.authType(authType);
+
                   Optional.of(settings.get(HTTP_OUTGOING_URL))
                       .map(Object::toString)
                       .map(HttpUrl::parse)
-                      .ifPresent(builder::url);
+                      .map(builder::url)
+                      .orElseThrow(() -> new IllegalArgumentException(HTTP_OUTGOING_URL + " is required"));
 
-                  if (authType == IlpOverHttpLinkSettings.AuthType.JWT) {
-                    ImmutableJwtAuthSettings.Builder authSettingsBuilder = JwtAuthSettings.builder();
-
-                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_ISSUER))
-                        .map(Object::toString)
-                        .map(HttpUrl::parse)
-                        .ifPresent(authSettingsBuilder::tokenIssuer);
-                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
-                        .map(Object::toString)
-                        .map(HttpUrl::parse)
-                        .ifPresent(authSettingsBuilder::tokenAudience);
-                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_SUBJECT))
-                        .map(Object::toString)
-                        .ifPresent(authSettingsBuilder::tokenSubject);
-                    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_EXPIRY))
-                        .map(Object::toString)
-                        .map(Duration::parse)
-                        .ifPresent(authSettingsBuilder::tokenExpiry);
-                    Optional.ofNullable(settings.get(HTTP_OUTGOING_SHARED_SECRET))
-                        .map(Object::toString)
-                        .ifPresent(authSettingsBuilder::encryptedTokenSharedSecret);
-                    builder.jwtAuthSettings(authSettingsBuilder.build());
-                  } else {
-                    builder.simpleAuthSettings(
-                        SimpleAuthSettings.forAuthToken(settings.get(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN).toString()));
+                  switch (authType) {
+                    case SIMPLE: {
+                      builder.simpleAuthSettings(buildSettingsForSimple(settings));
+                      break;
+                    }
+                    case JWT_HS_256:
+                    case JWT_RS_256: {
+                      builder.jwtAuthSettings(buildSettingsForJwt(settings));
+                      break;
+                    }
+                    default: throw new IllegalArgumentException("unsupported authType " + authType);
                   }
                 })
         );
@@ -134,19 +127,44 @@ public interface OutgoingLinkSettings {
     return builder;
   }
 
-  /**
-   * Auth settings if using SIMPLE scheme.
-   *
-   * @return settings
-   */
-  Optional<SimpleAuthSettings> simpleAuthSettings();
+  static SimpleAuthSettings buildSettingsForSimple(Map<String, Object> settings) {
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.SIMPLE;
 
-  /**
-   * Auth settings if using JWT scheme.
-   *
-   * @return settings
-   */
-  Optional<JwtAuthSettings> jwtAuthSettings();
+    return Optional.ofNullable(settings.get(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN))
+        .map(Object::toString)
+        .map(SimpleAuthSettings::forAuthToken)
+        .orElseThrow(() -> new IllegalArgumentException(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN + " required"));
+  }
+
+  static JwtAuthSettings buildSettingsForJwt(Map<String, Object> settings) {
+    ImmutableJwtAuthSettings.Builder authSettingsBuilder = JwtAuthSettings.builder();
+    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_HS_256;
+
+    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_ISSUER))
+        .map(Object::toString)
+        .map(HttpUrl::parse)
+        .map(authSettingsBuilder::tokenIssuer);
+
+    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
+        .map(Object::toString)
+        .map(HttpUrl::parse)
+        .map(authSettingsBuilder::tokenAudience);
+
+    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_SUBJECT))
+        .map(Object::toString)
+        .map(authSettingsBuilder::tokenSubject);
+
+    Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_EXPIRY))
+        .map(Object::toString)
+        .map(Duration::parse)
+        .map(authSettingsBuilder::tokenExpiry);
+
+    Optional.ofNullable(settings.get(HTTP_OUTGOING_SHARED_SECRET))
+        .map(Object::toString)
+        .map(authSettingsBuilder::encryptedTokenSharedSecret);
+
+    return authSettingsBuilder.build();
+  }
 
   /**
    * endpoint to POST packets to. If url contains a percent and the link is in `multi` mode, then the segment after this
@@ -157,21 +175,31 @@ public interface OutgoingLinkSettings {
   HttpUrl url();
 
   /**
-   * The type of Auth to support for outgoing HTTP connections.
+   * Generates a custom settings map representation of this outgoing link settings such that
+   * {@code OutgoingLinkSettings.fromCustomSettings(someSettings.toCustomSettingsMap()).equals(someSettings); }
    *
-   * @return A {@link IlpOverHttpLinkSettings.AuthType} for this shared secret token settings.
+   * @return map with custom settings for this outgoing link settings instance
    */
-  @Value.Default
-  default IlpOverHttpLinkSettings.AuthType authType() {
-    if (simpleAuthSettings().isPresent()) {
-      return IlpOverHttpLinkSettings.AuthType.SIMPLE;
-    }
-    else if (jwtAuthSettings().isPresent()) {
-      return  IlpOverHttpLinkSettings.AuthType.JWT;
-    }
-    else {
-      return null;
-    }
+  @Value.Auxiliary
+  default Map<String, Object> toCustomSettingsMap() {
+    ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
+    mapBuilder.put(HTTP_OUTGOING_URL, url().toString());
+    mapBuilder.put(HTTP_OUTGOING_AUTH_TYPE, authType().toString());
+    simpleAuthSettings().ifPresent(settings -> mapBuilder.put(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN, settings.authToken()));
+    jwtAuthSettings().ifPresent(settings -> {
+      mapBuilder.put(HTTP_OUTGOING_TOKEN_SUBJECT, settings.tokenSubject());
+      settings.encryptedTokenSharedSecret().ifPresent(value -> mapBuilder.put(HTTP_OUTGOING_SHARED_SECRET, value));
+      settings.tokenAudience().ifPresent(value -> mapBuilder.put(HTTP_OUTGOING_TOKEN_AUDIENCE, value.toString()));
+      settings.tokenIssuer().ifPresent(value -> mapBuilder.put(HTTP_OUTGOING_TOKEN_ISSUER, value.toString()));
+      settings.tokenExpiry().ifPresent(value -> mapBuilder.put(HTTP_OUTGOING_TOKEN_EXPIRY, value.toString()));
+    });
+    return mapBuilder.build();
+  }
+
+  @Value.Check
+  default OutgoingLinkSettings validate() {
+    LinkSettingsUtils.validate(this);
+    return this;
   }
 
 }

@@ -1,11 +1,6 @@
 package org.interledger.link.http;
 
-import static org.interledger.link.http.IlpOverHttpLinkSettings.AUTH_TOKEN;
-import static org.interledger.link.http.IlpOverHttpLinkSettings.DOT;
-import static org.interledger.link.http.IlpOverHttpLinkSettings.JWT;
-import static org.interledger.link.http.IlpOverHttpLinkSettings.SIMPLE;
-import static org.interledger.link.http.IlpOverHttpLinkSettings.TOKEN_SUBJECT;
-
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -22,6 +17,7 @@ public class LinkSettingsUtils {
    * {@code ["foo.bar" -> "baz" , "foo.fizz" -> "buzz" ] }. This is to deal with differences between Java property parsers
    * that generate hierarchical Map of Maps (where keys are single segments of a property name) instead a flattened
    * Map where all keys are the full property name.
+   *
    * @param settings map to flatten
    * @return flattened map
    */
@@ -36,12 +32,10 @@ public class LinkSettingsUtils {
         try {
           Map<String, Object> typedValue = (Map<String, Object>) value;
           flattened.putAll(flattenSettings(prefix + key + ".", typedValue));
-        }
-        catch (ClassCastException e) {
+        } catch (ClassCastException e) {
           throw new IllegalArgumentException("Found value with a key that is not a String");
         }
-      }
-      else {
+      } else {
         flattened.put(prefix + key, value);
       }
     });
@@ -49,30 +43,60 @@ public class LinkSettingsUtils {
   }
 
   /**
-   * Determines the {@link org.interledger.link.http.IlpOverHttpLinkSettings.AuthType} from custom settings values.
+   * Determines the incoming {@link org.interledger.link.http.IlpOverHttpLinkSettings.AuthType}
+   * from custom settings values.
+   *
    * @param customSettings
    * @return auth type or null if no auth settings founds
    */
-  public static Optional<IlpOverHttpLinkSettings.AuthType> getAuthType(Map<String, Object> customSettings) {
-    Map<String, Object> flattenedSettings = flattenSettings(customSettings);
-    boolean hasSimpleSettings = containsKeyWithPrefix(flattenedSettings, SIMPLE + DOT + AUTH_TOKEN);
-    boolean hasJwtSettings = containsKeyWithPrefix(flattenedSettings, JWT + DOT + TOKEN_SUBJECT);
-    if (hasSimpleSettings) {
-      if (hasJwtSettings) {
-        throw new IllegalArgumentException("customSettings cannot contain both simple and jwt auth settings");
-      }
-      return Optional.of(IlpOverHttpLinkSettings.AuthType.SIMPLE);
-    }
-    else if (hasJwtSettings) {
-      return Optional.of(IlpOverHttpLinkSettings.AuthType.JWT);
-    }
-    else {
-      return Optional.empty();
-    }
+  public static Optional<IlpOverHttpLinkSettings.AuthType> getIncomingAuthType(Map<String, Object> customSettings) {
+    return Optional.ofNullable(flattenSettings(customSettings).get(IncomingLinkSettings.HTTP_INCOMING_AUTH_TYPE))
+        .map(Object::toString)
+        .map(String::toUpperCase)
+        .map(IlpOverHttpLinkSettings.AuthType::valueOf);
   }
 
-  private static boolean containsKeyWithPrefix(Map<String, Object> settings, String prefix) {
-    return settings.keySet().stream().anyMatch(key -> key.contains(prefix));
+  /**
+   * Determines the outgoing {@link org.interledger.link.http.IlpOverHttpLinkSettings.AuthType}
+   * from custom settings values.
+   *
+   * @param customSettings
+   * @return auth type or null if no auth settings founds
+   */
+  public static Optional<IlpOverHttpLinkSettings.AuthType> getOutgoingAuthType(Map<String, Object> customSettings) {
+    return Optional.ofNullable(flattenSettings(customSettings).get(OutgoingLinkSettings.HTTP_OUTGOING_AUTH_TYPE))
+        .map(Object::toString)
+        .map(String::toUpperCase)
+        .map(IlpOverHttpLinkSettings.AuthType::valueOf);
+  }
+
+  public static void validate(AuthenticatedLinkSettings linkSettings) {
+    switch (linkSettings.authType()) {
+      case SIMPLE: {
+        Preconditions.checkArgument(linkSettings.simpleAuthSettings().isPresent(), "simpleAuthSettings required");
+        break;
+      }
+      case JWT_HS_256: {
+        Preconditions.checkArgument(linkSettings.jwtAuthSettings().isPresent(), "jwtAuthSettings required");
+        JwtAuthSettings jwtAuthSettings = linkSettings.jwtAuthSettings().get();
+        Preconditions.checkArgument(jwtAuthSettings.encryptedTokenSharedSecret().isPresent(),
+            "encryptedTokenSharedSecret required for HS256");
+        break;
+      }
+      case JWT_RS_256:
+      {
+        Preconditions.checkArgument(linkSettings.jwtAuthSettings().isPresent(), "jwtAuthSettings required");
+        JwtAuthSettings jwtAuthSettings = linkSettings.jwtAuthSettings().get();
+        Preconditions.checkArgument(jwtAuthSettings.tokenAudience().isPresent(),
+            "tokenAudience required for RS256");
+        Preconditions.checkArgument(jwtAuthSettings.tokenIssuer().isPresent(),
+            "tokenIssuer required for RS256");
+        break;
+      }
+      default:
+        throw new IllegalStateException("unknown authType " + linkSettings.authType());
+    }
+
   }
 
 }
