@@ -147,7 +147,6 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
 
     Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_AUDIENCE))
         .map(Object::toString)
-        .map(HttpUrl::parse)
         .map(authSettingsBuilder::tokenAudience);
 
     Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_SUBJECT))

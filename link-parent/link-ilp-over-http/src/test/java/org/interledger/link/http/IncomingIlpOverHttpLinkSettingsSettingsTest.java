@@ -32,8 +32,7 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     JwtAuthSettings jwtAuthSettings = incomingLinksettings.jwtAuthSettings().get();
     assertThat(jwtAuthSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
-    assertThat(jwtAuthSettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+    assertThat(jwtAuthSettings.tokenAudience().get()).isEqualTo("https://incoming-audience.example.com/");
     assertThat(jwtAuthSettings.encryptedTokenSharedSecret()).isEqualTo(Optional.of("incoming-credential"));
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
@@ -61,12 +60,10 @@ public class IncomingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     final IncomingLinkSettings incomingLinksettings = IncomingLinkSettings.fromCustomSettings(customSettings).build();
 
     assertThat(incomingLinksettings.authType()).isEqualTo(authType);
-    assertThat(incomingLinksettings.jwtAuthSettings().get().tokenIssuer().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
-    assertThat(incomingLinksettings.jwtAuthSettings().get().tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
-    assertThat(incomingLinksettings.jwtAuthSettings().get().encryptedTokenSharedSecret())
-        .isEqualTo(Optional.of("incoming-credential"));
+    JwtAuthSettings jwtAuthSettings = incomingLinksettings.jwtAuthSettings().get();
+    assertThat(jwtAuthSettings.tokenIssuer().get()).isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
+    assertThat(jwtAuthSettings.tokenAudience().get()).isEqualTo("https://incoming-audience.example.com/");
+    assertThat(jwtAuthSettings.encryptedTokenSharedSecret()).isEqualTo(Optional.of("incoming-credential"));
     assertThat(incomingLinksettings.getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
   }
 

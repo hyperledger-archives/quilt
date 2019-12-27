@@ -84,8 +84,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     JwtAuthSettings incomingJwtSettings = ilpOverHttpLinkSettings.incomingLinkSettings().get().jwtAuthSettings().get();
     assertThat(incomingJwtSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
-    assertThat(incomingJwtSettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+    assertThat(incomingJwtSettings.tokenAudience().get()).isEqualTo("https://incoming-audience.example.com/");
 
     JwtAuthSettings outgoingJwtSettings = ilpOverHttpLinkSettings.outgoingLinkSettings().get().jwtAuthSettings().get();
     assertThat(outgoingJwtSettings.tokenSubject()).isEqualTo("outgoing-subject");
@@ -97,8 +96,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
         .isEqualTo(IlpOverHttpLinkSettings.AuthType.JWT_HS_256);
     assertThat(outgoingJwtSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
-    assertThat(outgoingJwtSettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://outgoing-audience.example.com/"));
+    assertThat(outgoingJwtSettings.tokenAudience().get()).isEqualTo("https://outgoing-audience.example.com/");
     assertThat(outgoingJwtSettings.tokenSubject()).isEqualTo("outgoing-subject");
     assertThat(outgoingJwtSettings.encryptedTokenSharedSecret())
         .isEqualTo(Optional.of("outgoing-credential"));
@@ -129,7 +127,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(incomingJwtAuthSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://incoming-issuer.example.com/"));
     assertThat(incomingJwtAuthSettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://incoming-audience.example.com/"));
+        .isEqualTo("https://incoming-audience.example.com/");
     assertThat(incomingJwtAuthSettings.encryptedTokenSharedSecret())
         .isEqualTo(Optional.of("incoming-credential"));
     assertThat(httpLinkSettings.incomingLinkSettings().get().getMinMessageWindow()).isEqualTo(Duration.ofMillis(2500));
@@ -140,7 +138,7 @@ public class IlpOverHttpLinkSettingsTest extends AbstractHttpLinkSettingsTest {
     assertThat(outgoingJwtAuthSettings.tokenIssuer().get())
         .isEqualTo(HttpUrl.parse("https://outgoing-issuer.example.com/"));
     assertThat(outgoingJwtAuthSettings.tokenAudience().get())
-        .isEqualTo(HttpUrl.parse("https://outgoing-audience.example.com/"));
+        .isEqualTo("https://outgoing-audience.example.com/");
     assertThat(outgoingJwtAuthSettings.tokenSubject()).isEqualTo("outgoing-subject");
     assertThat(outgoingJwtAuthSettings.encryptedTokenSharedSecret())
         .isEqualTo(Optional.of("outgoing-credential"));

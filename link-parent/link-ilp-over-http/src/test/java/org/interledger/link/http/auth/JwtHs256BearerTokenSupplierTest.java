@@ -66,7 +66,7 @@ public class JwtHs256BearerTokenSupplierTest {
         .jwtAuthSettings(
             JwtAuthSettings.builder()
                 .encryptedTokenSharedSecret("i am a terrible bowler")
-                .tokenAudience(HttpUrl.get("https://www.ripple.com"))
+                .tokenAudience("https://www.ripple.com")
                 .tokenExpiry(duration)
                 .tokenIssuer(HttpUrl.get("https://www.ripple.com"))
                 .tokenSubject("about last night")

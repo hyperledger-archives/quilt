@@ -47,9 +47,9 @@ public interface JwtAuthSettings {
    * Connector operating this BLAST link, since the remote will want to narrow the scope of its token to only be valid
    * on this endpoint.
    *
-   * @return An optionally present {@link HttpUrl} for the token audience. Required for RS256.
+   * @return An optionally present String for the token audience. Required for RS256.
    */
-  Optional<HttpUrl> tokenAudience();
+  Optional<String> tokenAudience();
 
   /**
    * If present, determines how often to sign a new token for auth. Optional to support the shared-secret use-case.
