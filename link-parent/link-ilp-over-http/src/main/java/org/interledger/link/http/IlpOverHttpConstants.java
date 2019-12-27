@@ -12,6 +12,6 @@ public interface IlpOverHttpConstants {
   String OCTET_STREAM_STRING = OCTET_STREAM.toString();
   MediaType APPLICATION_OCTET_STREAM = MediaType.parse(OCTET_STREAM_STRING);
 
-  String BEARER = "Bearer ";
+  String BEARER = "Bearer";
   String ILP_OPERATOR_ADDRESS_VALUE = "ILP-Operator-Address";
 }

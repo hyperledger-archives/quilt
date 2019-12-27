@@ -240,6 +240,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
     }
   }
 
+  private final String BEARER_WITH_SPACE = BEARER + " ";
   /**
    * Construct headers for an ILP-over-HTTP request.
    *
@@ -257,7 +258,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
     // Set the Operator Address header, if present.
     headers.set(IlpOverHttpConstants.ILP_OPERATOR_ADDRESS_VALUE, getOperatorAddressSupplier().get().getValue());
 
-    headers.add(HttpHeaders.AUTHORIZATION, BEARER + this.authTokenSupplier.get());
+    headers.add(HttpHeaders.AUTHORIZATION, BEARER_WITH_SPACE + this.authTokenSupplier.get());
 
     return headers.build();
   }
