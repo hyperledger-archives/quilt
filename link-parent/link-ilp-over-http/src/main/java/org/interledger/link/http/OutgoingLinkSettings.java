@@ -103,7 +103,7 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
 
                   builder.authType(authType);
 
-                  Optional.of(settings.get(HTTP_OUTGOING_URL))
+                  Optional.ofNullable(settings.get(HTTP_OUTGOING_URL))
                       .map(Object::toString)
                       .map(HttpUrl::parse)
                       .map(builder::url)

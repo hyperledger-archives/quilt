@@ -82,7 +82,7 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
 
     final BearerTokenSupplier bearerTokenSupplier;
     OutgoingLinkSettings outgoingLinkSettings = ilpOverHttpLinkSettings.outgoingLinkSettings()
-      .orElseThrow(() -> new IllegalArgumentException("Not outgoing link settings configured for this link"));
+      .orElseThrow(() -> new IllegalArgumentException("No outgoing link settings configured for this link"));
     if (outgoingLinkSettings.authType().equals(IlpOverHttpLinkSettings.AuthType.SIMPLE)) {
       // Decrypt whatever is inside of the encryptedTokenSharedSecret. For the SIMPLE profile, this will decrypt to the
       // actual bearer token.
