@@ -49,6 +49,7 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
    * Simple
    * </p>
    * <pre>
+   *   "ilpOverHttp.outgoing.auth_type": "SIMPLE"
    *   "ilpOverHttp.outgoing.simple.auth_token": "password",
    *   "ilpOverHttp.outgoing.url": "http://java1.connector.com/accounts/foo/ilp"
    * </pre>
@@ -57,9 +58,10 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
    * JWT (using HS256)
    * </p>
    * <pre>
+   *   "ilpOverHttp.outgoing.auth_type": "JWT_HS_256"
    *   "ilpOverHttp.incoming.jwt.shared_secret": "some-key-used-for-symmetric-encryption",
    *   "ilpOverHttp.outgoing.jwt.subject": "foo@them",
-   *   "ilpOverHttp.outgoing.jwt.expiryDuration":  "pt30m",
+   *   "ilpOverHttp.outgoing.jwt.expiryDuration": "pt500s",
    *   "ilpOverHttp.outgoing.url": "http://java1.connector.com/accounts/foo/ilp"
    * </pre>
    *
@@ -67,10 +69,10 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
    * JWT (using RS256)
    * </p>
    * <pre>
+   *   "ilpOverHttp.outgoing.auth_type": "JWT_RS_256"
    *   "ilpOverHttp.outgoing.jwt.issuer": "http://me.example.com",
    *   "ilpOverHttp.outgoing.jwt.audience": "https://me.example.com",
    *   "ilpOverHttp.outgoing.jwt.subject": "foo@me",
-   *   "ilpOverHttp.outgoing.jwt.expiryDuration": "pt500s",
    *   "ilpOverHttp.outgoing.url": "http://java1.connector.com/accounts/foo/ilp"
    * </pre>
    *
@@ -128,8 +130,6 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
   }
 
   static SimpleAuthSettings buildSettingsForSimple(Map<String, Object> settings) {
-    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.SIMPLE;
-
     return Optional.ofNullable(settings.get(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN))
         .map(Object::toString)
         .map(SimpleAuthSettings::forAuthToken)
@@ -138,7 +138,6 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
 
   static JwtAuthSettings buildSettingsForJwt(Map<String, Object> settings) {
     ImmutableJwtAuthSettings.Builder authSettingsBuilder = JwtAuthSettings.builder();
-    IlpOverHttpLinkSettings.AuthType authType = IlpOverHttpLinkSettings.AuthType.JWT_HS_256;
 
     Optional.ofNullable(settings.get(HTTP_OUTGOING_TOKEN_ISSUER))
         .map(Object::toString)

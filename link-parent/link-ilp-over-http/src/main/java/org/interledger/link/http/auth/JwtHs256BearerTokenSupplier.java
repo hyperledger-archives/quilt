@@ -70,12 +70,6 @@ public class JwtHs256BearerTokenSupplier implements BearerTokenSupplier {
             final byte[] sharedSecretBytes = sharedSecretBytesSupplier.get();
             try {
               return JWT.create()
-                  //.withIssuedAt(new Date())
-                  //      .withIssuer(getOutgoingLinkSettings()
-                  //        .tokenIssuer()
-                  //        .map(HttpUrl::toString)
-                  //        .orElseThrow(() -> new RuntimeException("JWT Blast Senders require an Outgoing Issuer!"))
-                  //      )
                   .withSubject(outgoingLinkSettings.jwtAuthSettings().get().tokenSubject()) // account identifier at the remote server.
                   // Expire at the appointed time, or else after 15 minutes.
                   .withExpiresAt(
