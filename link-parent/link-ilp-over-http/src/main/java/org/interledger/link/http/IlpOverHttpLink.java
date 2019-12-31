@@ -300,11 +300,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
   private Request constructSendPacketRequest(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket);
     final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingLinkSettings()
-      .orElseGet(() -> {
-        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
-          "Please switch to using outgoingLinkSettings() instead");
-        return this.getLinkSettings().outgoingLinkSettings().get();
-      });
+        .orElseThrow(() -> new IllegalStateException("no outgoing settings for this link"));
 
     try {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
