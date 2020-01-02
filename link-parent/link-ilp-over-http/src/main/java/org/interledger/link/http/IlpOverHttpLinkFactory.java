@@ -82,16 +82,12 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
 
     final BearerTokenSupplier bearerTokenSupplier;
     OutgoingLinkSettings outgoingLinkSettings = ilpOverHttpLinkSettings.outgoingLinkSettings()
-      .orElseGet(() -> {
-        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
-          "Please switch to using outgoingLinkSettings() instead");
-        return ilpOverHttpLinkSettings.outgoingHttpLinkSettings();
-      });
+      .orElseThrow(() -> new IllegalArgumentException("No outgoing link settings configured for this link"));
     if (outgoingLinkSettings.authType().equals(IlpOverHttpLinkSettings.AuthType.SIMPLE)) {
       // Decrypt whatever is inside of the encryptedTokenSharedSecret. For the SIMPLE profile, this will decrypt to the
       // actual bearer token.
       bearerTokenSupplier = new SimpleBearerTokenSupplier(new String(
-        decryptor.decrypt(outgoingLinkSettings.encryptedTokenSharedSecret().getBytes())
+        decryptor.decrypt(outgoingLinkSettings.simpleAuthSettings().get().authToken().getBytes())
       ));
     } else {
       // TODO: For now, we assume the bytes are a String that conform to the Crypt CLI. However, this should be made
@@ -101,7 +97,7 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
       // NOTE: This supplier will always create a copy of the decrypted bytes so that the consumer of each call can
       // safely wipe the bytes from memory without affecting other callers.
       final SharedSecretBytesSupplier sharedSecretSupplier = () -> decryptor
-        .decrypt(outgoingLinkSettings.encryptedTokenSharedSecret().getBytes());
+        .decrypt(outgoingLinkSettings.jwtAuthSettings().get().encryptedTokenSharedSecret().get().getBytes());
 
       bearerTokenSupplier = new JwtHs256BearerTokenSupplier(
         sharedSecretSupplier, outgoingLinkSettings
@@ -110,7 +106,7 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
 
     final IlpOverHttpLink ilpOverHttpLink = new IlpOverHttpLink(
         operatorAddressSupplier,
-        ModifiableIlpOverHttpLinkSettings.create().from(ilpOverHttpLinkSettings), // Modifiable for testing
+        outgoingLinkSettings.url(),
         okHttpClient,
         objectMapper,
         ilpCodecContext,
