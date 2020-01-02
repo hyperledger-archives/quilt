@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Settings incoming ILP-over-HTTP Links. Note that this interface
+ * Settings for incoming ILP-over-HTTP Links. Note that this interface
  * purposefully does not define a `sub` claim because the `accountId` for any given account should always be used
  * instead for verification purposes.
  */
