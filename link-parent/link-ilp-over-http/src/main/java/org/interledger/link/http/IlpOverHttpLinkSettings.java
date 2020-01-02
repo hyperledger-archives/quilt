@@ -121,7 +121,7 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     JWT_RS_256
   }
 
-  @Value.Derived
+  @Value.Auxiliary
   default Map<String, Object> toCustomSettingsMap() {
     ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
     incomingLinkSettings().ifPresent(settings -> mapBuilder.putAll(settings.toCustomSettingsMap()));
