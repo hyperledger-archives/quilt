@@ -196,13 +196,6 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    * the endpoint does not support ILP-over-HTTP requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>
    */
   public void testConnection() {
-    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingLinkSettings()
-      .orElseGet(() -> {
-        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
-          "Please switch to using outgoingLinkSettings() instead");
-        return this.getLinkSettings().outgoingLinkSettings().get();
-      });
-
     try {
       final Request okHttpRequest = this.constructSendPacketRequest(UNFULFILLABLE_PACKET);
 
@@ -217,26 +210,26 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
               .isPresent();
 
           if (responseHasOctetStreamContentType) {
-            logger.info("Remote peer-link supports ILP-over-HTTP. authType={} url={} responseHeaders={}",
-                outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
+            logger.info("Remote peer-link supports ILP-over-HTTP. url={} responseHeaders={}",
+                outgoingUrl, response
             );
           } else {
-            logger.warn("Remote peer-link supports ILP-over-HTTP but uses wrong ContentType. authType={} url={} "
+            logger.warn("Remote peer-link supports ILP-over-HTTP but uses wrong ContentType. url={} "
                     + "response={}",
-                outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
+                outgoingUrl, response
             );
           }
         } else {
           if (response.code() == 406 || response.code() == 415) { // NOT_ACCEPTABLE || UNSUPPORTED_MEDIA_TYPE
             throw new LinkException(
-                String.format("Remote peer-link DOES NOT support ILP-over-HTTP. authType=%s url=%s response=%s",
-                    outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
+                String.format("Remote peer-link DOES NOT support ILP-over-HTTP. url=%s response=%s",
+                    outgoingUrl, response
                 ), getLinkId()
             );
           } else {
             throw new LinkException(
-                String.format("Unable to connect to ILP-over-HTTP. authType=%s url=%s response=%s",
-                    outgoingLinkSettings.authType(), outgoingLinkSettings.url(), response
+                String.format("Unable to connect to ILP-over-HTTP. url=%s response=%s",
+                    outgoingUrl, response
                 ), getLinkId()
             );
           }
