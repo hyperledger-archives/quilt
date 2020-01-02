@@ -87,43 +87,6 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    *                                uninitialized, for example, in cases where the Link obtains its address from a
    *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
    *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
-   * @param ilpOverHttpLinkSettings A {@link IlpOverHttpLinkSettings} that specified ledger link options.
-   * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
-   *                                endpoint.
-   * @param objectMapper            A {@link ObjectMapper} for reading error responses from the remote ILP-over-HTTP
-   *                                endpoint.
-   * @param ilpCodecContext         A {@link CodecContext} for ILP.
-   * @param bearerTokenSupplier     A {@link BearerTokenSupplier} that can be used to get a bearer token to make
-   *                                authenticated calls to the remote HTTP endpoint.
-   *
-   * @Deprecated
-   */
-  @Deprecated
-  public IlpOverHttpLink(
-      final Supplier<InterledgerAddress> operatorAddressSupplier,
-      final IlpOverHttpLinkSettings ilpOverHttpLinkSettings,
-      final OkHttpClient okHttpClient,
-      final ObjectMapper objectMapper,
-      final CodecContext ilpCodecContext,
-      final BearerTokenSupplier bearerTokenSupplier
-  ) {
-    super(operatorAddressSupplier, ilpOverHttpLinkSettings);
-    this.okHttpClient = Objects.requireNonNull(okHttpClient);
-    this.objectMapper = Objects.requireNonNull(objectMapper);
-    this.ilpCodecContext = Objects.requireNonNull(ilpCodecContext);
-    this.authTokenSupplier = Objects.requireNonNull(bearerTokenSupplier);
-    this.outgoingUrl = this.getLinkSettings().outgoingLinkSettings()
-        .map(OutgoingLinkSettings::url)
-        .orElseThrow(() -> new IllegalStateException("no outgoing settings for this link"));
-  }
-
-  /**
-   * Required-args Constructor.
-   *
-   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
-   *                                uninitialized, for example, in cases where the Link obtains its address from a
-   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
-   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
    * @param outgoingUrl             A {@link HttpUrl} to the connector.
    * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
    *                                endpoint.
