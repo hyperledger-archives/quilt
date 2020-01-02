@@ -8,10 +8,6 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.link.LinkId;
 import org.interledger.link.http.IlpOverHttpLink;
-import org.interledger.link.http.IlpOverHttpLinkSettings;
-import org.interledger.link.http.IlpOverHttpLinkSettings.AuthType;
-import org.interledger.link.http.IncomingLinkSettings;
-import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
@@ -96,9 +92,9 @@ public class SimpleStreamSenderIT {
       .withExposedPorts(7770)
       .withNetwork(network)
       //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer (logger)) // uncomment to see logs
-      .withEnv("ILP_REDIS_URL", "redis://redis:6379")
       .withCommand(""
           + "--admin_auth_token " + AUTH_TOKEN + " "
+          + "--database_url redis://redis:6379 "
           + "--ilp_address " + HOST_ADDRESS.getValue() + " "
           + "--secret_seed 9dce76b1a20ec8d3db05ad579f3293402743767692f935a0bf06b30d2728439d "
           + "--http_bind_address 0.0.0.0:7770"
@@ -130,22 +126,9 @@ public class SimpleStreamSenderIT {
         SpspClientDefaults.MAPPER
     );
 
-    final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingHttpLinkSettings(IncomingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .encryptedTokenSharedSecret(AUTH_TOKEN)
-            .build())
-        .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .tokenSubject(SENDER_ACCOUNT_USERNAME)
-            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
-            .encryptedTokenSharedSecret(AUTH_TOKEN)
-            .build())
-        .build();
-
     this.link = new IlpOverHttpLink(
         () -> SENDER_ADDRESS,
-        linkSettings,
+        this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME),
         httpClient,
         SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),
@@ -516,22 +499,10 @@ public class SimpleStreamSenderIT {
     final String connectorAccountUsername = UUID.randomUUID().toString().replace("-", "");
 
     final OkHttpClient httpClient = this.constructOkHttpClient();
-    final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingHttpLinkSettings(IncomingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .encryptedTokenSharedSecret(AUTH_TOKEN)
-            .build())
-        .outgoingHttpLinkSettings(OutgoingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .tokenSubject(connectorAccountUsername)
-            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
-            .encryptedTokenSharedSecret("wrong-password")
-            .build())
-        .build();
 
     this.link = new IlpOverHttpLink(
         () -> SENDER_ADDRESS,
-        linkSettings,
+        this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME),
         httpClient,
         SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),
