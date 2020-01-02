@@ -8,11 +8,6 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.link.LinkId;
 import org.interledger.link.http.IlpOverHttpLink;
-import org.interledger.link.http.IlpOverHttpLinkSettings;
-import org.interledger.link.http.IlpOverHttpLinkSettings.AuthType;
-import org.interledger.link.http.IncomingLinkSettings;
-import org.interledger.link.http.OutgoingLinkSettings;
-import org.interledger.link.http.SimpleAuthSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
@@ -131,17 +126,9 @@ public class SimpleStreamSenderIT {
         SpspClientDefaults.MAPPER
     );
 
-    final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .outgoingLinkSettings(OutgoingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(AUTH_TOKEN))
-            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
-            .build())
-        .build();
-
     this.link = new IlpOverHttpLink(
         () -> SENDER_ADDRESS,
-        linkSettings,
+        this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME),
         httpClient,
         SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),
@@ -512,21 +499,10 @@ public class SimpleStreamSenderIT {
     final String connectorAccountUsername = UUID.randomUUID().toString().replace("-", "");
 
     final OkHttpClient httpClient = this.constructOkHttpClient();
-    final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingLinkSettings(IncomingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(AUTH_TOKEN))
-            .build())
-        .outgoingLinkSettings(OutgoingLinkSettings.builder()
-            .authType(AuthType.SIMPLE)
-            .simpleAuthSettings(SimpleAuthSettings.forAuthToken(("wrong-password")))
-            .url(this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME))
-            .build())
-        .build();
 
     this.link = new IlpOverHttpLink(
         () -> SENDER_ADDRESS,
-        linkSettings,
+        this.constructIlpOverHttpUrl(SENDER_ACCOUNT_USERNAME),
         httpClient,
         SpspClientDefaults.MAPPER,
         InterledgerCodecContextFactory.oer(),

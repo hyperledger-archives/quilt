@@ -35,7 +35,6 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.io.IOException;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link IlpOverHttpLink}.
@@ -46,12 +45,6 @@ public class IlpOverHttpLinkTest {
   public ExpectedException expectedException = ExpectedException.none();
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
-  @Mock
-  IlpOverHttpLinkSettings settings;
-  @Mock
-  OutgoingLinkSettings outgoingLinkSettings;
-  @Mock
-  IncomingLinkSettings incomingLinkSettings;
   @Mock
   OkHttpClient httpClient;
   @Mock
@@ -69,16 +62,13 @@ public class IlpOverHttpLinkTest {
   public void setup() {
     link = new IlpOverHttpLink(
         () -> InterledgerAddress.of("example.destination"),
-        settings,
+        HttpUrl.get("https://cannotspellsurgerywithouturges.com"),
         httpClient,
         objectMapper,
         codecContext,
         bearerTokenSupplier
     );
     link.setLinkId(LinkId.of("pepe silvia"));
-    when(settings.outgoingLinkSettings()).thenReturn(Optional.of(outgoingLinkSettings));
-    when(settings.incomingLinkSettings()).thenReturn(Optional.of(incomingLinkSettings));
-    when(outgoingLinkSettings.url()).thenReturn(HttpUrl.get("https://cannotspellsurgerywithouturges.com"));
     packet = mock(InterledgerPreparePacket.class);
   }
 

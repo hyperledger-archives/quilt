@@ -106,7 +106,7 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
 
     final IlpOverHttpLink ilpOverHttpLink = new IlpOverHttpLink(
         operatorAddressSupplier,
-        ModifiableIlpOverHttpLinkSettings.create().from(ilpOverHttpLinkSettings), // Modifiable for testing
+        outgoingLinkSettings.url(),
         okHttpClient,
         objectMapper,
         ilpCodecContext,
