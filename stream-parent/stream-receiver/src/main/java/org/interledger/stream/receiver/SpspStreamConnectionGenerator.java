@@ -24,7 +24,36 @@ import java.util.function.Supplier;
 public class SpspStreamConnectionGenerator implements StreamConnectionGenerator {
 
   private static final Charset US_ASCII = StandardCharsets.US_ASCII;
-  private static final byte[] STREAM_SERVER_SECRET_GENERATOR = "ilp_stream_secret_generator".getBytes(US_ASCII);
+  // private static final byte[] STREAM_SERVER_SECRET_GENERATOR = "ilp_stream_secret_generator".getBytes(US_ASCII);
+
+  private final byte[] streamServerSecretGenerator;
+
+  /**
+   * No-args Constructor.
+   */
+  public SpspStreamConnectionGenerator() {
+    // Note that by default, we are using the same magic bytes as the Javascript implementation but this is not
+    // strictly necessary. These magic bytes need to be the same for the server that creates the STREAM details for a
+    // given packet and for the server that fulfills those packets, but in the vast majority of cases those two servers
+    // will be running the same STREAM implementation so it doesn't matter what this string is. However, for more
+    // control, see the required-args Constructor.
+    this("ilp_stream_shared_secret");
+  }
+
+  /**
+   * Required-args constructor.
+   *
+   * @param streamServerSecretGenerator A set of magic bytes that act as a secret-generator seed for generating SPSP
+   *                                    shared secrets. These magic bytes need to be the same for the server that
+   *                                    creates the STREAM details for a given packet and for the server that fulfills
+   *                                    those packets, but in the vast majority of cases those two servers will be
+   *                                    running the same STREAM implementation so it doesn't matter what this string
+   *                                    is.
+   */
+  public SpspStreamConnectionGenerator(final String streamServerSecretGenerator) {
+    this.streamServerSecretGenerator = Objects.requireNonNull(streamServerSecretGenerator)
+        .getBytes(StandardCharsets.US_ASCII);
+  }
 
   @Override
   public StreamConnectionDetails generateConnectionDetails(
@@ -34,33 +63,20 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
     Objects.requireNonNull(receiverAddress, "receiverAddress must not be null");
     Preconditions.checkArgument(serverSecretSupplier.get().length >= 32, "Server secret must be 32 bytes");
 
-    // base_address + "." + 32-bytes encoded as base64url
-    final Builder streamConnectionDetailsBuilder = StreamConnectionDetails.builder();
+    final byte[] token = Random.randBytes(18);
+    final String tokenBase64 = Base64.getUrlEncoder().withoutPadding().encodeToString(token);
+    final InterledgerAddress destinationAddress = receiverAddress.with(tokenBase64);
 
-    final byte[] randomBytes = Random.randBytes(18);
+    // Note the shared-secret is generated from the token's base64-encoded String bytes rather than from the
+    // _actual_ Base64-unencoded bytes. E.g., "foo".getBytes() is not the same as Base64.getDecoder().decode("foo")
     final byte[] sharedSecret = Hashing
         .hmacSha256(secretGenerator(serverSecretSupplier))
-        .hashBytes(randomBytes)
+        .hashBytes(tokenBase64.getBytes(StandardCharsets.US_ASCII))
         .asBytes();
 
-    final String destinationAddressPrecursor =
-        receiverAddress.with(Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes)).getValue();
-
-    // The authTag is the first 14 bytes of the HmacSha256 of destinationAddressPrecursor
-    final byte[] authTag = Arrays.copyOf(
-        Hashing.hmacSha256(sharedSecret)
-            .hashBytes(destinationAddressPrecursor.getBytes(US_ASCII))
-            .asBytes(),
-        14
-    );
-
-    final InterledgerAddress destinationAddress = InterledgerAddress.of(
-        destinationAddressPrecursor + Base64.getUrlEncoder().withoutPadding().encodeToString(authTag)
-    );
-
-    return streamConnectionDetailsBuilder
-        .sharedSecret(SharedSecret.of(sharedSecret))
+    return StreamConnectionDetails.builder()
         .destinationAddress(destinationAddress)
+        .sharedSecret(SharedSecret.of(sharedSecret))
         .build();
   }
 
@@ -71,36 +87,18 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
     Objects.requireNonNull(receiverAddress);
 
     final String receiverAddressAsString = receiverAddress.getValue();
+    // For Javascript compatibility, the `localpart` is not treated as a base64-encoded string of bytes, but is instead
+    // treated simply as US-ASCII bytes.
     final String localPart = receiverAddressAsString.substring(receiverAddressAsString.lastIndexOf(".") + 1);
-
-    final byte[] localPartBytes = Base64.getUrlDecoder().decode(localPart);
-    if (localPartBytes.length != 32) {
-      throw new StreamException(
-          String.format("Invalid Receiver Address (should have been 32 byte long): %s", receiverAddress));
-    }
-
-    // Bytes 0 through 17
-    final byte[] randomBytes = Arrays.copyOf(localPartBytes, 18);
-    final byte[] sharedSecret = Hashing.hmacSha256(secretGenerator(serverSecretSupplier)).hashBytes(randomBytes)
+    final byte[] sharedSecret = Hashing
+        .hmacSha256(secretGenerator(serverSecretSupplier))
+        .hashBytes(localPart.getBytes(StandardCharsets.US_ASCII))
         .asBytes();
-    // Bytes 18 through 31
-    final byte[] authTag = Arrays.copyOfRange(localPartBytes, 18, localPartBytes.length);
-
-    // The Address without the final 18 bytes.
-    String addressWithoutBytes = receiverAddressAsString.substring(0, receiverAddressAsString.length() - 19);
-    byte[] derivedAuthTag = Hashing.hmacSha256(sharedSecret)
-        .hashBytes(addressWithoutBytes.getBytes(US_ASCII)).asBytes();
-    derivedAuthTag = Arrays.copyOf(derivedAuthTag, 14);
-
-    if (!Arrays.equals(derivedAuthTag, authTag)) {
-      throw new StreamException("Invalid Receiver Address (derived AuthTag failure)!");
-    }
-
     return SharedSecret.of(sharedSecret);
   }
 
   /**
-   * Helper method to compute HmacSha256 on {@link #STREAM_SERVER_SECRET_GENERATOR}.
+   * Helper method to compute HmacSha256 on {@link #streamServerSecretGenerator}.
    *
    * @param serverSecretSupplier A {@link Supplier} for this node's main secret, which is the root seed for all derived
    *                             secrets provided by this node.
@@ -109,6 +107,6 @@ public class SpspStreamConnectionGenerator implements StreamConnectionGenerator 
    */
   private byte[] secretGenerator(final ServerSecretSupplier serverSecretSupplier) {
     Objects.requireNonNull(serverSecretSupplier);
-    return Hashing.hmacSha256(serverSecretSupplier.get()).hashBytes(STREAM_SERVER_SECRET_GENERATOR).asBytes();
+    return Hashing.hmacSha256(serverSecretSupplier.get()).hashBytes(this.streamServerSecretGenerator).asBytes();
   }
 }
