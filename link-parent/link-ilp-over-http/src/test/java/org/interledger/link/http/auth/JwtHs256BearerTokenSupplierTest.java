@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.interledger.link.http.IlpOverHttpLinkSettings;
+import org.interledger.link.http.JwtAuthSettings;
 import org.interledger.link.http.OutgoingLinkSettings;
 
 import okhttp3.HttpUrl;
@@ -62,11 +63,15 @@ public class JwtHs256BearerTokenSupplierTest {
   private OutgoingLinkSettings createOutgoingSettings(Duration duration) {
     return OutgoingLinkSettings.builder()
         .authType(IlpOverHttpLinkSettings.AuthType.JWT_HS_256)
-        .encryptedTokenSharedSecret("i am a terrible bowler")
-        .tokenAudience(HttpUrl.get("https://www.ripple.com"))
-        .tokenExpiry(duration)
-        .tokenIssuer(HttpUrl.get("https://www.ripple.com"))
-        .tokenSubject("about last night")
+        .jwtAuthSettings(
+            JwtAuthSettings.builder()
+                .encryptedTokenSharedSecret("i am a terrible bowler")
+                .tokenAudience("https://www.ripple.com")
+                .tokenExpiry(duration)
+                .tokenIssuer(HttpUrl.get("https://www.ripple.com"))
+                .tokenSubject("about last night")
+                .build()
+        )
         .url(HttpUrl.get("https://www.ripple.com"))
         .build();
   }

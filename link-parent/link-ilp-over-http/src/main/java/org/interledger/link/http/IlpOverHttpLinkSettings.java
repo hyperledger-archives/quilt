@@ -3,6 +3,7 @@ package org.interledger.link.http;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 
+import com.google.common.collect.ImmutableMap;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Derived;
 import org.immutables.value.Value.Modifiable;
@@ -10,7 +11,6 @@ import org.immutables.value.Value.Modifiable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * An extension of {@link LinkSettings} for ILP-over-HTTP links.
@@ -24,6 +24,8 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
   String INCOMING = "incoming";
 
   String AUTH_TYPE = "auth_type";
+  String SIMPLE = "simple";
+  String JWT = "jwt";
 
   String TOKEN_ISSUER = "token_issuer";
   String TOKEN_AUDIENCE = "token_audience";
@@ -32,6 +34,7 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
 
   // Used to grab the auth credential from custom settings...
   String SHARED_SECRET = "shared_secret";
+  String AUTH_TOKEN = "auth_token";
   String URL = "url";
 
   static ImmutableIlpOverHttpLinkSettings.Builder builder() {
@@ -64,19 +67,12 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     Objects.requireNonNull(builder);
     Objects.requireNonNull(customSettings);
 
-    final ImmutableIncomingLinkSettings.Builder incomingLinkSettingsBuilder =
-        IncomingLinkSettings.fromCustomSettings(customSettings);
-    final ImmutableOutgoingLinkSettings.Builder outgoingLinkSettingsBuilder =
-        OutgoingLinkSettings.fromCustomSettings(customSettings);
-
-    ImmutableIncomingLinkSettings incoming = incomingLinkSettingsBuilder.build();
-    builder.incomingLinkSettings(incoming);
-    ImmutableOutgoingLinkSettings outgoing = outgoingLinkSettingsBuilder.build();
-    builder.outgoingLinkSettings(outgoing);
-
-    // FIXME initialize in deprecated as well until removed
-    builder.incomingHttpLinkSettings(incoming);
-    builder.outgoingHttpLinkSettings(outgoing);
+    if (LinkSettingsUtils.getIncomingAuthType(customSettings).isPresent()) {
+      builder.incomingLinkSettings(IncomingLinkSettings.fromCustomSettings(customSettings).build());
+    }
+    if (LinkSettingsUtils.getOutgoingAuthType(customSettings).isPresent()) {
+      builder.outgoingLinkSettings(OutgoingLinkSettings.fromCustomSettings(customSettings).build());
+    }
 
     builder.customSettings(customSettings);
 
@@ -87,26 +83,6 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
   default LinkType getLinkType() {
     return IlpOverHttpLink.LINK_TYPE;
   }
-
-  /**
-   * @deprecated use {@link #incomingLinkSettings()}. To be removed in 1.0.4
-   * Link settings for the incoming HTTP link.
-   *
-   * @return A {@link IncomingLinkSettings}.
-   */
-  @Deprecated
-  @Nullable
-  IncomingLinkSettings incomingHttpLinkSettings();
-
-  /**
-   * @deprecated use {@link #outgoingLinkSettings()}. To be removed in 1.0.4
-   * Link settings for the outgoing HTTP link.
-   *
-   * @return A {@link OutgoingLinkSettings}.
-   */
-  @Deprecated
-  @Nullable
-  OutgoingLinkSettings outgoingHttpLinkSettings();
 
   /**
    * Optional link settings for the incoming HTTP link.
@@ -140,9 +116,17 @@ public interface IlpOverHttpLinkSettings extends LinkSettings {
     JWT_HS_256,
 
     /**
-     * Use RSA asymmetric keys to create aand verify JWT_RS_256 tokens.
+     * Use RSA asymmetric keys to create and verify JWT_RS_256 tokens.
      */
-    //JWT_RS_256
+    JWT_RS_256
+  }
+
+  @Value.Auxiliary
+  default Map<String, Object> toCustomSettingsMap() {
+    ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
+    incomingLinkSettings().ifPresent(settings -> mapBuilder.putAll(settings.toCustomSettingsMap()));
+    outgoingLinkSettings().ifPresent(settings -> mapBuilder.putAll(settings.toCustomSettingsMap()));
+    return mapBuilder.build();
   }
 
   @Value.Immutable

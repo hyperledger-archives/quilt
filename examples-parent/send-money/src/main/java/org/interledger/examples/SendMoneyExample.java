@@ -7,9 +7,6 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.link.http.IlpOverHttpLink;
-import org.interledger.link.http.IlpOverHttpLinkSettings;
-import org.interledger.link.http.IncomingLinkSettings;
-import org.interledger.link.http.OutgoingLinkSettings;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
@@ -19,6 +16,7 @@ import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
+import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 
@@ -74,6 +72,7 @@ public class SendMoneyExample {
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
+            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .amount(UnsignedLong.valueOf(100000))
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())
@@ -88,23 +87,9 @@ public class SendMoneyExample {
   }
 
   private static Link newIlpOverHttpLink() {
-    String sharedSecret = "some random secret here";
-    final IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-        .incomingLinkSettings(IncomingLinkSettings.builder()
-            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-            .encryptedTokenSharedSecret(sharedSecret)
-            .build())
-        .outgoingLinkSettings(OutgoingLinkSettings.builder()
-            .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-            .tokenSubject(SENDER_ACCOUNT_USERNAME)
-            .url(HttpUrl.parse(TESTNET_URI + "/ilp"))
-            .encryptedTokenSharedSecret(sharedSecret)
-            .build())
-        .build();
-
     return new IlpOverHttpLink(
         () -> SENDER_ADDRESS,
-        linkSettings,
+        HttpUrl.parse(TESTNET_URI + "/ilp"),
         newHttpClient(),
         new ObjectMapper(),
         InterledgerCodecContextFactory.oer(),

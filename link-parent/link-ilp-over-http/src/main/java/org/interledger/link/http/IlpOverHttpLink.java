@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
 import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Request.Builder;
@@ -77,6 +78,8 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    */
   private final Supplier<String> authTokenSupplier;
 
+  private final HttpUrl outgoingUrl;
+
   /**
    * Required-args Constructor.
    *
@@ -84,7 +87,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    *                                uninitialized, for example, in cases where the Link obtains its address from a
    *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
    *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
-   * @param ilpOverHttpLinkSettings A {@link IlpOverHttpLinkSettings} that specified ledger link options.
+   * @param outgoingUrl             A {@link HttpUrl} to the connector.
    * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
    *                                endpoint.
    * @param objectMapper            A {@link ObjectMapper} for reading error responses from the remote ILP-over-HTTP
@@ -95,13 +98,17 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    */
   public IlpOverHttpLink(
       final Supplier<InterledgerAddress> operatorAddressSupplier,
-      final IlpOverHttpLinkSettings ilpOverHttpLinkSettings,
+      final HttpUrl outgoingUrl,
       final OkHttpClient okHttpClient,
       final ObjectMapper objectMapper,
       final CodecContext ilpCodecContext,
       final BearerTokenSupplier bearerTokenSupplier
   ) {
-    super(operatorAddressSupplier, ilpOverHttpLinkSettings);
+    // IlpOverHttpLink does not require a full link settings, but the parent class requires one (even though it also
+    // does not use it for anything). For backwards compatibility pass a bare bones setting but ideally the abstract
+    // class could be refactored to not require it.
+    super(operatorAddressSupplier, IlpOverHttpLinkSettings.builder().build());
+    this.outgoingUrl = outgoingUrl;
     this.okHttpClient = Objects.requireNonNull(okHttpClient);
     this.objectMapper = Objects.requireNonNull(objectMapper);
     this.ilpCodecContext = Objects.requireNonNull(ilpCodecContext);
@@ -189,15 +196,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    * the endpoint does not support ILP-over-HTTP requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>
    */
   public void testConnection() {
-    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingLinkSettings()
-      .orElseGet(() -> {
-        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
-          "Please switch to using outgoingLinkSettings() instead");
-        return this.getLinkSettings().outgoingHttpLinkSettings();
-      });
-    final String tokenSubject = outgoingLinkSettings.tokenSubject();
     try {
-
       final Request okHttpRequest = this.constructSendPacketRequest(UNFULFILLABLE_PACKET);
 
       try (Response response = okHttpClient.newCall(okHttpRequest).execute()) {
@@ -211,26 +210,26 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
               .isPresent();
 
           if (responseHasOctetStreamContentType) {
-            logger.info("Remote peer-link supports ILP-over-HTTP. tokenSubject={} url={} responseHeaders={}",
-                outgoingLinkSettings.tokenSubject(), outgoingLinkSettings.url(), response
+            logger.info("Remote peer-link supports ILP-over-HTTP. url={} responseHeaders={}",
+                outgoingUrl, response
             );
           } else {
-            logger.warn("Remote peer-link supports ILP-over-HTTP but uses wrong ContentType. tokenSubject={} url={} "
+            logger.warn("Remote peer-link supports ILP-over-HTTP but uses wrong ContentType. url={} "
                     + "response={}",
-                outgoingLinkSettings.tokenSubject(), outgoingLinkSettings.url(), response
+                outgoingUrl, response
             );
           }
         } else {
           if (response.code() == 406 || response.code() == 415) { // NOT_ACCEPTABLE || UNSUPPORTED_MEDIA_TYPE
             throw new LinkException(
-                String.format("Remote peer-link DOES NOT support ILP-over-HTTP. tokenSubject=%s url=%s response=%s",
-                    tokenSubject, outgoingLinkSettings.url(), response
+                String.format("Remote peer-link DOES NOT support ILP-over-HTTP. url=%s response=%s",
+                    outgoingUrl, response
                 ), getLinkId()
             );
           } else {
             throw new LinkException(
-                String.format("Unable to connect to ILP-over-HTTP. tokenSubject=%s url=%s response=%s",
-                    tokenSubject, outgoingLinkSettings.url(), response
+                String.format("Unable to connect to ILP-over-HTTP. url=%s response=%s",
+                    outgoingUrl, response
                 ), getLinkId()
             );
           }
@@ -300,12 +299,6 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    */
   private Request constructSendPacketRequest(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket);
-    final OutgoingLinkSettings outgoingLinkSettings = this.getLinkSettings().outgoingLinkSettings()
-      .orElseGet(() -> {
-        logger.warn("Falling back to deprecated means of loading outgoing settings. " +
-          "Please switch to using outgoingLinkSettings() instead");
-        return this.getLinkSettings().outgoingHttpLinkSettings();
-      });
 
     try {
       final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -313,7 +306,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
 
       return new Builder()
           .headers(constructHttpRequestHeaders())
-          .url(outgoingLinkSettings.url())
+          .url(outgoingUrl)
           .post(
               RequestBody.create(byteArrayOutputStream.toByteArray(), APPLICATION_OCTET_STREAM)
           )
