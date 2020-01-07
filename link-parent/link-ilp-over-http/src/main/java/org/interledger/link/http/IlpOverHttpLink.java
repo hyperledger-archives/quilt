@@ -6,6 +6,7 @@ import static com.google.common.net.HttpHeaders.PRAGMA;
 import static com.google.common.net.MediaType.OCTET_STREAM;
 import static org.interledger.link.http.IlpOverHttpConstants.APPLICATION_OCTET_STREAM;
 import static org.interledger.link.http.IlpOverHttpConstants.BEARER;
+import static org.interledger.link.http.IlpOverHttpConstants.ILP_OPERATOR_ADDRESS_VALUE;
 import static org.interledger.link.http.IlpOverHttpConstants.OCTET_STREAM_STRING;
 
 import org.interledger.core.DateUtils;
@@ -256,7 +257,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
         .add(PRAGMA, "no-cache");
 
     // Set the Operator Address header, if present.
-    headers.set(IlpOverHttpConstants.ILP_OPERATOR_ADDRESS_VALUE, getOperatorAddressSupplier().get().getValue());
+    headers.set(ILP_OPERATOR_ADDRESS_VALUE, getOperatorAddressSupplier().get().getValue());
 
     headers.add(HttpHeaders.AUTHORIZATION, BEARER_WITH_SPACE + this.authTokenSupplier.get());
 
