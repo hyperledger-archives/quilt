@@ -50,7 +50,7 @@ public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link
   @Override
   public void registerLinkHandler(LinkHandler ilpDataHandler) throws LinkHandlerAlreadyRegisteredException {
     throw new RuntimeException(
-        "PingLoopback links never have incoming data, and thus should not have a registered DataHandler."
+        "PingLoopback links never emit data, and thus should not have a registered DataHandler."
     );
   }
 

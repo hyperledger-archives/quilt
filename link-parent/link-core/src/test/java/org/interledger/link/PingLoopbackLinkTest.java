@@ -56,7 +56,7 @@ public class PingLoopbackLinkTest {
       link.registerLinkHandler(incomingPreparePacket -> null);
     } catch (Exception e) {
       assertThat(e.getMessage()).isEqualTo(
-          "PingLoopback links never have incoming data, and thus should not have a registered DataHandler.");
+          "PingLoopback links never emit data, and thus should not have a registered DataHandler.");
       throw e;
     }
   }
