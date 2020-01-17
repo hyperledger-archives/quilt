@@ -6,7 +6,6 @@ import org.interledger.link.LinkFactory;
 import org.interledger.link.LinkId;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
-import org.interledger.link.LoopbackLink;
 import org.interledger.link.PacketRejector;
 import org.interledger.link.exceptions.LinkException;
 import org.interledger.stream.receiver.StatelessStreamReceiver;
@@ -15,7 +14,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * An implementation of {@link LinkFactory} for creating Links that can handle the `Loopback` packets.
+ * An implementation of {@link LinkFactory} for constructing instances of {@link StatelessSpspReceiverLink}.
  */
 public class StatelessSpspReceiverLinkFactory implements LinkFactory {
 

@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * An extension of {@link LinkSettings} for ILP-over-HTTP links.
+ * An extension of {@link LinkSettings} for Stateless SPSP receiver links.
  */
 public interface StatelessSpspReceiverLinkSettings extends LinkSettings {
 
