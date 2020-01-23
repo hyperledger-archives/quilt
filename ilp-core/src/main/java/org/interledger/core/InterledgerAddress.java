@@ -310,8 +310,7 @@ public interface InterledgerAddress {
   @Value.Style(
       typeBuilder = "*Builder",
       visibility = Value.Style.ImplementationVisibility.PRIVATE,
-      builderVisibility = Value.Style.BuilderVisibility.PUBLIC,
-      defaults = @Value.Immutable(intern = true))
+      builderVisibility = Value.Style.BuilderVisibility.PUBLIC)
   abstract class AbstractInterledgerAddress implements InterledgerAddress {
 
     static final String SEPARATOR_REGEX = "[.]";
