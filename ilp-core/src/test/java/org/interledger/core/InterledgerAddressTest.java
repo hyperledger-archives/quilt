@@ -391,7 +391,9 @@ public class InterledgerAddressTest {
     final InterledgerAddress addressPrefix3 = InterledgerAddress.of("g.foo.bar");
 
     assertThat(addressPrefix1.hashCode()).isEqualTo(addressPrefix2.hashCode());
-    assertThat(addressPrefix1 == addressPrefix2).isTrue();
+    // As of https://github.com/hyperledger/quilt/issues/418, this should NOT be true, as InterledgerAddresses
+    // are not interned
+    assertThat(addressPrefix1 == addressPrefix2).isFalse();
     assertThat(addressPrefix1).isEqualTo(addressPrefix2);
     assertThat(addressPrefix2).isEqualTo(addressPrefix1);
     assertThat(addressPrefix1.toString()).isEqualTo(addressPrefix2.toString());
