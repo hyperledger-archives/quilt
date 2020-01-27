@@ -14,6 +14,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -65,7 +66,13 @@ public class SimpleStreamSenderTests {
   @Test
   public void constructThreeArgWithNullExecutor() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, null);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, (ExecutorService) null);
+  }
+
+  @Test
+  public void constructThreeArgWithNullSleep() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, (Optional<UnsignedLong>) null);
   }
 
   @Test
