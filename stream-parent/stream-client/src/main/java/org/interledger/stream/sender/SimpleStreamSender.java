@@ -176,7 +176,7 @@ final ExecutorService executorService,
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    * @param executorService         A {@link ExecutorService} to run the payments.
    * @param streamConnectionManager A {@link StreamConnectionManager} that manages connections for all senders and
-   * @param sendPacketSleep amount of time for a thread to sleep before sending more packets
+   * @param                         sendPacketSleep amount of time for a thread to sleep before sending more packets
    */
   public SimpleStreamSender(
     final StreamEncryptionService streamEncryptionService,
