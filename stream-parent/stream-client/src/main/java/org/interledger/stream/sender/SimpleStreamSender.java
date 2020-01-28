@@ -157,7 +157,7 @@ public class SimpleStreamSender implements StreamSender {
    *                                sender and receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    * @param executorService         executorService to run the payments
-   * @param sendPacketSleep amount of time for a thread to sleep before sending more packets
+   * @param         sendPacketSleep amount of time for a thread to sleep before sending more packets
    */
   public SimpleStreamSender(
     final StreamEncryptionService streamEncryptionService,
