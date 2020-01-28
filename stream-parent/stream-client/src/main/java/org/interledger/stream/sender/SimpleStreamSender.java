@@ -162,7 +162,7 @@ public class SimpleStreamSender implements StreamSender {
   public SimpleStreamSender(
     final StreamEncryptionService streamEncryptionService,
     final Link link,
-    ExecutorService executorService,
+final ExecutorService executorService,
     final Optional<UnsignedLong> sendPacketSleep
   ) {
     this(streamEncryptionService, link, executorService, new StreamConnectionManager(), sendPacketSleep);
