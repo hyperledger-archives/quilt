@@ -183,7 +183,8 @@ final ExecutorService executorService,
     final Link link,
     final ExecutorService executorService,
     final StreamConnectionManager streamConnectionManager,
-    Optional<UnsignedLong> sendPacketSleep) {
+  final Optional<UnsignedLong> sendPacketSleep
+  ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
 
