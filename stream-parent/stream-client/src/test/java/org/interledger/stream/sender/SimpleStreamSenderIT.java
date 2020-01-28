@@ -317,7 +317,7 @@ public class SimpleStreamSenderIT {
    */
   @Test
   public void sendMoneyMultiPacketDifferentSleepTimes() {
-    final SendMoneyResult heavySleeperResult = sendMoneyWithConfiguredSleep(Optional.empty(), 1000001);
+    final SendMoneyResult heavySleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(100)), 1000001);
     final SendMoneyResult lightSleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(5)), 1000002);
 
     logger.info("Heavy sleeper took {} to send {} packets.", heavySleeperResult.sendMoneyDuration(), heavySleeperResult.totalPackets());
