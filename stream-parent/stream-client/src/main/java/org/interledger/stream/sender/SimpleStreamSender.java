@@ -350,7 +350,7 @@ final ExecutorService executorService,
       this.unrecoverableErrorEncountered = new AtomicBoolean(false);
 
       Objects.requireNonNull(sendPacketSleep);
-      this.sendPacketSleep = sendPacketSleep.orElse(UnsignedLong.valueOf(100L)).longValue();
+      this.sendPacketSleep = sendPacketSleep.orElse(UnsignedLong.valueOf(10)).longValue();
     }
 
     /**

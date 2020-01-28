@@ -311,6 +311,50 @@ public class SimpleStreamSenderIT {
   }
 
   /**
+   * Two calls to {@link SimpleStreamSender#sendMoney(SendMoneyRequest)}} that involves multiple packets in parallel.
+   * First call is to a {@link SimpleStreamSender} with the default sleep time (100ms)
+   * Second call is to a {@link SimpleStreamSender} with a shorter sleep time (5ms)
+   */
+  @Test
+  public void sendMoneyMultiPacketDifferentSleepTimes() {
+    final SendMoneyResult heavySleeperResult = sendMoneyWithConfiguredSleep(Optional.empty(), 1000001);
+    final SendMoneyResult lightSleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(5)), 1000002);
+
+    logger.info("Heavy sleeper took {} to send {} packets.", heavySleeperResult.sendMoneyDuration(), heavySleeperResult.totalPackets());
+    logger.info("Light sleeper took {} to send {} packets.", lightSleeperResult.sendMoneyDuration(), lightSleeperResult.totalPackets());
+    assertThat(heavySleeperResult.sendMoneyDuration()).isGreaterThan(lightSleeperResult.sendMoneyDuration());
+  }
+
+  private SendMoneyResult sendMoneyWithConfiguredSleep(Optional<UnsignedLong> sleepTime, int streamConnectionId) {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
+
+    StreamSender heavySleeperSender = new SimpleStreamSender(
+      new JavaxStreamEncryptionService(), link, sleepTime
+    );
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(streamConnectionId);
+
+    final SendMoneyResult heavySleeperResult = heavySleeperSender.sendMoney(
+      SendMoneyRequest.builder()
+        .sourceAddress(SENDER_ADDRESS)
+        .amount(paymentAmount)
+        .denomination(Denominations.XRP)
+        .destinationAddress(connectionDetails.destinationAddress())
+        .sharedSecret(connectionDetails.sharedSecret())
+        .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+        .build()
+    ).join();
+
+    assertThat(heavySleeperResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(heavySleeperResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(heavySleeperResult.numFulfilledPackets()).isCloseTo(8, Offset.offset(1));
+    assertThat(heavySleeperResult.numRejectPackets()).isEqualTo(0);
+
+    logger.info("Payment Sent via sender with sleep = {} : {}", sleepTime.orElse(UnsignedLong.valueOf(100)), heavySleeperResult);
+    return heavySleeperResult;
+  }
+
+  /**
    * Multiple calls to {@link SimpleStreamSender#sendMoney(SendMoneyRequest)}} that involves multiple packets in
    * parallel, but using different accounts for each Stream, and thus a different Connection.
    */
