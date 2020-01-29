@@ -2,6 +2,7 @@ package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
@@ -55,6 +56,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -425,22 +427,27 @@ public class SimpleStreamSenderIT {
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
-    final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(
-            SendMoneyRequest.builder()
-                .sourceAddress(SENDER_ADDRESS)
-                .amount(paymentAmount)
-                .denomination(Denominations.XRP)
-                .destinationAddress(connectionDetails.destinationAddress())
-                .sharedSecret(connectionDetails.sharedSecret())
-                .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-                .timeout(Duration.ofMillis(50))
-                .build()
-        ).join();
+    final SendMoneyResult sendMoneyResult;
+    try {
+      sendMoneyResult = streamSender
+          .sendMoney(
+              SendMoneyRequest.builder()
+                  .sourceAddress(SENDER_ADDRESS)
+                  .amount(paymentAmount)
+                  .denomination(Denominations.XRP)
+                  .destinationAddress(connectionDetails.destinationAddress())
+                  .sharedSecret(connectionDetails.sharedSecret())
+                  .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+                  .timeout(Duration.ofMillis(50))
+                  .build()
+          ).get();
+      assertThat(sendMoneyResult.successfulPayment()).isFalse();
 
-    assertThat(sendMoneyResult.successfulPayment()).isFalse();
-
-    logger.info("Payment Sent: {}", sendMoneyResult);
+      logger.info("Payment Sent: {}", sendMoneyResult);
+    } catch (ExecutionException | InterruptedException e) {
+      logger.error("Error getting completeable future: " + e.getMessage());
+      fail();
+    }
   }
 
   @Test(expected = NoExchangeRateException.class)
