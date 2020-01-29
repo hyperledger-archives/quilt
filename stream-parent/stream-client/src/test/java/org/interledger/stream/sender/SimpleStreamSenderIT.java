@@ -144,6 +144,7 @@ public class SimpleStreamSenderIT {
     RustNodeAccount sender = accountBuilder()
         .username(SENDER_ACCOUNT_USERNAME)
         .ilpAddress(SENDER_ADDRESS)
+        .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
         .build();
 
     nodeClient.createAccount(sender);
@@ -411,8 +412,10 @@ public class SimpleStreamSenderIT {
   public void sendMoneyHonorsTimeout() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000000);
 
+    // using a sleepy executor here to make sure race condition is handled properly where timeout is reached
+    // after submitting a sendPacketized task to the executor but before the task is executed
     StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
+        new JavaxStreamEncryptionService(), link, new SleepyExecutorService(Executors.newFixedThreadPool(5), 5)
     );
 
     String username = "sendMoneyHonorsTimeout";
@@ -420,30 +423,30 @@ public class SimpleStreamSenderIT {
     RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
-        /*.maxPacketAmount(BigInteger.valueOf(100))
-        .amountPerMinuteLimit(BigInteger.valueOf(1))
-        .packetsPerMinuteLimit(BigInteger.valueOf(1))*/
         .build();
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
-    final SendMoneyResult sendMoneyResult;
     try {
-      sendMoneyResult = streamSender
-          .sendMoney(
-              SendMoneyRequest.builder()
-                  .sourceAddress(SENDER_ADDRESS)
-                  .amount(paymentAmount)
-                  .denomination(Denominations.XRP)
-                  .destinationAddress(connectionDetails.destinationAddress())
-                  .sharedSecret(connectionDetails.sharedSecret())
-                  .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-                  .timeout(Duration.ofMillis(1))
-                  .build()
-          ).get();
-      assertThat(sendMoneyResult.successfulPayment()).isFalse();
+      // loop to test different timeout amounts
+      for (int i = 0; i < 10; i++) {
+        final SendMoneyResult sendMoneyResult = streamSender
+            .sendMoney(
+                SendMoneyRequest.builder()
+                    .sourceAddress(SENDER_ADDRESS)
+                    .amount(paymentAmount)
+                    .denomination(Denominations.XRP)
+                    .destinationAddress(connectionDetails.destinationAddress())
+                    .sharedSecret(connectionDetails.sharedSecret())
+                    .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+                    .timeout(Duration.ofMillis(10 + i * 10))
+                    .build()
+            ).get();
+        assertThat(sendMoneyResult.successfulPayment()).isFalse();
 
-      logger.info("Payment Sent: {}", sendMoneyResult);
+        logger.info("Payment Sent: {}", sendMoneyResult);
+
+      }
     } catch (ExecutionException | InterruptedException e) {
       logger.error("Error getting completeable future");
       logger.error("Error getting completeable future: " + e.toString() + " cause: " + e.getCause());
@@ -568,6 +571,7 @@ public class SimpleStreamSenderIT {
     nodeClient.createAccount(accountBuilder()
         .username(connectorAccountUsername)
         .ilpAddress(HOST_ADDRESS.with(connectorAccountUsername))
+        .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
         .build());
 
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);

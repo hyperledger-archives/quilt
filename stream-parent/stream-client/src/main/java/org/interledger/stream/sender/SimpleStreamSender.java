@@ -638,6 +638,13 @@ final ExecutorService executorService,
               paymentTracker.rollback(prepareAmounts, false);
             }
           }
+          else {
+            logger.info("timeout reached, not sending packet");
+            congestionController.reject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
+                .message(String.format("Timeout reached before packet could be sent", preparePacket))
+                .build());
+          }
         });
       } catch (RejectedExecutionException e) {
         // If we get here, it means the task was unable to be scheduled, so we need to unwind the congestion
