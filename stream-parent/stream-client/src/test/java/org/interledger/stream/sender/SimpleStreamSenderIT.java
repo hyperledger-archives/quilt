@@ -34,9 +34,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -65,6 +67,7 @@ import java.util.stream.Collectors;
  * Integration tests for {@link SimpleStreamSender} that connects to a running ILP Connector using the information
  * supplied in this link, and initiates a STREAM payment.
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SimpleStreamSenderIT {
 
   private static final String AUTH_TOKEN = "password";
@@ -431,7 +434,7 @@ public class SimpleStreamSenderIT {
                 .destinationAddress(connectionDetails.destinationAddress())
                 .sharedSecret(connectionDetails.sharedSecret())
                 .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-                .timeout(Duration.ofMillis(100))
+                .timeout(Duration.ofMillis(50))
                 .build()
         ).join();
 
