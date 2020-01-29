@@ -420,9 +420,9 @@ public class SimpleStreamSenderIT {
     RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
-        .maxPacketAmount(BigInteger.valueOf(100))
+        /*.maxPacketAmount(BigInteger.valueOf(100))
         .amountPerMinuteLimit(BigInteger.valueOf(1))
-        .packetsPerMinuteLimit(BigInteger.valueOf(1))
+        .packetsPerMinuteLimit(BigInteger.valueOf(1))*/
         .build();
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
@@ -438,7 +438,7 @@ public class SimpleStreamSenderIT {
                   .destinationAddress(connectionDetails.destinationAddress())
                   .sharedSecret(connectionDetails.sharedSecret())
                   .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-                  .timeout(Duration.ofMillis(50))
+                  .timeout(Duration.ofMillis(1))
                   .build()
           ).get();
       assertThat(sendMoneyResult.successfulPayment()).isFalse();
