@@ -445,7 +445,7 @@ public class SimpleStreamSenderIT {
 
       logger.info("Payment Sent: {}", sendMoneyResult);
     } catch (ExecutionException | InterruptedException e) {
-      logger.error("Error getting completeable future: " + e.getMessage());
+      logger.error("Error getting completeable future: " + e.toString());
       fail();
     }
   }
