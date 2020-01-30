@@ -51,7 +51,7 @@ public class LoopbackLinkTest {
       link.registerLinkHandler(incomingPreparePacket -> null);
     } catch (Exception e) {
       assertThat(e.getMessage())
-          .isEqualTo("Loopback links never emit data, and thus should not have a registered DataHandler.");
+          .isEqualTo("Loopback links never have incoming data, and thus should not have a registered DataHandler.");
       throw e;
     }
   }
