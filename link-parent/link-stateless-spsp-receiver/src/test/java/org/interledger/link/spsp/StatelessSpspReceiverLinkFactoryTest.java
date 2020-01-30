@@ -1,11 +1,8 @@
 package org.interledger.link.spsp;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.link.spsp.StatelessSpspReceiverLinkSettings.ASSET_CODE;
-import static org.interledger.link.spsp.StatelessSpspReceiverLinkSettings.ASSET_SCALE;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.Link;
 import org.interledger.link.LinkId;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
@@ -13,15 +10,12 @@ import org.interledger.link.PacketRejector;
 import org.interledger.link.exceptions.LinkException;
 import org.interledger.stream.receiver.StatelessStreamReceiver;
 
-import com.google.common.collect.Maps;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.Map;
 
 /**
  * Unit tests for {@link StatelessSpspReceiverLinkFactory}.
@@ -103,50 +97,16 @@ public class StatelessSpspReceiverLinkFactoryTest {
   }
 
   @Test
-  public void constructLinkWithMissingAssetCode() {
-    expectedException.expect(LinkException.class);
-    expectedException
-        .expectMessage("assetCode is required to construct a Link of type LinkType(STATELESS_SPSP_RECEIVER)");
-
-    final Map<String, Object> customSettings = Maps.newHashMap();
-    customSettings.put(ASSET_SCALE, "9");
-    LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(StatelessSpspReceiverLink.LINK_TYPE)
-        .customSettings(customSettings)
-        .build();
-    Link<?> link = statelessSpspReceiverLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
-    link.setLinkId(linkId);
-    assertThat(link.getLinkId()).isEqualTo(linkId);
-  }
-
-  @Test
-  public void constructLinkWithMissingAssetScale() {
-    expectedException.expect(LinkException.class);
-    expectedException
-        .expectMessage("assetScale is required to construct a Link of type LinkType(STATELESS_SPSP_RECEIVER)");
-
-    final Map<String, Object> customSettings = Maps.newHashMap();
-    customSettings.put(ASSET_CODE, "USD");
-    LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(StatelessSpspReceiverLink.LINK_TYPE)
-        .customSettings(customSettings)
-        .build();
-    Link<?> link = statelessSpspReceiverLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
-    link.setLinkId(linkId);
-    assertThat(link.getLinkId()).isEqualTo(linkId);
-  }
-
-  @Test
   public void constructLink() {
-    final Map<String, Object> customSettings = Maps.newHashMap();
-    customSettings.put(ASSET_CODE, "USD");
-    customSettings.put(ASSET_SCALE, "9");
-    LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(StatelessSpspReceiverLink.LINK_TYPE)
-        .customSettings(customSettings)
+    LinkSettings linkSettings = StatelessSpspReceiverLinkSettings.builder()
+        .assetCode("USD")
+        .assetScale((short) 9)
         .build();
-    Link<?> link = statelessSpspReceiverLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
-    link.setLinkId(linkId);
-    assertThat(link.getLinkId()).isEqualTo(linkId);
+    StatelessSpspReceiverLink link = (StatelessSpspReceiverLink) statelessSpspReceiverLinkFactory
+        .constructLink(() -> OPERATOR_ADDRESS, linkSettings);
+
+    assertThat(link.getLinkSettings().assetCode()).isEqualTo("USD");
+    assertThat(link.getLinkSettings().assetScale()).isEqualTo(9);
+    assertThat(link.getOperatorAddressSupplier().get()).isEqualTo(OPERATOR_ADDRESS);
   }
 }

@@ -44,7 +44,7 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
     super(operatorAddressSupplier, linkSettings);
     this.denomination = Denomination.builder()
         .assetCode(linkSettings.assetCode())
-        .assetScale(linkSettings.assetScale())
+        .assetScale((short) linkSettings.assetScale())
         .build();
     this.streamReceiver = Objects.requireNonNull(streamReceiver);
   }
@@ -62,11 +62,15 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
 
     return streamReceiver.receiveMoney(preparePacket, this.getOperatorAddressSupplier().get(), this.denomination)
         .map(fulfillPacket -> {
-              logger.info("Packet fulfilled! preparePacket={} fulfillPacket={}", preparePacket, fulfillPacket);
+              if (logger.isDebugEnabled()) {
+                logger.debug("Packet fulfilled! preparePacket={} fulfillPacket={}", preparePacket, fulfillPacket);
+              }
               return fulfillPacket;
             },
             rejectPacket -> {
-              logger.info("Packet rejected! preparePacket={} rejectPacket={}", preparePacket, rejectPacket);
+              if (logger.isDebugEnabled()) {
+                logger.debug("Packet rejected! preparePacket={} rejectPacket={}", preparePacket, rejectPacket);
+              }
               return rejectPacket;
             }
         );

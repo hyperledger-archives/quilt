@@ -10,6 +10,8 @@ import org.interledger.link.PacketRejector;
 import org.interledger.link.exceptions.LinkException;
 import org.interledger.stream.receiver.StatelessStreamReceiver;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -35,23 +37,17 @@ public class StatelessSpspReceiverLinkFactory implements LinkFactory {
         .requireNonNull(statelessStreamReceiver, "statelessStreamReceiver must not be null");
   }
 
-  /**
-   * An abstract method that sub-classes must implemented to provide actual factory functionality.
-   *
-   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
-   *                                uninitialized, for example, in cases where the Link obtains its address from a
-   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
-   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
-   * @param linkSettings            An instance of {@link LinkSettings} to initialize this link from.
-   *
-   * @return A newly constructed instance of {@link Link}.
-   */
+
   @Override
   public Link<?> constructLink(
       final Supplier<InterledgerAddress> operatorAddressSupplier, final LinkSettings linkSettings
   ) {
     Objects.requireNonNull(operatorAddressSupplier, "operatorAddressSupplier must not be null");
     Objects.requireNonNull(linkSettings, "linkSettings must not be null");
+    Preconditions.checkArgument(
+        StatelessSpspReceiverLinkSettings.class.isAssignableFrom(linkSettings.getClass()),
+        "Constructing an instance of StatelessSpspReceiverLink requires an instance of StatelessSpspReceiverLinkSettings"
+    );
 
     if (!this.supports(linkSettings.getLinkType())) {
       throw new LinkException(
@@ -60,16 +56,8 @@ public class StatelessSpspReceiverLinkFactory implements LinkFactory {
       );
     }
 
-    // Translate from Link.customSettings, being sure to apply custom settings from the incoming link.
-    final ImmutableStatelessSpspReceiverLinkSettings.Builder builder = StatelessSpspReceiverLinkSettings
-        .builder()
-        .from(linkSettings);
-
-    final StatelessSpspReceiverLinkSettings statelessSpspReceiverLinkSettings =
-        StatelessSpspReceiverLinkSettings.applyCustomSettings(builder, linkSettings.getCustomSettings()).build();
-
     return new StatelessSpspReceiverLink(
-        operatorAddressSupplier, statelessSpspReceiverLinkSettings, statelessStreamReceiver
+        operatorAddressSupplier, (StatelessSpspReceiverLinkSettings) linkSettings, statelessStreamReceiver
     );
   }
 
