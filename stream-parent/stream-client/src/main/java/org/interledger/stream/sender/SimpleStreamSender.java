@@ -86,6 +86,7 @@ public class SimpleStreamSender implements StreamSender {
   private final StreamEncryptionService streamEncryptionService;
   private final ExecutorService executorService;
   private final StreamConnectionManager streamConnectionManager;
+  private final Optional<UnsignedLong> sendPacketSleep;
 
   /**
    * Required-args Constructor.
@@ -99,13 +100,38 @@ public class SimpleStreamSender implements StreamSender {
   /**
    * Required-args Constructor.
    *
+   * @param link A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param sendPacketSleep amount of time for a thread to sleep before sending more packets
+   */
+  public SimpleStreamSender(final Link link, final Optional<UnsignedLong> sendPacketSleep) {
+    this(new JavaxStreamEncryptionService(), link, sendPacketSleep);
+  }
+
+  /**
+   * Required-args Constructor.
+   *
    * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
    *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
    *                                sender and receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    */
   public SimpleStreamSender(final StreamEncryptionService streamEncryptionService, final Link link) {
-    this(streamEncryptionService, link, newDefaultExecutor());
+    this(streamEncryptionService, link, newDefaultExecutor(), Optional.empty());
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
+   *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
+   *                                sender and receiver).
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param sendPacketSleep amount of time for a thread to sleep before sending more packets
+   */
+  public SimpleStreamSender(final StreamEncryptionService streamEncryptionService,
+                            final Link link,
+                            final Optional<UnsignedLong> sendPacketSleep) {
+    this(streamEncryptionService, link, newDefaultExecutor(), sendPacketSleep);
   }
 
   /**
@@ -120,25 +146,44 @@ public class SimpleStreamSender implements StreamSender {
   public SimpleStreamSender(
       final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
   ) {
-    this(streamEncryptionService, link, executorService, new StreamConnectionManager());
+    this(streamEncryptionService, link, executorService, new StreamConnectionManager(), Optional.empty());
   }
 
   /**
    * Required-args Constructor.
    *
-   * @param streamEncryptionService A {@link StreamEncryptionService} used to encrypt and decrypted end-to-end STREAM
+   * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
+   *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
+   *                                sender and receiver).
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param executorService         executorService to run the payments
+   * @param         sendPacketSleep amount of time for a thread to sleep before sending more packets
+   */
+  public SimpleStreamSender(
+    final StreamEncryptionService streamEncryptionService,
+    final Link link,
+final ExecutorService executorService,
+    final Optional<UnsignedLong> sendPacketSleep
+  ) {
+    this(streamEncryptionService, link, executorService, new StreamConnectionManager(), sendPacketSleep);
+  }
+
+  /**
+   * Required-args Constructor.
+   *  @param streamEncryptionService A {@link StreamEncryptionService} used to encrypt and decrypted end-to-end STREAM
    *                                packet data (i.e., packets that should only be visible between sender and
    *                                receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    * @param executorService         A {@link ExecutorService} to run the payments.
    * @param streamConnectionManager A {@link StreamConnectionManager} that manages connections for all senders and
-   *                                receivers in this JVM.
+   * @param                         sendPacketSleep amount of time for a thread to sleep before sending more packets
    */
   public SimpleStreamSender(
-      final StreamEncryptionService streamEncryptionService,
-      final Link link,
-      final ExecutorService executorService,
-      final StreamConnectionManager streamConnectionManager
+    final StreamEncryptionService streamEncryptionService,
+    final Link link,
+    final ExecutorService executorService,
+    final StreamConnectionManager streamConnectionManager,
+  final Optional<UnsignedLong> sendPacketSleep
   ) {
     this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
@@ -147,6 +192,7 @@ public class SimpleStreamSender implements StreamSender {
     // created using {@link ThreadPoolExecutor} constructors.
     this.executorService = Objects.requireNonNull(executorService);
     this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
+    this.sendPacketSleep = Objects.requireNonNull(sendPacketSleep);
   }
 
   private static ExecutorService newDefaultExecutor() {
@@ -162,17 +208,18 @@ public class SimpleStreamSender implements StreamSender {
     Objects.requireNonNull(request);
 
     final StreamConnection streamConnection = this.streamConnectionManager.openConnection(
-        StreamConnectionId.from(request.destinationAddress(), request.sharedSecret())
+      StreamConnectionId.from(request.destinationAddress(), request.sharedSecret())
     );
 
     return new SendMoneyAggregator(
-        this.executorService,
-        streamConnection,
-        StreamCodecContextFactory.oer(),
-        this.link,
-        new AimdCongestionController(),
-        this.streamEncryptionService,
-        request
+      this.executorService,
+      streamConnection,
+      StreamCodecContextFactory.oer(),
+      this.link,
+      new AimdCongestionController(),
+      this.streamEncryptionService,
+      request,
+      this.sendPacketSleep
     ).send();
   }
 
@@ -251,6 +298,8 @@ public class SimpleStreamSender implements StreamSender {
 
     private final AtomicBoolean unrecoverableErrorEncountered;
 
+    private long sendPacketSleep;
+
     /**
      * Required-args Constructor.
      *
@@ -271,7 +320,8 @@ public class SimpleStreamSender implements StreamSender {
         final Link link,
         final CongestionController congestionController,
         final StreamEncryptionService streamEncryptionService,
-        final SendMoneyRequest request
+        final SendMoneyRequest request,
+        final Optional<UnsignedLong> sendPacketSleep
     ) {
       this.executorService = Objects.requireNonNull(executorService);
       this.streamConnection = Objects.requireNonNull(streamConnection);
@@ -298,6 +348,9 @@ public class SimpleStreamSender implements StreamSender {
       this.receiverDenomination = Optional.empty();
 
       this.unrecoverableErrorEncountered = new AtomicBoolean(false);
+
+      Objects.requireNonNull(sendPacketSleep);
+      this.sendPacketSleep = sendPacketSleep.orElse(UnsignedLong.valueOf(10)).longValue();
     }
 
     /**
@@ -471,7 +524,7 @@ public class SimpleStreamSender implements StreamSender {
           try {
             // Don't send any more, but wait a bit for outstanding requests to complete so we don't cycle needlessly in
             // a while loop that doesn't do anything useful.
-            Thread.sleep(100);
+            Thread.sleep(sendPacketSleep);
           } catch (InterruptedException e) {
             throw new StreamSenderException(e.getMessage(), e);
           }
@@ -584,6 +637,13 @@ public class SimpleStreamSender implements StreamSender {
                   .build());
               paymentTracker.rollback(prepareAmounts, false);
             }
+          }
+          else {
+            logger.info("timeout reached, not sending packet");
+            congestionController.reject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
+                .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
+                .message(String.format("Timeout reached before packet could be sent", preparePacket))
+                .build());
           }
         });
       } catch (RejectedExecutionException e) {

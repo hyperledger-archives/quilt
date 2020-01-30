@@ -114,7 +114,7 @@ public class SendMoneyAggregatorTest {
         .build();
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request);
+        streamEncryptionServiceMock, request, Optional.empty());
 
     defaultPrepareAmounts = PrepareAmounts.from(samplePreparePacket(), sampleStreamPacket());
   }
@@ -224,7 +224,7 @@ public class SendMoneyAggregatorTest {
     ExecutorService executor = mock(ExecutorService.class);
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request);
+        streamEncryptionServiceMock, request, Optional.empty());
 
     when(executor.submit(any(Runnable.class))).thenThrow(new RejectedExecutionException());
 
@@ -365,7 +365,7 @@ public class SendMoneyAggregatorTest {
 
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request);
+        streamEncryptionServiceMock, request, Optional.empty());
 
     setSoldierOnBooleans(false, false, true);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
@@ -490,7 +490,7 @@ public class SendMoneyAggregatorTest {
 
     this.sendMoneyAggregator = new SendMoneyAggregator(
       executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-      streamEncryptionServiceMock, request);
+      streamEncryptionServiceMock, request, Optional.empty());
 
     when(congestionControllerMock.hasInFlight()).thenAnswer(new Answer<Boolean>() {
 
