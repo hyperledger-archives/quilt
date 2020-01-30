@@ -53,7 +53,7 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
   @Override
   public void registerLinkHandler(LinkHandler ilpDataHandler) throws LinkHandlerAlreadyRegisteredException {
     throw new RuntimeException(
-        "Loopback links never emit data, and thus should not have a registered DataHandler."
+        "Loopback links never have incoming data, and thus should not have a registered DataHandler."
     );
   }
 
