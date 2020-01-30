@@ -44,10 +44,6 @@ public class StatelessSpspReceiverLinkFactory implements LinkFactory {
   ) {
     Objects.requireNonNull(operatorAddressSupplier, "operatorAddressSupplier must not be null");
     Objects.requireNonNull(linkSettings, "linkSettings must not be null");
-    Preconditions.checkArgument(
-        StatelessSpspReceiverLinkSettings.class.isAssignableFrom(linkSettings.getClass()),
-        "Constructing an instance of StatelessSpspReceiverLink requires an instance of StatelessSpspReceiverLinkSettings"
-    );
 
     if (!this.supports(linkSettings.getLinkType())) {
       throw new LinkException(
@@ -55,6 +51,11 @@ public class StatelessSpspReceiverLinkFactory implements LinkFactory {
           LinkId.of("n/a")
       );
     }
+
+    Preconditions.checkArgument(
+        StatelessSpspReceiverLinkSettings.class.isAssignableFrom(linkSettings.getClass()),
+        "Constructing an instance of StatelessSpspReceiverLink requires an instance of StatelessSpspReceiverLinkSettings"
+    );
 
     return new StatelessSpspReceiverLink(
         operatorAddressSupplier, (StatelessSpspReceiverLinkSettings) linkSettings, statelessStreamReceiver
