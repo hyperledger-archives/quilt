@@ -16,6 +16,7 @@ import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerPreparePacketBuilder;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.SharedSecret;
+import org.interledger.link.PingLoopbackLink;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
@@ -50,9 +51,11 @@ public class IlpPacketEmitter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(IlpPacketEmitter.class);
 
+  private static final InterledgerAddress PING_DESTINATION_ADDRESS = InterledgerAddress.of("test.connie");
+
   private static final InterledgerAddress DESTINATION_ADDRESS = InterledgerAddress
-      .of("example.connie.bob.QeJvQtFp7eRiNhnoAg9PkusR");
-  private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("example.connie");
+      .of("test.connie.bob.QeJvQtFp7eRiNhnoAg9PkusR");
+  private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.connie");
 
   private static final SharedSecret SHARED_SECRET = SharedSecret
       .of(Base64.getDecoder().decode("nHYRcu5KM5pyw8XehssZtvhEgCgkKP4Do5kJUpk84G4"));
@@ -62,6 +65,7 @@ public class IlpPacketEmitter {
   public static void main(String[] args) throws IOException {
     emitPacketsWithNoData();
     emitPacketsWithStreamPayloads();
+    emitUnidrectionalPingPacket();
   }
 
   private static void emitPacketsWithNoData() {
@@ -79,6 +83,18 @@ public class IlpPacketEmitter {
         .fulfillment(InterledgerFulfillment.of(new byte[32]))
         .build();
     emitPacketToFile("/tmp/testFulfillPacket.bin", fulfillPacket);
+  }
+
+  private static void emitUnidrectionalPingPacket() {
+
+    final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+        .destination(PING_DESTINATION_ADDRESS)
+        .expiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
+        .executionCondition(PingLoopbackLink.PING_PROTOCOL_CONDITION)
+        .amount(UnsignedLong.ONE)
+        .build();
+
+    emitPacketToFile("/tmp/testUnidirectionalPingPacket.bin", preparePacket);
   }
 
   private static void emitPacketsWithStreamPayloads() throws IOException {

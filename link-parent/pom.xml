@@ -16,6 +16,7 @@
   <modules>
     <module>link-core</module>
     <module>link-ilp-over-http</module>
+    <module>link-stateless-spsp-receiver</module>
   </modules>
 
 </project>

@@ -2,6 +2,7 @@ package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
@@ -34,9 +35,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -53,6 +56,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -65,6 +69,7 @@ import java.util.stream.Collectors;
  * Integration tests for {@link SimpleStreamSender} that connects to a running ILP Connector using the information
  * supplied in this link, and initiates a STREAM payment.
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SimpleStreamSenderIT {
 
   private static final String AUTH_TOKEN = "password";
@@ -139,6 +144,7 @@ public class SimpleStreamSenderIT {
     RustNodeAccount sender = accountBuilder()
         .username(SENDER_ACCOUNT_USERNAME)
         .ilpAddress(SENDER_ADDRESS)
+        .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
         .build();
 
     nodeClient.createAccount(sender);
@@ -311,6 +317,50 @@ public class SimpleStreamSenderIT {
   }
 
   /**
+   * Two calls to {@link SimpleStreamSender#sendMoney(SendMoneyRequest)}} that involves multiple packets in parallel.
+   * First call is to a {@link SimpleStreamSender} with the default sleep time (100ms)
+   * Second call is to a {@link SimpleStreamSender} with a shorter sleep time (5ms)
+   */
+  @Test
+  public void sendMoneyMultiPacketDifferentSleepTimes() {
+    final SendMoneyResult heavySleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(100)), 1000001);
+    final SendMoneyResult lightSleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(5)), 1000002);
+
+    logger.info("Heavy sleeper took {} to send {} packets.", heavySleeperResult.sendMoneyDuration(), heavySleeperResult.totalPackets());
+    logger.info("Light sleeper took {} to send {} packets.", lightSleeperResult.sendMoneyDuration(), lightSleeperResult.totalPackets());
+    assertThat(heavySleeperResult.sendMoneyDuration()).isGreaterThan(lightSleeperResult.sendMoneyDuration());
+  }
+
+  private SendMoneyResult sendMoneyWithConfiguredSleep(Optional<UnsignedLong> sleepTime, int streamConnectionId) {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
+
+    StreamSender heavySleeperSender = new SimpleStreamSender(
+      new JavaxStreamEncryptionService(), link, sleepTime
+    );
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(streamConnectionId);
+
+    final SendMoneyResult heavySleeperResult = heavySleeperSender.sendMoney(
+      SendMoneyRequest.builder()
+        .sourceAddress(SENDER_ADDRESS)
+        .amount(paymentAmount)
+        .denomination(Denominations.XRP)
+        .destinationAddress(connectionDetails.destinationAddress())
+        .sharedSecret(connectionDetails.sharedSecret())
+        .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+        .build()
+    ).join();
+
+    assertThat(heavySleeperResult.amountDelivered()).isEqualTo(paymentAmount);
+    assertThat(heavySleeperResult.originalAmount()).isEqualTo(paymentAmount);
+    assertThat(heavySleeperResult.numFulfilledPackets()).isCloseTo(8, Offset.offset(1));
+    assertThat(heavySleeperResult.numRejectPackets()).isEqualTo(0);
+
+    logger.info("Payment Sent via sender with sleep = {} : {}", sleepTime.orElse(UnsignedLong.valueOf(100)), heavySleeperResult);
+    return heavySleeperResult;
+  }
+
+  /**
    * Multiple calls to {@link SimpleStreamSender#sendMoney(SendMoneyRequest)}} that involves multiple packets in
    * parallel, but using different accounts for each Stream, and thus a different Connection.
    */
@@ -362,8 +412,10 @@ public class SimpleStreamSenderIT {
   public void sendMoneyHonorsTimeout() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000000);
 
+    // using a sleepy executor here to make sure race condition is handled properly where timeout is reached
+    // after submitting a sendPacketized task to the executor but before the task is executed
     StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
+        new JavaxStreamEncryptionService(), link, new SleepyExecutorService(Executors.newFixedThreadPool(5), 5)
     );
 
     String username = "sendMoneyHonorsTimeout";
@@ -371,29 +423,35 @@ public class SimpleStreamSenderIT {
     RustNodeAccount rustNodeAccount = accountBuilder()
         .username(username)
         .ilpAddress(address)
-        .maxPacketAmount(BigInteger.valueOf(100))
-        .amountPerMinuteLimit(BigInteger.valueOf(1))
-        .packetsPerMinuteLimit(BigInteger.valueOf(1))
         .build();
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(rustNodeAccount);
 
-    final SendMoneyResult sendMoneyResult = streamSender
-        .sendMoney(
-            SendMoneyRequest.builder()
-                .sourceAddress(SENDER_ADDRESS)
-                .amount(paymentAmount)
-                .denomination(Denominations.XRP)
-                .destinationAddress(connectionDetails.destinationAddress())
-                .sharedSecret(connectionDetails.sharedSecret())
-                .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-                .timeout(Duration.ofMillis(100))
-                .build()
-        ).join();
+    try {
+      // loop to test different timeout amounts
+      for (int i = 0; i < 10; i++) {
+        final SendMoneyResult sendMoneyResult = streamSender
+            .sendMoney(
+                SendMoneyRequest.builder()
+                    .sourceAddress(SENDER_ADDRESS)
+                    .amount(paymentAmount)
+                    .denomination(Denominations.XRP)
+                    .destinationAddress(connectionDetails.destinationAddress())
+                    .sharedSecret(connectionDetails.sharedSecret())
+                    .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+                    .timeout(Duration.ofMillis(10 + i * 10))
+                    .build()
+            ).get();
+        assertThat(sendMoneyResult.successfulPayment()).isFalse();
 
-    assertThat(sendMoneyResult.successfulPayment()).isFalse();
+        logger.info("Payment Sent: {}", sendMoneyResult);
 
-    logger.info("Payment Sent: {}", sendMoneyResult);
+      }
+    } catch (ExecutionException | InterruptedException e) {
+      logger.error("Error getting completeable future");
+      logger.error("Error getting completeable future: " + e.toString() + " cause: " + e.getCause());
+      fail();
+    }
   }
 
   @Test(expected = NoExchangeRateException.class)
@@ -513,6 +571,7 @@ public class SimpleStreamSenderIT {
     nodeClient.createAccount(accountBuilder()
         .username(connectorAccountUsername)
         .ilpAddress(HOST_ADDRESS.with(connectorAccountUsername))
+        .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
         .build());
 
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);

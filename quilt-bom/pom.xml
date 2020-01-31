@@ -73,6 +73,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>link-stateless-spsp-receiver</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>spsp-client</artifactId>
         <version>${project.version}</version>
       </dependency>

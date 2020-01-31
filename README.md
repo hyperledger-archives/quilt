@@ -108,7 +108,7 @@ Modules in this library can be included in your Maven project by adding the Mave
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>ilp-core</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
   </dependency>
   ...
 </dependencies>
@@ -120,7 +120,7 @@ Modules in this library can be included in your Gradle project by adding the Mav
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'ilp-core', version: '1.0.2'
+    compile group: 'org.interledger', name: 'ilp-core', version: '1.0.3'
     ...
 }
 ```
