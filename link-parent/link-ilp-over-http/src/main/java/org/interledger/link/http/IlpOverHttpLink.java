@@ -122,7 +122,8 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
   public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket);
 
-    if (okHttpClient.readTimeoutMillis() <= Duration.between(Instant.now(), preparePacket.getExpiresAt()).toMillis()) {
+    if (preparePacket.getExpiresAt() != null &&
+          okHttpClient.readTimeoutMillis() <= Duration.between(Instant.now(), preparePacket.getExpiresAt()).toMillis()) {
       logger.warn("OkHttpClient read timeout is shorter than the Prepare Packet's timeout.  " +
         "This may result in an HTTP timeout while unexpired ILP packets are in flight.");
     }
