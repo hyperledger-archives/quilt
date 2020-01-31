@@ -57,6 +57,10 @@
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
+      <artifactId>link-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
       <artifactId>stream-core</artifactId>
     </dependency>
     <dependency>
