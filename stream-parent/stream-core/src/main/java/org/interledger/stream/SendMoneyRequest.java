@@ -8,6 +8,7 @@ import com.google.common.primitives.UnsignedLong;
 
 import java.time.Duration;
 import java.util.Optional;
+
 import javax.annotation.Nullable;
 
 @Immutable
@@ -18,7 +19,7 @@ public interface SendMoneyRequest {
   }
 
   /**
-   * The shared secret, shared between only the sender and receiverd, required by IL-RFC-29 to encrypt stream frames so
+   * The shared secret, shared between only the sender and receiver, required by IL-RFC-29 to encrypt stream frames so
    * that only the sender and receiver can decrypt them.
    *
    * @return A {@link SharedSecret} known only to the sender and receiver, negotiated using some higher-level protocol
@@ -48,10 +49,10 @@ public interface SendMoneyRequest {
   UnsignedLong amount();
 
   /**
-   * @deprecated ascertained via the type of payment tracker used for sending.
-   * Returns the {@link SenderAmountMode} for this payment tracker.
-   *
    * @return A {@link SenderAmountMode} that indicates the meaning of {@link #amount()}.
+   *
+   * @deprecated ascertained via the type of payment tracker used for sending. Returns the {@link SenderAmountMode} for
+   *     this payment tracker.
    */
   @Deprecated
   @Nullable
@@ -84,9 +85,9 @@ public interface SendMoneyRequest {
   PaymentTracker<SenderAmountMode> paymentTracker();
 
   /**
-   * @deprecated no longer performs a check on compatible SenderAmountMode since payment tracker is the authority
-   *
    * @return this instance
+   *
+   * @deprecated no longer performs a check on compatible SenderAmountMode since payment tracker is the authority
    */
   @Deprecated
   default SendMoneyRequest check() {
