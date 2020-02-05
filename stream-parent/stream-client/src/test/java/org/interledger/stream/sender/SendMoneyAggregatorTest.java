@@ -44,6 +44,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -52,6 +53,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -96,7 +98,6 @@ public class SendMoneyAggregatorTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-
     when(congestionControllerMock.getMaxAmount()).thenReturn(UnsignedLong.ONE);
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
@@ -238,7 +239,7 @@ public class SendMoneyAggregatorTest {
         .build();
 
     expectedException.expect(RejectedExecutionException.class);
-    sendMoneyAggregator.schedule(new AtomicBoolean(false), prepare, sampleStreamPacket(),
+    sendMoneyAggregator.schedule(new AtomicBoolean(false), () -> prepare, sampleStreamPacket(),
         PrepareAmounts.from(prepare, sampleStreamPacket()));
     verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
   }
@@ -539,6 +540,45 @@ public class SendMoneyAggregatorTest {
     assertThat(result.amountLeftToSend()).isLessThanOrEqualTo(UnsignedLong.valueOf(9));
     verify(congestionControllerMock, atMost(11)).getMaxAmount();
     verify(linkMock, atMost(11)).sendPacket(any());
+  }
+
+  /**
+   * Test that if there is a delay between when a packet is schedule and when the executor sends the packet,
+   * that the prepare packet expiresAt is calculated just before sending (not before scheduling).
+   */
+  @Test
+  public void packetExpiryIsComputedJustBeforeSending() throws InterruptedException {
+    SendMoneyRequest request = SendMoneyRequest.builder()
+        .sharedSecret(sharedSecret)
+        .sourceAddress(sourceAddress)
+        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
+        .destinationAddress(destinationAddress)
+        .amount(originalAmountToSend)
+        .timeout(Optional.of(Duration.ofSeconds(60)))
+        .denomination(Denominations.XRP)
+        .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
+        .build();
+
+    // use a SleepyExecutorService with a non-trivial sleep so that we can verify that expiresAt is calculated
+    // AFTER the scheduler woke up to process the packet.
+    long scheduleDelayMillis = 100;
+    ExecutorService executor = new SleepyExecutorService(Executors.newFixedThreadPool(1), scheduleDelayMillis);
+    Instant minExpectedExpiresAt =  DateUtils.now().plusMillis(scheduleDelayMillis);
+
+    this.sendMoneyAggregator = new SendMoneyAggregator(
+        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+        streamEncryptionServiceMock, request, Optional.empty());
+
+    sendMoneyAggregator.schedule(new AtomicBoolean(false),
+        () -> samplePreparePacket(), sampleStreamPacket(),
+        PrepareAmounts.builder().amountToSend(UnsignedLong.ONE).minimumAmountToAccept(UnsignedLong.ONE).build());
+    Thread.sleep(scheduleDelayMillis);
+    ArgumentCaptor<InterledgerPreparePacket> prepareCaptor = ArgumentCaptor.forClass(InterledgerPreparePacket.class);
+
+    verify(linkMock).sendPacket(prepareCaptor.capture());
+
+    Instant actualExpiresAt = prepareCaptor.getValue().getExpiresAt();
+    assertThat(actualExpiresAt).isAfter(minExpectedExpiresAt);
   }
 
   /**

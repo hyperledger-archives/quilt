@@ -20,9 +20,15 @@ class SleepyExecutorService implements ExecutorService {
   private final ExecutorService delegate;
   private final long sleep;
 
-  SleepyExecutorService(ExecutorService delegate, long sleep) {
+  /**
+   * Wraps an ExecutorService and sleeps before delegating submit/execute calls to the underlying delegate.
+   *
+   * @param delegate wrapped ExecutorService that is delegated to
+   * @param sleepMillis how long to sleep before execution
+   */
+  SleepyExecutorService(ExecutorService delegate, long sleepMillis) {
     this.delegate = delegate;
-    this.sleep = sleep;
+    this.sleep = sleepMillis;
   }
 
   @Override
