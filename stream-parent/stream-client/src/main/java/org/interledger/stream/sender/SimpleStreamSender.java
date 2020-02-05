@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -565,7 +566,7 @@ final ExecutorService executorService,
         final InterledgerCondition executionCondition;
         executionCondition = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
 
-        final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+        final Supplier<InterledgerPreparePacket> preparePacket = () -> InterledgerPreparePacket.builder()
             .destination(destinationAddress)
             .amount(amountToSend)
             .executionCondition(executionCondition)
@@ -577,7 +578,7 @@ final ExecutorService executorService,
         // capture
         // rollback
 
-        final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
+        final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket.get(), streamPacket);
         if (!paymentTracker.auth(prepareAmounts)) {
           // if we can't auth, just skip this iteration of the loop until everything else completes
           tryingToSendTooMuch = true;
@@ -608,17 +609,18 @@ final ExecutorService executorService,
     @VisibleForTesting
     void schedule(
         final AtomicBoolean timeoutReached,
-        final InterledgerPreparePacket preparePacket,
+        final Supplier<InterledgerPreparePacket> preparePacketSupplier,
         final StreamPacket streamPacket,
         final PrepareAmounts prepareAmounts
     ) {
       Objects.requireNonNull(timeoutReached);
-      Objects.requireNonNull(preparePacket);
+      Objects.requireNonNull(preparePacketSupplier);
       Objects.requireNonNull(streamPacket);
       Objects.requireNonNull(prepareAmounts);
 
       try {
         executorService.submit(() -> {
+          InterledgerPreparePacket preparePacket = preparePacketSupplier.get();
           if (!timeoutReached.get()) {
             try {
               InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
@@ -649,10 +651,10 @@ final ExecutorService executorService,
       } catch (RejectedExecutionException e) {
         // If we get here, it means the task was unable to be scheduled, so we need to unwind the congestion
         // controller to prevent deadlock.
-        congestionController.reject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
+        congestionController.reject(preparePacketSupplier.get().getAmount(), InterledgerRejectPacket.builder()
             .code(InterledgerErrorCode.F00_BAD_REQUEST)
             .message(
-                String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacket,
+                String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacketSupplier.get(),
                     e.getMessage())
             )
             .build());
