@@ -547,7 +547,7 @@ public class SendMoneyAggregatorTest {
    * that the prepare packet expiresAt is calculated just before sending (not before scheduling).
    */
   @Test
-  public void packetExpiryIsComputedJustBeforeSending() {
+  public void packetExpiryIsComputedJustBeforeSending() throws InterruptedException {
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sharedSecret(sharedSecret)
         .sourceAddress(sourceAddress)
@@ -572,7 +572,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.schedule(new AtomicBoolean(false),
         () -> samplePreparePacket(), sampleStreamPacket(),
         PrepareAmounts.builder().amountToSend(UnsignedLong.ONE).minimumAmountToAccept(UnsignedLong.ONE).build());
-
+    Thread.sleep(scheduleDelayMillis);
     ArgumentCaptor<InterledgerPreparePacket> prepareCaptor = ArgumentCaptor.forClass(InterledgerPreparePacket.class);
 
     verify(linkMock).sendPacket(prepareCaptor.capture());
