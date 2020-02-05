@@ -56,23 +56,9 @@ StreamConnectionDetails connectionDetails =
 
 We can create a link using the following code:
 ```java
-String sharedSecret = "some random secret you generated";
-IlpOverHttpLinkSettings linkSettings = IlpOverHttpLinkSettings.builder()
-    .incomingLinkSettings(IncomingLinkSettings.builder()
-        .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-        .encryptedTokenSharedSecret(sharedSecret)
-        .build())
-    .outgoingLinkSettings(OutgoingLinkSettings.builder()
-        .authType(IlpOverHttpLinkSettings.AuthType.SIMPLE)
-        .tokenSubject(SENDER_ACCOUNT_USERNAME)
-        .url(HttpUrl.parse(TESTNET_URI + "/ilp"))
-        .encryptedTokenSharedSecret(sharedSecret)
-        .build())
-    .build();
-
 Link link = new IlpOverHttpLink(
     () -> SENDER_ADDRESS,
-    linkSettings,
+    HttpUrl.parse("https://example.com/accounts/peer/ilp"),
     newHttpClient(),
     new ObjectMapper(),
     InterledgerCodecContextFactory.oer(),
@@ -86,8 +72,16 @@ SimpleStreamSender simpleStreamSender = new SimpleStreamSender(link);
 
 Now, we can send a payment for 1000 millidrops from our source account to our destination account using the shared secret.
 ```java
-SendMoneyResult result = simpleStreamSender.sendMoney(SharedSecret.of(connectionDetails.sharedSecret().value()),
-    SENDER_ADDRESS, connectionDetails.destinationAddress(), UnsignedLong.valueOf(1000)).get();
+
+SendMoneyRequest sendMoneyRequest = SendMoneyRequest.builder()
+      .sourceAddress(InterledgerAddress.of(SPSP_SENDER))
+      .amount(UnsignedLong.valueOf(1000L))
+      .denomination(Denomination.builder().assetScale((short) 9).assetCode(XRP).build())
+      .destinationAddress(connectionDetails.destinationAddress())
+      .sharedSecret(connectionDetails.sharedSecret())
+      .build();
+
+SendMoneyResult result = simpleStreamSender.sendMoney(sendMoneyRequest).get();
 ```
 
 Finally, we can verify the account balance of the receiver using the Rust admin client:
