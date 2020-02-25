@@ -81,7 +81,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    */
   private final Supplier<String> authTokenSupplier;
 
-  private final HttpUrl outgoingUrl;
+  private final OutgoingUrlFactory outgoingUrlFactory;
 
   /**
    * Required-args Constructor.
@@ -90,7 +90,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
    *                                uninitialized, for example, in cases where the Link obtains its address from a
    *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
    *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
-   * @param outgoingUrl             A {@link HttpUrl} to the connector.
+   * @param outgoingUrl             Outgoing {@link HttpUrl}
    * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
    *                                endpoint.
    * @param objectMapper            A {@link ObjectMapper} for reading error responses from the remote ILP-over-HTTP
@@ -107,11 +107,43 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
       final CodecContext ilpCodecContext,
       final BearerTokenSupplier bearerTokenSupplier
   ) {
+    this(operatorAddressSupplier,
+        new StaticUrlFactory(outgoingUrl),
+        okHttpClient,
+        objectMapper,
+        ilpCodecContext,
+        bearerTokenSupplier);
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
+   *                                uninitialized, for example, in cases where the Link obtains its address from a
+   *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
+   *                                been obtained via IL-DCP, then this value will by default be {@link Link#SELF}.
+   * @param outgoingUrlFactory      A factory for the outgoing {@link HttpUrl}
+   * @param okHttpClient            A {@link OkHttpClient} to use to communicate with the remote ILP-over-HTTP
+   *                                endpoint.
+   * @param objectMapper            A {@link ObjectMapper} for reading error responses from the remote ILP-over-HTTP
+   *                                endpoint.
+   * @param ilpCodecContext         A {@link CodecContext} for ILP.
+   * @param bearerTokenSupplier     A {@link BearerTokenSupplier} that can be used to get a bearer token to make
+   *                                authenticated calls to the remote HTTP endpoint.
+   */
+  public IlpOverHttpLink(
+      final Supplier<InterledgerAddress> operatorAddressSupplier,
+      final OutgoingUrlFactory outgoingUrlFactory,
+      final OkHttpClient okHttpClient,
+      final ObjectMapper objectMapper,
+      final CodecContext ilpCodecContext,
+      final BearerTokenSupplier bearerTokenSupplier
+  ) {
     // IlpOverHttpLink does not require a full link settings, but the parent class requires one (even though it also
     // does not use it for anything). For backwards compatibility pass a bare bones setting but ideally the abstract
     // class could be refactored to not require it.
     super(operatorAddressSupplier, IlpOverHttpLinkSettings.builder().build());
-    this.outgoingUrl = outgoingUrl;
+    this.outgoingUrlFactory = outgoingUrlFactory;
     this.okHttpClient = Objects.requireNonNull(okHttpClient);
     this.objectMapper = Objects.requireNonNull(objectMapper);
     this.ilpCodecContext = Objects.requireNonNull(ilpCodecContext);
@@ -209,6 +241,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
       final Request okHttpRequest = this.constructSendPacketRequest(UNFULFILLABLE_PACKET);
 
       try (Response response = okHttpClient.newCall(okHttpRequest).execute()) {
+        HttpUrl outgoingUrl = outgoingUrlFactory.getOutgoingUrl(UNFULFILLABLE_PACKET.getDestination());
         if (response.isSuccessful()) {
           //////////
           // Success
@@ -315,7 +348,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
 
       return new Builder()
           .headers(constructHttpRequestHeaders())
-          .url(outgoingUrl)
+          .url(outgoingUrlFactory.getOutgoingUrl(preparePacket.getDestination()))
           .post(
               RequestBody.create(byteArrayOutputStream.toByteArray(), APPLICATION_OCTET_STREAM)
           )

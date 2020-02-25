@@ -33,6 +33,7 @@ public class OutgoingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     assertThat(jwtAuthSettings.encryptedTokenSharedSecret()).isEqualTo(Optional.of("outgoing-credential"));
     assertThat(jwtAuthSettings.tokenExpiry().get()).isEqualTo(Duration.ofHours(24));
     assertThat(outgoingLinksettings.url()).isEqualTo(HttpUrl.parse("https://outgoing.example.com/"));
+    assertThat(outgoingLinksettings.multilateral()).isTrue();
   }
 
   /**
@@ -67,6 +68,7 @@ public class OutgoingIlpOverHttpLinkSettingsSettingsTest extends AbstractHttpLin
     assertThat(jwtAuthSettings.encryptedTokenSharedSecret()).isEqualTo(Optional.of("outgoing-credential"));
     assertThat(jwtAuthSettings.tokenExpiry().get()).isEqualTo(Duration.ofHours(48));
     assertThat(outgoingLinksettings.url()).isEqualTo(HttpUrl.parse("https://outgoing.example.com"));
+    assertThat(outgoingLinksettings.multilateral()).isTrue();
   }
 
   /**

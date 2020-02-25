@@ -37,6 +37,7 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
 
   String HTTP_OUTGOING_SIMPLE_AUTH_TOKEN = ILP_OVER_HTTP + DOT + OUTGOING + DOT + SIMPLE + DOT + AUTH_TOKEN;
   String HTTP_OUTGOING_URL = ILP_OVER_HTTP + DOT + OUTGOING + DOT + URL;
+  String HTTP_OUTGOING_MULTILATERAL = ILP_OVER_HTTP + DOT + OUTGOING + DOT + "multilateral";
 
   static ImmutableOutgoingLinkSettings.Builder builder() {
     return ImmutableOutgoingLinkSettings.builder();
@@ -111,6 +112,11 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
                       .map(builder::url)
                       .orElseThrow(() -> new IllegalArgumentException(HTTP_OUTGOING_URL + " is required"));
 
+                  Optional.ofNullable(settings.get(HTTP_OUTGOING_MULTILATERAL))
+                      .map(Object::toString)
+                      .map(Boolean::valueOf)
+                      .map(builder::multilateral);
+
                   switch (authType) {
                     case SIMPLE: {
                       builder.simpleAuthSettings(buildSettingsForSimple(settings));
@@ -172,6 +178,11 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
    */
   HttpUrl url();
 
+  @Value.Default
+  default boolean multilateral() {
+    return false;
+  }
+
   /**
    * Generates a custom settings map representation of this outgoing link settings such that
    * {@code OutgoingLinkSettings.fromCustomSettings(someSettings.toCustomSettingsMap()).equals(someSettings); }
@@ -183,6 +194,7 @@ public interface OutgoingLinkSettings extends AuthenticatedLinkSettings {
     ImmutableMap.Builder<String, Object> mapBuilder = ImmutableMap.builder();
     mapBuilder.put(HTTP_OUTGOING_URL, url().toString());
     mapBuilder.put(HTTP_OUTGOING_AUTH_TYPE, authType().toString());
+    mapBuilder.put(HTTP_OUTGOING_MULTILATERAL, multilateral());
     simpleAuthSettings().ifPresent(settings -> mapBuilder.put(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN, settings.authToken()));
     jwtAuthSettings().ifPresent(settings -> {
       mapBuilder.put(HTTP_OUTGOING_TOKEN_SUBJECT, settings.tokenSubject());

@@ -20,6 +20,7 @@ import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_TOKEN
 import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_TOKEN_ISSUER;
 import static org.interledger.link.http.IncomingLinkSettings.HTTP_INCOMING_TOKEN_SUBJECT;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_AUTH_TYPE;
+import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_MULTILATERAL;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_SHARED_SECRET;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_SIMPLE_AUTH_TOKEN;
 import static org.interledger.link.http.OutgoingLinkSettings.HTTP_OUTGOING_TOKEN_AUDIENCE;
@@ -50,7 +51,7 @@ public abstract class AbstractHttpLinkSettingsTest {
         .put(HTTP_OUTGOING_TOKEN_AUDIENCE, "https://outgoing-audience.example.com/")
         .put(HTTP_OUTGOING_TOKEN_EXPIRY, Duration.ofDays(1).toString())
         .put(HTTP_OUTGOING_URL, "https://outgoing.example.com/")
-
+        .put(HTTP_OUTGOING_MULTILATERAL, true)
         .build();
   }
 
@@ -74,6 +75,7 @@ public abstract class AbstractHttpLinkSettingsTest {
     outgoingMap.put(JWT, outgoingAuthMap);
     outgoingMap.put(AUTH_TYPE, authType.toString());
     outgoingMap.put(URL, "https://outgoing.example.com/");
+    outgoingMap.put("multilateral", true);
 
     final Map<String, Object> httpMap = new HashMap<>();
     httpMap.put(INCOMING, incomingMap);
@@ -92,6 +94,7 @@ public abstract class AbstractHttpLinkSettingsTest {
         .put(HTTP_OUTGOING_AUTH_TYPE, "SIMPLE")
         .put(HTTP_OUTGOING_SIMPLE_AUTH_TOKEN, "outgoing-secret")
         .put(HTTP_OUTGOING_URL, "https://outgoing.example.com/")
+        .put(HTTP_OUTGOING_MULTILATERAL, false)
         .build();
   }
 
@@ -108,6 +111,7 @@ public abstract class AbstractHttpLinkSettingsTest {
     outgoingMap.put(AUTH_TYPE, "SIMPLE");
     outgoingMap.put(SIMPLE, outgoingAuthMap);
     outgoingMap.put(URL, "https://outgoing.example.com/");
+    outgoingMap.put("multilateral", false);
 
     final Map<String, Object> httpMap = new HashMap<>();
     httpMap.put(INCOMING, incomingMap);

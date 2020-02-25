@@ -104,9 +104,13 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
       );
     }
 
+    OutgoingUrlFactory outgoingUrlFactory =  outgoingLinkSettings.multilateral() ?
+        new MultilateralUrlFactory(operatorAddressSupplier, outgoingLinkSettings.url()) :
+        new StaticUrlFactory(outgoingLinkSettings.url());
+
     final IlpOverHttpLink ilpOverHttpLink = new IlpOverHttpLink(
         operatorAddressSupplier,
-        outgoingLinkSettings.url(),
+        outgoingUrlFactory,
         okHttpClient,
         objectMapper,
         ilpCodecContext,

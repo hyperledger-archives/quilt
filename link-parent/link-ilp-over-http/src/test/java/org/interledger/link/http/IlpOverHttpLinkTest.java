@@ -62,7 +62,7 @@ public class IlpOverHttpLinkTest {
   public void setup() {
     link = new IlpOverHttpLink(
         () -> InterledgerAddress.of("example.destination"),
-        HttpUrl.get("https://cannotspellsurgerywithouturges.com"),
+        new StaticUrlFactory(HttpUrl.get("https://cannotspellsurgerywithouturges.com")),
         httpClient,
         objectMapper,
         codecContext,
