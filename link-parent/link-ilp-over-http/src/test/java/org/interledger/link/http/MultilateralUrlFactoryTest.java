@@ -35,7 +35,7 @@ public class MultilateralUrlFactoryTest {
   public void getOutgoingUrlWithNonMultilateralAddress() {
     MultilateralUrlFactory factory = new MultilateralUrlFactory(() -> OPERATOR, MULTILATERAL_URL);
     assertThat(factory.getOutgoingUrl(OPERATOR.with("spsp")))
-        .isEqualTo(HttpUrl.parse("https://www.test.com/spsp-%/ilp"));
+        .isEqualTo(MULTILATERAL_URL);
   }
 
 
