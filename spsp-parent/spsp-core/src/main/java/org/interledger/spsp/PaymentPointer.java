@@ -61,7 +61,7 @@ public interface PaymentPointer {
   @Immutable
   abstract class AbstractPaymentPointer implements PaymentPointer {
 
-    private static final String WELL_KNOWN = "/.well-known/pay";
+    public static final String WELL_KNOWN = "/.well-known/pay";
 
     @Default
     public String path() {
