@@ -20,25 +20,25 @@ public class PaymentPointerTest {
   @Test
   public void wellKnownPath() {
     assertThat(PaymentPointer.of("$example.com").path())
-        .isEqualTo("/.well-known/pay");
+        .isEqualTo(PaymentPointer.WELL_KNOWN);
   }
 
   @Test
   public void wellKnownPathWithTrailingSlash() {
     assertThat(PaymentPointer.of("$example.com/").path())
-        .isEqualTo("/.well-known/pay");
+        .isEqualTo(PaymentPointer.WELL_KNOWN);
   }
 
   @Test
   public void builderWithWellKnownPathWithTrailingSlash() {
     assertThat(ImmutablePaymentPointer.builder().host("example.com").path("/").build().path())
-        .isEqualTo("/.well-known/pay");
+        .isEqualTo(PaymentPointer.WELL_KNOWN);
   }
 
   @Test
   public void builderWithWellKnownPathWithoutTrailingSlash() {
     assertThat(ImmutablePaymentPointer.builder().host("example.com").path("").build().path())
-        .isEqualTo("/.well-known/pay");
+        .isEqualTo(PaymentPointer.WELL_KNOWN);
   }
 
   @Test
