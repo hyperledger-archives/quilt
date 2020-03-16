@@ -15,7 +15,7 @@ public interface SpspClient {
   /**
    * The Java, JS, Rafiki, and Rust SPSP servers all respond properly to this header.
    */
-  String APPLICATION_SPSP4_JSON = "application/spsp4+json";
+  String APPLICATION_SPSP4_JSON_VALUE = "application/spsp4+json";
 
   /**
    * Calls SPSP endpoint to obtain address and secret needed to setup a payment (for the given pointer). Typically used
