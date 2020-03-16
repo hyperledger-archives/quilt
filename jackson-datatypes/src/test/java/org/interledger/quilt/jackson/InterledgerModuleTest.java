@@ -27,12 +27,15 @@ import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
+import org.interledger.link.LinkId;
+import org.interledger.link.LinkType;
 import org.interledger.quilt.jackson.conditions.Encoding;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,10 +44,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.Random;
 
 /**
  * Validates the functionality of {@link InterledgerModule}.
@@ -75,8 +76,7 @@ public class InterledgerModuleTest {
    *
    * @param encodingToUse        A {@link Encoding} to use for each test run.
    * @param expectedEncodedValue A {@link String} encoded in the above encoding to assert against.
-   * @param condition            A {@link InterledgerCondition} to encode and decode for each test
-   *                             run.
+   * @param condition            A {@link InterledgerCondition} to encode and decode for each test run.
    */
   public InterledgerModuleTest(
       final Encoding encodingToUse, final String expectedEncodedValue,
@@ -127,15 +127,30 @@ public class InterledgerModuleTest {
 
     final InterledgerAddressPrefix expectedPrefix = InterledgerAddressPrefix.of("test1.ledger");
 
-    final InterledgerContainer expectedContainer
-        = new InterledgerContainer(expectedAddress, expectedPrefix, condition);
+    final LinkId expectedLinkId = LinkId.of("linkId");
+    final LinkType expectedLinkType = LinkType.of("linkType");
+    final SharedSecret expectedSharedSecret = SharedSecret.of(new byte[32]);
+
+    final InterledgerContainer expectedContainer = ImmutableInterledgerContainer.builder()
+        .interledgerAddress(expectedAddress)
+        .interledgerAddressPrefix(expectedPrefix)
+        .condition(condition)
+        .linkId(expectedLinkId)
+        .linkType(expectedLinkType)
+        .sharedSecret(expectedSharedSecret)
+        .build();
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json).isEqualTo(
-        String.format("{\"ledger_address\":\"%s\",\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\"}",
+        String.format("{\"ledger_address\":\"%s\",\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\","
+                + "\"shared_secret\":\"%s\",\"link_id\":\"%s\",\"link_type\":\"%s\"}",
             expectedContainer.getInterledgerAddress().getValue(),
             expectedContainer.getInterledgerAddressPrefix().getValue(),
-            expectedEncodedValue)
+            expectedEncodedValue,
+            expectedSharedSecret.value(),
+            expectedLinkId.value(),
+            expectedLinkType.value()
+        )
     );
 
     final InterledgerContainer actualAddressContainer = objectMapper
@@ -144,99 +159,32 @@ public class InterledgerModuleTest {
     assertThat(actualAddressContainer).isEqualTo(expectedContainer);
     assertThat(actualAddressContainer.getInterledgerAddressPrefix()).isEqualTo(expectedPrefix);
     assertThat(actualAddressContainer.getCondition()).isEqualTo(condition);
+    assertThat(actualAddressContainer.getLinkId()).isEqualTo(expectedLinkId);
+    assertThat(actualAddressContainer.getLinkType()).isEqualTo(expectedLinkType);
+    assertThat(actualAddressContainer.getSharedSecret()).isEqualTo(expectedSharedSecret);
   }
 
-  @Test
-  public void sharedSecretSerializeDeserialize() throws JsonProcessingException {
-    byte[] key = new byte[32];
-    new Random().nextBytes(key);
-    SharedSecret sharedSecret = SharedSecret.of(key);
-
-    String jsonValue = objectMapper.writeValueAsString(sharedSecret);
-    SharedSecret fromJackson = objectMapper.readValue(jsonValue, SharedSecret.class);
-    assertThat(fromJackson).isEqualTo(sharedSecret);
-  }
-
-  @Test
-  public void sharedSecretBase64SerializeDeserialize() throws JsonProcessingException {
-    byte[] key = new byte[32];
-    new Random().nextBytes(key);
-    String base64 = Base64.getEncoder().encodeToString(key);
-    SharedSecret sharedSecret = SharedSecret.of(key);
-
-    String jsonValue = objectMapper.writeValueAsString(sharedSecret);
-    SharedSecret fromJackson = objectMapper.readValue(jsonValue, SharedSecret.class);
-    assertThat(fromJackson).isEqualTo(sharedSecret);
-  }
-
-  private static class InterledgerContainer {
+  @Value.Immutable
+  @JsonSerialize(as = ImmutableInterledgerContainer.class)
+  @JsonDeserialize(as = ImmutableInterledgerContainer.class)
+  interface InterledgerContainer {
 
     @JsonProperty("ledger_address")
-    private final InterledgerAddress interledgerAddress;
+    InterledgerAddress getInterledgerAddress();
 
     @JsonProperty("ledger_prefix")
-    private final InterledgerAddressPrefix interledgerAddressPrefix;
+    InterledgerAddressPrefix getInterledgerAddressPrefix();
 
     @JsonProperty("execution_condition")
-    private final InterledgerCondition condition;
+    InterledgerCondition getCondition();
 
-    @JsonCreator
-    public InterledgerContainer(
-        @JsonProperty("ledger_address") final InterledgerAddress interledgerAddress,
-        @JsonProperty("ledger_prefix") final InterledgerAddressPrefix interledgerAddressPrefix,
-        @JsonProperty("execution_condition") final InterledgerCondition condition
-    ) {
-      this.interledgerAddress = Objects.requireNonNull(interledgerAddress);
-      this.interledgerAddressPrefix = Objects.requireNonNull(interledgerAddressPrefix);
-      this.condition = Objects.requireNonNull(condition);
-    }
+    @JsonProperty("shared_secret")
+    SharedSecret getSharedSecret();
 
-    public InterledgerAddress getInterledgerAddress() {
-      return interledgerAddress;
-    }
+    @JsonProperty("link_id")
+    LinkId getLinkId();
 
-    public InterledgerAddressPrefix getInterledgerAddressPrefix() {
-      return interledgerAddressPrefix;
-    }
-
-    public InterledgerCondition getCondition() {
-      return condition;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null || getClass() != obj.getClass()) {
-        return false;
-      }
-
-      InterledgerContainer that = (InterledgerContainer) obj;
-
-      if (!interledgerAddress.equals(that.interledgerAddress)) {
-        return false;
-      }
-      if (!interledgerAddressPrefix.equals(that.interledgerAddressPrefix)) {
-        return false;
-      }
-      return condition.equals(that.condition);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = interledgerAddress.hashCode();
-      result = 31 * result + condition.hashCode();
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "InterledgerContainer{"
-          + "interledgerAddress=" + interledgerAddress
-          + ", interledgerAddressPrefix=" + interledgerAddressPrefix
-          + ", condition=" + condition
-          + '}';
-    }
+    @JsonProperty("link_type")
+    LinkType getLinkType();
   }
 }

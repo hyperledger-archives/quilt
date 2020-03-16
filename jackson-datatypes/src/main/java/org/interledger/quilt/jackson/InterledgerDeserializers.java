@@ -25,11 +25,15 @@ import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
+import org.interledger.link.LinkId;
+import org.interledger.link.LinkType;
 import org.interledger.quilt.jackson.address.InterledgerAddressDeserializer;
 import org.interledger.quilt.jackson.addressprefix.InterledgerAddressPrefixDeserializer;
 import org.interledger.quilt.jackson.conditions.ConditionDeserializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.quilt.jackson.conditions.FulfillmentDeserializer;
+import org.interledger.quilt.jackson.link.LinkIdDeserializer;
+import org.interledger.quilt.jackson.link.LinkTypeDeserializer;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretDeserializer;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
 
@@ -71,9 +75,19 @@ public class InterledgerDeserializers extends Deserializers.Base {
     if (type.hasRawClass(InterledgerFulfillment.class)) {
       return new FulfillmentDeserializer(cryptoConditionEncoding);
     }
+
     if (type.hasRawClass(SharedSecret.class)) {
       return new SharedSecretDeserializer();
     }
+
+    if (type.hasRawClass(LinkId.class)) {
+      return new LinkIdDeserializer();
+    }
+
+    if (type.hasRawClass(LinkType.class)) {
+      return new LinkTypeDeserializer();
+    }
+
     return null;
   }
 
