@@ -13,12 +13,9 @@ import okhttp3.HttpUrl;
 public interface SpspClient {
 
   /**
-   * The Java, JS, and Rust SPSP servers all respond properly to this header. Thus, Quilt only utilizes this header in
-   * any of its calls.
+   * The Java, JS, Rafiki, and Rust SPSP servers all respond properly to this header.
    */
   String APPLICATION_SPSP4_JSON = "application/spsp4+json";
-
-  String ACCEPT_APPLICATION_SPSP4_JSON = APPLICATION_SPSP4_JSON;
 
   /**
    * Calls SPSP endpoint to obtain address and secret needed to setup a payment (for the given pointer). Typically used

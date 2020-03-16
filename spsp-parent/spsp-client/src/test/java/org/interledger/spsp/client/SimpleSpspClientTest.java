@@ -39,7 +39,7 @@ public class SimpleSpspClientTest {
 
     String wiremockIlpAddress = "test.wiremock";
     stubFor(get(urlEqualTo("/" + testClient))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_APPLICATION_SPSP4_JSON))
+        .withHeader("Accept", equalTo(SpspClient.APPLICATION_SPSP4_JSON))
         .willReturn(aResponse()
             .withStatus(200)
             .withBody("{\"destination_account\":\"" + wiremockIlpAddress + "." + testClient + "\","
@@ -63,7 +63,7 @@ public class SimpleSpspClientTest {
 
     String wiremockIlpAddress = "test.wiremock";
     stubFor(get(urlEqualTo("/" + testClient))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_APPLICATION_SPSP4_JSON))
+        .withHeader("Accept", equalTo(SpspClient.APPLICATION_SPSP4_JSON))
         .willReturn(aResponse()
             .withStatus(200)
             .withBody("{\"destination_account\":\"" + wiremockIlpAddress + "." + testClient + "\","
@@ -85,7 +85,7 @@ public class SimpleSpspClientTest {
     String testClient = "testClient";
 
     stubFor(get(urlEqualTo("/" + testClient))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_APPLICATION_SPSP4_JSON))
+        .withHeader("Accept", equalTo(SpspClient.APPLICATION_SPSP4_JSON))
         .willReturn(aResponse()
             .withStatus(404)
         ));
@@ -98,7 +98,7 @@ public class SimpleSpspClientTest {
     String testClient = "testClient";
 
     stubFor(get(urlEqualTo("/" + testClient))
-        .withHeader("Accept", equalTo(SpspClient.ACCEPT_APPLICATION_SPSP4_JSON))
+        .withHeader("Accept", equalTo(SpspClient.APPLICATION_SPSP4_JSON))
         .willReturn(aResponse()
             .withStatus(503)
         ));
@@ -109,7 +109,6 @@ public class SimpleSpspClientTest {
   @Test
   public void testHeaders() {
     assertThat(SpspClient.APPLICATION_SPSP4_JSON).isEqualTo("application/spsp4+json");
-    assertThat(SpspClient.ACCEPT_APPLICATION_SPSP4_JSON).isEqualTo("application/spsp4+json, application/spsp+json");
   }
 
   private PaymentPointer paymentPointer(String testClient) {
