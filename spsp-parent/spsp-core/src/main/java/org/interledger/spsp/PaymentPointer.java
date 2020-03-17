@@ -14,6 +14,8 @@ import org.immutables.value.Value.Immutable;
  */
 public interface PaymentPointer {
 
+  public static final String WELL_KNOWN = "/.well-known/pay";
+  
   /**
    * Parses a payment pointer string into a @{code PaymentPointer}.
    * @param value text
@@ -60,9 +62,6 @@ public interface PaymentPointer {
 
   @Immutable
   abstract class AbstractPaymentPointer implements PaymentPointer {
-
-    private static final String WELL_KNOWN = "/.well-known/pay";
-
     @Default
     public String path() {
       return WELL_KNOWN;

@@ -13,7 +13,7 @@ import java.io.IOException;
  */
 public class LinkTypeDeserializer extends StdDeserializer<LinkType> {
 
-  protected LinkTypeDeserializer() {
+  public LinkTypeDeserializer() {
     super(LinkType.class);
   }
 
