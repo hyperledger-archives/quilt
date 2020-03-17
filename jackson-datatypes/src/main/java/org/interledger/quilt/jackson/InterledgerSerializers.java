@@ -25,11 +25,15 @@ import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.SharedSecret;
+import org.interledger.link.LinkId;
+import org.interledger.link.LinkType;
 import org.interledger.quilt.jackson.address.InterledgerAddressSerializer;
 import org.interledger.quilt.jackson.addressprefix.InterledgerAddressPrefixSerializer;
 import org.interledger.quilt.jackson.conditions.ConditionSerializer;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.quilt.jackson.conditions.FulfillmentSerializer;
+import org.interledger.quilt.jackson.link.LinkIdSerializer;
+import org.interledger.quilt.jackson.link.LinkTypeSerializer;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
 
 import com.fasterxml.jackson.databind.BeanDescription;
@@ -71,6 +75,13 @@ public class InterledgerSerializers extends Serializers.Base {
     if (SharedSecret.class.isAssignableFrom(raw)) {
       return new SharedSecretSerializer();
     }
+    if (LinkId.class.isAssignableFrom(raw)) {
+      return new LinkIdSerializer();
+    }
+    if (LinkType.class.isAssignableFrom(raw)) {
+      return new LinkTypeSerializer();
+    }
+
     return null;
   }
 
