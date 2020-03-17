@@ -2,6 +2,7 @@ package org.interledger.stream.sender;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.stream;
 import static org.junit.Assert.fail;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
@@ -317,6 +318,37 @@ public class SimpleStreamSenderIT {
   }
 
   /**
+   * This test sends a payment in packets that are destined for a receiver that doesn't exist.
+   * This will cause an F02_UNREACHABLE reject packet to be returned during the preflightCheck,
+   * which should cause the soldierOn loop to short circuit and not try to send any packets.
+   */
+  @Test
+  public void sendMoneyFailsWithFinalErrorAndShortCircuits() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
+
+    StreamSender streamSender = new SimpleStreamSender(
+      new JavaxStreamEncryptionService(), link
+    );
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000001);
+
+    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+      SendMoneyRequest.builder()
+        .sourceAddress(SENDER_ADDRESS)
+        .amount(paymentAmount)
+        .denomination(Denominations.XRP)
+        .destinationAddress(InterledgerAddress.of("test.foo.bar.patrick"))
+        .sharedSecret(connectionDetails.sharedSecret())
+        .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+        .build()
+    ).join();
+
+    logger.info("SendMoneyResult: " + sendMoneyResult);
+    // preflightCheck should trip the circuit and cause streamSender to not even try to send any packets.
+    assertThat(sendMoneyResult.totalPackets()).isEqualTo(0);
+  }
+
+  /**
    * Two calls to {@link SimpleStreamSender#sendMoney(SendMoneyRequest)}} that involves multiple packets in parallel.
    * First call is to a {@link SimpleStreamSender} with the default sleep time (100ms)
    * Second call is to a {@link SimpleStreamSender} with a shorter sleep time (5ms)
@@ -613,6 +645,24 @@ public class SimpleStreamSenderIT {
     }
     PaymentPointer pointer =
         PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/accounts/" + rustNodeAccount.username() + "/spsp");
+    return spspClient.getStreamConnectionDetails(pointer);
+  }
+
+  private StreamConnectionDetails getStreamConnectionDetailsWithNoRoute(int id) {
+    return getStreamConnectionDetailsWithNoRoute("accountTest" + id);
+  }
+
+  private StreamConnectionDetails getStreamConnectionDetailsWithNoRoute(String username) {
+    InterledgerAddress address = HOST_ADDRESS.with(username);
+    return getStreamConnectionDetailsWithNoRoute(accountBuilder()
+      .username(username)
+      .ilpAddress(address)
+      .build());
+  }
+
+  private StreamConnectionDetails getStreamConnectionDetailsWithNoRoute(RustNodeAccount rustNodeAccount) {
+    PaymentPointer pointer =
+      PaymentPointer.of("$" + HOST_ADDRESS.getValue() + "/accounts/" + rustNodeAccount.username() + "/spsp");
     return spspClient.getStreamConnectionDetails(pointer);
   }
 
