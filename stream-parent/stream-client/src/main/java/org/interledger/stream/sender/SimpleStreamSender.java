@@ -1,6 +1,5 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.core.InterledgerErrorCode.F00_BAD_REQUEST;
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE;
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
 import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
@@ -467,7 +466,7 @@ final ExecutorService executorService,
           .data(streamPacketData)
           .build();
 
-      InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
+      InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket, streamPacket);
 
       final Function<InterledgerResponsePacket, Optional<Denomination>> readDetails = (p) -> {
         final StreamPacket packet = this.fromEncrypted(sharedSecret, p.getData());
@@ -486,16 +485,23 @@ final ExecutorService executorService,
      * should stop retrying. We should stop retrying if the reject packet had an F family error, and that error is not
      * and F08. When we receive an F08 reject packet, we try to send smaller packets, so this should not short circuit.
      * @param preparePacket
+     * @param streamPacket
      * @return the returned response packet
      */
     @VisibleForTesting
-    protected InterledgerResponsePacket sendPacketAndCheckForFailure(InterledgerPreparePacket preparePacket) {
+    protected InterledgerResponsePacket sendPacketAndCheckForFailure(InterledgerPreparePacket preparePacket,
+                                                                     StreamPacket streamPacket) {
       InterledgerResponsePacket response = link.sendPacket(preparePacket);
-      response.handle((fulfill) -> {}, (reject) -> {
-        if (!reject.getCode().equals(F08_AMOUNT_TOO_LARGE) &&
-          reject.getCode().getErrorFamily().equals(ErrorFamily.FINAL)) {
-          unrecoverableErrorEncountered.set(true);
-        }
+      response.handle(
+        (fulfill) -> {},
+        (reject) -> {
+          if (!reject.getCode().equals(F08_AMOUNT_TOO_LARGE) &&
+            reject.getCode().getErrorFamily().equals(ErrorFamily.FINAL)) {
+            logger.error("Encountered Final ILPv4 error: {}. Will not retry." +
+                " originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+              reject.getCode(), preparePacket, streamPacket, reject);
+            unrecoverableErrorEncountered.set(true);
+          }
       });
       return response;
     }
@@ -626,7 +632,7 @@ final ExecutorService executorService,
           InterledgerPreparePacket preparePacket = preparePacketSupplier.get();
           if (!timeoutReached.get()) {
             try {
-              InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
+              InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket, streamPacket);
               responsePacket.handle(
                   fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
                   rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts,

@@ -314,7 +314,7 @@ public class SendMoneyAggregatorTest {
 
     // flip flag on unrecoverable error
     when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
-    sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
+    sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket(), sampleStreamPacket());
     setSoldierOnBooleans(false, false, false);
     allSoldierOnsFalse();
     setSoldierOnBooleans(false, false, true);
@@ -454,7 +454,7 @@ public class SendMoneyAggregatorTest {
   public void sendPacketAndCheckForFailureMarksUnrecoverableForF00() {
     when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
-    sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
+    sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket(), sampleStreamPacket());
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
   }
 
