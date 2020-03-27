@@ -51,7 +51,7 @@ public class SimpleSpspClient implements SpspClient {
 
     return execute(new Request.Builder()
         .url(spspUrl)
-        .header("Accept", ACCEPT_SPSP_JSON)
+        .header("Accept", APPLICATION_SPSP4_JSON_VALUE)
         .get()
         .build(), StreamConnectionDetails.class);
   }
