@@ -1,6 +1,7 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE;
+import static org.interledger.core.InterledgerErrorCode.F00_BAD_REQUEST;
+import static org.interledger.core.InterledgerErrorCode.F02_UNREACHABLE;
 import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
 import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
@@ -481,11 +482,10 @@ final ExecutorService executorService,
     }
 
     /**
-     * Send the packet but check to see if an error in the HTTP 4XX range was encountered so that we know if we
-     * should stop retrying. We should stop retrying if the reject packet had an F family error, and that error is not
-     * and F08. When we receive an F08 reject packet, we try to send smaller packets, so this should not short circuit.
-     * @param preparePacket
-     * @param streamPacket
+     * Send the packet but check to see if an F00 or F02 reject error was encountered so that we know if we
+     * should stop retrying.
+     * @param preparePacket {@link InterledgerPreparePacket} to send
+     * @param streamPacket The unencrypted {@link StreamPacket} contained in {@code preparePacket}
      * @return the returned response packet
      */
     @VisibleForTesting
@@ -495,8 +495,7 @@ final ExecutorService executorService,
       response.handle(
         (fulfill) -> {},
         (reject) -> {
-          if (!reject.getCode().equals(F08_AMOUNT_TOO_LARGE) &&
-            reject.getCode().getErrorFamily().equals(ErrorFamily.FINAL)) {
+          if (reject.getCode().equals(F00_BAD_REQUEST) || reject.getCode().equals(F02_UNREACHABLE)) {
             logger.error("Encountered Final ILPv4 error: {}. Will not retry." +
                 " originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
               reject.getCode(), preparePacket, streamPacket, reject);
