@@ -8,8 +8,9 @@ import org.interledger.stream.PrepareAmounts;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
-import java.util.Optional;
-
+/**
+ * Unit tests for {@link FixedSenderAmountPaymentTracker}.
+ */
 public class FixedSenderAmountPaymentTrackerTest {
 
   @Test
@@ -23,14 +24,12 @@ public class FixedSenderAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.moreToSend()).isTrue();
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP,
-        Optional.of(Denominations.XRP));
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
 
-    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP,
-        Optional.of(Denominations.XRP));
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.valueOf(6));
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
@@ -82,13 +81,18 @@ public class FixedSenderAmountPaymentTrackerTest {
     FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12L),
         new HalfsiesExchangeRateCalculator());
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(12), Denominations.XRP,
-        Optional.of(Denominations.XRP));
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(12), Denominations.XRP);
     tracker.auth(amounts);
     tracker.commit(amounts, UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
     // check amountLeftToSend instead
     tracker.setSentAmount(UnsignedLong.ZERO);
     assertThat(tracker.auth(amounts)).isFalse();
+  }
+
+  @Test
+  public void testMode() {
+    FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.ZERO);
+    assertThat(tracker.requiresReceiverDenomination()).isFalse();
   }
 }

@@ -1,7 +1,29 @@
 package org.interledger.stream.sender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.interledger.core.InterledgerErrorCode.F00_BAD_REQUEST;
+import static org.interledger.core.InterledgerErrorCode.F01_INVALID_PACKET;
+import static org.interledger.core.InterledgerErrorCode.F02_UNREACHABLE;
+import static org.interledger.core.InterledgerErrorCode.F03_INVALID_AMOUNT;
+import static org.interledger.core.InterledgerErrorCode.F04_INSUFFICIENT_DST_AMOUNT;
+import static org.interledger.core.InterledgerErrorCode.F05_WRONG_CONDITION;
+import static org.interledger.core.InterledgerErrorCode.F06_UNEXPECTED_PAYMENT;
+import static org.interledger.core.InterledgerErrorCode.F07_CANNOT_RECEIVE;
+import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE;
+import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR;
+import static org.interledger.core.InterledgerErrorCode.R00_TRANSFER_TIMED_OUT;
+import static org.interledger.core.InterledgerErrorCode.R01_INSUFFICIENT_SOURCE_AMOUNT;
+import static org.interledger.core.InterledgerErrorCode.R02_INSUFFICIENT_TIMEOUT;
+import static org.interledger.core.InterledgerErrorCode.R99_APPLICATION_ERROR;
+import static org.interledger.core.InterledgerErrorCode.T00_INTERNAL_ERROR;
+import static org.interledger.core.InterledgerErrorCode.T01_PEER_UNREACHABLE;
+import static org.interledger.core.InterledgerErrorCode.T02_PEER_BUSY;
+import static org.interledger.core.InterledgerErrorCode.T03_CONNECTOR_BUSY;
+import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY;
+import static org.interledger.core.InterledgerErrorCode.T05_RATE_LIMITED;
+import static org.interledger.core.InterledgerErrorCode.T99_APPLICATION_ERROR;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -54,6 +76,7 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -101,7 +124,7 @@ public class SendMoneyAggregatorTest {
     when(congestionControllerMock.getMaxAmount()).thenReturn(UnsignedLong.ONE);
     when(streamEncryptionServiceMock.encrypt(any(), any())).thenReturn(new byte[32]);
     when(streamEncryptionServiceMock.decrypt(any(), any())).thenReturn(new byte[32]);
-    when(linkMock.sendPacket(any())).thenReturn(mock(InterledgerRejectPacket.class));
+    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(F99_APPLICATION_ERROR));
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     this.paymentTracker = new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator());
     SendMoneyRequest request = SendMoneyRequest.builder()
@@ -115,7 +138,8 @@ public class SendMoneyAggregatorTest {
         .build();
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request, Optional.empty());
+        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+    );
 
     defaultPrepareAmounts = PrepareAmounts.from(samplePreparePacket(), sampleStreamPacket());
   }
@@ -225,13 +249,14 @@ public class SendMoneyAggregatorTest {
     ExecutorService executor = mock(ExecutorService.class);
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request, Optional.empty());
+        streamEncryptionServiceMock, Duration.ofSeconds(10L), request
+    );
 
     when(executor.submit(any(Runnable.class))).thenThrow(new RejectedExecutionException());
 
     InterledgerPreparePacket prepare = samplePreparePacket();
     InterledgerRejectPacket expectedReject = InterledgerRejectPacket.builder()
-        .code(InterledgerErrorCode.F00_BAD_REQUEST)
+        .code(F00_BAD_REQUEST)
         .message(
             String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", prepare,
                 "java.util.concurrent.RejectedExecutionException")
@@ -263,7 +288,7 @@ public class SendMoneyAggregatorTest {
   @Test
   public void preflightCheckRejects() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR));
+    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(T00_INTERNAL_ERROR));
     StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
         .addFrames(StreamMoneyFrame.builder()
             .shares(UnsignedLong.ONE)
@@ -313,8 +338,8 @@ public class SendMoneyAggregatorTest {
     allSoldierOnsTrue();
 
     // flip flag on unrecoverable error
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
-    sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
+    sendMoneyAggregator.setUnrecoverableErrorEncountered(true);
+
     setSoldierOnBooleans(false, false, false);
     allSoldierOnsFalse();
     setSoldierOnBooleans(false, false, true);
@@ -342,7 +367,7 @@ public class SendMoneyAggregatorTest {
         .amountToSend(UnsignedLong.valueOf(10L))
         .minimumAmountToAccept(UnsignedLong.ZERO)
         .build();
-    when(tracker.getSendPacketAmounts(any(), any(), any())).thenReturn(prepare);
+    when(tracker.getSendPacketAmounts(any(), any())).thenReturn(prepare);
     when(tracker.auth(any())).thenReturn(false);
     when(tracker.getOriginalAmountMode()).thenReturn(SenderAmountMode.SENDER_AMOUNT);
     when(tracker.moreToSend()).thenReturn(true);
@@ -363,10 +388,10 @@ public class SendMoneyAggregatorTest {
         .build();
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request, Optional.empty());
+        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+    );
 
     setSoldierOnBooleans(false, false, true);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
@@ -394,7 +419,7 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullPrepare() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
+        sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
         congestionControllerMock);
   }
 
@@ -402,7 +427,7 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullStreamPacket() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(samplePreparePacket(), null,
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
+        sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
         congestionControllerMock);
   }
 
@@ -417,7 +442,7 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullNumReject() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator
-        .handleReject(null, sampleStreamPacket(), sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR),
+        .handleReject(null, sampleStreamPacket(), sampleRejectPacket(T00_INTERNAL_ERROR),
             null, null, congestionControllerMock);
   }
 
@@ -425,7 +450,7 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullCongestionController() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
+        sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
         null);
   }
 
@@ -433,7 +458,7 @@ public class SendMoneyAggregatorTest {
   public void handleRejectHatesNullPrepareAmounts() {
     expectedException.expect(NullPointerException.class);
     sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-        sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR), null, new AtomicInteger(),
+        sampleRejectPacket(T00_INTERNAL_ERROR), null, new AtomicInteger(),
         congestionControllerMock);
   }
 
@@ -442,7 +467,7 @@ public class SendMoneyAggregatorTest {
     UnsignedLong originalAmountToSend = paymentTracker.getOriginalAmountLeft();
     AtomicInteger numReject = new AtomicInteger(0);
     InterledgerPreparePacket prepare = samplePreparePacket();
-    InterledgerRejectPacket reject = sampleRejectPacket(InterledgerErrorCode.T00_INTERNAL_ERROR);
+    InterledgerRejectPacket reject = sampleRejectPacket(T00_INTERNAL_ERROR);
     sendMoneyAggregator.handleReject(prepare, sampleStreamPacket(),
         reject, defaultPrepareAmounts, numReject, congestionControllerMock);
     assertThat(numReject.get()).isEqualTo(1);
@@ -451,23 +476,112 @@ public class SendMoneyAggregatorTest {
   }
 
   @Test
-  public void sendPacketAndCheckForFailureMarksUnrecoverableForF00() {
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
-    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
-    sendMoneyAggregator.sendPacketAndCheckForFailure(samplePreparePacket());
-    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
+  public void handleRejectWithVariousErrorCodes() {
+    // F Errors
+    handleRejectTestHelper(F00_BAD_REQUEST, true);
+    handleRejectTestHelper(InterledgerErrorCode.F01_INVALID_PACKET, true);
+    handleRejectTestHelper(InterledgerErrorCode.F02_UNREACHABLE, true);
+    handleRejectTestHelper(InterledgerErrorCode.F03_INVALID_AMOUNT, true);
+    handleRejectTestHelper(InterledgerErrorCode.F04_INSUFFICIENT_DST_AMOUNT, true);
+    handleRejectTestHelper(InterledgerErrorCode.F05_WRONG_CONDITION, true);
+    handleRejectTestHelper(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT, true);
+    handleRejectTestHelper(InterledgerErrorCode.F07_CANNOT_RECEIVE, true);
+    handleRejectTestHelper(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE, false);
+    handleRejectTestHelper(InterledgerErrorCode.F99_APPLICATION_ERROR, false);
+
+    // T Errors
+    handleRejectTestHelper(T00_INTERNAL_ERROR, false);
+    handleRejectTestHelper(InterledgerErrorCode.T01_PEER_UNREACHABLE, false);
+    handleRejectTestHelper(InterledgerErrorCode.T02_PEER_BUSY, false);
+    handleRejectTestHelper(InterledgerErrorCode.T03_CONNECTOR_BUSY, false);
+    handleRejectTestHelper(InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY, false);
+    handleRejectTestHelper(InterledgerErrorCode.T05_RATE_LIMITED, false);
+    handleRejectTestHelper(InterledgerErrorCode.T99_APPLICATION_ERROR, false);
+
+    // R Errors
+    handleRejectTestHelper(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT, true);
+    handleRejectTestHelper(InterledgerErrorCode.R01_INSUFFICIENT_SOURCE_AMOUNT, true);
+    handleRejectTestHelper(InterledgerErrorCode.R02_INSUFFICIENT_TIMEOUT, true);
+    handleRejectTestHelper(InterledgerErrorCode.R99_APPLICATION_ERROR, true);
+  }
+
+  private void handleRejectTestHelper(
+      final InterledgerErrorCode errorCodeToTest, final boolean expectedUnrecoverableState
+  ) {
+    Objects.requireNonNull(errorCodeToTest);
+
+    ///////
+    // Test Initialization
+    sendMoneyAggregator.setUnrecoverableErrorEncountered(false);
+    UnsignedLong originalAmountToSend = paymentTracker.getOriginalAmountLeft();
+    AtomicInteger numReject = new AtomicInteger(0);
+    InterledgerPreparePacket prepare = samplePreparePacket();
+    InterledgerRejectPacket reject = sampleRejectPacket(errorCodeToTest);
+
+    ///////
+    // Do test
+    sendMoneyAggregator.handleReject(
+        prepare, sampleStreamPacket(), reject, defaultPrepareAmounts, numReject, congestionControllerMock
+    );
+
+    ///////
+    // Assertions
+    assertThat(numReject.get()).isEqualTo(1);
+    assertThat(paymentTracker.getOriginalAmountLeft()).isEqualTo(originalAmountToSend.plus(prepare.getAmount()));
+    verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, reject);
+    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isEqualTo(expectedUnrecoverableState);
+  }
+
+  @Test
+  public void testCheckForAndTriggerUnrecoverableError() {
+    // F Errors
+    testCheckForAndTriggerUnrecoverableErrorHelper(F00_BAD_REQUEST, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F01_INVALID_PACKET, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F02_UNREACHABLE, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F03_INVALID_AMOUNT, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F04_INSUFFICIENT_DST_AMOUNT, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F05_WRONG_CONDITION, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F06_UNEXPECTED_PAYMENT, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F07_CANNOT_RECEIVE, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F08_AMOUNT_TOO_LARGE, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(F99_APPLICATION_ERROR, false);
+
+    // T Errors
+    testCheckForAndTriggerUnrecoverableErrorHelper(T00_INTERNAL_ERROR, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(T01_PEER_UNREACHABLE, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(T02_PEER_BUSY, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(T03_CONNECTOR_BUSY, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(T04_INSUFFICIENT_LIQUIDITY, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(T05_RATE_LIMITED, false);
+    testCheckForAndTriggerUnrecoverableErrorHelper(T99_APPLICATION_ERROR, false);
+
+    // R Errors
+    testCheckForAndTriggerUnrecoverableErrorHelper(R00_TRANSFER_TIMED_OUT, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(R01_INSUFFICIENT_SOURCE_AMOUNT, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(R02_INSUFFICIENT_TIMEOUT, true);
+    testCheckForAndTriggerUnrecoverableErrorHelper(R99_APPLICATION_ERROR, true);
+  }
+
+  private void testCheckForAndTriggerUnrecoverableErrorHelper(
+      final InterledgerErrorCode errorCodeToTest, final boolean expectedUnrecoverableState
+  ) {
+    Objects.requireNonNull(errorCodeToTest);
+    InterledgerRejectPacket reject = sampleRejectPacket(errorCodeToTest);
+    sendMoneyAggregator.setUnrecoverableErrorEncountered(false);
+    sendMoneyAggregator.checkForAndTriggerUnrecoverableError(reject);
+    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isEqualTo(expectedUnrecoverableState);
   }
 
   @Test
   public void preflightCheckFlagsAsUnrecoverable() throws Exception {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
-    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST));
+    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(F00_BAD_REQUEST));
     StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
-      .addFrames(StreamMoneyFrame.builder()
-        .shares(UnsignedLong.ONE)
-        .streamId(UnsignedLong.ONE)
-        .build())
-      .build();
+        .addFrames(StreamMoneyFrame.builder()
+            .shares(UnsignedLong.ONE)
+            .streamId(UnsignedLong.ONE)
+            .build())
+        .build();
     when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
     sendMoneyAggregator.preflightCheck();
@@ -477,21 +591,23 @@ public class SendMoneyAggregatorTest {
   @Test
   public void stopSendingWhenUnrecoverableErrorEncountered() throws Exception {
     SendMoneyRequest request = SendMoneyRequest.builder()
-      .sharedSecret(sharedSecret)
-      .sourceAddress(sourceAddress)
-      .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
-      .destinationAddress(destinationAddress)
-      .amount(originalAmountToSend)
-      .timeout(Optional.of(Duration.ofSeconds(60)))
-      .denomination(Denominations.XRP)
-      .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
-      .build();
+        .sharedSecret(sharedSecret)
+        .sourceAddress(sourceAddress)
+        .destinationAddress(destinationAddress)
+        .amount(originalAmountToSend)
+        .timeout(Optional.of(Duration.ofSeconds(60)))
+        .denomination(Denominations.XRP)
+        .paymentTracker(
+            new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator())
+        )
+        .build();
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
     this.sendMoneyAggregator = new SendMoneyAggregator(
-      executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-      streamEncryptionServiceMock, request, Optional.empty());
+        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+    );
 
     when(congestionControllerMock.hasInFlight()).thenAnswer(new Answer<Boolean>() {
 
@@ -515,26 +631,26 @@ public class SendMoneyAggregatorTest {
         if (invocations.incrementAndGet() <= 2) {
           return sampleFulfillPacket();
         }
-        return sampleRejectPacket(InterledgerErrorCode.F00_BAD_REQUEST);
+        return sampleRejectPacket(F00_BAD_REQUEST);
       }
     });
     StreamPacket streamPacket = StreamPacket.builder()
-      .prepareAmount(UnsignedLong.ONE)
-      .sequence(UnsignedLong.ZERO)
-      .interledgerPacketType(InterledgerPacketType.FULFILL)
-      .addFrames(StreamMoneyFrame.builder()
-        .shares(UnsignedLong.ONE)
-        .streamId(UnsignedLong.ONE)
-        .build())
-      .build();
+        .prepareAmount(UnsignedLong.ONE)
+        .sequence(UnsignedLong.ZERO)
+        .interledgerPacketType(InterledgerPacketType.FULFILL)
+        .addFrames(StreamMoneyFrame.builder()
+            .shares(UnsignedLong.ONE)
+            .streamId(UnsignedLong.ONE)
+            .build())
+        .build();
     when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
     SendMoneyResult result = sendMoneyAggregator.send().get();
     assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
     assertThat(result)
-      .extracting("amountDelivered", "amountSent", "numFulfilledPackets",
-        "successfulPayment")
-      .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, 1, false);
+        .extracting("amountDelivered", "amountSent", "numFulfilledPackets",
+            "successfulPayment")
+        .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, 1, false);
     // depending on execution order, we may halt sooner than trying all 10 potential times
     assertThat(result.numRejectPackets()).isLessThanOrEqualTo(9);
     assertThat(result.amountLeftToSend()).isLessThanOrEqualTo(UnsignedLong.valueOf(9));
@@ -543,31 +659,32 @@ public class SendMoneyAggregatorTest {
   }
 
   /**
-   * Test that if there is a delay between when a packet is schedule and when the executor sends the packet,
-   * that the prepare packet expiresAt is calculated just before sending (not before scheduling).
+   * Test that if there is a delay between when a packet is schedule and when the executor sends the packet, that the
+   * prepare packet expiresAt is calculated just before sending (not before scheduling).
    */
   @Test
   public void packetExpiryIsComputedJustBeforeSending() throws InterruptedException {
     SendMoneyRequest request = SendMoneyRequest.builder()
         .sharedSecret(sharedSecret)
         .sourceAddress(sourceAddress)
-        .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
         .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
         .denomination(Denominations.XRP)
-        .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
+        .paymentTracker(
+            new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
         .build();
 
     // use a SleepyExecutorService with a non-trivial sleep so that we can verify that expiresAt is calculated
     // AFTER the scheduler woke up to process the packet.
     long scheduleDelayMillis = 100;
     ExecutorService executor = new SleepyExecutorService(Executors.newFixedThreadPool(1), scheduleDelayMillis);
-    Instant minExpectedExpiresAt =  DateUtils.now().plusMillis(scheduleDelayMillis);
+    Instant minExpectedExpiresAt = DateUtils.now().plusMillis(scheduleDelayMillis);
 
     this.sendMoneyAggregator = new SendMoneyAggregator(
         executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-        streamEncryptionServiceMock, request, Optional.empty());
+        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+    );
 
     sendMoneyAggregator.schedule(new AtomicBoolean(false),
         () -> samplePreparePacket(), sampleStreamPacket(),

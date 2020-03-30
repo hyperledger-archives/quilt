@@ -14,11 +14,10 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
+import java.time.Duration;
 
 /**
- * Unit tests for {@link SimpleStreamSenderTests}.
+ * Unit tests for {@link SimpleStreamSender}.
  */
 public class SimpleStreamSenderTests {
 
@@ -36,43 +35,39 @@ public class SimpleStreamSenderTests {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    simpleStreamSender = new SimpleStreamSender(streamEncryptionServiceMock, linkMock);
-  }
-
-  @Test
-  public void constructWithNullEncryptionService() {
-    expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(null, linkMock);
+    simpleStreamSender = new SimpleStreamSender(linkMock, Duration.ofMillis(10L), streamEncryptionServiceMock);
   }
 
   @Test
   public void constructWithNullLink() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(streamEncryptionServiceMock, null);
+    new SimpleStreamSender(null);
   }
 
   @Test
-  public void constructThreeArgWithNullEncryptionService() {
+  public void constructWithNullDurationo() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(null, linkMock, mock(ExecutorService.class));
+    new SimpleStreamSender(linkMock, null);
   }
 
   @Test
-  public void constructThreeArgWithNullLink() {
+  public void constructWithNullEncryptionService() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(streamEncryptionServiceMock, null, mock(ExecutorService.class));
+    new SimpleStreamSender(linkMock, Duration.ofMillis(10L), null);
+  }
+
+  @Test
+  public void constructWithNullConnectionManager() {
+    expectedException.expect(NullPointerException.class);
+    new SimpleStreamSender(linkMock, Duration.ofMillis(10L), streamEncryptionServiceMock, null);
   }
 
   @Test
   public void constructThreeArgWithNullExecutor() {
     expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, (ExecutorService) null);
-  }
-
-  @Test
-  public void constructThreeArgWithNullSleep() {
-    expectedException.expect(NullPointerException.class);
-    new SimpleStreamSender(streamEncryptionServiceMock, linkMock, (Optional<UnsignedLong>) null);
+    new SimpleStreamSender(
+        linkMock, Duration.ofMillis(10L), streamEncryptionServiceMock, mock(StreamConnectionManager.class), null
+    );
   }
 
   @Test

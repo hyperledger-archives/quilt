@@ -8,8 +8,9 @@ import org.interledger.stream.PrepareAmounts;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
-import java.util.Optional;
-
+/**
+ * Unit tests for {@link FixedReceiverAmountPaymentTracker}.
+ */
 public class FixedReceiverAmountPaymentTrackerTest {
 
   @Test
@@ -23,14 +24,12 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(10));
     assertThat(tracker.moreToSend()).isTrue();
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP,
-        Optional.of(Denominations.XRP));
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP, Denominations.XRP);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
 
-    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP,
-        Optional.of(Denominations.XRP));
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP, Denominations.XRP);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.valueOf(6));
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
@@ -80,11 +79,15 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.moreToSend()).isFalse();
 
-    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP,
-        Optional.of(Denominations.XRP));
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP, Denominations.XRP);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
   }
 
+  @Test
+  public void testMode() {
+    FixedReceiverAmountPaymentTracker tracker = new FixedReceiverAmountPaymentTracker(UnsignedLong.ZERO);
+    assertThat(tracker.requiresReceiverDenomination()).isTrue();
+  }
 }

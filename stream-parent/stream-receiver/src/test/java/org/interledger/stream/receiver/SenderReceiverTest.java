@@ -11,9 +11,11 @@ import org.interledger.stream.Denomination;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
+import org.interledger.stream.calculators.NoExchangeRateException;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.receiver.testutils.AlwaysEmptyStreamReceiver;
 import org.interledger.stream.receiver.testutils.SimulatedIlpv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
 import org.interledger.stream.sender.FixedReceiverAmountPaymentTracker;
@@ -36,7 +38,6 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -75,16 +76,24 @@ public class SenderReceiverTest {
     final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
     final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
 
-    SimpleStreamSender streamSender = new SimpleStreamSender(
-        streamEncryptionService, link
+    return initNode(link, senderAddress, receiverAddress,
+        new StatelessStreamReceiver(
+            () -> serverSecret,
+            new SpspStreamConnectionGenerator(),
+            streamEncryptionService,
+            StreamCodecContextFactory.oer()
+        )
     );
+  }
 
-    StatelessStreamReceiver streamReceiver = new StatelessStreamReceiver(
-        () -> serverSecret,
-        new SpspStreamConnectionGenerator(),
-        streamEncryptionService,
-        StreamCodecContextFactory.oer()
-    );
+  private static StreamNode initNode(
+      Link link,
+      InterledgerAddress senderAddress,
+      InterledgerAddress receiverAddress,
+      StreamReceiver streamReceiver
+  ) {
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    SimpleStreamSender streamSender = new SimpleStreamSender(link);
 
     return StreamNode.builder()
         .serverSecret(serverSecret)
@@ -96,6 +105,7 @@ public class SenderReceiverTest {
         .link(link)
         .build();
   }
+
 
   private static <T> List<T> awaitResults(List<CompletableFuture<T>> futures) {
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -264,16 +274,49 @@ public class SenderReceiverTest {
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
 
+  /**
+   * Validates that the send operation does not complete if the preflight check fails.
+   */
   @Test
   public void testSendCannotDetermineReceiverDenomination() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    final SendMoneyResult sendMoneyResult = sendMoney(rightStreamNode, leftStreamNode, paymentAmount);
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
+    final StreamReceiver brokenStreamReceiver = new AlwaysEmptyStreamReceiver(
+        () -> serverSecret,
+        new SpspStreamConnectionGenerator(),
+        streamEncryptionService,
+        StreamCodecContextFactory.oer()
+    );
+    this.rightStreamNode = initNode(simulatedIlpNetwork.getRightToLeftLink(), RIGHT_SENDER_ADDRESS,
+        RIGHT_RECEIVER_ADDRESS, brokenStreamReceiver);
+    this.simulatedIlpNetwork.getRightToLeftLink().unregisterLinkHandler();
+    this.simulatedIlpNetwork.getRightToLeftLink().registerLinkHandler(incomingPreparePacket ->
+        brokenStreamReceiver.receiveMoney(incomingPreparePacket, RIGHT_RECEIVER_ADDRESS, rightStreamNode.denomination())
+    );
 
-    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
+    final SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
+    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
+
+    final SendMoneyResult sendMoneyResult = sender.sendMoney(
+        SendMoneyRequest.builder()
+            .sourceAddress(leftStreamNode.senderAddress())
+            .amount(paymentAmount)
+            .denomination(leftStreamNode.denomination())
+            .destinationAddress(connectionDetails.destinationAddress())
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(new FixedReceiverAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+            .timeout(Duration.ofMillis(10000))
+            .build())
+        .join();
+
+    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(UnsignedLong.ZERO);
     assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(1);
+    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(0);
     assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
+    assertThat(sendMoneyResult.successfulPayment()).isFalse();
+    assertThat(sendMoneyResult.amountLeftToSend()).isEqualTo(UnsignedLong.valueOf(1000L));
 
     logger.info("Payment Sent: {}", sendMoneyResult);
   }
@@ -578,19 +621,29 @@ public class SenderReceiverTest {
     }
 
     @Override
-    public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive,
-        Denomination sendDenomination,
-        Denomination receiveDenomination) {
-      return UnsignedLong.valueOf(new BigDecimal(amountToReceive.bigIntegerValue())
-          .divide(senderUnitsPerReceiverUnits, RoundingMode.FLOOR).toBigInteger()); // FIXME how to round
+    public UnsignedLong calculateAmountToSend(UnsignedLong amountToSend,
+        Denomination amountToSendDenomination,
+        Denomination receiverDenomination) {
+      return UnsignedLong.valueOf(new BigDecimal(amountToSend.bigIntegerValue())
+          .divide(senderUnitsPerReceiverUnits, RoundingMode.FLOOR).toBigInteger()); // toBigInteger rounds to Floor
     }
 
     @Override
-    public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount,
-        Denomination sendDenomination,
-        Optional<Denomination> expectedReceivedDenomination) {
+    public UnsignedLong calculateMinAmountToAccept(
+        final UnsignedLong sendAmount, final Denomination sendAmountDenomination
+    ) {
+      Objects.requireNonNull(sendAmount);
+      Objects.requireNonNull(sendAmountDenomination);
       return UnsignedLong.valueOf(new BigDecimal(sendAmount.bigIntegerValue())
-          .multiply(senderUnitsPerReceiverUnits).toBigInteger()); // FIXME how to round
+          .multiply(senderUnitsPerReceiverUnits).toBigInteger()); // toBigInteger rounds to Floor
+    }
+
+    @Override
+    public UnsignedLong calculateMinAmountToAccept(
+        final UnsignedLong sendAmount, final Denomination sendAmountDenomination,
+        final Denomination receiverDenomination
+    ) throws NoExchangeRateException {
+      return this.calculateMinAmountToAccept(sendAmount, sendAmountDenomination);
     }
   }
 

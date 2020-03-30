@@ -4,25 +4,26 @@ import org.interledger.stream.Denomination;
 
 import com.google.common.primitives.UnsignedLong;
 
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * Exchange rate calculator that ignores denominations and applies no rate calculations.
  */
 public class NoOpExchangeRateCalculator implements ExchangeRateCalculator {
 
-
   @Override
-  public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive,
-                                            Denomination sendDenomination,
-                                            Denomination receiveDenomination) {
-    return amountToReceive;
+  public UnsignedLong calculateAmountToSend(UnsignedLong amountToSend,
+      Denomination amountToSendDenomination,
+      Denomination receiverDenomination) {
+    return amountToSend;
   }
 
   @Override
-  public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
-                                                 Optional<Denomination> expectedReceivedDenomination) {
+  public UnsignedLong calculateMinAmountToAccept(
+      final UnsignedLong sendAmount, final Denomination sendAmountDenomination
+  ) {
+    Objects.requireNonNull(sendAmount);
+    Objects.requireNonNull(sendAmountDenomination);
     return UnsignedLong.ZERO;
   }
-
 }

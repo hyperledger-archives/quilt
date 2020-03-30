@@ -13,7 +13,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -82,19 +81,13 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   }
 
   @Override
-  public PrepareAmounts getSendPacketAmounts(
-      final UnsignedLong congestionLimit,
-      final Denomination senderDenomination,
-      final Optional<Denomination> receiverDenomination
-  ) {
+  public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit, Denomination senderDenomination) {
     Objects.requireNonNull(congestionLimit);
     Objects.requireNonNull(senderDenomination);
-    Objects.requireNonNull(receiverDenomination);
 
     final UnsignedLong packetAmountToSend = StreamUtils.min(amountLeftToSend.get(), congestionLimit);
     return PrepareAmounts.builder()
-        .minimumAmountToAccept(
-            rateCalculator.calculateMinAmountToAccept(packetAmountToSend, senderDenomination, receiverDenomination))
+        .minimumAmountToAccept(rateCalculator.calculateMinAmountToAccept(packetAmountToSend, senderDenomination))
         .amountToSend(packetAmountToSend)
         .build();
   }

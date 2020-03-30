@@ -5,7 +5,7 @@ import org.interledger.stream.Denomination;
 import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * <p>Defines how a STREAM sender or receiver can calculate the amount to send on a per-packet basis, in addition to
@@ -23,36 +23,45 @@ public interface ExchangeRateCalculator {
    * Calculates the amount to send for the ILP packet based on a desired amount to be received by the receiver (in
    * receiver's units).
    *
-   * @param amountToReceive     amount to be received (in receiver's units)
-   * @param sendDenomination    sender's denomination
-   * @param receiveDenomination receiver's denomination
+   * @param amountToReceive      An {@link UnsignedLong} containing the amount to be received (in receiver's units)
+   * @param sendDenomination     A {@link Denomination} representing the sender's denomination.
+   * @param receiverDenomination A {@link Denomination} representing the receiver's denomination.
    *
-   * @return amount to send in the ILP packet (in sender's denomination)
+   * @return An {@link UnsignedLong} containing amount to send in the ILP packet (in sender's denomination).
    *
    * @throws NoExchangeRateException if exchange rate could not be calculated
    */
-  UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive,
-      Denomination sendDenomination,
-      Denomination receiveDenomination)
+  UnsignedLong calculateAmountToSend(
+      UnsignedLong amountToReceive, Denomination sendDenomination, Denomination receiverDenomination
+  ) throws NoExchangeRateException;
+
+  /**
+   * Calculate the minimum amount a receiver should accept based on the exchange rate applied to the {@code
+   * sendAmount}.
+   *
+   * @param sendAmount             An {@link UnsignedLong} representing the amount to send.
+   * @param sendAmountDenomination asset code and scale of the amount to send.
+   *
+   * @return An {@link UnsignedLong} containing the minimum amount the receiver should accept, in sender's units.
+   */
+  UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendAmountDenomination)
       throws NoExchangeRateException;
 
   /**
-   * Calculate the minimum amount a receiver should accept based on the exchange rate applied to the sendAmount.
+   * Calculate the minimum amount a receiver should accept based on the exchange rate applied to the {@code
+   * sendAmount}.
    *
-   * @param sendAmount                   amount to send.
-   * @param sendDenomination             asset code and scale of the amount to send.
-   * @param expectedReceivedDenomination asset code and scale to apply to the amount the receiver should receive when
-   *                                     computing the total for an exchange rate. Optional if denomination of receiver
-   *                                     is unknown. ExchangeRateCalculator implementations should throw a {@link
-   *                                     NoExchangeRateException}
+   * @param sendAmount             An {@link UnsignedLong} containing the amount to send.
+   * @param sendAmountDenomination A {@link Denomination} for  {@code amountToSend}.
+   * @param receiverDenomination   A {@link Denomination} for the receiver.
    *
-   * @return the minimum amount the receiver should accept.
-   *
-   * @throws NoExchangeRateException if exchange rate could not be calculated
+   * @return An {@link UnsignedLong} containing the minimum amount the receiver should accept, in sender's units.
    */
-  UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
-      Optional<Denomination> expectedReceivedDenomination)
-      throws NoExchangeRateException;
+  default UnsignedLong calculateMinAmountToAccept(
+      UnsignedLong sendAmount, Denomination sendAmountDenomination, Denomination receiverDenomination
+  ) throws NoExchangeRateException {
+    return calculateMinAmountToAccept(sendAmount, sendAmountDenomination);
+  }
 
   /**
    * Convenience method to compute the BigDecimal representation of an amount for a given asset scale.
@@ -62,7 +71,10 @@ public interface ExchangeRateCalculator {
    *
    * @return the scaled decimal amount
    */
-  default BigDecimal scaled(UnsignedLong amount, Denomination denomination) {
+  default BigDecimal scaled(final UnsignedLong amount, final Denomination denomination) {
+    Objects.requireNonNull(amount);
+    Objects.requireNonNull(denomination);
+
     BigDecimal scale = BigDecimal.ONE.scaleByPowerOfTen(denomination.assetScale());
     return new BigDecimal(amount.bigIntegerValue()).divide(scale);
   }
