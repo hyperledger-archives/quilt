@@ -37,6 +37,7 @@ import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -52,6 +53,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -249,26 +251,27 @@ public class SimpleStreamSender implements StreamSender {
    */
   static class SendMoneyAggregator {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    // These error codes, despite beging FINAL, should be treated as "recoverable", meaning the Stream sendMoney
+    // operation should not immediately fail if one of these is encountered.
+    private static final Set<InterledgerErrorCode> NON_TERMINAL_ERROR_CODES = ImmutableSet.of(
+        F08_AMOUNT_TOO_LARGE, F99_APPLICATION_ERROR
+    );
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ExecutorService executorService;
     private final StreamConnection streamConnection;
     private final CodecContext streamCodecContext;
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
     private final Link link;
-
     private final SharedSecret sharedSecret;
     private final Optional<Duration> timeout;
-
     private final InterledgerAddress senderAddress;
     private final Denomination senderDenomination;
     private final InterledgerAddress destinationAddress;
-
     private final AtomicBoolean shouldSendSourceAddress;
     private final AtomicInteger numFulfilledPackets;
     private final AtomicInteger numRejectedPackets;
-
     private final PaymentTracker paymentTracker;
     private final AtomicBoolean unrecoverableErrorEncountered;
     private final SendMoneyRequest sendMoneyRequest;
@@ -842,20 +845,19 @@ public class SimpleStreamSender implements StreamSender {
       ////////////
 
       if (ErrorFamily.FINAL.equals(rejectPacket.getCode().getErrorFamily())) {
-        // Most Final errors trigger immediate stoppage of send operations.
-        if (!rejectPacket.getCode().equals(F08_AMOUNT_TOO_LARGE) &&
-            !rejectPacket.getCode().equals(F99_APPLICATION_ERROR)) {
-          logger.error(
-              "Encountered an unexpected ILPv4 FINAL error. Aborting this sendMoney. "
-                  + "originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
-              originalPreparePacket, originalStreamPacket, rejectPacket
-          );
-        } else {
+        // Most Final errors trigger immediate stoppage of send operations, except for F08 and F99.
+        if (NON_TERMINAL_ERROR_CODES.contains(rejectPacket.getCode())) {
           // error was a tolerable F rejection (currently F08 or F99)
           logger.debug(
               "Encountered an expected ILPv4 FINAL error. Retrying... "
                   + "originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
               originalPreparePacket, originalStreamPacket, rejectPacket);
+        } else {
+          logger.error(
+              "Encountered an unexpected ILPv4 FINAL error. Aborting this sendMoney. "
+                  + "originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+              originalPreparePacket, originalStreamPacket, rejectPacket
+          );
         }
       } else if (ErrorFamily.RELATIVE.equals(rejectPacket.getCode().getErrorFamily())) {
         // All Relative errors trigger immediate stoppage of send operations.
@@ -907,12 +909,11 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(rejectPacket);
 
       if (ErrorFamily.FINAL.equals(rejectPacket.getCode().getErrorFamily())) {
-        // Most Final errors trigger immediate stoppage of send operations.
-        if (!rejectPacket.getCode().equals(F08_AMOUNT_TOO_LARGE) &&
-            !rejectPacket.getCode().equals(F99_APPLICATION_ERROR)) {
-          unrecoverableErrorEncountered.set(true);
-        } else {
+        // Most Final errors trigger immediate stoppage of send operations, except for F08 and F99.
+        if (NON_TERMINAL_ERROR_CODES.contains(rejectPacket.getCode())) {
           // error was a tolerable F rejection (currently F08 or F99)
+        } else {
+          unrecoverableErrorEncountered.set(true);
         }
       } else if (ErrorFamily.RELATIVE.equals(rejectPacket.getCode().getErrorFamily())) {
         // All Relative errors trigger immediate stoppage of send operations.
