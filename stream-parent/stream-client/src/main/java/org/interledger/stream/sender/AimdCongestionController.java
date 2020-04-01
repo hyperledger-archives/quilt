@@ -187,7 +187,7 @@ public class AimdCongestionController implements CongestionController {
       default: {
         // No special treatment for unhandled errors, but warn just in case we start to see a lot of them.
         // Actual packet data is logged by the StreamSender, so no need to log packet details here.
-        logger.warn("For Congestion control purposes, ignoring unhandled packet rejection ({}: {}).",
+        logger.debug("For Congestion control purposes, ignoring unhandled packet rejection ({}: {}).",
             rejectPacket.getCode().getCode(), rejectPacket.getCode().getName()
         );
       }

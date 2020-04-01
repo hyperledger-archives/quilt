@@ -28,16 +28,17 @@ import java.util.Random;
  * as STREAM sender/receiver interactions.</p>
  *
  * <p>Ordinarily, an ILPv4 node would utilize a {@link Link} to connect to an Interledger peer
- * Connector/Router. This peer might be connected to an arbitrary number of intermediate nodes, forming a graph of
- * potential connections between the `sender` and `receiver`. In these cases, it can be difficult to isolate various
- * network conditions for testing purposes, such as path-exchange rate, path latency, path distance, and more.</p>
+ * Connector. This peer might be connected to an arbitrary number of intermediate nodes, forming a graph of potential
+ * connections between the `sender` and `receiver`. In these cases, it can be difficult to isolate various network
+ * conditions for testing purposes, such as path-exchange rate, path latency, path distance, and more.</p>
  *
  * <p>In order to isolate and control these variables for testing purposes, this class can be used to allow, for
- * example, a STREAM sender and receiver to interact with each other without actually engaging an actual
- * Connector/Router or Link with an actual underlying network transport.</p>
+ * example, a STREAM sender and receiver to interact with each other without actually engaging an actual Connector
+ * network or Link with an actual underlying network transport.</p>
  *
  * <p>This class works by defining a `left` and a `right` link where each Link's internal methods are connected to
- * the other Link's method to simulate network connectivity.</p>
+ * the other Link's method to simulate network connectivity, as detailed in the following diagram:</p>
+ *
  * <pre>
  * ┌────────────┬────────────┐               ┌────────────┬────────────┐
  * │            │  SendData  │──────────────▷│   OnData   │            │
@@ -58,6 +59,25 @@ public class SimulatedIlpv4Network {
   private final SimulatedPathConditions rightToLeftNetworkConditions;
 
   private Random random = new SecureRandom();
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param leftToRightLink A {@link SimulatedPathConditions} that governs the simulated path from the left {@link Link}
+   *                        to the right {@link Link}.
+   * @param rightToLeftLink A {@link SimulatedPathConditions} that governs the simulated path from right to left.
+   */
+  public SimulatedIlpv4Network(
+      final Link<?> leftToRightLink, final Link<?> rightToLeftLink
+  ) {
+    this.leftToRightNetworkConditions = SimulatedPathConditions.builder().build();
+    this.rightToLeftNetworkConditions = SimulatedPathConditions.builder().build();
+
+    this.leftToRightLink = Objects.requireNonNull(leftToRightLink);
+    leftToRightLink.setLinkId(LinkId.of("left"));
+    this.rightToLeftLink = Objects.requireNonNull(rightToLeftLink);
+    rightToLeftLink.setLinkId(LinkId.of("right"));
+  }
 
   /**
    * Required-args Constructor.
@@ -121,7 +141,7 @@ public class SimulatedIlpv4Network {
           this.leftToRightNetworkConditions.currentExchangeRateSupplier().get()
       );
 
-      return this.leftToRightLink.getLinkHandler()
+      return this.rightToLeftLink.getLinkHandler()
           .map(linkHandler -> linkHandler.handleIncomingPacket(adjustedPreparePacket))
           .orElseThrow(() -> new RuntimeException("No LinkHandler registered for leftToRightLink"));
     }
@@ -151,7 +171,7 @@ public class SimulatedIlpv4Network {
           this.rightToLeftNetworkConditions.currentExchangeRateSupplier().get()
       );
 
-      return this.rightToLeftLink.getLinkHandler()
+      return this.leftToRightLink.getLinkHandler()
           .map(linkHandler -> linkHandler.handleIncomingPacket(adjustedPreparePacket))
           .orElseThrow(() -> new RuntimeException("No LinkHandler registered for leftToRightLink"));
     }

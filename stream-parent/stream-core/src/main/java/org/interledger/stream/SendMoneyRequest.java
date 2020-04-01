@@ -5,17 +5,27 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
 
 import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
 
 import java.time.Duration;
 import java.util.Optional;
-
-import javax.annotation.Nullable;
+import java.util.UUID;
 
 @Immutable
 public interface SendMoneyRequest {
 
   static SendMoneyRequestBuilder builder() {
     return new SendMoneyRequestBuilder();
+  }
+
+  /**
+   * A unique identifier for this Send Money request.
+   *
+   * @return A {@link UUID} that uniquely identifies this request.
+   */
+  @Default
+  default UUID requestId() {
+    return UUID.randomUUID();
   }
 
   /**
@@ -47,16 +57,6 @@ public interface SendMoneyRequest {
    * @return An {@link UnsignedLong} containing the amount of this payment.
    */
   UnsignedLong amount();
-
-  /**
-   * @return A {@link SenderAmountMode} that indicates the meaning of {@link #amount()}.
-   *
-   * @deprecated ascertained via the type of payment tracker used for sending. Returns the {@link SenderAmountMode} for
-   *     this payment tracker.
-   */
-  @Deprecated
-  @Nullable
-  SenderAmountMode getSenderAmountMode();
 
   /**
    * The {@link Denomination} of the amount in this request.

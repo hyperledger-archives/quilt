@@ -1,4 +1,4 @@
-package org.interledger.stream.receiver;
+package org.interledger.stream.receiver.testutils;
 
 import static org.interledger.stream.FluentCompareTo.is;
 
@@ -18,17 +18,13 @@ import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
-import org.interledger.stream.frames.ConnectionCloseFrame;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
-import org.interledger.stream.frames.StreamFrameType;
-import org.interledger.stream.frames.StreamMoneyFrame;
-import org.interledger.stream.frames.StreamMoneyMaxFrame;
+import org.interledger.stream.receiver.ServerSecretSupplier;
+import org.interledger.stream.receiver.StreamConnectionGenerator;
+import org.interledger.stream.receiver.StreamReceiver;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,19 +34,10 @@ import java.io.IOException;
 import java.util.Objects;
 
 /**
- * <p>A stateless implementation of {@link StreamReceiver} that does **not** maintain STREAM state, but instead
- * fulfills all incoming packets to collect the money.</p>
- *
- * <p>NOTE: This implementation does not currently support handling data sent via STREAM.</p>
- *
- * <p>Note that, per https://github.com/hyperledger/quilt/issues/242, as of the publication of this client,
- * connectors will reject ILP packets that exceed 32kb. This implementation does not overtly check to restrict the size
- * of thedatafield in any particular {@link InterledgerPreparePacket}, for two reasons. First, this implementation never
- * packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb limit to be an issue; Second,
- * if the ILPv4 RFC ever changes to increase this size limitation, we don't want sender/receiver software to have to be
- * updated across the Interledger.</p>
+ * <p>An implementation of {@link StreamReceiver} that sends valid STREAM frames that are _always_ empty, for testing
+ * purposes only.</p>
  */
-public class StatelessStreamReceiver implements StreamReceiver {
+public class AlwaysEmptyStreamReceiver implements StreamReceiver {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final ServerSecretSupplier serverSecretSupplier;
@@ -58,7 +45,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
   private final StreamEncryptionService streamEncryptionService;
   private final CodecContext streamCodecContext;
 
-  public StatelessStreamReceiver(
+  public AlwaysEmptyStreamReceiver(
       final ServerSecretSupplier serverSecretSupplier, final StreamConnectionGenerator streamConnectionGenerator,
       final StreamEncryptionService streamEncryptionService, final CodecContext streamCodecContext
   ) {
@@ -91,13 +78,6 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     final StreamPacket streamPacket;
     try {
-      if (preparePacket.getData().length == 0) {
-        return InterledgerRejectPacket.builder()
-            .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
-            .message("No STREAM packet bytes available to decrypt")
-            .triggeredBy(receiverAddress)
-            .build();
-      }
       // Try to parse the STREAM data from the payload.
       final byte[] streamPacketBytes = streamEncryptionService.decrypt(streamSharedSecret, preparePacket.getData());
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
@@ -115,38 +95,10 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     final Builder<StreamFrame> responseFrames = ImmutableList.builder();
 
-    if (streamPacket.sequenceIsSafeForSingleSharedSecret()) {
-      streamPacket.frames().stream()
-          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
-          .map($ -> (StreamMoneyFrame) $)
-          // Tell the sender the stream can handle lots of money
-          .forEach(streamMoneyFrame -> responseFrames.add(StreamMoneyMaxFrame.builder()
-              .streamId(streamMoneyFrame.streamId())
-              .totalReceived(UnsignedLong.ZERO)
-              .receiveMax(UnsignedLong.MAX_VALUE)
-              .build()));
-
-      // Add ConnectionNewAddress, but only if the sender sent one. This allows the sender to ask multiple times, if
-      // desired.
-      streamPacket.frames().stream()
-          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionNewAddress)
-          .findFirst()
-          .map(streamFrame -> responseFrames.add(ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(denomination)
-              .build()));
-    } else {
-      logger.warn("This STREAM Connection's sequence {} was too high for safe encryption. CLOSING the stream!",
-          streamPacket.sequence());
-      // If the sequence it too high, we should close the Connection.
-      responseFrames.add(ConnectionCloseFrame.builder()
-          .errorCode(ErrorCodes.ProtocolViolation)
-          .errorMessage("Sequence number was to too high for safe encryption")
-          .build());
-    }
-
     // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
     final InterledgerFulfillment fulfillment = StreamUtils
         .generatedFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
+
     final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
 
     // Return Fulfill or Reject Packet

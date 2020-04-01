@@ -2,8 +2,6 @@ package org.interledger.stream;
 
 import com.google.common.primitives.UnsignedLong;
 
-import java.util.Optional;
-
 /**
  * Defines how to track a payment while considering the amount sent vs amount received, allowing room for
  * path-exchange-rate fluctuations and implementation-defined rules relating to whether or not to continue a payment.
@@ -53,6 +51,19 @@ public interface PaymentTracker<T extends SenderAmountMode> {
   /**
    * Computes the values that should be used to Prepare a Stream packet, based upon the supplied inputs.
    *
+   * @param congestionLimit    An {@link UnsignedLong} representing the number of units that the congestion controller
+   *                           has indicated should be sent.
+   * @param senderDenomination A {@link Denomination} representing the asset information for the sender, in order to
+   *                           compute path-exchange-rates.
+   *
+   * @return A {@link PrepareAmounts} object that contains the correct information to use in the next ILPv4 and Stream
+   *     packets as part of a packetized payment flow in STREAM.
+   */
+  PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit, Denomination senderDenomination);
+
+  /**
+   * Computes the values that should be used to Prepare a Stream packet, based upon the supplied inputs.
+   *
    * @param congestionLimit      An {@link UnsignedLong} representing the number of units that the congestion controller
    *                             has indicated should be sent.
    * @param senderDenomination   A {@link Denomination} representing the asset information for the sender, in order to
@@ -64,7 +75,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    *     packets as part of a packetized payment flow in STREAM.
    */
   PrepareAmounts getSendPacketAmounts(
-      UnsignedLong congestionLimit, Denomination senderDenomination, Optional<Denomination> receiverDenomination
+      UnsignedLong congestionLimit, Denomination senderDenomination, Denomination receiverDenomination
   );
 
   /**
@@ -91,8 +102,8 @@ public interface PaymentTracker<T extends SenderAmountMode> {
   /**
    * Finalize and commit any tracking values for a packetized payment using the values in {@code prepareAmounts}.
    *
-   * @param prepareAmounts A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
-   *                       individual Prepare request.
+   * @param prepareAmounts  A {@link PrepareAmounts} that contains discrete ILPv4 and Stream packet amounts for an
+   *                        individual Prepare request.
    * @param deliveredAmount A {@link UnsignedLong} that contains the amount delivered which needs to be committed.
    */
   void commit(PrepareAmounts prepareAmounts, UnsignedLong deliveredAmount);
@@ -111,5 +122,19 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    */
   default boolean successful() {
     return !moreToSend();
+  }
+
+  /**
+   * <p>Determines if this payment track requires a receiver denomination. This is generally used to determine whether
+   * or not whether {@link #getSendPacketAmounts(UnsignedLong, Denomination)} or {@link
+   * #getSendPacketAmounts(UnsignedLong, Denomination, Denomination)} or should be called.</p>
+   *
+   * <p>By default, this method returns {@code true} for {@link SenderAmountMode#RECEIVER_AMOUNT}.</p>
+   *
+   * @return {@code true} if {@link #getOriginalAmountMode()} equals {@link SenderAmountMode#RECEIVER_AMOUNT}; {@code
+   *     false} otherwise.
+   */
+  default boolean requiresReceiverDenomination() {
+    return getOriginalAmountMode() == SenderAmountMode.RECEIVER_AMOUNT;
   }
 }

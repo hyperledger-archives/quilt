@@ -13,7 +13,6 @@ import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import com.google.common.primitives.UnsignedLong;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -90,9 +89,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
 
   @Override
   public PrepareAmounts getSendPacketAmounts(
-      final UnsignedLong congestionLimit,
-      final Denomination senderDenomination,
-      final Optional<Denomination> receiverDenomination
+      final UnsignedLong congestionLimit, final Denomination senderDenomination, final Denomination receiverDenomination
   ) {
     Objects.requireNonNull(congestionLimit);
     Objects.requireNonNull(senderDenomination);
@@ -101,12 +98,14 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
     if (congestionLimit.equals(UnsignedLong.ZERO) || amountLeftToDeliver.get().equals(UnsignedLong.ZERO)) {
       return PrepareAmounts.builder().amountToSend(UnsignedLong.ZERO).minimumAmountToAccept(UnsignedLong.ZERO).build();
     }
-    UnsignedLong amountToSendInSenderUnits =
-        rateCalculator.calculateAmountToSend(amountLeftToDeliver.get(), senderDenomination, receiverDenomination.get());
-    final UnsignedLong packetAmountToSend = StreamUtils.max(StreamUtils.min(amountToSendInSenderUnits, congestionLimit),
-        UnsignedLong.ONE);
-    UnsignedLong minAmountToAcceptInReceiverUnits =
+
+    final UnsignedLong amountToSendInSenderUnits = rateCalculator
+        .calculateAmountToSend(amountLeftToDeliver.get(), senderDenomination, receiverDenomination);
+    final UnsignedLong packetAmountToSend = StreamUtils
+        .max(StreamUtils.min(amountToSendInSenderUnits, congestionLimit), UnsignedLong.ONE);
+    final UnsignedLong minAmountToAcceptInReceiverUnits =
         rateCalculator.calculateMinAmountToAccept(packetAmountToSend, senderDenomination, receiverDenomination);
+
     return PrepareAmounts.builder()
         .minimumAmountToAccept(minAmountToAcceptInReceiverUnits)
         .amountToSend(packetAmountToSend)

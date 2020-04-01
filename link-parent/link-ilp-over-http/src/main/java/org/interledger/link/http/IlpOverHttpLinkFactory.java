@@ -90,10 +90,6 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
         decryptor.decrypt(outgoingLinkSettings.simpleAuthSettings().get().authToken().getBytes())
       ));
     } else {
-      // TODO: For now, we assume the bytes are a String that conform to the Crypt CLI. However, this should be made
-      // type-safe and more generic if possible. E.g., CryptoCLI formate vs Protobuf. Or, standardize on a single
-      // type-safe format?
-
       // NOTE: This supplier will always create a copy of the decrypted bytes so that the consumer of each call can
       // safely wipe the bytes from memory without affecting other callers.
       final SharedSecretBytesSupplier sharedSecretSupplier = () -> decryptor

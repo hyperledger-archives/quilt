@@ -7,14 +7,22 @@ import org.interledger.stream.Denominations;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
-import java.util.Optional;
-
+/**
+ * Unit tests for {@link NoOpExchangeRateCalculator}.
+ */
 public class NoOpExchangeRateCalculatorTest {
 
   @Test
-  public void calculate() {
+  public void calculateMinAmountToAcceptInReceiverAmountMode() {
     ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
-    assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD, Optional.of(Denominations.EUR)))
+    assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD, Denominations.EUR))
+        .isEqualTo(UnsignedLong.ZERO);
+  }
+
+  @Test
+  public void calculateMinAmountToAcceptInSenderAmountMode() {
+    ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
+    assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD))
         .isEqualTo(UnsignedLong.ZERO);
   }
 }

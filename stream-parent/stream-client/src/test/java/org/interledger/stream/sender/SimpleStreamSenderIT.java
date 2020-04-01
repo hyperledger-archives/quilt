@@ -52,7 +52,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -158,9 +158,7 @@ public class SimpleStreamSenderIT {
   public void sendMoneySinglePacket() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
+    StreamSender streamSender = new SimpleStreamSender(link);
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
@@ -191,9 +189,7 @@ public class SimpleStreamSenderIT {
   public void sendSmallPayment() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
 
-    StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
+    StreamSender streamSender = new SimpleStreamSender(link);
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails("sendSmallPayment");
 
@@ -227,9 +223,7 @@ public class SimpleStreamSenderIT {
     final int numExecutions = 10;
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000L);
 
-    StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
+    StreamSender streamSender = new SimpleStreamSender(link);
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
@@ -291,9 +285,7 @@ public class SimpleStreamSenderIT {
   public void sendMoneyMultiPacket() {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
 
-    StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
+    StreamSender streamSender = new SimpleStreamSender(link);
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000001);
 
@@ -318,37 +310,37 @@ public class SimpleStreamSenderIT {
 
   /**
    * Two calls to {@link SimpleStreamSender#sendMoney(SendMoneyRequest)}} that involves multiple packets in parallel.
-   * First call is to a {@link SimpleStreamSender} with the default sleep time (100ms)
-   * Second call is to a {@link SimpleStreamSender} with a shorter sleep time (5ms)
+   * First call is to a {@link SimpleStreamSender} with the default sleep time (100ms) Second call is to a {@link
+   * SimpleStreamSender} with a shorter sleep time (5ms)
    */
   @Test
   public void sendMoneyMultiPacketDifferentSleepTimes() {
-    final SendMoneyResult heavySleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(100)), 1000001);
-    final SendMoneyResult lightSleeperResult = sendMoneyWithConfiguredSleep(Optional.of(UnsignedLong.valueOf(5)), 1000002);
+    final SendMoneyResult heavySleeperResult = sendMoneyWithConfiguredSleep(Duration.ofMillis(100), 1000001);
+    final SendMoneyResult lightSleeperResult = sendMoneyWithConfiguredSleep(Duration.ofMillis(5), 1000002);
 
-    logger.info("Heavy sleeper took {} to send {} packets.", heavySleeperResult.sendMoneyDuration(), heavySleeperResult.totalPackets());
-    logger.info("Light sleeper took {} to send {} packets.", lightSleeperResult.sendMoneyDuration(), lightSleeperResult.totalPackets());
+    logger.info("Heavy sleeper took {} to send {} packets.", heavySleeperResult.sendMoneyDuration(),
+        heavySleeperResult.totalPackets());
+    logger.info("Light sleeper took {} to send {} packets.", lightSleeperResult.sendMoneyDuration(),
+        lightSleeperResult.totalPackets());
     assertThat(heavySleeperResult.sendMoneyDuration()).isGreaterThan(lightSleeperResult.sendMoneyDuration());
   }
 
-  private SendMoneyResult sendMoneyWithConfiguredSleep(Optional<UnsignedLong> sleepTime, int streamConnectionId) {
+  private SendMoneyResult sendMoneyWithConfiguredSleep(Duration sleepTimeDuration, int streamConnectionId) {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
 
-    StreamSender heavySleeperSender = new SimpleStreamSender(
-      new JavaxStreamEncryptionService(), link, sleepTime
-    );
+    StreamSender heavySleeperSender = new SimpleStreamSender(link, sleepTimeDuration);
 
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(streamConnectionId);
 
     final SendMoneyResult heavySleeperResult = heavySleeperSender.sendMoney(
-      SendMoneyRequest.builder()
-        .sourceAddress(SENDER_ADDRESS)
-        .amount(paymentAmount)
-        .denomination(Denominations.XRP)
-        .destinationAddress(connectionDetails.destinationAddress())
-        .sharedSecret(connectionDetails.sharedSecret())
-        .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-        .build()
+        SendMoneyRequest.builder()
+            .sourceAddress(SENDER_ADDRESS)
+            .amount(paymentAmount)
+            .denomination(Denominations.XRP)
+            .destinationAddress(connectionDetails.destinationAddress())
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+            .build()
     ).join();
 
     assertThat(heavySleeperResult.amountDelivered()).isEqualTo(paymentAmount);
@@ -356,7 +348,7 @@ public class SimpleStreamSenderIT {
     assertThat(heavySleeperResult.numFulfilledPackets()).isCloseTo(8, Offset.offset(1));
     assertThat(heavySleeperResult.numRejectPackets()).isEqualTo(0);
 
-    logger.info("Payment Sent via sender with sleep = {} : {}", sleepTime.orElse(UnsignedLong.valueOf(100)), heavySleeperResult);
+    logger.info("Payment Sent via sender with sleep = {} : {}", sleepTimeDuration.toMillis(), heavySleeperResult);
     return heavySleeperResult;
   }
 
@@ -415,7 +407,8 @@ public class SimpleStreamSenderIT {
     // using a sleepy executor here to make sure race condition is handled properly where timeout is reached
     // after submitting a sendPacketized task to the executor but before the task is executed
     StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link, new SleepyExecutorService(Executors.newFixedThreadPool(5), 5)
+        link, Duration.ofMillis(10L), new JavaxStreamEncryptionService(), new StreamConnectionManager(),
+        new SleepyExecutorService(Executors.newFixedThreadPool(5), 5)
     );
 
     String username = "sendMoneyHonorsTimeout";
@@ -438,7 +431,8 @@ public class SimpleStreamSenderIT {
                     .denomination(Denominations.XRP)
                     .destinationAddress(connectionDetails.destinationAddress())
                     .sharedSecret(connectionDetails.sharedSecret())
-                    .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+                    .paymentTracker(
+                        new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
                     .timeout(Duration.ofMillis(10 + i * 10))
                     .build()
             ).get();
@@ -458,9 +452,7 @@ public class SimpleStreamSenderIT {
   public void sendFailsIfNoExchangeRate() throws Throwable {
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
 
-    StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
+    StreamSender streamSender = new SimpleStreamSender(link);
 
     String username = "sendFailsIfNoExchangeRate";
     InterledgerAddress address = HOST_ADDRESS.with(username);
@@ -575,9 +567,7 @@ public class SimpleStreamSenderIT {
         .build());
 
     final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
-    final StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link
-    );
+    final StreamSender streamSender = new SimpleStreamSender(link);
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000000);
 
     streamSender.sendMoney(
@@ -592,6 +582,39 @@ public class SimpleStreamSenderIT {
             .build()
     ).whenComplete(($, error) -> assertThat(error).isNotNull());
   }
+
+  /**
+   * This test sends a payment in packets that are destined for a receiver that doesn't exist. This will cause an
+   * F02_UNREACHABLE reject packet to be returned during the preflightCheck, which should cause the soldierOn loop to
+   * short circuit and not try to send any packets.
+   */
+  @Test
+  public void sendMoneyFailsWithFinalErrorAndShortCircuits() {
+    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
+
+    StreamSender streamSender = new SimpleStreamSender(link);
+
+    final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(1000001);
+
+    final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
+        SendMoneyRequest.builder()
+            .sourceAddress(SENDER_ADDRESS)
+            .amount(paymentAmount)
+            .denomination(Denominations.XRP)
+            .destinationAddress(InterledgerAddress.of("test.foo.bar.patrick"))
+            .sharedSecret(connectionDetails.sharedSecret())
+            .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
+            .build()
+    ).join();
+
+    logger.info("SendMoneyResult: " + sendMoneyResult);
+    // preflightCheck should trip the circuit and cause streamSender to not even try to send any packets.
+    assertThat(sendMoneyResult.totalPackets()).isEqualTo(0);
+  }
+
+  //////////////////
+  // Private Helpers
+  //////////////////
 
   private StreamConnectionDetails getStreamConnectionDetails(int id) {
     return getStreamConnectionDetails("accountTest" + id);
@@ -620,7 +643,7 @@ public class SimpleStreamSenderIT {
     final StreamConnectionDetails connectionDetails = getStreamConnectionDetails(taskId);
 
     StreamSender streamSender = new SimpleStreamSender(
-        new JavaxStreamEncryptionService(), link, executor
+        link, Duration.ofMillis(10L), new JavaxStreamEncryptionService(), new StreamConnectionManager(), executor
     );
 
     final SendMoneyResult sendMoneyResult = streamSender.sendMoney(
@@ -701,14 +724,17 @@ public class SimpleStreamSenderIT {
   static class CrankyExchangeRateCalculator implements ExchangeRateCalculator {
 
     @Override
-    public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive, Denomination sendDenomination,
-        Denomination receiveDenomination) {
+    public UnsignedLong calculateAmountToSend(UnsignedLong amountToSend, Denomination amountToSendDenomination,
+        Denomination receiverDenomination) {
       throw new NoExchangeRateException("no exchanges allowed");
     }
 
     @Override
-    public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
-        Optional<Denomination> expectedReceivedDenomination) throws NoExchangeRateException {
+    public UnsignedLong calculateMinAmountToAccept(
+        final UnsignedLong sendAmount, final Denomination sendAmountDenomination
+    ) {
+      Objects.requireNonNull(sendAmount);
+      Objects.requireNonNull(sendAmountDenomination);
       throw new NoExchangeRateException("no exchanges allowed");
     }
   }
@@ -716,14 +742,17 @@ public class SimpleStreamSenderIT {
   static class GreedyExchangeRateCalculator implements ExchangeRateCalculator {
 
     @Override
-    public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive, Denomination sendDenomination,
-        Denomination receiveDenomination) {
-      return amountToReceive.plus(UnsignedLong.ONE);
+    public UnsignedLong calculateAmountToSend(UnsignedLong amountToSend, Denomination amountToSendDenomination,
+        Denomination receiverDenomination) {
+      return amountToSend.plus(UnsignedLong.ONE);
     }
 
     @Override
-    public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
-        Optional<Denomination> expectedReceivedDenomination) throws NoExchangeRateException {
+    public UnsignedLong calculateMinAmountToAccept(
+        final UnsignedLong sendAmount, final Denomination sendAmountDenomination
+    ) {
+      Objects.requireNonNull(sendAmount);
+      Objects.requireNonNull(sendAmountDenomination);
       return sendAmount.plus(UnsignedLong.ONE);
     }
   }

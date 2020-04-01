@@ -16,7 +16,6 @@ import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
-import org.interledger.stream.SenderAmountMode;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 
@@ -72,7 +71,6 @@ public class SendMoneyExample {
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
-            .senderAmountMode(SenderAmountMode.SENDER_AMOUNT)
             .amount(UnsignedLong.valueOf(100000))
             .denomination(Denominations.XRP)
             .destinationAddress(connectionDetails.destinationAddress())

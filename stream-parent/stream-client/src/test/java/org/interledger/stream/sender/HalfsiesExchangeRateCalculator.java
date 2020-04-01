@@ -6,7 +6,7 @@ import org.interledger.stream.calculators.NoExchangeRateException;
 
 import com.google.common.primitives.UnsignedLong;
 
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * An implementation of {@link ExchangeRateCalculator} that always assumes an exchange rate from sender:receiver
@@ -15,15 +15,23 @@ import java.util.Optional;
 public class HalfsiesExchangeRateCalculator implements ExchangeRateCalculator {
 
   @Override
-  public UnsignedLong calculateAmountToSend(UnsignedLong amountToReceive, Denomination sendDenomination,
-      Denomination receiveDenomination) throws NoExchangeRateException {
-    return amountToReceive.times(UnsignedLong.valueOf(2));
+  public UnsignedLong calculateAmountToSend(
+      final UnsignedLong amountToSend,
+      final Denomination amountToSendDenomination,
+      final Denomination receiverDenomination
+  ) throws NoExchangeRateException {
+    Objects.requireNonNull(amountToSend);
+    Objects.requireNonNull(amountToSendDenomination);
+    Objects.requireNonNull(receiverDenomination);
+    return amountToSend.times(UnsignedLong.valueOf(2));
   }
 
   @Override
-  public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendDenomination,
-      Optional<Denomination> expectedReceivedDenomination)
-      throws NoExchangeRateException {
+  public UnsignedLong calculateMinAmountToAccept(
+      final UnsignedLong sendAmount, final Denomination sendAmountDenomination
+  ) {
+    Objects.requireNonNull(sendAmount);
+    Objects.requireNonNull(sendAmountDenomination);
     return sendAmount.dividedBy(UnsignedLong.valueOf(2));
   }
 }

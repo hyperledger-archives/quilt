@@ -1,8 +1,7 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.core.InterledgerErrorCode.F00_BAD_REQUEST;
-import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE_CODE;
-import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
+import static org.interledger.core.InterledgerErrorCode.F08_AMOUNT_TOO_LARGE;
+import static org.interledger.core.InterledgerErrorCode.F99_APPLICATION_ERROR;
 import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -38,6 +37,7 @@ import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -53,6 +53,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,6 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -84,10 +87,10 @@ import javax.annotation.concurrent.ThreadSafe;
 public class SimpleStreamSender implements StreamSender {
 
   private final Link link;
+  private final Duration sendPacketSleepDuration;
   private final StreamEncryptionService streamEncryptionService;
-  private final ExecutorService executorService;
   private final StreamConnectionManager streamConnectionManager;
-  private final Optional<UnsignedLong> sendPacketSleep;
+  private final ExecutorService executorService;
 
   /**
    * Required-args Constructor.
@@ -95,59 +98,34 @@ public class SimpleStreamSender implements StreamSender {
    * @param link A {@link Link} that is used to send ILPv4 packets to an immediate peer.
    */
   public SimpleStreamSender(final Link link) {
-    this(new JavaxStreamEncryptionService(), link);
+    this(link, Duration.ofMillis(10L));
   }
 
   /**
    * Required-args Constructor.
    *
-   * @param link A {@link Link} that is used to send ILPv4 packets to an immediate peer.
-   * @param sendPacketSleep amount of time for a thread to sleep before sending more packets
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param sendPacketSleepDuration A {@link Duration} representing the amount of time for the soldierOn thread to sleep
+   *                                before attempting more processing.
    */
-  public SimpleStreamSender(final Link link, final Optional<UnsignedLong> sendPacketSleep) {
-    this(new JavaxStreamEncryptionService(), link, sendPacketSleep);
+  public SimpleStreamSender(final Link link, final Duration sendPacketSleepDuration) {
+    this(link, sendPacketSleepDuration, new JavaxStreamEncryptionService());
   }
 
   /**
    * Required-args Constructor.
    *
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param sendPacketSleepDuration A {@link Duration} representing the amount of time for the soldierOn thread to sleep
+   *                                before attempting more processing.
    * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
    *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
    *                                sender and receiver).
-   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
-   */
-  public SimpleStreamSender(final StreamEncryptionService streamEncryptionService, final Link link) {
-    this(streamEncryptionService, link, newDefaultExecutor(), Optional.empty());
-  }
-
-  /**
-   * Required-args Constructor.
-   *
-   * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
-   *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
-   *                                sender and receiver).
-   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
-   * @param sendPacketSleep amount of time for a thread to sleep before sending more packets
-   */
-  public SimpleStreamSender(final StreamEncryptionService streamEncryptionService,
-                            final Link link,
-                            final Optional<UnsignedLong> sendPacketSleep) {
-    this(streamEncryptionService, link, newDefaultExecutor(), sendPacketSleep);
-  }
-
-  /**
-   * Required-args Constructor.
-   *
-   * @param streamEncryptionService An instance of {@link StreamEncryptionService} used to encrypt and decrypted
-   *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
-   *                                sender and receiver).
-   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
-   * @param executorService         executorService to run the payments
    */
   public SimpleStreamSender(
-      final StreamEncryptionService streamEncryptionService, final Link link, ExecutorService executorService
+      final Link link, final Duration sendPacketSleepDuration, final StreamEncryptionService streamEncryptionService
   ) {
-    this(streamEncryptionService, link, executorService, new StreamConnectionManager(), Optional.empty());
+    this(link, sendPacketSleepDuration, streamEncryptionService, new StreamConnectionManager());
   }
 
   /**
@@ -157,43 +135,43 @@ public class SimpleStreamSender implements StreamSender {
    *                                end-to-end STREAM packet data (i.e., packets that should only be visible between
    *                                sender and receiver).
    * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
-   * @param executorService         executorService to run the payments
-   * @param         sendPacketSleep amount of time for a thread to sleep before sending more packets
+   * @param sendPacketSleepDuration A {@link Duration} representing the amount of time for the soldierOn thread to sleep
+   *                                before attempting more processing.
    */
   public SimpleStreamSender(
-    final StreamEncryptionService streamEncryptionService,
-    final Link link,
-final ExecutorService executorService,
-    final Optional<UnsignedLong> sendPacketSleep
+      final Link link, final Duration sendPacketSleepDuration, final StreamEncryptionService streamEncryptionService,
+      final StreamConnectionManager streamConnectionManager
   ) {
-    this(streamEncryptionService, link, executorService, new StreamConnectionManager(), sendPacketSleep);
+    this(link, sendPacketSleepDuration, streamEncryptionService, streamConnectionManager, newDefaultExecutor());
   }
 
   /**
    * Required-args Constructor.
-   *  @param streamEncryptionService A {@link StreamEncryptionService} used to encrypt and decrypted end-to-end STREAM
+   *
+   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
+   * @param sendPacketSleepDuration A {@link Duration} representing the amount of time for the soldierOn thread to sleep
+   *                                before attempting more processing.
+   * @param streamEncryptionService A {@link StreamEncryptionService} used to encrypt and decrypted end-to-end STREAM
    *                                packet data (i.e., packets that should only be visible between sender and
    *                                receiver).
-   * @param link                    A {@link Link} that is used to send ILPv4 packets to an immediate peer.
-   * @param executorService         A {@link ExecutorService} to run the payments.
    * @param streamConnectionManager A {@link StreamConnectionManager} that manages connections for all senders and
-   * @param                         sendPacketSleep amount of time for a thread to sleep before sending more packets
+   * @param executorService         A {@link ExecutorService} to run the payments.
    */
   public SimpleStreamSender(
-    final StreamEncryptionService streamEncryptionService,
-    final Link link,
-    final ExecutorService executorService,
-    final StreamConnectionManager streamConnectionManager,
-  final Optional<UnsignedLong> sendPacketSleep
+      final Link link,
+      final Duration sendPacketSleepDuration,
+      final StreamEncryptionService streamEncryptionService,
+      final StreamConnectionManager streamConnectionManager,
+      final ExecutorService executorService
   ) {
-    this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
     this.link = Objects.requireNonNull(link);
+    this.sendPacketSleepDuration = Objects.requireNonNull(sendPacketSleepDuration);
+    this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
+    this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
 
     // Note that pools with similar properties but different details (for example, timeout parameters) may be
     // created using {@link ThreadPoolExecutor} constructors.
     this.executorService = Objects.requireNonNull(executorService);
-    this.streamConnectionManager = Objects.requireNonNull(streamConnectionManager);
-    this.sendPacketSleep = Objects.requireNonNull(sendPacketSleep);
   }
 
   private static ExecutorService newDefaultExecutor() {
@@ -209,18 +187,18 @@ final ExecutorService executorService,
     Objects.requireNonNull(request);
 
     final StreamConnection streamConnection = this.streamConnectionManager.openConnection(
-      StreamConnectionId.from(request.destinationAddress(), request.sharedSecret())
+        StreamConnectionId.from(request.destinationAddress(), request.sharedSecret())
     );
 
     return new SendMoneyAggregator(
-      this.executorService,
-      streamConnection,
-      StreamCodecContextFactory.oer(),
-      this.link,
-      new AimdCongestionController(),
-      this.streamEncryptionService,
-      request,
-      this.sendPacketSleep
+        this.executorService,
+        streamConnection,
+        StreamCodecContextFactory.oer(),
+        this.link,
+        new AimdCongestionController(),
+        this.streamEncryptionService,
+        this.sendPacketSleepDuration,
+        request
     ).send();
   }
 
@@ -273,33 +251,32 @@ final ExecutorService executorService,
    */
   static class SendMoneyAggregator {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    // These error codes, despite beging FINAL, should be treated as "recoverable", meaning the Stream sendMoney
+    // operation should not immediately fail if one of these is encountered.
+    private static final Set<InterledgerErrorCode> NON_TERMINAL_ERROR_CODES = ImmutableSet.of(
+        F08_AMOUNT_TOO_LARGE, F99_APPLICATION_ERROR
+    );
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ExecutorService executorService;
     private final StreamConnection streamConnection;
     private final CodecContext streamCodecContext;
     private final StreamEncryptionService streamEncryptionService;
     private final CongestionController congestionController;
     private final Link link;
-
     private final SharedSecret sharedSecret;
     private final Optional<Duration> timeout;
-
     private final InterledgerAddress senderAddress;
     private final Denomination senderDenomination;
     private final InterledgerAddress destinationAddress;
-
     private final AtomicBoolean shouldSendSourceAddress;
     private final AtomicInteger numFulfilledPackets;
     private final AtomicInteger numRejectedPackets;
-
     private final PaymentTracker paymentTracker;
-
-    private Optional<Denomination> receiverDenomination;
-
     private final AtomicBoolean unrecoverableErrorEncountered;
-
-    private long sendPacketSleep;
+    private final SendMoneyRequest sendMoneyRequest;
+    private Optional<Denomination> receiverDenomination;
+    private Duration sendPacketSleepDuration;
 
     /**
      * Required-args Constructor.
@@ -312,7 +289,7 @@ final ExecutorService executorService,
      * @param congestionController    A {@link CongestionController} that supports back-pressure for money streams.
      * @param streamEncryptionService A {@link StreamEncryptionService} that allows for Stream packet encryption and
      *                                decryption.
-     * @param request                 all relevant details about the money to send
+     * @param sendMoneyRequest        A {@link SendMoneyRequest} that contains all relevant details about the money to
      */
     SendMoneyAggregator(
         final ExecutorService executorService,
@@ -321,8 +298,8 @@ final ExecutorService executorService,
         final Link link,
         final CongestionController congestionController,
         final StreamEncryptionService streamEncryptionService,
-        final SendMoneyRequest request,
-        final Optional<UnsignedLong> sendPacketSleep
+        final Duration sendPacketSleepDuration,
+        final SendMoneyRequest sendMoneyRequest
     ) {
       this.executorService = Objects.requireNonNull(executorService);
       this.streamConnection = Objects.requireNonNull(streamConnection);
@@ -332,26 +309,21 @@ final ExecutorService executorService,
       this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
       this.congestionController = Objects.requireNonNull(congestionController);
       this.shouldSendSourceAddress = new AtomicBoolean(true);
+      this.unrecoverableErrorEncountered = new AtomicBoolean(false);
 
-      this.sharedSecret = request.sharedSecret();
-      this.senderAddress = request.sourceAddress();
-      this.destinationAddress = request.destinationAddress();
+      this.sharedSecret = sendMoneyRequest.sharedSecret();
+      this.senderAddress = sendMoneyRequest.sourceAddress();
+      this.destinationAddress = sendMoneyRequest.destinationAddress();
+      this.sendPacketSleepDuration = Objects.requireNonNull(sendPacketSleepDuration);
 
       this.numFulfilledPackets = new AtomicInteger(0);
       this.numRejectedPackets = new AtomicInteger(0);
 
-      this.timeout = request.timeout();
-
-      this.senderDenomination = request.denomination();
-
-      this.paymentTracker = request.paymentTracker();
-
+      this.sendMoneyRequest = Objects.requireNonNull(sendMoneyRequest);
+      this.timeout = sendMoneyRequest.timeout();
+      this.senderDenomination = sendMoneyRequest.denomination();
+      this.paymentTracker = sendMoneyRequest.paymentTracker();
       this.receiverDenomination = Optional.empty();
-
-      this.unrecoverableErrorEncountered = new AtomicBoolean(false);
-
-      Objects.requireNonNull(sendPacketSleep);
-      this.sendPacketSleep = sendPacketSleep.orElse(UnsignedLong.valueOf(10)).longValue();
     }
 
     /**
@@ -366,20 +338,22 @@ final ExecutorService executorService,
       Instant startPreflight = DateUtils.now();
       try {
         receiverDenomination = preflightCheck();
-      } catch (StreamConnectionClosedException e) {
-        return CompletableFuture.completedFuture(SendMoneyResult.builder()
-            .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
-            .numRejectPackets(1)
-            .numFulfilledPackets(0)
-            .amountDelivered(UnsignedLong.ZERO)
-            .amountSent(UnsignedLong.ZERO)
-            .originalAmount(paymentTracker.getOriginalAmount())
-            .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
-            .successfulPayment(paymentTracker.successful())
-            .build());
+        if (paymentTracker.requiresReceiverDenomination() && !receiverDenomination.isPresent()) {
+          // The PaymentTrack requires a receiver denomination, but the receiver didn't send one. Thus, we must abort.
+          return CompletableFuture.completedFuture(this.constructSendMoneyResultForInvalidPreflight(startPreflight));
+        }
       } catch (Exception e) {
-        logger.warn("Preflight check failed", e);
+        if (paymentTracker.requiresReceiverDenomination()) {
+          logger.error("Preflight check failed. sendMoneyRequest={}", sendMoneyRequest, e);
+          return CompletableFuture.completedFuture(this.constructSendMoneyResultForInvalidPreflight(startPreflight));
+        } else {
+          logger.warn(
+              "Preflight check failed, but was not crucial for this sendMoney operation. sendMoneyRequest={}",
+              sendMoneyRequest, e
+          );
+        }
       }
+
       // A separate executor is needed for overall call to sendMoneyPacketized otherwise a livelock can occur.
       // Using a shared executor could cause sendMoneyPacketized to internally get blocked from submitting tasks
       // because the shared executor is already blocked waiting on the results of the call here to sendMoneyPacketized
@@ -408,14 +382,48 @@ final ExecutorService executorService,
               logger.error("SendMoney Stream failed: " + error.getMessage(), error);
             }
             if (!$.successfulPayment()) {
-              logger.error("Failed to send full amount");
+              logger.error("Failed to send full amount. sendMoneyRequestId={}", sendMoneyRequest.requestId());
             }
           });
     }
 
     /**
+     * Helper method to construct a {@link SendMoneyResult} that can be used when preflight checks are not successful.
+     *
+     * @param startPreflight An {@link Instant} representing the moment in time that preflight was started.
+     *
+     * @return A {@link SendMoneyResult}.
+     */
+    private SendMoneyResult constructSendMoneyResultForInvalidPreflight(final Instant startPreflight) {
+      Objects.requireNonNull(startPreflight);
+      return SendMoneyResult.builder()
+          .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
+          .numRejectPackets(0)
+          .numFulfilledPackets(0)
+          .amountDelivered(UnsignedLong.ZERO)
+          .amountSent(UnsignedLong.ZERO)
+          .originalAmount(paymentTracker.getOriginalAmount())
+          .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
+          .successfulPayment(paymentTracker.successful())
+          .build();
+    }
+
+    /**
+     * <p>Send a zero-value Prepare packet to "pre-flight" the Connection before actual value is transferred.</p>
+     *
+     * <p>This operation is used to initialize a new Stream connection in order to fulfill any prerequisites necessary
+     * before sending real value. For example, it is necessary to obtain the receiver's "Connection Asset Details"
+     * before a sender can send value, in order to manage slippage for the sender.</p>
+     *
+     * <p>Likewise, it may be desirable to perform other preflight checks in the future, such as checking an exchange
+     * rate or some other type of check.</p>
+     *
      * TODO: See https://github.com/hyperledger/quilt/issues/308 to determine when the Stream and/or Connection should
      * be closed.
+     *
+     * @return A {@link Denomination} that contains the asset information for the receiver.
+     *
+     * @throws StreamConnectionClosedException if the denomination could not be loaded and the Stream should be closed.
      */
     @VisibleForTesting
     Optional<Denomination> preflightCheck() throws StreamConnectionClosedException {
@@ -425,7 +433,7 @@ final ExecutorService executorService,
         sequence = this.streamConnection.nextSequence();
       } catch (StreamConnectionClosedException e) {
         // The Connection is closed, so we can't send anything more on it.
-        logger.warn(
+        logger.error(
             "Unable to send more packets on a closed StreamConnection. streamConnection={} error={}",
             streamConnection, e
         );
@@ -434,7 +442,7 @@ final ExecutorService executorService,
 
       final List<StreamFrame> frames = Lists.newArrayList(
           StreamMoneyFrame.builder()
-              // This aggregator supports only a simple stream-id, which is one.
+              // This aggregator supports only a single stream-id, which is one.
               .streamId(UnsignedLong.ONE)
               .shares(UnsignedLong.ONE)
               .build(),
@@ -466,37 +474,34 @@ final ExecutorService executorService,
           .data(streamPacketData)
           .build();
 
-      InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
-
-      final Function<InterledgerResponsePacket, Optional<Denomination>> readDetails = (p) -> {
-        final StreamPacket packet = this.fromEncrypted(sharedSecret, p.getData());
-        return packet.frames().stream()
-            .filter(f -> f.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
-            .findFirst()
-            .map(f -> (ConnectionAssetDetailsFrame) f)
-            .map(f -> Denomination.builder().from(f.sourceDenomination()).build());
+      // The function that parses out the STREAM packets...
+      final Function<InterledgerResponsePacket, Optional<Denomination>> readDetailsFromStream = (responsePacket) -> {
+        final StreamPacket packet = this.fromEncrypted(sharedSecret, responsePacket.getData());
+        if (packet != null) {
+          return packet.frames().stream()
+              .filter(f -> f.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
+              .findFirst()
+              .map(f -> (ConnectionAssetDetailsFrame) f)
+              .map(f -> Denomination.builder().from(f.sourceDenomination()).build());
+        } else {
+          return Optional.empty();
+        }
       };
 
-      return responsePacket.map(readDetails::apply, readDetails::apply);
+      return link.sendPacket(preparePacket)
+          .handleAndReturn(
+              fulfillPacket -> {
+              }, // Do nothing on fulfill
+              this::checkForAndTriggerUnrecoverableError // check for unrecoverable error.
+          )
+          // We typically expect this Prepare operation to reject, but regardless of whether the response is a fulfill or a
+          // reject, try to read the Receiver's Connection Asset Details and return them.
+          .map(readDetailsFromStream::apply, readDetailsFromStream::apply);
     }
 
     /**
-     * Send the packet but check to see if an error in the HTTP 4XX range was encountered so that we know if we
-     * should stop retrying
-     * @param preparePacket
-     * @return the returned response packet
+     * Helper method to send money in a packetized operation.
      */
-    @VisibleForTesting
-    protected InterledgerResponsePacket sendPacketAndCheckForFailure(InterledgerPreparePacket preparePacket) {
-      InterledgerResponsePacket response = link.sendPacket(preparePacket);
-      response.handle((fulfill) -> {}, (reject) -> {
-        if (reject.getCode().equals(F00_BAD_REQUEST)) {
-          unrecoverableErrorEncountered.set(true);
-        }
-      });
-      return response;
-    }
-
     private void sendMoneyPacketized() {
 
       final AtomicBoolean timeoutReached = new AtomicBoolean(false);
@@ -515,9 +520,14 @@ final ExecutorService executorService,
 
       while (soldierOn(timeoutReached.get(), tryingToSendTooMuch)) {
         // Determine the amount to send
-        PrepareAmounts amounts = paymentTracker.getSendPacketAmounts(
-            congestionController.getMaxAmount(), senderDenomination, receiverDenomination
-        );
+        final PrepareAmounts amounts = receiverDenomination
+            .map(receiverDenomination -> paymentTracker.getSendPacketAmounts(
+                congestionController.getMaxAmount(), senderDenomination, receiverDenomination
+            ))
+            .orElseGet(() -> paymentTracker.getSendPacketAmounts(
+                congestionController.getMaxAmount(), senderDenomination
+            ));
+
         UnsignedLong amountToSend = amounts.getAmountToSend();
         UnsignedLong receiverMinimum = amounts.getMinimumAmountToAccept();
 
@@ -525,7 +535,7 @@ final ExecutorService executorService,
           try {
             // Don't send any more, but wait a bit for outstanding requests to complete so we don't cycle needlessly in
             // a while loop that doesn't do anything useful.
-            Thread.sleep(sendPacketSleep);
+            Thread.sleep(sendPacketSleepDuration.toMillis());
           } catch (InterruptedException e) {
             throw new StreamSenderException(e.getMessage(), e);
           }
@@ -606,6 +616,24 @@ final ExecutorService executorService,
       timeoutMonitor.shutdownNow();
     }
 
+    /**
+     * Schedules a {@link Callable} with {@link this#executorService} to actually send an {@link
+     * InterledgerPreparePacket} on an existing Stream connection.
+     *
+     * @param timeoutReached        An {@link AtomicBoolean} that can be set to indicate whether a timeout has been
+     *                              reached.
+     * @param preparePacketSupplier A {@link Supplier} of the {@link InterledgerPreparePacket} that will be used by this
+     *                              method. This is a supplier in order to facilitate late-bound construction of the
+     *                              packet in order to ensure the when a packet is constructed, its expiry is
+     *                              initialized very close to when the packet will actually be sent on a link. Without
+     *                              this supplier, packets were getting created and then handing around in the executor.
+     *                              Under extreme-load conditions, these packets would expire before ever getting sent
+     *                              out over the wire.
+     * @param streamPacket          A decoded {@link StreamPacket} containing all STREAM information that is inside of
+     *                              the Prepare packet passed into this method. This is provided for debugging and minor
+     *                              optimization improvements inside of nested methods called by this method.
+     * @param prepareAmounts        A {@link PrepareAmounts} for augmenting the sending of the prepare packet.
+     */
     @VisibleForTesting
     void schedule(
         final AtomicBoolean timeoutReached,
@@ -623,11 +651,12 @@ final ExecutorService executorService,
           InterledgerPreparePacket preparePacket = preparePacketSupplier.get();
           if (!timeoutReached.get()) {
             try {
-              InterledgerResponsePacket responsePacket = sendPacketAndCheckForFailure(preparePacket);
-              responsePacket.handle(
+              link.sendPacket(preparePacket).handle(
                   fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
-                  rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts,
-                      numRejectedPackets, congestionController)
+                  rejectPacket -> handleReject(
+                      preparePacket, streamPacket, rejectPacket,
+                      prepareAmounts, numRejectedPackets, congestionController
+                  )
               );
             } catch (Exception e) {
               logger.error("Link send failed. preparePacket={}", preparePacket, e);
@@ -639,11 +668,10 @@ final ExecutorService executorService,
                   .build());
               paymentTracker.rollback(prepareAmounts, false);
             }
-          }
-          else {
+          } else {
             logger.info("timeout reached, not sending packet");
             congestionController.reject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
-                .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
+                .code(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT)
                 .message(String.format("Timeout reached before packet could be sent", preparePacket))
                 .build());
           }
@@ -654,8 +682,9 @@ final ExecutorService executorService,
         congestionController.reject(preparePacketSupplier.get().getAmount(), InterledgerRejectPacket.builder()
             .code(InterledgerErrorCode.F00_BAD_REQUEST)
             .message(
-                String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacketSupplier.get(),
-                    e.getMessage())
+                String
+                    .format("Unable to schedule sendMoney task. preparePacket=%s error=%s", preparePacketSupplier.get(),
+                        e.getMessage())
             )
             .build());
         throw e;
@@ -669,12 +698,14 @@ final ExecutorService executorService,
       //   the connection is not closed
       //   and you haven't delivered the full amount
       //   and you haven't timed out
-      //   and you're not trying to send to much
+      //   and you're not trying to send too much
       //   and we haven't hit an unrecoverable error
       return this.congestionController.hasInFlight()
-          || (
-            !streamConnection.isClosed() && paymentTracker.moreToSend() && !timeoutReached && !tryingToSendTooMuch &&
-              !unrecoverableErrorEncountered.get());
+          || (!streamConnection.isClosed()
+          && paymentTracker.moreToSend()
+          && !timeoutReached
+          && !tryingToSendTooMuch
+          && !unrecoverableErrorEncountered.get());
     }
 
     /**
@@ -769,6 +800,9 @@ final ExecutorService executorService,
      * @param originalStreamPacket  The {@link StreamPacket} that was inside of {@code originalPreparePacket}.
      * @param rejectPacket          The {@link InterledgerRejectPacket} received from a peer directly connected via a
      *                              {@link Link}.
+     * @param numRejectedPackets    An {@link AtomicInteger} that holds the total number of packets rejected thus far on
+     *                              this sendMoney operation.
+     * @param congestionController  The {@link CongestionController} used for this sendMoney operation.
      */
     @VisibleForTesting
     void handleReject(
@@ -804,28 +838,88 @@ final ExecutorService executorService,
           rejectPacket
       );
 
-      switch (rejectPacket.getCode().getCode()) {
+      this.checkForAndTriggerUnrecoverableError(rejectPacket);
 
-        case T04_INSUFFICIENT_LIQUIDITY_CODE:
-        case F08_AMOUNT_TOO_LARGE_CODE: {
-          // Handled by the congestion controller
-          break;
-        }
-        default: {
-          if (rejectPacket.getCode().getErrorFamily() == ErrorFamily.TEMPORARY) {
-            logger.warn(
-                "Temporary ILPv4 transport outage. Retrying... originalPreparePacket={} originalStreamPacket={} "
-                    + "rejectPacket={}",
-                originalPreparePacket, originalStreamPacket, rejectPacket);
+      ////////////
+      // Log the rejection
+      ////////////
 
-          } else {
-            logger.error(
-                "Encountered Final ILPv4 error. Retrying, but this sendMoney will likely hang until timeout."
-                    + " originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
-                originalPreparePacket, originalStreamPacket, rejectPacket);
-          }
-          break;
+      if (ErrorFamily.FINAL.equals(rejectPacket.getCode().getErrorFamily())) {
+        // Most Final errors trigger immediate stoppage of send operations, except for F08 and F99.
+        if (NON_TERMINAL_ERROR_CODES.contains(rejectPacket.getCode())) {
+          // error was a tolerable F rejection (currently F08 or F99)
+          logger.debug(
+              "Encountered an expected ILPv4 FINAL error. Retrying... "
+                  + "originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+              originalPreparePacket, originalStreamPacket, rejectPacket);
+        } else {
+          logger.error(
+              "Encountered an unexpected ILPv4 FINAL error. Aborting this sendMoney. "
+                  + "originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+              originalPreparePacket, originalStreamPacket, rejectPacket
+          );
         }
+      } else if (ErrorFamily.RELATIVE.equals(rejectPacket.getCode().getErrorFamily())) {
+        // All Relative errors trigger immediate stoppage of send operations.
+        logger.warn(
+            "Relative ILPv4 transport outage. originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+            originalPreparePacket, originalStreamPacket, rejectPacket
+        );
+      } else { // if (ErrorFamily.TEMPORARY.equals(rejectPacket.getCode().getErrorFamily())) {
+        logger.warn(
+            "Temporary ILPv4 transport outage. originalPreparePacket={} originalStreamPacket={} rejectPacket={}",
+            originalPreparePacket, originalStreamPacket, rejectPacket
+        );
+      }
+    }
+
+    /**
+     * <p>A helper method to centralize all logic around when to trigger an "unrecoverable error" that will stop this
+     * sender from schedule further packets.</p>
+     *
+     * <p>This method functions according to the following rules:</p>
+     *
+     * <p>Interledger Reject packets with the following attributes will immediately trigger an UNRECOVERABLE_ERROR
+     * condition, stopping the sendMoney operation:</p>
+     * <ol>
+     *   <li>Any F-family rejections (except F08 and F99, which are used for congestion control and rate-probing).</li>
+     *   <li>Any R-family rejections.</li>
+     * </ol>
+     *
+     * <p>Interledger Reject packets with the following attributes MAY trigger an UNRECOVERABLE_ERROR condition after
+     * some threshold (this logic is not yet implemented, and may never be):</p>
+     * <ol>
+     *  <li>T00 Errors (generally should be accepted up to some threshold)</li>
+     *  <li>T01 Errors (generally should be accepted up to some threshold)</li>
+     *  <li>F99 Errors (generally should be accepted up to some threshold; used for FX problems where prepare amount is
+     *  less than min amount the receiver should receive).</li>
+     * </ol>
+     *
+     * <p>Interledger Reject packets with the following attributes will NEVER trigger an UNRECOVERABLE_ERROR condition:</p>
+     * <ol>
+     *  <li>T02-T99 Errors (these may resolve with time)</li>
+     *  <li>F08 Errors (used for congestion control)</li>
+     * </ol>
+     *
+     * @param rejectPacket An {@link InterledgerRejectPacket} that was received from an outgoing {@link Link} in
+     *                     response to a prepare packet.
+     */
+    @VisibleForTesting
+    void checkForAndTriggerUnrecoverableError(final InterledgerRejectPacket rejectPacket) {
+      Objects.requireNonNull(rejectPacket);
+
+      if (ErrorFamily.FINAL.equals(rejectPacket.getCode().getErrorFamily())) {
+        // Most Final errors trigger immediate stoppage of send operations, except for F08 and F99.
+        if (NON_TERMINAL_ERROR_CODES.contains(rejectPacket.getCode())) {
+          // error was a tolerable F rejection (currently F08 or F99)
+        } else {
+          unrecoverableErrorEncountered.set(true);
+        }
+      } else if (ErrorFamily.RELATIVE.equals(rejectPacket.getCode().getErrorFamily())) {
+        // All Relative errors trigger immediate stoppage of send operations.
+        unrecoverableErrorEncountered.set(true);
+      } else { // if (ErrorFamily.TEMPORARY.equals(rejectPacket.getCode().getErrorFamily())) {
+        // do nothing.
       }
     }
 
@@ -833,6 +927,16 @@ final ExecutorService executorService,
     protected boolean isUnrecoverableErrorEncountered() {
       return this.unrecoverableErrorEncountered.get();
     }
+
+    @VisibleForTesting
+    void setUnrecoverableErrorEncountered(boolean unrecoverableErrorEncountered) {
+      this.unrecoverableErrorEncountered.set(unrecoverableErrorEncountered);
+    }
+
+    // TODO: FIXME per https://github.com/hyperledger/quilt/issues/308. Until this is completed, parallel STREAM send()
+    //  operations are not thread-safe. Consider a new instance of everything on each sendMoney? In other words, each
+    //  SendMoney requires its own connection information,
+    // so as long as two senders don't use the same Connection details, everything should be thread-safe.
 
     ///**
     // * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
