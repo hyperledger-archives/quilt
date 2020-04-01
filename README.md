@@ -161,7 +161,7 @@ Next, add the following Maven dependency:
   <dependency>
     <groupId>org.interledger</groupId>
     <artifactId>ilp-core</artifactId>
-    <version>HEAD-SNAPSHOT</version>
+    <version>1.2.0</version>
   </dependency>
   ...
 </dependencies>
@@ -184,7 +184,7 @@ Next, import this library as a dependency, like this:
 ```
 dependencies {
     ...
-    compile group: 'org.interledger', name: 'ilp-core', version: 'HEAD-SNAPSHOT'
+    compile group: 'org.interledger', name: 'ilp-core', version: '1.2.0'
     ...
 }
 ```
