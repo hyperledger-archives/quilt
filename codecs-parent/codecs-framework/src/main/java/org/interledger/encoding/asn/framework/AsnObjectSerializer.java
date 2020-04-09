@@ -30,8 +30,7 @@ import java.io.OutputStream;
 public interface AsnObjectSerializer<T extends AsnObjectCodec> {
 
   /**
-   * Read an ASN.1 object from the buffer according to the rules defined in the {@link
-   * AsnObjectSerializationContext}.
+   * Read an ASN.1 object from the buffer according to the rules defined in the {@link AsnObjectSerializationContext}.
    *
    * @param context     An instance of {@link AsnObjectSerializationContext}.
    * @param instance    An instance of {@link AsnObjectCodec} to read the data into.
@@ -39,12 +38,10 @@ public interface AsnObjectSerializer<T extends AsnObjectCodec> {
    *
    * @throws IOException if anything goes wrong reading from the {@link InputStream}.
    */
-  void read(AsnObjectSerializationContext context, T instance, InputStream inputStream)
-      throws IOException;
+  void read(AsnObjectSerializationContext context, T instance, InputStream inputStream) throws IOException;
 
   /**
-   * Write an object to the {@code outputStream} according to the rules defined in the {@code
-   * context}.
+   * Write an object to the {@code outputStream} according to the rules defined in the {@code context}.
    *
    * @param context      An instance of {@link AsnObjectSerializationContext}.
    * @param instance     An instance of {@link AsnObjectCodec} that is being serialized.
@@ -52,7 +49,6 @@ public interface AsnObjectSerializer<T extends AsnObjectCodec> {
    *
    * @throws IOException If anything goes wrong writing to the {@link OutputStream}
    */
-  void write(AsnObjectSerializationContext context, T instance, OutputStream outputStream)
-      throws IOException;
+  void write(AsnObjectSerializationContext context, T instance, OutputStream outputStream) throws IOException;
 
 }

@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link AsnUint8OerSerializer}.
+ * Parameterized unit tests for encoding an instance of {@link OerLengthSerializer}.
  */
 @RunWith(Parameterized.class)
 public class OerLengthPrefixCodecTest {

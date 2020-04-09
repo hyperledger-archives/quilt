@@ -23,7 +23,6 @@ import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDI
 import static org.interledger.core.InterledgerErrorCode.T05_RATE_LIMITED;
 import static org.interledger.core.InterledgerErrorCode.T99_APPLICATION_ERROR;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -133,7 +132,7 @@ public class SendMoneyAggregatorTest {
         .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
-        .denomination(Denominations.XRP)
+        .denomination(Denominations.XRP_DROPS)
         .paymentTracker(paymentTracker)
         .build();
     this.sendMoneyAggregator = new SendMoneyAggregator(
@@ -243,7 +242,7 @@ public class SendMoneyAggregatorTest {
         .amount(originalAmountToSend)
         .destinationAddress(destinationAddress)
         .timeout(Optional.of(Duration.ofSeconds(60)))
-        .denomination(Denominations.XRP)
+        .denomination(Denominations.XRP_DROPS)
         .paymentTracker(new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator()))
         .build();
     ExecutorService executor = mock(ExecutorService.class);
@@ -383,7 +382,7 @@ public class SendMoneyAggregatorTest {
         .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
-        .denomination(Denominations.XRP)
+        .denomination(Denominations.XRP_DROPS)
         .paymentTracker(tracker)
         .build();
 
@@ -596,7 +595,7 @@ public class SendMoneyAggregatorTest {
         .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
-        .denomination(Denominations.XRP)
+        .denomination(Denominations.XRP_DROPS)
         .paymentTracker(
             new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator())
         )
@@ -670,7 +669,7 @@ public class SendMoneyAggregatorTest {
         .destinationAddress(destinationAddress)
         .amount(originalAmountToSend)
         .timeout(Optional.of(Duration.ofSeconds(60)))
-        .denomination(Denominations.XRP)
+        .denomination(Denominations.XRP_DROPS)
         .paymentTracker(
             new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
         .build();

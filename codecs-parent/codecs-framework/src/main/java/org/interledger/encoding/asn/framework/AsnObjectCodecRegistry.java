@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.framework;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A registry of {@link Class} to {@link AsnObjectCodec} mappings that can provide a new instance of
- * an {@link AsnObjectCodec} that can encode/decode a given type.
+ * A registry of {@link Class} to {@link AsnObjectCodec} mappings that can provide a new instance of an {@link
+ * AsnObjectCodec} that can encode/decode a given type.
  */
 public class AsnObjectCodecRegistry {
 
@@ -43,12 +43,13 @@ public class AsnObjectCodecRegistry {
    * Register a new ASN.1 codec that can encode/decode the given type.
    *
    * @param type     An instance of {@link Class}.
-   * @param supplier The {@link AsnObjectCodecSupplier} that will produce new
-   *                 {@link AsnObjectCodec} instances as required.
+   * @param supplier The {@link AsnObjectCodecSupplier} that will produce new {@link AsnObjectCodec} instances as
+   *                 required.
    * @param <T>      The type of object that can be encoded/decoded by the given codec.
+   *
    * @return this {@link AsnObjectCodecRegistry} to allow chaining calls to this method.
    */
-  public <T> AsnObjectCodecRegistry register(Class<T> type, AsnObjectCodecSupplier<T> supplier) {
+  public <T> AsnObjectCodecRegistry register(final Class<T> type, final AsnObjectCodecSupplier<T> supplier) {
     Objects.requireNonNull(type);
     Objects.requireNonNull(supplier);
 
@@ -61,7 +62,7 @@ public class AsnObjectCodecRegistry {
    * Get a new {@link AsnObjectCodec} instance to encode/decode the specified {@code type}.
    *
    * @param type An instance of {@link Class}.
-   * @param <T> the type of object that can be encoded/decoded by the returned codec
+   * @param <T>  the type of object that can be encoded/decoded by the returned codec
    *
    * @return a codec for encoding/decoding objects of type {@code T}
    */

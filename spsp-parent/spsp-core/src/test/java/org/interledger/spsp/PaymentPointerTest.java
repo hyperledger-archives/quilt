@@ -58,6 +58,13 @@ public class PaymentPointerTest {
   }
 
   @Test
+  public void parsePaymentPointerWithEmailAddress() {
+    PaymentPointer paymentPointer = PaymentPointer.of("$rafiki.money/p/test@example.com");
+    assertThat(paymentPointer.host()).isEqualTo("rafiki.money");
+    assertThat(paymentPointer.path()).isEqualTo("/p/test@example.com");
+  }
+
+  @Test
   public void exceptionIfDoesntStartWithDollarSign() {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("PaymentPointers must begin with $");

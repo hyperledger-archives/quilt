@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,19 +30,20 @@ import java.util.Objects;
 /**
  * A serializer with some static utility functions for reading and writing length prefixes.
  */
-public class OerLengthSerializer  {
+public class OerLengthSerializer {
 
   /**
    * Read a length prefix from the stream.
    *
    * @param inputStream the stream to read from
+   *
    * @return The length encoded in the length prefix
+   *
    * @throws IOException if there is an error reading from the stream.
    */
   public static int readLength(final InputStream inputStream) throws IOException {
 
     Objects.requireNonNull(inputStream);
-
 
     // The number of encoded octets that the encoded payload will be stored in.
     final int length;
@@ -51,7 +52,7 @@ public class OerLengthSerializer  {
     if (initialLengthPrefixOctet >= 0 && initialLengthPrefixOctet < 128) {
       length = initialLengthPrefixOctet;
     } else {
-      // Truncate the MSB and use the rest as a number...
+      // Truncate the MSB and use the rest as a number...length may not exceed 127 since this can only be 1 byte.
       final int lengthOfLength = initialLengthPrefixOctet & 0x7f;
 
       // Convert the bytes into an integer...
@@ -59,8 +60,7 @@ public class OerLengthSerializer  {
       int read = inputStream.read(ba, 0, lengthOfLength);
 
       if (read != lengthOfLength) {
-        throw new IOException(
-            "error reading " + lengthOfLength + " bytes from stream, only read " + read);
+        throw new IOException("Unable to read " + lengthOfLength + " bytes from stream, only read " + read);
       }
       length = toInt(ba);
     }
@@ -69,11 +69,11 @@ public class OerLengthSerializer  {
   }
 
   /**
-   * Helper method to convert a byte array of varying length (assuming not larger than 4 bytes) into
-   * an int. This is necessary because most traditional library assume a 4-byte array when
-   * converting to an Integer.
+   * Helper method to convert a byte array of varying length (assuming not larger than 4 bytes) into an int. This is
+   * necessary because most traditional library assume a 4-byte array when converting to an Integer.
    *
    * @param bytes An array of up to 4 bytes representing an integer
+   *
    * @return the int representation of the given bytes
    */
   private static int toInt(final byte[] bytes) {
@@ -108,8 +108,9 @@ public class OerLengthSerializer  {
   /**
    * Write an OER length prefix to the stream.
    *
-   * @param length The length to encode and write to the stream.
+   * @param length       The length to encode and write to the stream.
    * @param outputStream the stream to write to
+   *
    * @throws IOException if there is an error writing to the stream
    */
   public static void writeLength(final int length, final OutputStream outputStream)

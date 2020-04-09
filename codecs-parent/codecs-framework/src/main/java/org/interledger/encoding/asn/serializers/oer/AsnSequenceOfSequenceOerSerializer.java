@@ -32,16 +32,17 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 
 /**
- * An extension of {@link AsnObjectSerializer} for reading and writing an ASN.1 OER object that is represented by an
- * SEQUENCE.
+ * An extension of {@link AsnObjectSerializer} for reading and writing an ASN.1 OER object that is represented by a
+ * SEQUENCE OF SEQUENCE (which in ASN.1 OER nomenclature is an array of objects).
  */
-public class AsnSequenceOfSequenceOerSerializer
-    implements AsnObjectSerializer<AsnSequenceOfSequenceCodec> {
+public class AsnSequenceOfSequenceOerSerializer implements AsnObjectSerializer<AsnSequenceOfSequenceCodec> {
 
   @Override
-  public void read(AsnObjectSerializationContext context, AsnSequenceOfSequenceCodec instance,
-      InputStream inputStream)
-      throws IOException {
+  public void read(
+      final AsnObjectSerializationContext context,
+      final AsnSequenceOfSequenceCodec instance,
+      final InputStream inputStream
+  ) throws IOException {
 
     AsnUintCodec quantityCodec = new AsnUintCodec();
     context.read(quantityCodec, inputStream);
@@ -51,18 +52,19 @@ public class AsnSequenceOfSequenceOerSerializer
       throw new CodecException("SEQUENCE_OF quantities > Integer.MAX_VALUE ar not supported");
     }
 
-    int quantity = quantityBigInt.intValue();
-    instance.setSize(quantity);
-
-    for (int i = 0; i < quantity; i++) {
+    // This is the number of sequences that were indicated in the ASN.1
+    int indicatedNumberOfSequences = quantityBigInt.intValue();
+    for (int i = 0; i < indicatedNumberOfSequences; i++) {
       context.read(instance.getCodecAt(i), inputStream);
     }
   }
 
   @Override
-  public void write(AsnObjectSerializationContext context,
-      AsnSequenceOfSequenceCodec instance,
-      OutputStream outputStream) throws IOException {
+  public void write(
+      final AsnObjectSerializationContext context,
+      final AsnSequenceOfSequenceCodec instance,
+      final OutputStream outputStream
+  ) throws IOException {
 
     AsnUintCodec quantityCodec = new AsnUintCodec();
     quantityCodec.encode(BigInteger.valueOf(instance.size()));

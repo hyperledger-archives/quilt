@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,16 +34,17 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 /**
- * An extension of {@link AsnObjectSerializer} for reading and writing an ASN.1 OER
- * object that is represented by an octet string.
+ * An extension of {@link AsnObjectSerializer} for reading and writing an ASN.1 OER object that is represented by an
+ * octet string.
  */
-public class AsnOctetStringOerSerializer
-    implements AsnObjectSerializer<AsnOctetStringBasedObjectCodec> {
+public class AsnOctetStringOerSerializer implements AsnObjectSerializer<AsnOctetStringBasedObjectCodec> {
 
   @Override
-  public void read(final AsnObjectSerializationContext context,
-                   final AsnOctetStringBasedObjectCodec instance,
-                   final InputStream inputStream) throws IOException {
+  public void read(
+      final AsnObjectSerializationContext context,
+      final AsnOctetStringBasedObjectCodec instance,
+      final InputStream inputStream
+  ) throws IOException {
     Objects.requireNonNull(context);
     Objects.requireNonNull(instance);
     Objects.requireNonNull(inputStream);
@@ -62,12 +63,11 @@ public class AsnOctetStringOerSerializer
     if (length == 0) {
       instance.setBytes(returnable);
     } else {
-
       int bytesRead = inputStream.read(returnable);
       if (bytesRead < length) {
         throw new CodecException(
-            format("Unexpected end of stream. Expected %s bytes but only read %s.",
-                length, bytesRead));
+            format("Unexpected end of stream. Expected %s bytes but only read %s.", length, bytesRead)
+        );
       }
       instance.setBytes(returnable);
     }
@@ -75,9 +75,11 @@ public class AsnOctetStringOerSerializer
   }
 
   @Override
-  public void write(final AsnObjectSerializationContext context,
-                    final AsnOctetStringBasedObjectCodec instance,
-                    final OutputStream outputStream) throws IOException {
+  public void write(
+      final AsnObjectSerializationContext context,
+      final AsnOctetStringBasedObjectCodec instance,
+      final OutputStream outputStream
+  ) throws IOException {
     Objects.requireNonNull(context);
     Objects.requireNonNull(instance);
     Objects.requireNonNull(outputStream);

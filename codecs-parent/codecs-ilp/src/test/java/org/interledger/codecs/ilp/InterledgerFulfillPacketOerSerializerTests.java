@@ -97,8 +97,7 @@ public class InterledgerFulfillPacketOerSerializerTests {
     final CodecContext context = InterledgerCodecContextFactory.oer();
     final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPacketBytes();
 
-    final InterledgerFulfillPacket packet = context.read(InterledgerFulfillPacket.class,
-        asn1OerPaymentBytes);
+    final InterledgerFulfillPacket packet = context.read(InterledgerFulfillPacket.class, asn1OerPaymentBytes);
     assertThat(packet).isEqualTo(this.packet);
   }
 
@@ -111,8 +110,7 @@ public class InterledgerFulfillPacketOerSerializerTests {
     final CodecContext context = InterledgerCodecContextFactory.oer();
     final ByteArrayInputStream asn1OerPaymentBytes = constructAsn1OerPacketBytes();
 
-    final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class,
-        asn1OerPaymentBytes);
+    final InterledgerPacket decodedPacket = context.read(InterledgerPacket.class, asn1OerPaymentBytes);
     assertThat(decodedPacket.getClass().getName()).isEqualTo(packet.getClass().getName());
     assertThat(decodedPacket).isEqualTo(packet);
   }
