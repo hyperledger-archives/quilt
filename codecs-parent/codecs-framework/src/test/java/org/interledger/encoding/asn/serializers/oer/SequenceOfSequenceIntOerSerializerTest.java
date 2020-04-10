@@ -212,8 +212,8 @@ public class SequenceOfSequenceIntOerSerializerTest {
     }
     codecContext.write(sequences, byteArrayOutputStream);
 
-    // Twiddle the byte at index=1 to falsely indicate that the total SEQUENCES is 127
-    // byte[1] = 0x7F
+    // Twiddle the byte at index=1 to falsely indicate that the total SEQUENCES is 255
+    // byte[1] = 0xFF
     byte[] copiedByteArray = byteArrayOutputStream.toByteArray();
     copiedByteArray[1] = (byte) 0xFF;
 
