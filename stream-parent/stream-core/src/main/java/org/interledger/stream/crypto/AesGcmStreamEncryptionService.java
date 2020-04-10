@@ -29,10 +29,6 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
-  // TODO: Try encrypt/decrypt using non-standard mechanisms, fallback to standard mechanism.
-  // TODO: New KeyDerivation function.
-
-
   /**
    * For GCM a 12 byte random byte-array is recommend by NIST because it's faster and more secure (See page 8 in the PDF
    * document below).
