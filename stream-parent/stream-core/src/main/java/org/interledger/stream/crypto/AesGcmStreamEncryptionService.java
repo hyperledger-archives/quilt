@@ -362,7 +362,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
   public enum EncryptionMode {
     /**
      * Encrypts payloads with ciphertext that has the AuthTag last, which is non-standard but commonly deployed in JS
-     * and RUST implementations. Decryption attempts non-standard-mode first, and falls-back to standards mode in the
+     * and RUST implementations. Decryption attempts non-standard-mode first, and falls-back to standard-mode in the
      * event of an {@link EncryptionException}.
      */
     ENCRYPT_NON_STANDARD,
