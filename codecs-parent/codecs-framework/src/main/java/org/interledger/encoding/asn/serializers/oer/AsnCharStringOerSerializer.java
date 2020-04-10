@@ -74,7 +74,11 @@ public class AsnCharStringOerSerializer implements AsnObjectSerializer<AsnCharSt
     } else {
       // Use a limited input stream so we don't read too many bytes.
       final InputStream limitedInputStream = ByteStreams.limit(inputStream, lengthToRead);
-      result = CharStreams.toString(new InputStreamReader(limitedInputStream, instance.getCharacterSet().name()));
+      // Auto-closes the InputStreamReader...
+      try (InputStreamReader inputStreamReader = new InputStreamReader(limitedInputStream,
+          instance.getCharacterSet().name())) {
+        result = CharStreams.toString(inputStreamReader);
+      }
       // For UTF-8 characters, result.length() will report the viewable length (e.g., 3) but for certain encoded
       // characters, the actual byte-length will be larger (e.g., the String 元元元 is 3 viewable bytes, but 9 encoded
       // UTF-8 bytes). Thus, when we write the length-prefix, the code will write 9, so when we read, we need to
