@@ -20,8 +20,6 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.interledger.encoding.asn.codecs.AsnIA5StringCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.framework.CodecContext;
@@ -71,8 +69,7 @@ public class IA5StringOerSerializerTestBadLength {
      * try read the data, the codec should fail since it reaches EOF before consuming the 34 bytes
      * indicated.
      */
-    String value = context.read(String.class, inputStream);
-    assertThat(value).isEqualTo("foo");
+    context.read(String.class, inputStream);
   }
 
 }
