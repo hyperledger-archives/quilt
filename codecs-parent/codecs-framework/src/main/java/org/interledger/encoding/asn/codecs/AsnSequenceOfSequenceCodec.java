@@ -58,19 +58,20 @@ public class AsnSequenceOfSequenceCodec<L extends List<T>, T> extends AsnObjectC
     this.listConstructor = Objects.requireNonNull(listConstructor);
     this.subCodecSupplier = Objects.requireNonNull(subCodecSupplier);
 
-    // A SEQUENCE-OF-SEQUENCE must always have the same type of SEQUENCE, so the codec used for each SEQUENCE in an
-    // Array of SEQUENCES must always be the same type. That said, due to the unfortunate design of this implementation,
-    // there must be a unique instance of the Codec for each item in the listSupplier. Despite this limitation, we can
-    // construct a reasonably small Array here, which covers our happy-path (e.g., a typical use-case for this
-    // functionality is the encoding/decoding of STREAM frames, and there generally aren't more than a few in any
-    // given STREAM packet. Therefore, this implementation starts with a small Array, but allows it to grow as needed.
-    // This is preferable to simply constructing an array with a length equal to the length supplied in an ASN.1 OER
-    // encoded packet, because this could lead to a potential DOS attack if an attacker were to maliciously specify an
-    // artificially long length value (e.g., a malicious packet creator could specified a quantity value of
-    // Integer.MAX_VALUE, which in a naive decoder would attempt to allocate 2GB of JVM heap while constructing an
-    // array with the size supplied by the packet creator. This might have resulted in an OutOfMemoryError depending on
-    // the default heap size of the JVM. Dynamically allocating this array based upon actual byte counts avoids this
-    // potential attack vector.
+    // A SEQUENCE-OF-SEQUENCE must always have the same type of SEQUENCE in its collection, so the codec used for each
+    // SEQUENCE in an Array of SEQUENCES must always be the same type. That said, due to the unfortunate design of this
+    // implementation, there must be a unique instance of a sub-codec for each item in the listSupplier. Despite this
+    // limitation, we can construct a reasonably small array here in order to covers our happy-path (e.g., a typical
+    // use-case for this functionality is the encoding/decoding of STREAM frames, and there generally aren't more than
+    // a few frames in any given STREAM packet). Therefore, this implementation starts with a small array, but allows
+    // the array to grow dynamically as needed.
+    // This design preferable to simply constructing an array with a length equal to the length supplied in the ASN.1
+    // OER packet, because this could lead to a potential DOS attack if an attacker were to maliciously specify an
+    // artificially long length value.
+    // For example, a malicious packet creator could specify a length value of Integer.MAX_VALUE, which a naive decoder
+    // would use to initialize an array, thus accidentially allocating 2GB of JVM heap. This likely would result in an
+    // OutOfMemoryError depending on the default heap size of the JVM. Instead, the chosen design which dynamically
+    // allocates the array based upon actual byte counts avoids this potential attack vector.
     this.codecs = new ArrayList<>(CODECS_ARRAY_INITIAL_CAPACITY);
   }
 
