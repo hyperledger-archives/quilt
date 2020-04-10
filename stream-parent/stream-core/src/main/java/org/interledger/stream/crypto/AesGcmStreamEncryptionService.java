@@ -147,11 +147,12 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
   /**
    * <p>Encrypts {@code plainText} with {@code iv} using a non-standard byte arrangement where the AuthTag goes first,
-   * followed by cipher.</p>
+   * followed by ciphertext.</p>
    *
-   * <p>This arrangement was introduced in the JS and Rust Connectors, and so Java followed suit. However, it's
-   * technically wrong but works as long as everyone uses the same arrangement when encrypting/decrypting, which is the
-   * case in any Interledger deployments.</p>
+   * <p>This arrangement was introduced in the JS and Rust Connectors by mistake, and by the time Java was implemented,
+   * JS and Rust were widely deployed enough that Java had to follow suit. While this implementation is non-standard, it
+   * isn't technically broken, and  works as long as everyone uses the same arrangement when encrypting/decrypting,
+   * which is the case in most Interledger deployments.</p>
    *
    * @param sharedSecret A {@link SharedSecret} used for encryption.
    * @param plainText    A byte-array to encrypt.
@@ -295,9 +296,10 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * <p>Decrypts {@code cipherMessage} using the non-standard byte arrangement of the embedded ciphertext where the
    * AuthTag goes first, which is non-standard but commonly deployed.</p>
    *
-   * <p>This arrangement was introduced in the JS and Rust Connectors, and so Java followed suit. However, it's
-   * technically wrong but works as long as everyone uses the same arrangement when encrypting/decrypting, which is the
-   * case in most Interledger deployments.</p>
+   * <p>This arrangement was introduced in the JS and Rust Connectors by mistake, and by the time Java was implemented,
+   * JS and Rust were widely deployed enough that Java had to follow suit. While this implementation is non-standard, it
+   * isn't technically broken, and  works as long as everyone uses the same arrangement when encrypting/decrypting,
+   * which is the case in most Interledger deployments.</p>
    *
    * @param sharedSecret  A {@link SharedSecret} used for encryption.
    * @param cipherMessage A byte-array to decrypt.
