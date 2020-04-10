@@ -35,10 +35,10 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link OerLengthSerializer}.
+ * Parameterized unit tests for {@link OerLengthSerializer}.
  */
 @RunWith(Parameterized.class)
-public class OerLengthPrefixCodecTest {
+public class OerLengthSerializerTest {
 
   private final int expectedPayloadLength;
   private final byte[] asn1OerBytes;
@@ -50,7 +50,7 @@ public class OerLengthPrefixCodecTest {
    *                              length-prefix.
    * @param asn1OerBytes          The expected value, in binary, of the supplied {@code expectedPayloadLength}.
    */
-  public OerLengthPrefixCodecTest(final int expectedPayloadLength, final byte[] asn1OerBytes) {
+  public OerLengthSerializerTest(final int expectedPayloadLength, final byte[] asn1OerBytes) {
     this.expectedPayloadLength = expectedPayloadLength;
     this.asn1OerBytes = asn1OerBytes;
   }
