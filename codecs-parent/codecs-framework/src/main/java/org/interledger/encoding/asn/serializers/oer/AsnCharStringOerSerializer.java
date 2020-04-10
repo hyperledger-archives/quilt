@@ -20,11 +20,14 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
+import static java.lang.String.format;
+
 import org.interledger.encoding.asn.codecs.AsnCharStringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.framework.AsnObjectSerializationContext;
 import org.interledger.encoding.asn.framework.AsnObjectSerializer;
 
+import com.google.common.base.Utf8;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 
@@ -32,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.Objects;
 
 /**
@@ -73,15 +75,26 @@ public class AsnCharStringOerSerializer implements AsnObjectSerializer<AsnCharSt
       // Use a limited input stream so we don't read too many bytes.
       final InputStream limitedInputStream = ByteStreams.limit(inputStream, lengthToRead);
       result = CharStreams.toString(new InputStreamReader(limitedInputStream, instance.getCharacterSet().name()));
+      // For UTF-8 characters, result.length() will report the viewable length (e.g., 3) but for certain encoded
+      // characters, the actual byte-length will be larger (e.g., the String 元元元 is 3 viewable bytes, but 9 encoded
+      // UTF-8 bytes). Thus, when we write the length-prefix, the code will write 9, so when we read, we need to
+      // validate that 9 bytes were read, and not 3 (in this example).
+      if (Utf8.encodedLength(result) != lengthToRead) {
+        throw new IOException(
+            format("Unable to properly decode %s bytes (could only read %s bytes)", lengthToRead, result.length())
+        );
+      }
     }
 
     instance.setCharString(result);
   }
 
   @Override
-  public void write(final AsnObjectSerializationContext context,
+  public void write(
+      final AsnObjectSerializationContext context,
       final AsnCharStringBasedObjectCodec instance,
-      final OutputStream outputStream) throws IOException {
+      final OutputStream outputStream
+  ) throws IOException {
 
     Objects.requireNonNull(context);
     Objects.requireNonNull(instance);

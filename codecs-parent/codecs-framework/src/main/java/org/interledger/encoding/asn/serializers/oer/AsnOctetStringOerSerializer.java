@@ -20,6 +20,8 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
+import static java.lang.String.format;
+
 import org.interledger.encoding.asn.codecs.AsnOctetStringBasedObjectCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.framework.AsnObjectSerializationContext;
@@ -68,6 +70,11 @@ public class AsnOctetStringOerSerializer implements AsnObjectSerializer<AsnOctet
       // Use a limited input stream so we don't read too many bytes.
       final InputStream limitedInputStream = ByteStreams.limit(inputStream, lengthToRead);
       bytes = ByteStreams.toByteArray(limitedInputStream);
+      if (bytes.length != lengthToRead) {
+        throw new IOException(
+            format("Unable to properly decode %s bytes (could only read %s bytes)", lengthToRead, bytes.length)
+        );
+      }
     }
     instance.setBytes(bytes);
   }
@@ -91,9 +98,7 @@ public class AsnOctetStringOerSerializer implements AsnObjectSerializer<AsnOctet
     }
 
     // Write the OctetString bytes to the buffer.
-    if (bytes.length > 0) {
-      outputStream.write(bytes);
-    }
+    outputStream.write(bytes);
   }
 
 }

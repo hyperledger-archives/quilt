@@ -169,8 +169,8 @@ public class SequenceOfSequenceIntOerSerializerTest {
    */
   @Test
   public void readWithLengthTooBig() throws IOException {
-    expectedException.expect(CodecException.class);
-    expectedException.expectMessage("Unexpected end of stream. Expected 2 bytes but only read -1.");
+    expectedException.expect(IOException.class);
+    expectedException.expectMessage("Unable to properly decode 2 bytes (could only read 0 bytes)");
 
     // Write 1 SEQUENCE...
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -200,8 +200,8 @@ public class SequenceOfSequenceIntOerSerializerTest {
    */
   @Test
   public void readWithLengthWayTooBig() throws IOException {
-    expectedException.expect(CodecException.class);
-    expectedException.expectMessage("Unexpected end of stream. Expected 2 bytes but only read -1.");
+    expectedException.expect(IOException.class);
+    expectedException.expectMessage("Unable to properly decode 2 bytes (could only read 0 bytes)");
 
     // Write 1 SEQUENCE...
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

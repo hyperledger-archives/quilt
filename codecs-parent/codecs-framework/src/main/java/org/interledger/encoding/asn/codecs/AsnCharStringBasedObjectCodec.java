@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.codecs;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,18 +32,16 @@ import java.util.function.Predicate;
  * ASN.1 object codec that uses a character string as an intermediary encoding.
  *
  * <p>This base class should be used for codecs where the ASN.1 object is a subclass of an ASN.1
- * string type like IA5String or UTF8String (although the specific subclasses
- * {@link AsnIA5StringBasedObjectCodec} and {@link AsnUtf8StringBasedObjectCodec} should be used in
- * the case of those two types).
+ * string type like IA5String or UTF8String (although the specific subclasses {@link AsnIA5StringBasedObjectCodec} and
+ * {@link AsnUtf8StringBasedObjectCodec} should be used in the case of those two types).
  *
  * <p>Codecs that extend this object can call {@link #getCharString()} and
- * {@link #setCharString(String)} in their implementations of {@link #decode()} and
- * {@link #encode(Object)} respectively.
+ * {@link #setCharString(String)} in their implementations of {@link #decode()} and {@link #encode(Object)}
+ * respectively.
  *
  * <p>The serializers for this object must call {@link #getCharString()} and
- * {@link #setCharString(String)} when reading from a stream. The values passed and returned must
- * not contain any length prefixes or tags.
- *
+ * {@link #setCharString(String)} when reading from a stream. The values passed and returned must not contain any length
+ * prefixes or tags.
  */
 public abstract class AsnCharStringBasedObjectCodec<T> extends AsnPrimitiveCodec<T> {
 
@@ -52,25 +50,37 @@ public abstract class AsnCharStringBasedObjectCodec<T> extends AsnPrimitiveCodec
   private String charString;
 
   /**
-   * Default constructor.
+   * Required args Constructor.
    *
-   * @param sizeConstraint The size constraint for this ASN.1 object.
-   * @param characterSet   The character set to use when encoding and decoding this string from
-   *                       the byte stream.
+   * @param fixedSizeConstraint A single integer that represents the min/max value of this codec.
+   * @param characterSet        The character set to use when encoding and decoding this string from the byte stream.
    */
-  public AsnCharStringBasedObjectCodec(AsnSizeConstraint sizeConstraint, Charset characterSet) {
-    super(sizeConstraint);
-    this.characterSet = characterSet;
-  }
-
-
   public AsnCharStringBasedObjectCodec(int fixedSizeConstraint, Charset characterSet) {
     this(new AsnSizeConstraint(fixedSizeConstraint), characterSet);
   }
 
+  /**
+   * Required args Constructor.
+   *
+   * @param minSize      The minimum size of the string this codec can handle.
+   * @param maxSize      The maximum size of the string this codec can handle.
+   * @param characterSet The character set to use when encoding and decoding this string from the byte stream.
+   */
   public AsnCharStringBasedObjectCodec(int minSize, int maxSize, Charset characterSet) {
     this(new AsnSizeConstraint(minSize, maxSize), characterSet);
   }
+
+  /**
+   * Default constructor.
+   *
+   * @param sizeConstraint The size constraint for this ASN.1 object.
+   * @param characterSet   The character set to use when encoding and decoding this string from the byte stream.
+   */
+  public AsnCharStringBasedObjectCodec(final AsnSizeConstraint sizeConstraint, final Charset characterSet) {
+    super(sizeConstraint);
+    this.characterSet = Objects.requireNonNull(characterSet);
+  }
+
 
   public Charset getCharacterSet() {
     return characterSet;
@@ -95,10 +105,11 @@ public abstract class AsnCharStringBasedObjectCodec<T> extends AsnPrimitiveCodec
    * to set String that should be written by the serializer.
    *
    * <p>The provided String will be validated both against the codec size constraint and the
-   * {@link Predicate} set in {@link #setValidator(Predicate)} (if any). If the String
-   * fails validation a {@link CodecException} will be thrown.
+   * {@link Predicate} set in {@link #setValidator(Predicate)} (if any). If the String fails validation a {@link
+   * CodecException} will be thrown.
    *
    * @param charString the {@link String} representing the value of this object
+   *
    * @throws CodecException if the provided charString fails validation
    */
   public final void setCharString(String charString) {
