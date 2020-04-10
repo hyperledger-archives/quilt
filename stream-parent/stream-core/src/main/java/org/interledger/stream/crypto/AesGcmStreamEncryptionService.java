@@ -56,7 +56,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
   /**
    * Required-args Constructor.
    *
-   * @param encryptionMode The {@link EncryptionMode} to use when encrypting & decrypting.
+   * @param encryptionMode The {@link EncryptionMode} to use when encrypting and decrypting.
    */
   public AesGcmStreamEncryptionService(final EncryptionMode encryptionMode) {
     this.encryptionMode = Objects.requireNonNull(encryptionMode);
