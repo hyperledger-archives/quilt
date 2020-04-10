@@ -83,9 +83,9 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
     Objects.requireNonNull(iv);
 
     if (this.encryptionMode == EncryptionMode.ENCRYPT_NON_STANDARD) {
-      return this.nonStandardEncryptWithIv(sharedSecret, plainText, iv);
+      return this.nonStandardModeEncryptWithIv(sharedSecret, plainText, iv);
     } else {
-      return this.standardEncryptWithIv(sharedSecret, plainText, iv);
+      return this.standardModeEncryptWithIv(sharedSecret, plainText, iv);
     }
   }
 
@@ -102,7 +102,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
-  private byte[] standardEncryptWithIv(
+  private byte[] standardModeEncryptWithIv(
       final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
   ) throws EncryptionException {
     Objects.requireNonNull(plainText);
@@ -162,11 +162,11 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    *     inverted from the NIST specification).
    *
    * @see "https://github.com/hyperledger/quilt/issues/237"
-   * @deprecated This method will be removed in a future version. Prefer {@link #standardEncryptWithIv(SharedSecret,
+   * @deprecated This method will be removed in a future version. Prefer {@link #standardModeEncryptWithIv(SharedSecret,
    *     byte[], byte[])} instead.
    */
   @Deprecated
-  private byte[] nonStandardEncryptWithIv(
+  private byte[] nonStandardModeEncryptWithIv(
       final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
   ) throws EncryptionException {
     Objects.requireNonNull(plainText);
