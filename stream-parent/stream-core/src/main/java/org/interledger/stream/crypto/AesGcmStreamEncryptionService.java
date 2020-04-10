@@ -5,21 +5,17 @@ import org.interledger.core.SharedSecret;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
+import com.google.crypto.tink.subtle.Hkdf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Objects;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -82,16 +78,23 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
     Objects.requireNonNull(plainText);
     Objects.requireNonNull(iv);
 
-    if (this.encryptionMode == EncryptionMode.ENCRYPT_NON_STANDARD) {
-      return this.nonStandardModeEncryptWithIv(sharedSecret, plainText, iv);
-    } else {
-      return this.standardModeEncryptWithIv(sharedSecret, plainText, iv);
+    try {
+      if (this.encryptionMode == EncryptionMode.ENCRYPT_NON_STANDARD) {
+        return this.nonStandardModeEncryptWithIv(sharedSecret, plainText, iv);
+      } else {
+        return this.standardModeEncryptWithIv(sharedSecret, plainText, iv);
+      }
+    } catch (EncryptionException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new EncryptionException(e.getMessage(), e);
     }
   }
 
   /**
    * <p>Encrypts {@code plainText} with {@code iv} using the standard byte arrangement of the ciphertext where the
-   * AuthTag goes last, as specified by NIST.</p>
+   * AuthTag goes last, as specified by NIST. Additionally, this implementation utilizes a standard key derivation
+   * function (KDF) called HKDF and defined by RFC-5869.</p>
    *
    * @param sharedSecret A {@link SharedSecret} used for encryption.
    * @param plainText    A byte-array to encrypt.
@@ -101,6 +104,8 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    *     inverted from the NIST specification).
    *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
+   * @see "https://tools.ietf.org/html/rfc5869"
+   * @see "https://eprint.iacr.org/2010/264.pdf"
    */
   private byte[] standardModeEncryptWithIv(
       final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
@@ -108,11 +113,17 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
     Objects.requireNonNull(plainText);
     Preconditions.checkArgument(iv.length == AES_GCM_NONCE_IV_LENGTH);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
-    final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
-
     // See https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9
     try {
+      // Use a standards-based key derivation function. In this case, we prefer RFC-5869. It should be noted that this
+      // RFC tolerates a null salt value. While less ideal than a random salt value, the benefit to STREAM
+      // is somewhat marginal since the sharedSecret varies on every STREAM, and StreamConnections are generally
+      // short-lived. Thus, the primary benefit to STREAM of using something like HKDF here is to guard against a
+      // non-uniform or low-entropy shared-secret, which this function (i.e., standardModeEncryptWithIv) cannot easily
+      // guarantee. See https://tools.ietf.org/html/rfc5869#section-3.1 for more details about salt values in HKDF.
+      final byte[] encryptionKey = deriveStandardModeEncryptionKey(sharedSecret);
+      final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
+
       final Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
       // 128 is the recommended authentication tag length for GCM. More info can be found in pdf mentioned above.
       // After each encryption operation using GCM mode, callers should re-initialize the cipher objects with GCM
@@ -134,13 +145,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       Arrays.fill(encryptionKey, (byte) 0);
 
       return cipherMessage;
-    } catch (NoSuchAlgorithmException
-        | NoSuchPaddingException
-        | InvalidAlgorithmParameterException
-        | InvalidKeyException
-        | BadPaddingException
-        | IllegalBlockSizeException e
-    ) {
+    } catch (GeneralSecurityException e) {
       throw new EncryptionException("Unable to Encrypt: ", e);
     }
   }
@@ -172,11 +177,11 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
     Objects.requireNonNull(plainText);
     Preconditions.checkArgument(iv.length == AES_GCM_NONCE_IV_LENGTH);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
-    final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
-
     // See https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9
     try {
+      byte[] encryptionKey = deriveNonStandardModeEncryptionKey(sharedSecret);
+      final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
+
       final Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
       // 128 is the recommended authentication tag length for GCM. More info can be found in pdf mentioned above.
       // After each encryption operation using GCM mode, callers should re-initialize the cipher objects with GCM
@@ -208,13 +213,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       Arrays.fill(encryptionKey, (byte) 0);
 
       return cipherMessage;
-    } catch (NoSuchAlgorithmException
-        | NoSuchPaddingException
-        | InvalidAlgorithmParameterException
-        | InvalidKeyException
-        | BadPaddingException
-        | IllegalBlockSizeException e
-    ) {
+    } catch (GeneralSecurityException e) {
       throw new EncryptionException("Unable to Encrypt: ", e);
     }
   }
@@ -265,11 +264,11 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
   private byte[] standardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
     Objects.requireNonNull(cipherMessage);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
-    final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
-
     // First, deconstruct the message
     try {
+      final byte[] encryptionKey = deriveStandardModeEncryptionKey(sharedSecret);
+      final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
+
       ByteBuffer byteBuffer = ByteBuffer.wrap(cipherMessage);
       byte[] iv = new byte[AES_GCM_NONCE_IV_LENGTH];
       byteBuffer.get(iv);
@@ -287,7 +286,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       Arrays.fill(encryptionKey, (byte) 0);
 
       return plainText;
-    } catch (Exception e) {
+    } catch (GeneralSecurityException e) {
       throw new EncryptionException(e.getMessage(), e);
     }
   }
@@ -315,7 +314,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
   private byte[] nonStandardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
     Objects.requireNonNull(cipherMessage);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = deriveNonStandardModeEncryptionKey(sharedSecret);
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // First, deconstruct the message
@@ -349,9 +348,40 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       Arrays.fill(encryptionKey, (byte) 0);
 
       return plainText;
-    } catch (Exception e) {
+    } catch (GeneralSecurityException e) {
       throw new EncryptionException(e.getMessage(), e);
     }
+  }
+
+  /**
+   * Derive an encryption key that can be used for a STREAM connection. This implementation uses a standard
+   * key-derivation function (KDF) defined by RFC-5869.
+   *
+   * @param sharedSecret A {@link SharedSecret} that can be used to derive an encryption key for STREAM.
+   *
+   * @return A byte-array that can be used as an encryption key in AES/GCM.
+   *
+   * @see "https://tools.ietf.org/html/rfc5869"
+   * @see "https://eprint.iacr.org/2010/264.pdf"
+   * @deprecated This method will be replaced in a future version.
+   */
+  private byte[] deriveStandardModeEncryptionKey(SharedSecret sharedSecret) throws GeneralSecurityException {
+    return Hkdf.computeHkdf("HMACSHA256", sharedSecret.key(), null, ENCRYPTION_KEY_STRING, 32);
+  }
+
+  /**
+   * Derive an encryption key that can be used for a STREAM connection. This implementation uses a non-standard
+   * key-derivation function, but _is_ the methodology defined in IL-RFC-29 and widely deployed in JS and Rust.
+   *
+   * @param sharedSecret A {@link SharedSecret} that can be used to derive an encryption key for STREAM.
+   *
+   * @return A byte-array that can be used as an encryption key in AES/GCM.
+   *
+   * @deprecated This method will be replaced in a future version.
+   */
+  @Deprecated
+  private byte[] deriveNonStandardModeEncryptionKey(SharedSecret sharedSecret) {
+    return Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
   }
 
   /**
