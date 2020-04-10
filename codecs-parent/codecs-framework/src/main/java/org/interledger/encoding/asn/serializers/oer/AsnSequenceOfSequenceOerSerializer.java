@@ -52,7 +52,9 @@ public class AsnSequenceOfSequenceOerSerializer implements AsnObjectSerializer<A
       throw new CodecException("SEQUENCE_OF quantities > Integer.MAX_VALUE ar not supported");
     }
 
-    // This is the number of sequences that were indicated in the ASN.1
+    // This is the number of sequences that were indicated in the ASN.1 OER encoding. While this is specified by an
+    // outside caller and _could_ be malicious, the code will not read past the actual number of bytes in the
+    // InputStream, which due to ILPv4 packet limits should never be greater than 32kb.
     int indicatedNumberOfSequences = quantityBigInt.intValue();
     for (int i = 0; i < indicatedNumberOfSequences; i++) {
       context.read(instance.getCodecAt(i), inputStream);

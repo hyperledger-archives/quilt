@@ -27,7 +27,6 @@ import org.interledger.encoding.asn.codecs.AsnSequenceOfSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnUint16Codec;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
-import org.interledger.encoding.asn.framework.CodecException;
 
 import com.google.common.io.BaseEncoding;
 import org.junit.Before;
@@ -47,7 +46,7 @@ import java.util.Collection;
 
 /**
  * * Parameterized unit tests for encoding a "Sequence Of" (i.e., an Array) of an Sequence (i.e., an object) containing
- * a {@link Integer}.
+ * a {@link Integer} via {@link AsnSequenceOfSequenceOerSerializer}.
  */
 @RunWith(Parameterized.class)
 public class SequenceOfSequenceIntOerSerializerTest {
@@ -160,15 +159,16 @@ public class SequenceOfSequenceIntOerSerializerTest {
     assertThat(byteArrayOutputStream2.toByteArray()).isEqualTo(asn1OerBytes);
   }
 
-
   /**
-   * This implementation limits the number of sequences to 256 in order to guard against DOS attacks. For example, one
-   * vector would be to assemble a Stream packet that with a quantity field set to {@link Short#MAX_VALUE}. This would
-   * force the serializer to allocate an array of many bytes (~2GB of memory) that could be a DOS vector if many packets
-   * are encountered. This test validates this upper limit.
+   * This implementation guards against DOS attacks by not allocating arrays based upon values in ASN.1 OER packets. For
+   * example, one vector would be to assemble a Stream packet that with a quantity field set to {@link Short#MAX_VALUE},
+   * but only supply a single sequence. Naive implementations might accidentally allocate arrays off of this value,
+   * which could cause the program to exhaust the total avialble memory in the JVM, which would be a DOS vector. While
+   * this implementation doesn't allocate arrays in that manner, this test validates that bytes are not read past the
+   * total available bytes in the InputStream.
    */
   @Test
-  public void readWithLengthTooBig() throws IOException {
+  public void readWithLengthOneTooBig() throws IOException {
     expectedException.expect(IOException.class);
     expectedException.expectMessage("Unable to properly decode 2 bytes (could only read 0 bytes)");
 
@@ -180,23 +180,24 @@ public class SequenceOfSequenceIntOerSerializerTest {
     }
     codecContext.write(sequences, byteArrayOutputStream);
 
-    // Twiddle the 2 byte (at index=1) to falsely indicate that the total SEQUENCES is 2.
+    // Twiddle the byte at index=1 to falsely indicate that the total SEQUENCES is 2.
     // byte[1] = 0x02
-
     byte[] copiedByteArray = byteArrayOutputStream.toByteArray();
     copiedByteArray[1] = (byte) 0x02;
 
     // Read...
     assertThat(copiedByteArray.length).isEqualTo(8);
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(copiedByteArray);
-    codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream);
+    codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream); // throws exception
   }
 
   /**
-   * This implementation limits the number of sequences to 256 in order to guard against DOS attacks. For example, one
-   * vector would be to assemble a Stream packet that with a quantity field set to {@link Short#MAX_VALUE}. This would
-   * force the serializer to allocate an array of many bytes (~2GB of memory) that could be a DOS vector if many packets
-   * are encountered. This test validates this upper limit.
+   * This implementation guards against DOS attacks by not allocating arrays based upon values in ASN.1 OER packets. For
+   * example, one vector would be to assemble a Stream packet that with a quantity field set to {@link Short#MAX_VALUE},
+   * but only supply a single sequence. Naive implementations might accidentally allocate arrays off of this value,
+   * which could cause the program to exhaust the total avialble memory in the JVM, which would be a DOS vector. While
+   * this implementation doesn't allocate arrays in that manner, this test validates that bytes are not read past the
+   * total available bytes in the InputStream.
    */
   @Test
   public void readWithLengthWayTooBig() throws IOException {
@@ -211,15 +212,15 @@ public class SequenceOfSequenceIntOerSerializerTest {
     }
     codecContext.write(sequences, byteArrayOutputStream);
 
-    // Twiddle the 2 byte (at index=1) to falsely indicate that the total SEQUENCES is 2.
-    // byte[1] = 0x02
+    // Twiddle the byte at index=1 to falsely indicate that the total SEQUENCES is 127
+    // byte[1] = 0x7F
     byte[] copiedByteArray = byteArrayOutputStream.toByteArray();
     copiedByteArray[1] = (byte) 0xFF;
 
     // Read...
     assertThat(copiedByteArray.length).isEqualTo(8);
     final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(copiedByteArray);
-    codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream);
+    codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream); // throws exception
   }
 
   /**
