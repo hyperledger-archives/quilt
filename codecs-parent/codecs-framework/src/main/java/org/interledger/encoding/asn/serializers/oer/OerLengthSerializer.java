@@ -44,7 +44,7 @@ import java.util.Objects;
  *
  * <p>For the second case, the length values are encoded as an unsigned binary integer using four octets, which allows
  * for a length of 4294967295. While OER lengths can technically support a length that can fit into 127 bytes, this
- * implementation caps length values at 4-byte numbers.</p></>
+ * implementation caps length values at 4-byte numbers.</p>
  */
 public class OerLengthSerializer {
 
