@@ -59,7 +59,7 @@ public class AsnOctetStringOerSerializer implements AsnObjectSerializer<AsnOctet
     if (sizeConstraint.isFixedSize()) {
       lengthToRead = sizeConstraint.getMax();
     } else {
-      // Read the lengthToRead of the encoded OctetString...
+      // Read the lengthToRead of the encoded OctetString...will never be > 127
       lengthToRead = OerLengthSerializer.readLength(inputStream);
     }
 

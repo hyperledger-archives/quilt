@@ -20,7 +20,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,8 +32,13 @@ import java.io.IOException;
  */
 public class OerLengthSerializerTestBadLength {
 
-  @Test(expected = IOException.class)
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
+  @Test
   public void test_BadLengthIndicator() throws IOException {
+    expectedException.expect(IOException.class);
+
     /*
      * we create an incorrect length indicator that says that the next two bytes encode the length
      * of the actual data. however, we'll only supply one byte of information. the codec should
