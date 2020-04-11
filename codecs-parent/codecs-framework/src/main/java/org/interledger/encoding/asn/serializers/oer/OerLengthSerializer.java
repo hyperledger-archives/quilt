@@ -70,8 +70,7 @@ public class OerLengthSerializer {
       length = initialLengthPrefixOctet;
     } else {
       // Truncate the MSB and use the rest as a number...length-of-length may not exceed 127 since this can only be 1
-      // signed byte. This
-      // represents the number of bytes to consume in order to determine the actual length.
+      // signed byte. This represents the number of bytes to consume in order to determine the actual length.
       final int lengthOfLength = initialLengthPrefixOctet & 0x7F;
 
       // Convert the bytes into an integer...
