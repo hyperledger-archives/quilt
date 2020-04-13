@@ -8,23 +8,29 @@ import org.interledger.core.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.link.http.IlpOverHttpLink;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
+import org.interledger.quilt.jackson.InterledgerModule;
+import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
-import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.stream.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.primitives.UnsignedLong;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
+import org.zalando.problem.ProblemModule;
+import org.zalando.problem.violations.ConstraintViolationProblemModule;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -37,27 +43,29 @@ import java.util.concurrent.TimeUnit;
 public class SendMoneyExample {
 
   // NOTE - replace this with the username for your sender account
-  private static final String SENDER_ACCOUNT_USERNAME = "user_9wgfsfte";
+  private static final String SENDER_ACCOUNT_USERNAME = "demo_user";
   // NOTE - replace this with the passkey for your sender account
-  private static final String SENDER_PASS_KEY = "w6uwvg42ogktl";
+  private static final String SENDER_PASS_KEY = "MjA0NGU2MDQtMDVlOC00NzFlLTgyMzYtYTEzNTkzMDQ4ODBk";
   // NOTE - replace this with the payment pointer for your receiver account
-  private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_e8zprn59/spsp";
+  private static final String RECEIVER_PAYMENT_POINTER = "$xpring.money/demo_receiver";
 
-  private static final String TESTNET_URI = "https://rs3.xpring.dev";
+  private static final String TESTNET_URI = "https://jc1.xpring.dev/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
 
+  /**
+   * This value will go away once #445 is fixed.
+   *
+   * @see "https://github.com/hyperledger/quilt/issues/445"
+   */
+  @Deprecated
   private static final InterledgerAddress SENDER_ADDRESS =
-      InterledgerAddress.of("test.xpring-dev.rs3").with(SENDER_ACCOUNT_USERNAME);
+      InterledgerAddress.of("test.xpring-dev.jc1.spsp-test").with(SENDER_ACCOUNT_USERNAME);
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     SpspClient spspClient = new SimpleSpspClient();
 
-    // Create rust client
-    InterledgerRustNodeClient rustClient =
-        new InterledgerRustNodeClient(newHttpClient(), SENDER_ACCOUNT_USERNAME + ":" + SENDER_PASS_KEY, TESTNET_URI);
-
     // Fetch shared secret and destination address using SPSP client
-    StreamConnectionDetails connectionDetails =
-        spspClient.getStreamConnectionDetails(PaymentPointer.of(RECEIVER_PAYMENT_POINTER));
+    StreamConnectionDetails connectionDetails = spspClient
+        .getStreamConnectionDetails(PaymentPointer.of(RECEIVER_PAYMENT_POINTER));
 
     // Use ILP over HTTP for our underlying link
     Link link = newIlpOverHttpLink();
@@ -65,33 +73,33 @@ public class SendMoneyExample {
     // Create SimpleStreamSender for sending STREAM payments
     SimpleStreamSender simpleStreamSender = new SimpleStreamSender(link);
 
-    System.out.println("Starting balance for sender: " + rustClient.getBalance(SENDER_ACCOUNT_USERNAME));
+    // This is 1 drop when scale=9
+    final long ONE_DROP_IN_SCALE_9 = 1000;
 
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
             .sourceAddress(SENDER_ADDRESS)
-            .amount(UnsignedLong.valueOf(100000))
-            .denomination(Denominations.XRP)
+            .amount(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9))
+            .denomination(Denominations.XRP_MILLI_DROPS)
             .destinationAddress(connectionDetails.destinationAddress())
-            .timeout(Duration.ofMillis(30000))
-            .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(100000)))
+            .timeout(Duration.ofMillis(15000))
+            .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9)))
             .sharedSecret(SharedSecret.of(connectionDetails.sharedSecret().value()))
             .build()
     ).get();
 
     System.out.println("Send money result: " + result);
-    System.out.println("Ending balance for sender: " + rustClient.getBalance(SENDER_ACCOUNT_USERNAME));
   }
 
   private static Link newIlpOverHttpLink() {
     return new IlpOverHttpLink(
         () -> SENDER_ADDRESS,
-        HttpUrl.parse(TESTNET_URI + "/ilp"),
+        HttpUrl.parse(TESTNET_URI),
         newHttpClient(),
-        new ObjectMapper(),
+        createObjectMapperForProblemsJson(),
         InterledgerCodecContextFactory.oer(),
-        new SimpleBearerTokenSupplier(SENDER_ACCOUNT_USERNAME + ":" + SENDER_PASS_KEY)
+        new SimpleBearerTokenSupplier(SENDER_PASS_KEY)
     );
   }
 
@@ -107,4 +115,22 @@ public class SendMoneyExample {
     return builder.connectionPool(connectionPool).build();
   }
 
+  /**
+   * Construct an {@link ObjectMapper} that can be used to serialize and deserialize ProblemsJSON where JSON numbers
+   * emit as non-String values. Because Problems+Json requires HTTP status codes to be serialized as numbers (and not
+   * Strings) per RFC-7807, this ObjectMapper should not be used for payloads that involve Problems.
+   *
+   * @return An {@link ObjectMapper}.
+   *
+   * @see "https://tools.ietf.org/html/rfc7807"
+   */
+  private static ObjectMapper createObjectMapperForProblemsJson() {
+    return new ObjectMapper()
+        .registerModule(new Jdk8Module())
+        .registerModule(new InterledgerModule(Encoding.BASE64))
+        .registerModule(new ProblemModule())
+        .registerModule(new ConstraintViolationProblemModule())
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        .configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, false);
+  }
 }

@@ -27,10 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Codec for a List of Frames (i.e., a SEQUENCE-OF Frame).
+ * Codec for an Array of Frames (i.e., a SEQUENCE OF SEQUENCE of type StreamFrame).
  */
-public class AsnStreamFramesCodec
-    extends AsnSequenceOfSequenceCodec<List<StreamFrame>, StreamFrame> {
+public class AsnStreamFramesCodec extends AsnSequenceOfSequenceCodec<List<StreamFrame>, StreamFrame> {
 
   public AsnStreamFramesCodec() {
     super(ArrayList::new, AsnStreamFrameCodec::new);

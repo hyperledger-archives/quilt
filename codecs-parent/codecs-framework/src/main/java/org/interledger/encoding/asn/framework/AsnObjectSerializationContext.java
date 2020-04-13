@@ -20,7 +20,6 @@ package org.interledger.encoding.asn.framework;
  * =========================LICENSE_END==================================
  */
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,15 +50,13 @@ public class AsnObjectSerializationContext {
    *
    * @param type       An instance of {@link Class}.
    * @param serializer An instance of {@link AsnObjectSerializer}.
-   * @param <T>        The type of {@link AsnObjectCodec} that can be serialized by this
-   *                   serializer.
+   * @param <T>        The type of {@link AsnObjectCodec} that can be serialized by this serializer.
    *
    * @return A {@link AsnObjectSerializationContext} for the supplied {@code type}.
    */
   public <T extends AsnObjectCodec> AsnObjectSerializationContext register(
-      final Class<T> type,
-      final AsnObjectSerializer<? super T> serializer) {
-
+      final Class<T> type, final AsnObjectSerializer<? super T> serializer
+  ) {
     Objects.requireNonNull(type);
     Objects.requireNonNull(serializer);
 
@@ -70,17 +67,14 @@ public class AsnObjectSerializationContext {
   /**
    * Read an deserialize an ASN.1 object from a stream.
    *
-   * @param instance    An instance of {@link AsnObjectCodec} that will be populated with the
-   *                    deserialized data.
-   * @param inputStream An instance of {@link InputStream} that contains bytes in a certain
-   *                    encoding.
+   * @param instance    An instance of {@link AsnObjectCodec} that will be populated with the deserialized data.
+   * @param inputStream An instance of {@link InputStream} that contains bytes in a certain encoding.
    *
    * @return this {@link AsnObjectSerializationContext} for further operations.
    *
    * @throws IOException If anything goes wrong reading from the {@code buffer}.
    */
-  public AsnObjectSerializationContext read(final AsnObjectCodec instance,
-      final InputStream inputStream)
+  public AsnObjectSerializationContext read(final AsnObjectCodec instance, final InputStream inputStream)
       throws IOException {
     Objects.requireNonNull(instance);
     Objects.requireNonNull(inputStream);
@@ -89,42 +83,16 @@ public class AsnObjectSerializationContext {
   }
 
   /**
-   * Read an deserialize an ASN.1 object from a byte array.
-   *
-   * <p>NOTE: This methods wraps IOExceptions in RuntimeExceptions.
-   *
-   * @param instance An instance of {@link AsnObjectCodec} that will be populated with the
-   *                 deserialized data.
-   * @param data     An instance of byte array that contains bytes in a certain encoding.
-   *
-   * @return this {@link AsnObjectSerializationContext} for further operations.
-   */
-  public AsnObjectSerializationContext read(final AsnObjectCodec instance, final byte[] data) {
-    Objects.requireNonNull(instance);
-    Objects.requireNonNull(data);
-
-    try (ByteArrayInputStream bais = new ByteArrayInputStream(data)) {
-      read(instance, bais);
-    } catch (IOException e) {
-      throw new CodecException("Unable to decode " + instance.getClass().getCanonicalName(), e);
-    }
-
-    return this;
-  }
-
-  /**
    * Write the decoded value of an {@link AsnObjectCodec} to the supplied {@link OutputStream}.
    *
-   * @param instance     An instance of {@link AsnObjectCodec} that will encode the value to be
-   *                     serialized.
+   * @param instance     An instance of {@link AsnObjectCodec} that will encode the value to be serialized.
    * @param outputStream An instance of {@link OutputStream} that will be written to.
    *
    * @return this {@link AsnObjectSerializationContext} for further operations.
    *
    * @throws IOException If anything goes wrong while writing to the {@link OutputStream}
    */
-  public AsnObjectSerializationContext write(final AsnObjectCodec instance,
-      final OutputStream outputStream)
+  public AsnObjectSerializationContext write(final AsnObjectCodec instance, final OutputStream outputStream)
       throws IOException {
     Objects.requireNonNull(instance);
     Objects.requireNonNull(outputStream);
@@ -135,11 +103,9 @@ public class AsnObjectSerializationContext {
   }
 
   /**
-   * Write the decoded value of an {@link AsnObjectCodec} to an in-memory stream and return the
-   * bytes.
+   * Write the decoded value of an {@link AsnObjectCodec} to an in-memory stream and return the bytes.
    *
-   * @param instance An instance of {@link AsnObjectCodec} that will encode the value to be
-   *                 serialized.
+   * @param instance An instance of {@link AsnObjectCodec} that will encode the value to be serialized.
    *
    * @return The serialized object.
    */
@@ -172,9 +138,7 @@ public class AsnObjectSerializationContext {
   }
 
   // Visible for testing...
-  protected <T extends AsnObjectCodec> AsnObjectSerializer<T> tryGetSerializerForCodec(
-      final Class<T> type
-  ) {
+  protected <T extends AsnObjectCodec> AsnObjectSerializer<T> tryGetSerializerForCodec(final Class<T> type) {
     Objects.requireNonNull(type);
 
     AsnObjectSerializer<T> serializer;

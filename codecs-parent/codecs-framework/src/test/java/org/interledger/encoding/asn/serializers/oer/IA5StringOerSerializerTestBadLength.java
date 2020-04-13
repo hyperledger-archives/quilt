@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,9 @@ import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,13 +35,18 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * Test to ensure that the {@link AsnCharStringOerSerializer} properly fails when it cannot read
- * the number of bytes indicated.
+ * Test to ensure that the {@link AsnCharStringOerSerializer} properly fails when it cannot read the number of bytes
+ * indicated.
  */
 public class IA5StringOerSerializerTestBadLength {
 
-  @Test(expected = IOException.class)
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
+  @Test
   public void test_BadLengthIndicator() throws IOException {
+    expectedException.expect(IOException.class);
+    expectedException.expectMessage("Unable to properly decode 34 bytes (could only read 9 bytes)");
 
     CodecContext context = CodecContextFactory.oer()
         .register(String.class, () -> new AsnIA5StringCodec(AsnSizeConstraint.UNCONSTRAINED));
@@ -47,14 +54,12 @@ public class IA5StringOerSerializerTestBadLength {
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
     context.write("A test string of reasonable length", outputStream);
-
     final byte[] correctData = outputStream.toByteArray();
 
     /*
      * we now remove a portion of the data, i.e. the length indicator should claim that there are 34
      * bytes, but we have truncated to 10 bytes
      */
-
     final byte[] truncated = Arrays.copyOfRange(correctData, 0, 10);
 
     /* create an input stream over the truncated data */

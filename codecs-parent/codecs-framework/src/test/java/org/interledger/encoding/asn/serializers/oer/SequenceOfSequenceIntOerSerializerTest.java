@@ -30,25 +30,33 @@ import org.interledger.encoding.asn.framework.CodecContextFactory;
 
 import com.google.common.io.BaseEncoding;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link Integer}.
+ * * Parameterized unit tests for encoding a "Sequence Of" (i.e., an Array) of an Sequence (i.e., an object) containing
+ * a {@link Integer} via {@link AsnSequenceOfSequenceOerSerializer}.
  */
 @RunWith(Parameterized.class)
 public class SequenceOfSequenceIntOerSerializerTest {
 
   private final int[][] inputValue;
   private final byte[] asn1OerBytes;
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
   private CodecContext codecContext;
 
   /**
@@ -57,8 +65,7 @@ public class SequenceOfSequenceIntOerSerializerTest {
    * @param inputValue   A {@code int} representing the unsigned 8bit integer to write in OER encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code intValue}.
    */
-  public SequenceOfSequenceIntOerSerializerTest(final int[][] inputValue,
-      final byte[] asn1OerBytes) {
+  public SequenceOfSequenceIntOerSerializerTest(final int[][] inputValue, final byte[] asn1OerBytes) {
     this.inputValue = inputValue;
     this.asn1OerBytes = asn1OerBytes;
   }
@@ -99,7 +106,7 @@ public class SequenceOfSequenceIntOerSerializerTest {
    * Test setup.
    */
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     // Register the codec to be tested...
     codecContext = CodecContextFactory.oer();
     codecContext.register(TestSequence.class, TestSequenceCodec::new);
@@ -143,15 +150,77 @@ public class SequenceOfSequenceIntOerSerializerTest {
     assertThat(byteArrayOutputStream.toByteArray()).isEqualTo(asn1OerBytes);
 
     // Read...
-    final ByteArrayInputStream byteArrayInputStream =
-        new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    final TestSequenceOfSequence decodedValue = codecContext
-        .read(TestSequenceOfSequence.class, byteArrayInputStream);
+    final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+    final TestSequenceOfSequence decodedValue = codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream);
 
     // Write...
     final ByteArrayOutputStream byteArrayOutputStream2 = new ByteArrayOutputStream();
     codecContext.write(decodedValue, byteArrayOutputStream2);
     assertThat(byteArrayOutputStream2.toByteArray()).isEqualTo(asn1OerBytes);
+  }
+
+  /**
+   * This implementation guards against DOS attacks by not allocating arrays based upon values in ASN.1 OER packets. For
+   * example, one vector would be to assemble a Stream packet that with a quantity field set to {@link Short#MAX_VALUE},
+   * but only supply a single sequence. Naive implementations might accidentally allocate arrays off of this value,
+   * which could cause the program to exhaust the total avialble memory in the JVM, which would be a DOS vector. While
+   * this implementation doesn't allocate arrays in that manner, this test validates that bytes are not read past the
+   * total available bytes in the InputStream.
+   */
+  @Test
+  public void readWithLengthOneTooBig() throws IOException {
+    expectedException.expect(IOException.class);
+    expectedException.expectMessage("Unable to properly decode 2 bytes (could only read 0 bytes)");
+
+    // Write 1 SEQUENCE...
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    TestSequenceOfSequence sequences = new TestSequenceOfSequence();
+    for (int i = 0; i < 1; i++) {
+      sequences.add(i, new TestSequence(1, 2, 3));
+    }
+    codecContext.write(sequences, byteArrayOutputStream);
+
+    // Twiddle the byte at index=1 to falsely indicate that the total SEQUENCES is 2.
+    // byte[1] = 0x02
+    byte[] copiedByteArray = byteArrayOutputStream.toByteArray();
+    copiedByteArray[1] = (byte) 0x02;
+
+    // Read...
+    assertThat(copiedByteArray.length).isEqualTo(8);
+    final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(copiedByteArray);
+    codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream); // throws exception
+  }
+
+  /**
+   * This implementation guards against DOS attacks by not allocating arrays based upon values in ASN.1 OER packets. For
+   * example, one vector would be to assemble a Stream packet that with a quantity field set to {@link Short#MAX_VALUE},
+   * but only supply a single sequence. Naive implementations might accidentally allocate arrays off of this value,
+   * which could cause the program to exhaust the total avialble memory in the JVM, which would be a DOS vector. While
+   * this implementation doesn't allocate arrays in that manner, this test validates that bytes are not read past the
+   * total available bytes in the InputStream.
+   */
+  @Test
+  public void readWithLengthWayTooBig() throws IOException {
+    expectedException.expect(IOException.class);
+    expectedException.expectMessage("Unable to properly decode 2 bytes (could only read 0 bytes)");
+
+    // Write 1 SEQUENCE...
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    TestSequenceOfSequence sequences = new TestSequenceOfSequence();
+    for (int i = 0; i < 1; i++) {
+      sequences.add(i, new TestSequence(1, 2, 3));
+    }
+    codecContext.write(sequences, byteArrayOutputStream);
+
+    // Twiddle the byte at index=1 to falsely indicate that the total SEQUENCES is 255
+    // byte[1] = 0xFF
+    byte[] copiedByteArray = byteArrayOutputStream.toByteArray();
+    copiedByteArray[1] = (byte) 0xFF;
+
+    // Read...
+    assertThat(copiedByteArray.length).isEqualTo(8);
+    final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(copiedByteArray);
+    codecContext.read(TestSequenceOfSequence.class, byteArrayInputStream); // throws exception
   }
 
   /**

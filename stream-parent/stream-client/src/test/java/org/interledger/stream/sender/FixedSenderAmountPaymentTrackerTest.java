@@ -24,12 +24,12 @@ public class FixedSenderAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(12));
     assertThat(tracker.moreToSend()).isTrue();
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP);
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP_DROPS);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
 
-    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP);
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP_DROPS);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.valueOf(6));
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
@@ -81,7 +81,7 @@ public class FixedSenderAmountPaymentTrackerTest {
     FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12L),
         new HalfsiesExchangeRateCalculator());
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(12), Denominations.XRP);
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(12), Denominations.XRP_DROPS);
     tracker.auth(amounts);
     tracker.commit(amounts, UnsignedLong.valueOf(12));
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);

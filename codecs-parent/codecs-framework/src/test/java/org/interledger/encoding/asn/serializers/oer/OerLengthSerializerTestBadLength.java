@@ -9,9 +9,9 @@ package org.interledger.encoding.asn.serializers.oer;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,19 +20,25 @@ package org.interledger.encoding.asn.serializers.oer;
  * =========================LICENSE_END==================================
  */
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 /**
- * Tests that the {@link OerLengthSerializer} correctly fails if the required length indicator
- * cannot be fully read.
+ * Tests that the {@link OerLengthSerializer} correctly fails if the required length indicator cannot be fully read.
  */
-public class OerLengthPrefixCodecTestBadLength {
+public class OerLengthSerializerTestBadLength {
 
-  @Test(expected = IOException.class)
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
+  @Test
   public void test_BadLengthIndicator() throws IOException {
+    expectedException.expect(IOException.class);
+
     /*
      * we create an incorrect length indicator that says that the next two bytes encode the length
      * of the actual data. however, we'll only supply one byte of information. the codec should

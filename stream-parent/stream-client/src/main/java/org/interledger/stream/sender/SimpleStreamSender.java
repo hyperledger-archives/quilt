@@ -827,16 +827,18 @@ public class SimpleStreamSender implements StreamSender {
       paymentTracker.rollback(prepareAmounts, true);
       congestionController.reject(amountToSend, rejectPacket);
 
-      logger.debug(
-          "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} "
-              + "originalStreamPacket={} rejectPacket={}",
-          amountToSend,
-          rejectPacket.getCode().getCode(),
-          paymentTracker.getOriginalAmountLeft(),
-          originalPreparePacket,
-          originalStreamPacket,
-          rejectPacket
-      );
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "Prepare with amount {} was rejected with code: {} ({} left to send). originalPreparePacket={} "
+                + "originalStreamPacket={} rejectPacket={}",
+            amountToSend,
+            rejectPacket.getCode().getCode(),
+            paymentTracker.getOriginalAmountLeft(),
+            originalPreparePacket,
+            originalStreamPacket,
+            rejectPacket
+        );
+      }
 
       this.checkForAndTriggerUnrecoverableError(rejectPacket);
 

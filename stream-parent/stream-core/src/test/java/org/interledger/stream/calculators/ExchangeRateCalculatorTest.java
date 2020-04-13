@@ -31,7 +31,7 @@ public class ExchangeRateCalculatorTest {
         return null;
       }
     };
-    assertThat(calculator.scaled(UnsignedLong.ONE, Denominations.US_CENTS)).isEqualTo(BigDecimal.valueOf(.01));
+    assertThat(calculator.scaled(UnsignedLong.ONE, Denominations.USD_CENTS)).isEqualTo(BigDecimal.valueOf(.01));
   }
 
   @Test
@@ -51,7 +51,7 @@ public class ExchangeRateCalculatorTest {
         return UnsignedLong.ZERO;
       }
     };
-    calculator.calculateMinAmountToAccept(UnsignedLong.ZERO, Denominations.US_CENTS);
+    calculator.calculateMinAmountToAccept(UnsignedLong.ZERO, Denominations.USD_CENTS);
     assertThat(called.get()).isTrue();
   }
 }
