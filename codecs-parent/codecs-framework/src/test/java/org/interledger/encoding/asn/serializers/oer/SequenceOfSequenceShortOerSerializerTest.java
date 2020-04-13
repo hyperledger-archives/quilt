@@ -42,7 +42,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Parameterized unit tests for encoding an instance of {@link Short}.
+ * Parameterized unit tests for encoding a "Sequence Of" (i.e., an Array) of an Sequence (i.e., an object) containing a
+ * {@link Short}.
  */
 @RunWith(Parameterized.class)
 public class SequenceOfSequenceShortOerSerializerTest {
@@ -57,9 +58,7 @@ public class SequenceOfSequenceShortOerSerializerTest {
    * @param inputValue   A {@code short} representing the unsigned 8bit shorteger to write in OER encoding.
    * @param asn1OerBytes The expected value, in binary, of the supplied {@code shortValue}.
    */
-  public SequenceOfSequenceShortOerSerializerTest(
-      final short[][] inputValue, final byte[] asn1OerBytes
-  ) {
+  public SequenceOfSequenceShortOerSerializerTest(final short[][] inputValue, final byte[] asn1OerBytes) {
     this.inputValue = inputValue;
     this.asn1OerBytes = asn1OerBytes;
   }

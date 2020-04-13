@@ -97,22 +97,14 @@ public abstract class AsnOctetStringBasedObjectCodec<T> extends AsnPrimitiveCode
       return;
     }
 
-    if (getSizeConstraint().isFixedSize()) {
-      if (bytes.length != getSizeConstraint().getMax()) {
-        throw new CodecException(format("Invalid octet string length. Expected %s, got %s",
-            getSizeConstraint().getMax(), bytes.length));
-      }
-    } else {
-      if (bytes.length < getSizeConstraint().getMin()) {
-        throw new CodecException(format("Invalid octet string length. Expected > %s, got %s",
-            getSizeConstraint().getMin(), bytes.length));
-      }
-      if (bytes.length > getSizeConstraint().getMax()) {
-        throw new CodecException(format("Invalid octet string length. Expected < %s, got %s",
-            getSizeConstraint().getMax(), bytes.length));
-      }
+    if (bytes.length < getSizeConstraint().getMin()) {
+      throw new CodecException(format("Invalid octet string length. Expected > %s, got %s",
+          getSizeConstraint().getMin(), bytes.length));
     }
-
+    if (bytes.length > getSizeConstraint().getMax()) {
+      throw new CodecException(format("Invalid octet string length. Expected < %s, got %s",
+          getSizeConstraint().getMax(), bytes.length));
+    }
   }
 
   @Override

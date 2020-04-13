@@ -24,12 +24,12 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(10));
     assertThat(tracker.moreToSend()).isTrue();
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP, Denominations.XRP);
+    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
 
-    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP, Denominations.XRP);
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.valueOf(6));
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
@@ -79,7 +79,7 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.moreToSend()).isFalse();
 
-    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP, Denominations.XRP);
+    amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
     assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);

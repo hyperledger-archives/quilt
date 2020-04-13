@@ -66,7 +66,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     try {
       codec.setBytes(bytes);
     } catch (CodecException e) {
-      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected 1, got 2");
+      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected < 1, got 2");
       throw e;
     }
   }
@@ -91,7 +91,7 @@ public class AsnOctetStringBasedObjectCodecTest {
     try {
       codec.setBytes(bytes);
     } catch (CodecException e) {
-      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected 1, got 0");
+      assertThat(e.getMessage()).isEqualTo("Invalid octet string length. Expected > 1, got 0");
       throw e;
     }
   }
