@@ -48,7 +48,7 @@ public class AsnOpenTypeOerSerializer implements AsnObjectSerializer<AsnOpenType
     // WARNING: This length can be maliciously specified by the packet creator, so be careful not to use it for unsafe
     // operations, such as creating a new array of initial size `length`. This usage is safe because it merely caps the
     // InputStream to the specified packet-length, although the InputStream is authoritative for when it actually ends,
-    // and this limit may be well smaller than `length`.
+    // and this limit may be well smaller than `length` (length will never be > 127)
     int length = OerLengthSerializer.readLength(inputStream);
     context.read(instance.getInnerCodec(), ByteStreams.limit(inputStream, length));
   }

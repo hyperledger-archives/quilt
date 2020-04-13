@@ -22,15 +22,19 @@ package org.interledger.encoding.asn.serializers.oer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.interledger.encoding.asn.framework.CodecException;
+
 import com.google.common.io.BaseEncoding;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -42,6 +46,9 @@ public class OerLengthSerializerTest {
 
   private final int expectedPayloadLength;
   private final byte[] asn1OerBytes;
+
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
   /**
    * Construct an instance of this parameterized test with the supplied inputs.
@@ -80,25 +87,15 @@ public class OerLengthSerializerTest {
         {256, BaseEncoding.base16().decode("820100")},
         // 8 (Last number that can be encoded in 2 value octets).
         {65535, BaseEncoding.base16().decode("82FFFF")},
-
         // 9 (First number that can be encoded in 3 value octets).
         {65536, BaseEncoding.base16().decode("83010000")},
-
         // 10 (Last number that can be encoded in 3 value octets).
         {16777215, BaseEncoding.base16().decode("83FFFFFF")},
-
         // 11 (First number that can be encoded in 4 value octets).
         {16777216, BaseEncoding.base16().decode("8401000000")},
-
-        // 11 (First number that can be encoded in 4 value octets).
-        {Integer.MAX_VALUE, BaseEncoding.base16().decode("847FFFFFFF")},});
-  }
-
-  /**
-   * Test setup.
-   */
-  @Before
-  public void setUp() throws Exception {
+        // 12 (Largest signed Integer value).
+        {Integer.MAX_VALUE, BaseEncoding.base16().decode("847FFFFFFF")},
+    });
   }
 
   @Test
@@ -136,4 +133,62 @@ public class OerLengthSerializerTest {
     assertThat(outputStream.toByteArray()).isEqualTo(outputStream2.toByteArray());
   }
 
+  @Test
+  public void writeNegativeLength() throws IOException {
+    // Allow the AsnObjectCodec to write to 'outputStream'
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    OerLengthSerializer.writeLength(Integer.MIN_VALUE, outputStream);
+    assertThat(BaseEncoding.base16().decode("00")).isEqualTo(outputStream.toByteArray());
+
+    // Allow the AsnObjectCodec to write to 'outputStream'
+    outputStream = new ByteArrayOutputStream();
+    OerLengthSerializer.writeLength(-1, outputStream);
+    assertThat(BaseEncoding.base16().decode("00")).isEqualTo(outputStream.toByteArray());
+  }
+
+  @Test
+  public void readLengthWithCorrectPrefixButNegativeNumber() throws IOException {
+    // Allow the AsnObjectCodec to write to 'outputStream'
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    outputStream.write(3); // 00000010 --> The following bytes after this will be ignored.
+    for (int i = 0; i < 3; i++) {
+      outputStream.write(-1); // FF
+    }
+
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+    assertThat(OerLengthSerializer.readLength(inputStream)).isEqualTo(3);
+  }
+
+  @Test
+  public void readMultiByteLengthWithNegativeValue() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    outputStream.write(-127); // 10000001 (should be translated to 1) --> Length-of-Length
+    outputStream.write(0x80); // 10000000 (should be translated to -128) --> Length
+
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+    assertThat(OerLengthSerializer.readLength(inputStream)).isEqualTo(128);
+  }
+
+  @Test
+  public void readMultiByteLengthWith1Byte() throws IOException {
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    outputStream.write(-127); // 10000001 (should be translated to 1) --> Length-of-Length
+    outputStream.write(2); // 00000001 (should be translated to 2) --> Length
+
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+    assertThat(OerLengthSerializer.readLength(inputStream)).isEqualTo(2);
+  }
+
+  @Test
+  public void readMultiByteLengthWithMaxBytes() throws IOException {
+    expectedException.expect(CodecException.class);
+    expectedException.expectMessage("This method only supports arrays up to length 4!");
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    outputStream.write(-1); // (0xFF) or 11111111 (should be translated to 127) --> Length-of-Length
+    for (int i = 0; i < 127; i++) {
+      outputStream.write(-1); // FF
+    }
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+    OerLengthSerializer.readLength(inputStream);
+  }
 }
