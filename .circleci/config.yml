@@ -32,7 +32,7 @@ _run:
       JDK14_URL=$(curl -s https://jdk.java.net/14/ | egrep -o "https://download.java.net/java/GA/jdk14.*?/.*?linux-x64.*?tar.gz" | head -1)
       wget $JDK14_URL -O /tmp/openjdk14.tar.gz
       tar -xvzf /tmp/openjdk14.tar.gz
-      sudo mv jdk-14.01/ /usr/lib/jvm/
+      sudo mv jdk-14.0.1/ /usr/lib/jvm/
 
 jobs:
   build:
