@@ -29,10 +29,10 @@ _run:
   installjava14: &installjava14
     name: "Download and install Java 14 from source OpenJDK"
     command: |
-      JDK14_URL=$(curl -s https://jdk.java.net/14/ | egrep -o "https://download.java.net/java/GA/jdk14/.*?linux-x64.*?tar.gz" | head -1)
+      JDK14_URL=$(curl -s https://jdk.java.net/14/ | egrep -o "https://download.java.net/java/GA/jdk14.*?/.*?linux-x64.*?tar.gz" | head -1)
       wget $JDK14_URL -O /tmp/openjdk14.tar.gz
       tar -xvzf /tmp/openjdk14.tar.gz
-      sudo mv jdk-14/ /usr/lib/jvm/
+      sudo mv jdk-14.0.1/ /usr/lib/jvm/
 
 jobs:
   build:
@@ -272,7 +272,7 @@ jobs:
     environment:
       # Customize the JVM maximum heap limit
       MAVEN_OPTS: -Xmx3200m
-      JAVA_HOME: /usr/lib/jvm/jdk-14/
+      JAVA_HOME: /usr/lib/jvm/jdk-14.0.1/
 
     steps:
       - run:
