@@ -367,6 +367,8 @@ public class SimpleStreamSender implements StreamSender {
             // Do all the work of sending packetized money for this Stream/sendMoney request.
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
+                .senderAddress(senderAddress)
+                .destinationAddress(destinationAddress)
                 .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
                 .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
                 .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
@@ -398,6 +400,8 @@ public class SimpleStreamSender implements StreamSender {
     private SendMoneyResult constructSendMoneyResultForInvalidPreflight(final Instant startPreflight) {
       Objects.requireNonNull(startPreflight);
       return SendMoneyResult.builder()
+          .senderAddress(senderAddress)
+          .destinationAddress(destinationAddress)
           .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
           .numRejectPackets(0)
           .numFulfilledPackets(0)

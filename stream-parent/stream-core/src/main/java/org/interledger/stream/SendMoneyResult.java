@@ -1,11 +1,12 @@
 package org.interledger.stream;
 
 import org.interledger.core.Immutable;
+import org.interledger.core.InterledgerAddress;
 
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * The result of a request to send money using the STREAM protocol.
@@ -16,6 +17,20 @@ public interface SendMoneyResult {
   static SendMoneyResultBuilder builder() {
     return new SendMoneyResultBuilder();
   }
+
+  /**
+   * The ILP address of the sender, if present.
+   *
+   * @return The optional {@link InterledgerAddress} of the Receiver.
+   */
+  Optional<InterledgerAddress> senderAddress();
+
+  /**
+   * The ILP address of the receiver.
+   *
+   * @return The {@link InterledgerAddress} of the Receiver.
+   */
+  InterledgerAddress destinationAddress();
 
   /**
    * The original amount that was requested to be sent.

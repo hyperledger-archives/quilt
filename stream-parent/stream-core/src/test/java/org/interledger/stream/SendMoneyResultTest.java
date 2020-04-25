@@ -2,6 +2,8 @@ package org.interledger.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.interledger.core.InterledgerAddress;
+
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
@@ -15,6 +17,7 @@ public class SendMoneyResultTest {
   @Test
   public void totalPackets() {
     SendMoneyResult result = SendMoneyResult.builder()
+        .destinationAddress(InterledgerAddress.of("example.foo"))
         .originalAmount(UnsignedLong.ZERO)
         .amountDelivered(UnsignedLong.ZERO)
         .amountSent(UnsignedLong.ZERO)
