@@ -367,7 +367,10 @@ public class SimpleStreamSender implements StreamSender {
             // Do all the work of sending packetized money for this Stream/sendMoney request.
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
-                .senderAddress(senderAddress)
+                // Add the senderAddress, or else add the Link operator address.
+                .senderAddress(
+                    senderAddress.orElseGet(() -> (InterledgerAddress) link.getOperatorAddressSupplier().get())
+                )
                 .destinationAddress(destinationAddress)
                 .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
                 .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
