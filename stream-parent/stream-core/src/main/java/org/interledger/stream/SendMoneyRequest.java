@@ -38,11 +38,13 @@ public interface SendMoneyRequest {
   SharedSecret sharedSecret();
 
   /**
-   * The source address of this request.
+   * The optionally-supplied source address of this request. Senders are not required to send a source ILP address,
+   * especially to support scenarios where the sender is not routable (e.g., client making sendMoney requests using an
+   * ILP-over-HTTP link that has no incoming URL, such as from an Android device).
    *
-   * @return The {@link InterledgerAddress} of the source of this payment.
+   * @return The optionally-present {@link InterledgerAddress} of the source of this payment.
    */
-  InterledgerAddress sourceAddress();
+  Optional<InterledgerAddress> sourceAddress();
 
   /**
    * The destination address of this request.

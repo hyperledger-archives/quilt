@@ -51,13 +51,7 @@ public class SendMoneyExample {
 
   private static final String TESTNET_URI = "https://jc1.xpring.dev/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
 
-  /**
-   * This value will go away once #445 is fixed.
-   *
-   * @see "https://github.com/hyperledger/quilt/issues/445"
-   */
-  @Deprecated
-  private static final InterledgerAddress SENDER_ADDRESS =
+  private static final InterledgerAddress OPERATOR_ADDRESS =
       InterledgerAddress.of("test.xpring-dev.jc1.spsp-test").with(SENDER_ACCOUNT_USERNAME);
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
@@ -79,7 +73,6 @@ public class SendMoneyExample {
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
-            .sourceAddress(SENDER_ADDRESS)
             .amount(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9))
             .denomination(Denominations.XRP_MILLI_DROPS)
             .destinationAddress(connectionDetails.destinationAddress())
@@ -94,7 +87,7 @@ public class SendMoneyExample {
 
   private static Link newIlpOverHttpLink() {
     return new IlpOverHttpLink(
-        () -> SENDER_ADDRESS,
+        () -> OPERATOR_ADDRESS,
         HttpUrl.parse(TESTNET_URI),
         newHttpClient(),
         createObjectMapperForProblemsJson(),

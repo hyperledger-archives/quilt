@@ -8,6 +8,7 @@ import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.DateUtils;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerErrorCode.ErrorFamily;
@@ -266,7 +267,7 @@ public class SimpleStreamSender implements StreamSender {
     private final Link link;
     private final SharedSecret sharedSecret;
     private final Optional<Duration> timeout;
-    private final InterledgerAddress senderAddress;
+    private final Optional<InterledgerAddress> senderAddress;
     private final Denomination senderDenomination;
     private final InterledgerAddress destinationAddress;
     private final AtomicBoolean shouldSendSourceAddress;
@@ -440,14 +441,27 @@ public class SimpleStreamSender implements StreamSender {
         throw e;
       }
 
+      // If the senderAddress is specified, we should send that address. Otherwise, we should send an empty
+      // address because in either case, we need to prompt the receiver to send ConnectionAssetDetails.
+      // NOTE: This section will change once https://github.com/interledger/rfcs/issues/554 is worked out in the RFC.
+      // For now, we simply send an unroutable address.
+      final InterledgerAddress actualSenderAddress = senderAddress
+          .orElseGet(() ->
+              InterledgerAddress.of(
+                  InterledgerAddressPrefix.PRIVATE
+                      .with(((InterledgerAddress) link.getOperatorAddressSupplier().get()).getValue()).getValue()
+              )
+          );
+
       final List<StreamFrame> frames = Lists.newArrayList(
           StreamMoneyFrame.builder()
               // This aggregator supports only a single stream-id, which is one.
               .streamId(UnsignedLong.ONE)
               .shares(UnsignedLong.ONE)
               .build(),
+          // See discussion of this in https://github.com/interledger/rfcs/issues/571
           ConnectionNewAddressFrame.builder()
-              .sourceAddress(senderAddress)
+              .sourceAddress(actualSenderAddress)
               .build(),
           ConnectionAssetDetailsFrame.builder()
               .sourceDenomination(senderDenomination)
