@@ -179,7 +179,7 @@ public class SimpleStreamSender implements StreamSender {
         .setDaemon(true)
         .setNameFormat("simple-stream-sender-%d")
         .build();
-    return Executors.newFixedThreadPool(30, factory);
+    return Executors.newCachedThreadPool(factory);
   }
 
   @Override
