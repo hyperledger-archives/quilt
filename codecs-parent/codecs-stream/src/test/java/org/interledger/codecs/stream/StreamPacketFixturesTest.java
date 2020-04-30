@@ -20,6 +20,7 @@ package org.interledger.codecs.stream;
  * =========================LICENSE_END==================================
  */
 
+import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.interledger.codecs.stream.frame.helpers.FixtureManager.checkInternetConnectivity;
 import static org.interledger.codecs.stream.frame.helpers.FixtureManager.checksum;
@@ -104,9 +105,9 @@ public class StreamPacketFixturesTest {
         boolean localFixtureStatus = checkLocalFixtureFileState();
         if (!rfcStatus || !localFixtureStatus) {
           if (!localFixtureStatus) {
-         //   throw new Exception("Local test Fixture does not match the expected file integrity and has changed");
+            //   throw new Exception("Local test Fixture does not match the expected file integrity and has changed");
           }
-         // throw new Exception("Change in Checksum. Fixture file on RFC does not match the expected value");
+          // throw new Exception("Change in Checksum. Fixture file on RFC does not match the expected value");
         }
       } else {
         Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -133,7 +134,7 @@ public class StreamPacketFixturesTest {
    *
    * @return {@code false} if the Fixtures in the RFC have changed, else {@code true}.
    */
-  @SuppressWarnings( {"checkstyle:AbbreviationAsWordInName" })
+  @SuppressWarnings( {"checkstyle:AbbreviationAsWordInName"})
   private static boolean checkFixtureRFCStalenessState() {
     Properties properties = readProperties();
     String fixtureUrl = (String) properties.get("stream.packetFixtures.file");
@@ -248,15 +249,75 @@ public class StreamPacketFixturesTest {
     assertThat(Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())).isEqualTo(wantBuffer);
   }
 
+  /**
+   * This test validates that an encoded StreamPacket with an invalid Stream frame does not decode successfully. The
+   * rationale here is that if a particular frame in a StreamPacket is invalid, then it's likely the byte-counts are
+   * simply incorrect. There is no way to determine what the correct byte values should be in ASN.1 OER if the
+   * byte-count indicators are wrong.
+   *
+   * Additionally, one might be tempted to allow any arbitrary failure inside of any particular Codec, and simply "skip
+   * over" any codec errors. This can yield unexpected results, however, for two intertwined reasons. First, the Codec
+   * framework stacks codecs on top of each other, with an assumed behavior. Second, because most of the Stream Frame
+   * values are number-based, ignoring any particular error will generally lead the Codec to simply use a default value,
+   * which is often 0. Using a 0-value instead of throwing an error would likely lead to incorrect packet handling as
+   * any system processing the packet would think the packet was valid, when in reality it just happens to have 0-values
+   * that look correct, but are in fact incorrect.
+   */
   @Test
-  public void ignoreInvalidFrames() throws IOException {
-    byte[] packetWithInvalidFrameBytes = Base64.getDecoder().decode("AQwBAQEBAQICBgVnLmZvbwIBAA==");
-    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
-    StreamPacket packet = StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
+  public void validStreamPacketWithInvalidFramesMustFailToDecode() throws IOException {
+    // Valid StreamPacket with 2 Frames
+    // --> StreamCloseFrame{streamId=3, errorCode=0 }
+    // --> StreamMoneyFrame{streamId=4, shares=5 }
+    // 010C0101010201 02 100401030100 110401040105
+    {
+      // Validate the "valid bytes" above.
+      byte[] packetWithInvalidFrameBytes = BaseEncoding.base16()
+          .decode("010C0101010201 02 100401030100 110401040105".replace(" ", ""));
+      ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
+      StreamPacket validStreampacket = StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
+      assertThat(validStreampacket.frames().size()).isEqualTo(2);
 
-    assertThat(packet.frames().size()).isEqualTo(1);
-    ConnectionNewAddressFrame validFrame = (ConnectionNewAddressFrame) packet.frames().get(0);
-    assertThat(validFrame.sourceAddress()).isEqualTo(InterledgerAddress.of("g.foo"));
+      StreamCloseFrame streamCloseFrame = (StreamCloseFrame) validStreampacket.frames().get(0);
+      assertThat(streamCloseFrame.streamId()).isEqualTo(UnsignedLong.valueOf(3));
+      assertThat(streamCloseFrame.errorCode().code()).isEqualTo(ErrorCodes.NoError.code());
+
+      StreamMoneyFrame streamMoneyFrame = (StreamMoneyFrame) validStreampacket.frames().get(1);
+      assertThat(streamMoneyFrame.streamId()).isEqualTo(UnsignedLong.valueOf(4));
+      assertThat(streamMoneyFrame.shares()).isEqualTo(UnsignedLong.valueOf(5));
+    }
+
+    try {
+      // Valid StreamPacket with 1 Valid Frame and 1 Invalid Frame
+      // --> (Valid) StreamCloseFrame{streamId=3, errorCode=0 }
+      // --> (Invalid) StreamMoneyFrame{streamId=4, shares=MISSING }  --> Missing the num shares.
+      // 010C0101010201 02 100401030100 110401040105
+
+      // Validate the "valid bytes" above.
+      byte[] packetWithInvalidFrameBytes = BaseEncoding.base16()
+          .decode("010C0101010201 02 100401030100 1103010401".replace(" ", ""));
+      ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
+      StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
+      fail("Should have thrown an exception but did not");
+    } catch (Exception e) {
+      // Eat exception, it's not necessary to display and we expect it.
+      assertThat(e.getMessage()).isEqualTo("Unable to properly decode 1 bytes (could only read 0 bytes)");
+    }
+
+    try {
+      // Valid StreamPacket with 1 Valid Frame but incorrect length indicator (set to 2, but should be 1)
+      // --> (Valid) StreamCloseFrame{streamId=3, errorCode=0 }
+      // 010C0101010201 02 100401030100
+
+      // Validate the "valid bytes" above.
+      byte[] packetWithInvalidFrameBytes = BaseEncoding.base16()
+          .decode("010C0101010201 02 100401030100".replace(" ", ""));
+      ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
+      StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
+      fail("Should have thrown an exception but did not");
+    } catch (Exception e) {
+      // Eat exception, it's not necessary to display and we expect it.
+      assertThat(e.getMessage()).isEqualTo("Unable to properly decode 1 bytes (could only read 0 bytes)");
+    }
   }
 
   private StreamFrame fromJson(final StreamFrameFixture fixture) {

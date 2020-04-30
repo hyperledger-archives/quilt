@@ -133,11 +133,7 @@ public class AsnSequenceOfSequenceCodec<L extends List<T>, T> extends AsnObjectC
     Objects.requireNonNull(codecs);
     L list = listConstructor.get();
     for (AsnSequenceCodec<T> codec : codecs) {
-      try {
-        list.add(codec.decode());
-      } catch (Exception e) {
-        LOGGER.warn("Skipping invalid STREAM Frame: {}", e.getMessage(), e);
-      }
+      list.add(codec.decode());
     }
     return list;
   }
