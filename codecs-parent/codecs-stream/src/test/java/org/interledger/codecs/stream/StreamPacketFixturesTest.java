@@ -203,8 +203,7 @@ public class StreamPacketFixturesTest {
     String data = lines.collect(Collectors.joining("\n"));
     lines.close();
 
-    List<StreamTestFixture> vectors = objectMapper.readValue(data, new TypeReference<List<StreamTestFixture>>() {
-    });
+    List<StreamTestFixture> vectors = objectMapper.readValue(data, new TypeReference<List<StreamTestFixture>>() {});
 
     return vectors;
   }
