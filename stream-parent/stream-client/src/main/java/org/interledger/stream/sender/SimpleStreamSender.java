@@ -599,8 +599,8 @@ public class SimpleStreamSender implements StreamSender {
 
         // Create the ILP Prepare packet
         final byte[] streamPacketData = this.toEncrypted(sharedSecret, streamPacket);
-        final InterledgerCondition executionCondition;
-        executionCondition = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
+        final InterledgerCondition executionCondition
+            = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
 
         final Supplier<InterledgerPreparePacket> preparePacket = () -> InterledgerPreparePacket.builder()
             .destination(destinationAddress)

@@ -74,7 +74,9 @@ public class SendMoneyExample {
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(
         SendMoneyRequest.builder()
-            // No source address because the client/sender is not routable (i.e., can't receive).
+            // The client is not routable, so while we could send an empty ConnectionNewAddress frame, this breaks older
+            // version of the Java receiver, so for now we specify an address here.
+            .sourceAddress(OPERATOR_ADDRESS)
             .amount(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9))
             .denomination(Denominations.XRP_MILLI_DROPS)
             .destinationAddress(connectionDetails.destinationAddress())
