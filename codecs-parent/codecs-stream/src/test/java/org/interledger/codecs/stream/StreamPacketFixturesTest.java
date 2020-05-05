@@ -89,6 +89,7 @@ import java.util.stream.Stream;
 @RunWith(Parameterized.class)
 public class StreamPacketFixturesTest {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(StreamPacketFixturesTest.class);
   /**
    * The {@link ClassRule} provides a {@code before()} method which is executed before the tests in the class are
    * executed. As a part of the class rule, we expect the validation of the checksum to pass on both the local test
@@ -203,8 +204,7 @@ public class StreamPacketFixturesTest {
     String data = lines.collect(Collectors.joining("\n"));
     lines.close();
 
-    List<StreamTestFixture> vectors = objectMapper.readValue(data, new TypeReference<List<StreamTestFixture>>() {
-    });
+    List<StreamTestFixture> vectors = objectMapper.readValue(data, new TypeReference<List<StreamTestFixture>>() {});
 
     return vectors;
   }
