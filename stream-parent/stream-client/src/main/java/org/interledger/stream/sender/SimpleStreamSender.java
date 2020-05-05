@@ -266,7 +266,7 @@ public class SimpleStreamSender implements StreamSender {
     private final Link link;
     private final SharedSecret sharedSecret;
     private final Optional<Duration> timeout;
-    private final InterledgerAddress senderAddress;
+    private final Optional<InterledgerAddress> senderAddress;
     private final Denomination senderDenomination;
     private final InterledgerAddress destinationAddress;
     private final AtomicBoolean shouldSendSourceAddress;
@@ -366,6 +366,8 @@ public class SimpleStreamSender implements StreamSender {
             // Do all the work of sending packetized money for this Stream/sendMoney request.
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
+                .senderAddress(this.computeSenderAddressForReportingPurposes())
+                .destinationAddress(destinationAddress)
                 .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
                 .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
                 .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
@@ -397,6 +399,8 @@ public class SimpleStreamSender implements StreamSender {
     private SendMoneyResult constructSendMoneyResultForInvalidPreflight(final Instant startPreflight) {
       Objects.requireNonNull(startPreflight);
       return SendMoneyResult.builder()
+          .senderAddress(this.computeSenderAddressForReportingPurposes())
+          .destinationAddress(destinationAddress)
           .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
           .numRejectPackets(0)
           .numFulfilledPackets(0)
@@ -406,6 +410,17 @@ public class SimpleStreamSender implements StreamSender {
           .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
           .successfulPayment(paymentTracker.successful())
           .build();
+    }
+
+    /**
+     * Helper method to centralize the computation of this sener's {@link InterledgerAddress}. Basically, if {@link
+     * #senderAddress} is empty, then the implementation will report back the link address. However, during STREAM
+     * operation with a receiver, no address will be reported (e.g., such as inside of a `ConnectionNewAddress` frame).
+     *
+     * @return The {@link InterledgerAddress} of this sender, for usage by the creator of this stream sender.
+     */
+    private InterledgerAddress computeSenderAddressForReportingPurposes() {
+      return this.senderAddress.orElseGet((link.getOperatorAddressSupplier()));
     }
 
     /**
@@ -446,6 +461,13 @@ public class SimpleStreamSender implements StreamSender {
               .streamId(UnsignedLong.ONE)
               .shares(UnsignedLong.ONE)
               .build(),
+          // Always send a ConnectionNewAddress frame (sometimes with an empty address) in order to trigger the receiver
+          // on the other side of this STREAM to send us our ConnectionAssetDetails. This is odd behavior, but the
+          // RFC authors can't agree on a standardization in IL-RFC-29. So until then, we have this dirty little secret
+          // in every implementation that just does this. Read more in the following issues:
+          // https://github.com/interledger/rfcs/issues/554
+          // https://github.com/interledger/rfcs/issues/571
+          // https://github.com/interledger/rfcs/pull/573
           ConnectionNewAddressFrame.builder()
               .sourceAddress(senderAddress)
               .build(),
@@ -494,8 +516,8 @@ public class SimpleStreamSender implements StreamSender {
               }, // Do nothing on fulfill
               this::checkForAndTriggerUnrecoverableError // check for unrecoverable error.
           )
-          // We typically expect this Prepare operation to reject, but regardless of whether the response is a fulfill or a
-          // reject, try to read the Receiver's Connection Asset Details and return them.
+          // We typically expect this Prepare operation to reject, but regardless of whether the response is a fulfill
+          // or a reject, try to read the Receiver's Connection Asset Details and return them.
           .map(readDetailsFromStream::apply, readDetailsFromStream::apply);
     }
 
