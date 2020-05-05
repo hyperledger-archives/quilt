@@ -367,7 +367,9 @@ public class SimpleStreamSender implements StreamSender {
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
                 .senderAddress(this.computeSenderAddressForReportingPurposes())
+                .senderDenomination(this.senderDenomination)
                 .destinationAddress(destinationAddress)
+                .destinationDenomination(this.receiverDenomination)
                 .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
                 .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
                 .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
@@ -400,7 +402,9 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(startPreflight);
       return SendMoneyResult.builder()
           .senderAddress(this.computeSenderAddressForReportingPurposes())
-          .destinationAddress(destinationAddress)
+          .senderDenomination(this.senderDenomination)
+          .destinationAddress(this.destinationAddress)
+          .destinationDenomination(this.receiverDenomination)
           .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
           .numRejectPackets(0)
           .numFulfilledPackets(0)
