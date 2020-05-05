@@ -207,6 +207,7 @@ public class SendMoneyAggregatorTest {
     sendMoneyAggregator.send().get();
 
     // Expect 0 link calls
+    Mockito.verify(linkMock).getOperatorAddressSupplier();
     Mockito.verifyNoMoreInteractions(linkMock);
   }
 
