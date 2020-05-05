@@ -8,7 +8,6 @@ import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.DateUtils;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerErrorCode.ErrorFamily;
@@ -367,10 +366,7 @@ public class SimpleStreamSender implements StreamSender {
             // Do all the work of sending packetized money for this Stream/sendMoney request.
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
-                // Add the senderAddress, or else add the Link operator address.
-                .senderAddress(
-                    senderAddress.orElseGet(() -> (InterledgerAddress) link.getOperatorAddressSupplier().get())
-                )
+                .senderAddress(this.computeSenderAddressForReportingPurposes())
                 .destinationAddress(destinationAddress)
                 .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
                 .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
@@ -403,7 +399,7 @@ public class SimpleStreamSender implements StreamSender {
     private SendMoneyResult constructSendMoneyResultForInvalidPreflight(final Instant startPreflight) {
       Objects.requireNonNull(startPreflight);
       return SendMoneyResult.builder()
-          .senderAddress(senderAddress)
+          .senderAddress(this.computeSenderAddressForReportingPurposes())
           .destinationAddress(destinationAddress)
           .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
           .numRejectPackets(0)
@@ -414,6 +410,17 @@ public class SimpleStreamSender implements StreamSender {
           .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
           .successfulPayment(paymentTracker.successful())
           .build();
+    }
+
+    /**
+     * Helper method to centralize the computation of this sener's {@link InterledgerAddress}. Basically, if {@link
+     * #senderAddress} is empty, then the implementation will report back the link address. However, during STREAM
+     * operation with a receiver, no address will be reported (e.g., such as inside of a `ConnectionNewAddress` frame).
+     *
+     * @return The {@link InterledgerAddress} of this sender, for usage by the creator of this stream sender.
+     */
+    private InterledgerAddress computeSenderAddressForReportingPurposes() {
+      return this.senderAddress.orElseGet((link.getOperatorAddressSupplier()));
     }
 
     /**
@@ -448,27 +455,21 @@ public class SimpleStreamSender implements StreamSender {
         throw e;
       }
 
-      // If the senderAddress is specified, we should send that address. Otherwise, we should send an empty
-      // address because in either case, we need to prompt the receiver to send ConnectionAssetDetails.
-      // NOTE: This section will change once https://github.com/interledger/rfcs/issues/554 is worked out in the RFC.
-      // For now, we simply send an unroutable address.
-      final InterledgerAddress actualSenderAddress = senderAddress
-          .orElseGet(() ->
-              InterledgerAddress.of(
-                  InterledgerAddressPrefix.PRIVATE
-                      .with(((InterledgerAddress) link.getOperatorAddressSupplier().get()).getValue()).getValue()
-              )
-          );
-
       final List<StreamFrame> frames = Lists.newArrayList(
           StreamMoneyFrame.builder()
               // This aggregator supports only a single stream-id, which is one.
               .streamId(UnsignedLong.ONE)
               .shares(UnsignedLong.ONE)
               .build(),
-          // See discussion of this in https://github.com/interledger/rfcs/issues/571
+          // If the senderAddress was not specify, then still send a ConnectionNewAddress frame in order to trigger the
+          // receiver on the other side of this STREAM to send us our ConnectionAssetDetails. If our senderAddress is
+          // not specified, then send a frame with an empty value. This will work with JS and Java receivers. This is
+          // weird behavior, but see discussion in the following issues:
+          // * https://github.com/interledger/rfcs/issues/554
+          // * https://github.com/interledger/rfcs/issues/571
+          // * https://github.com/interledger/rfcs/pull/573
           ConnectionNewAddressFrame.builder()
-              .sourceAddress(actualSenderAddress)
+              .sourceAddress(senderAddress)
               .build(),
           ConnectionAssetDetailsFrame.builder()
               .sourceDenomination(senderDenomination)
@@ -515,8 +516,8 @@ public class SimpleStreamSender implements StreamSender {
               }, // Do nothing on fulfill
               this::checkForAndTriggerUnrecoverableError // check for unrecoverable error.
           )
-          // We typically expect this Prepare operation to reject, but regardless of whether the response is a fulfill or a
-          // reject, try to read the Receiver's Connection Asset Details and return them.
+          // We typically expect this Prepare operation to reject, but regardless of whether the response is a fulfill
+          // or a reject, try to read the Receiver's Connection Asset Details and return them.
           .map(readDetailsFromStream::apply, readDetailsFromStream::apply);
     }
 
