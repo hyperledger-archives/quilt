@@ -59,20 +59,20 @@
 
   <developers>
     <developer>
-      <name>Adrian Hope-Bailie</name>
-      <organizationUrl>https://github.com/adrianhopebailie</organizationUrl>
-    </developer>
-    <developer>
-      <name>Andrew Gates</name>
-      <organizationUrl>https://github.com/andrew-g-za</organizationUrl>
-    </developer>
-    <developer>
-      <name>Enrique Benito</name>
-      <organizationUrl>https://github.com/earizon</organizationUrl>
-    </developer>
-    <developer>
       <name>David Fuelling</name>
       <organizationUrl>https://github.com/sappenin</organizationUrl>
+    </developer>
+    <developer>
+      <name>Neil Hartner</name>
+      <organizationUrl>https://github.com/nhartner</organizationUrl>
+    </developer>
+    <developer>
+      <name>Noah Kramer</name>
+      <organizationUrl>https://github.com/nkramer44</organizationUrl>
+    </developer>
+    <developer>
+      <name>Ian Simpson</name>
+      <organizationUrl>https://github.com/theotherian</organizationUrl>
     </developer>
   </developers>
 
