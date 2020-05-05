@@ -461,13 +461,13 @@ public class SimpleStreamSender implements StreamSender {
               .streamId(UnsignedLong.ONE)
               .shares(UnsignedLong.ONE)
               .build(),
-          // If the senderAddress was not specify, then still send a ConnectionNewAddress frame in order to trigger the
-          // receiver on the other side of this STREAM to send us our ConnectionAssetDetails. If our senderAddress is
-          // not specified, then send a frame with an empty value. This will work with JS and Java receivers. This is
-          // weird behavior, but see discussion in the following issues:
-          // * https://github.com/interledger/rfcs/issues/554
-          // * https://github.com/interledger/rfcs/issues/571
-          // * https://github.com/interledger/rfcs/pull/573
+          // Always send a ConnectionNewAddress frame (sometimes with an empty address) in order to trigger the receiver
+          // on the other side of this STREAM to send us our ConnectionAssetDetails. This is odd behavior, but the
+          // RFC authors can't agree on a standardization in IL-RFC-29. So until then, we have this dirty little secret
+          // in every implementation that just does this. Read more in the following issues:
+          // https://github.com/interledger/rfcs/issues/554
+          // https://github.com/interledger/rfcs/issues/571
+          // https://github.com/interledger/rfcs/pull/573
           ConnectionNewAddressFrame.builder()
               .sourceAddress(senderAddress)
               .build(),
