@@ -6,6 +6,7 @@ import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * The result of a request to send money using the STREAM protocol.
@@ -24,6 +25,8 @@ public interface SendMoneyResult {
    */
   UnsignedLong originalAmount();
 
+  Denomination senderDenomination();
+
   /**
    * The actual amount, in the receivers units, that was delivered to the receiver. Any currency conversion and/or
    * connector fees may cause this to be different than the amount sent.
@@ -31,6 +34,8 @@ public interface SendMoneyResult {
    * @return An {@link UnsignedLong} representing the amount delivered.
    */
   UnsignedLong amountDelivered();
+
+  Optional<Denomination> receiverDenomination();
 
   /**
    * The actual amount, in the senders units, that was sent to the receiver. In the case, of a timeout or rejected
