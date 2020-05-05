@@ -16,7 +16,7 @@ import java.time.Duration;
 public class SendMoneyResultTest {
 
   @Test
-  public void testBuilderWithNoSenderAddress() {
+  public void testBuilderWithNoOptionals() {
     SendMoneyResult result = SendMoneyResult.builder()
         .destinationAddress(InterledgerAddress.of("example.destination"))
         .originalAmount(ZERO)
@@ -36,12 +36,13 @@ public class SendMoneyResultTest {
     assertThat(result.amountLeftToSend()).isEqualTo(UnsignedLong.valueOf(3));
     assertThat(result.numFulfilledPackets()).isEqualTo(10);
     assertThat(result.numRejectPackets()).isEqualTo(5);
+    assertThat(result.totalPackets()).isEqualTo(15);
     assertThat(result.sendMoneyDuration()).isEqualTo(Duration.ofMillis(1000));
     assertThat(result.successfulPayment()).isTrue();
   }
 
   @Test
-  public void testBuilderWithSenderAddress() {
+  public void testBuilderWithOptionals() {
     SendMoneyResult result = SendMoneyResult.builder()
         .senderAddress(InterledgerAddress.of("example.sender"))
         .destinationAddress(InterledgerAddress.of("example.destination"))
@@ -54,7 +55,7 @@ public class SendMoneyResultTest {
         .sendMoneyDuration(Duration.ofMillis(1000))
         .successfulPayment(false)
         .build();
-    assertThat(result.senderAddress()).isEqualTo(InterledgerAddress.of("example.sender"));
+    assertThat(result.senderAddress().get()).isEqualTo(InterledgerAddress.of("example.sender"));
     assertThat(result.destinationAddress()).isEqualTo(InterledgerAddress.of("example.destination"));
     assertThat(result.originalAmount()).isEqualTo(ZERO);
     assertThat(result.amountDelivered()).isEqualTo(UnsignedLong.ONE);
@@ -62,6 +63,7 @@ public class SendMoneyResultTest {
     assertThat(result.amountLeftToSend()).isEqualTo(UnsignedLong.valueOf(3));
     assertThat(result.numFulfilledPackets()).isEqualTo(10);
     assertThat(result.numRejectPackets()).isEqualTo(5);
+    assertThat(result.totalPackets()).isEqualTo(15);
     assertThat(result.sendMoneyDuration()).isEqualTo(Duration.ofMillis(1000));
     assertThat(result.successfulPayment()).isFalse();
   }
