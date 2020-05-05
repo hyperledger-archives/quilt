@@ -20,9 +20,6 @@ package org.interledger.encoding.asn.codecs;
  * =========================LICENSE_END==================================
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,8 +35,6 @@ import java.util.function.Supplier;
  * @see "https://www.oss.com/asn1/resources/books-whitepapers-pubs/Overview_of_OER.pdf"
  */
 public class AsnSequenceOfSequenceCodec<L extends List<T>, T> extends AsnObjectCodecBase<L> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(AsnSequenceOfSequenceCodec.class);
 
   private static final int CODECS_ARRAY_INITIAL_CAPACITY = 5;
 
