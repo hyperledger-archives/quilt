@@ -55,9 +55,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
+
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -89,32 +89,7 @@ import java.util.stream.Stream;
 @RunWith(Parameterized.class)
 public class StreamPacketFixturesTest {
 
-  /**
-   * The {@link ClassRule} provides a {@code before()} method which is executed before the tests in the class are
-   * executed. As a part of the class rule, we expect the validation of the checksum to pass on both the local test
-   * fixtures file and the remote test fixtures file in the RFCs repository. Any change to either the local or the
-   * remote file will result in a failure of this test.
-   */
-  @ClassRule
-  public static ExternalResource externalResource = new ExternalResource() {
-    @Override
-    protected void before() throws Throwable {
-      boolean checkNetworkStatus = checkInternetConnectivity();
-      if (checkNetworkStatus) {
-        boolean rfcStatus = checkFixtureRFCStalenessState();
-        boolean localFixtureStatus = checkLocalFixtureFileState();
-        if (!rfcStatus || !localFixtureStatus) {
-          if (!localFixtureStatus) {
-            //throw new Exception("Local test Fixture does not match the expected file integrity and has changed");
-          }
-          //throw new Exception("Change in Checksum. Fixture file on RFC does not match the expected value");
-        }
-      } else {
-        Logger logger = LoggerFactory.getLogger(this.getClass());
-        logger.warn("No active Internet connection is available. Running test using only the local fixtures.");
-      }
-    }
-  };
+  private static final Logger LOGGER = LoggerFactory.getLogger(StreamPacketFixturesTest.class);
   private StreamTestFixture streamTestFixture;
 
   public StreamPacketFixturesTest(StreamTestFixture streamTestFixture) {
@@ -122,9 +97,9 @@ public class StreamPacketFixturesTest {
   }
 
   /**
-   * When the test is run, this method reads the data of the latest fixtures on the RFC repository located at {@code
-   * stream.packetFixtures.file} in the {@code fixtures.properties} configuration file. The method computes the SHA256
-   * checksum of the fixtures file located in the repository and checks the integrity of the file.
+   * When the test is run, this method reads the data of the latest fixtures on the RFC repository located at
+   * {@code stream.packetFixtures.file} in the {@code fixtures.properties} configuration file. The method computes the
+   * SHA256 checksum of the fixtures file located in the repository and checks the integrity of the file.
    *
    * <p>Any changes in the actual fixtures file should fail when comparing with {@code stream.packetFixtures.checksum}
    * property of the configuration and returns {@code false} in case of changes to the actual file.</p>
@@ -134,7 +109,7 @@ public class StreamPacketFixturesTest {
    *
    * @return {@code false} if the Fixtures in the RFC have changed, else {@code true}.
    */
-  @SuppressWarnings( {"checkstyle:AbbreviationAsWordInName" })
+  @SuppressWarnings({"checkstyle:AbbreviationAsWordInName"})
   private static boolean checkFixtureRFCStalenessState() {
     Properties properties = readProperties();
     String fixtureUrl = (String) properties.get("stream.packetFixtures.file");
@@ -156,9 +131,9 @@ public class StreamPacketFixturesTest {
   }
 
   /**
-   * When the test is run, this method reads the local fixtures resource and performs a checksum on the file contents to
-   * ensure the integrity of the file and compares it with the expected {@code stream.packetFixtures.checksum} value in
-   * the properties configuration located at {@code fixtures.properties}.
+   * When the test is run, this method reads the local fixtures resource and performs a checksum on the file contents
+   * to ensure the integrity of the file and compares it with the expected {@code stream.packetFixtures.checksum} value
+   * in the properties configuration located at {@code fixtures.properties}.
    *
    * <p>This test is present to ensure that in case the file is updated locally, we also update the corresponding
    * checksum of the file.</p>
@@ -182,6 +157,41 @@ public class StreamPacketFixturesTest {
 
     return false;
   }
+
+  /**
+   * The {@link ClassRule} provides a {@code before()} method which is executed before the tests in the class
+   * are executed. As a part of the class rule, we expect the validation of the checksum to pass on both the local
+   * test fixtures file and the remote test fixtures file in the RFCs repository. Any change to either the local or
+   * the remote file will result in a failure of this test.
+   */
+  @ClassRule
+  public static ExternalResource externalResource = new ExternalResource() {
+    @Override
+    protected void before() throws Throwable {
+      boolean checkNetworkStatus = checkInternetConnectivity();
+      if (checkNetworkStatus) {
+        boolean rfcStatus = checkFixtureRFCStalenessState();
+        boolean localFixtureStatus = checkLocalFixtureFileState();
+        if (!rfcStatus || !localFixtureStatus) {
+
+          // TODO: Remove this and restore the exception throwing once  https://github.com/hyperledger/quilt/issues/451
+          // is fixed.
+          if (!localFixtureStatus) {
+            LOGGER.error("Local test Fixture does not match the expected file integrity and has changed");
+          }
+          LOGGER
+              .error("Change in RFC Test Vector File Checksum. Fixture file on RFC does not match the expected value");
+//          if (!localFixtureStatus) {
+//            throw new Exception("Local test Fixture does not match the expected file integrity and has changed");
+//          }
+//          throw new Exception("Change in Checksum. Fixture file on RFC does not match the expected value");
+        }
+      } else {
+        Logger logger = LoggerFactory.getLogger(this.getClass());
+        logger.warn("No active Internet connection is available. Running test using only the local fixtures.");
+      }
+    }
+  };
 
   /**
    * Loads a list of tests based on the json-encoded test vector files.
@@ -248,35 +258,6 @@ public class StreamPacketFixturesTest {
     assertThat(Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())).isEqualTo(wantBuffer);
   }
 
-  @Test
-  public void ignoreInvalidFrames() throws IOException {
-
-    StreamPacket startingPacket = StreamPacket.builder()
-        .sequence(UnsignedLong.valueOf(1L))
-        .interledgerPacketType(InterledgerPacketType.PREPARE)
-        .prepareAmount(UnsignedLong.valueOf(1L))
-        .frames(
-            Lists.newArrayList(
-                ConnectionNewAddressFrame.builder()
-                    .sourceAddress(InterledgerAddress.of("g.foo"))
-                    .build(),
-                ConnectionNewAddressFrame.builder()
-                    //.sourceAddress(InterledgerAddress.of("g.foo"))
-                    .build()
-            )
-        )
-        .build();
-
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    StreamCodecContextFactory.oer().write(startingPacket, byteArrayOutputStream);
-
-    String packetWithInvalidFrameBytes = BaseEncoding.base64().encode(byteArrayOutputStream.toByteArray());
-
-    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-    StreamPacket packet = StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
-
-    assertThat(packet).isEqualTo(startingPacket);
-  }
 
   private StreamFrame fromJson(final StreamFrameFixture fixture) {
 
