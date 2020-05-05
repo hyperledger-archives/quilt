@@ -21,8 +21,11 @@ package org.interledger.codecs.stream.frame;
  */
 
 import org.interledger.codecs.ilp.AsnInterledgerAddressCodec;
+import org.interledger.core.InterledgerAddress;
 import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
+
+import java.util.Optional;
 
 public class AsnConnectionNewAddressFrameDataCodec extends AsnSequenceCodec<ConnectionNewAddressFrame> {
 
@@ -37,13 +40,14 @@ public class AsnConnectionNewAddressFrameDataCodec extends AsnSequenceCodec<Conn
 
   @Override
   public ConnectionNewAddressFrame decode() {
+    final Optional<InterledgerAddress> address = Optional.ofNullable(getValueAt(0));
     return ConnectionNewAddressFrame.builder()
-        .sourceAddress(getValueAt(0))
+        .sourceAddress(address)
         .build();
   }
 
   @Override
   public void encode(ConnectionNewAddressFrame value) {
-    setValueAt(0, value.sourceAddress());
+    setValueAt(0, value.sourceAddress().orElse(null));
   }
 }
