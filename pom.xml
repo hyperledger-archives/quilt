@@ -102,7 +102,7 @@
     <guava.version>28.1-jre</guava.version>
     <jackson.version>2.10.0.pr3</jackson.version>
     <okhttp.version>4.2.0</okhttp.version>
-    <slf4j.version>1.7.28</slf4j.version>
+    <slf4j.version>1.7.30</slf4j.version>
 
     <skipITs>false</skipITs>
   </properties>

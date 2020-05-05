@@ -49,7 +49,8 @@ public class SendMoneyExample {
   // NOTE - replace this with the payment pointer for your receiver account
   private static final String RECEIVER_PAYMENT_POINTER = "$xpring.money/demo_receiver";
 
-  private static final String TESTNET_URI = "https://jc1.xpring.dev/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
+  private static final String TESTNET_URI =
+      "https://prod.wc.wallet.xpring.io/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
 
   /**
    * This value will go away once #445 is fixed.
@@ -58,7 +59,7 @@ public class SendMoneyExample {
    */
   @Deprecated
   private static final InterledgerAddress SENDER_ADDRESS =
-      InterledgerAddress.of("test.xpring-dev.jc1.spsp-test").with(SENDER_ACCOUNT_USERNAME);
+      InterledgerAddress.of("test.xpring-dev.wc.prod.spsp").with(SENDER_ACCOUNT_USERNAME);
 
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     SpspClient spspClient = new SimpleSpspClient();
