@@ -76,6 +76,10 @@ public class AsnConnectionNewAddressFrameCodecTest extends AbstractAsnFrameCodec
                 .sourceAddress(InterledgerAddress.of(JUST_RIGHT))
                 .build()
         },
+        // empty address
+        {
+            ConnectionNewAddressFrame.builder().build()
+        },
     });
   }
 }
