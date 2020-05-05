@@ -15,7 +15,6 @@ import static org.interledger.stream.frames.StreamFrameConstants.STREAM_DATA_MAX
 import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY;
 import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_BLOCKED;
 import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_MAX;
-import static org.mockito.Mockito.spy;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.Denomination;
@@ -188,12 +187,16 @@ public class StreamFrameTypeTest {
         .build();
     assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
     // make sure interface default method is exercised
-    final ConnectionNewAddressFrame interfaceFrame = new ConnectionNewAddressFrame() {
-      @Override
-      public InterledgerAddress sourceAddress() {
-        return null;
-      }
-    };
+    final ConnectionNewAddressFrame interfaceFrame = () -> Optional.empty();
+    assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
+  }
+
+  @Test
+  public void connectionNewAddressFrameWithEmptyAddress() {
+    ConnectionNewAddressFrame frame = ConnectionNewAddressFrame.builder().build();
+    assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
+    // make sure interface default method is exercised
+    final ConnectionNewAddressFrame interfaceFrame = () -> Optional.empty();
     assertThat(interfaceFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionNewAddress);
   }
 

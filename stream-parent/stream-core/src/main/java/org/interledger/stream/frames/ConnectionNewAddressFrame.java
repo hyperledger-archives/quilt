@@ -23,6 +23,8 @@ package org.interledger.stream.frames;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 
+import java.util.Optional;
+
 /**
  * Indicates that the connection was closed.
  */
@@ -48,6 +50,6 @@ public interface ConnectionNewAddressFrame extends StreamFrame {
    *
    * @return A {@link InterledgerAddress} representing the source address of the receiver.
    */
-  InterledgerAddress sourceAddress();
+  Optional<InterledgerAddress> sourceAddress();
 
 }
