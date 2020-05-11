@@ -173,6 +173,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         return InterledgerFulfillPacket.builder()
             .fulfillment(fulfillment)
             .data(encryptedReturnableStreamPacketBytes)
+            .typedData(returnableStreamPacketResponse)
             .build();
 
       } catch (IOException e) {
@@ -212,6 +213,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
             .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
             .triggeredBy(receiverAddress)
             .data(encryptedReturnableStreamPacketBytes)
+            .typedData(returnableStreamPacketResponse)
             .build();
       } catch (IOException e) {
         throw new StreamException(e.getMessage(), e);

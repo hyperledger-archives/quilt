@@ -494,6 +494,7 @@ public class SimpleStreamSender implements StreamSender {
           .executionCondition(executionCondition)
           .expiresAt(DateUtils.now().plusSeconds(30L))
           .data(streamPacketData)
+          .typedData(streamPacket)
           .build();
 
       // The function that parses out the STREAM packets...
@@ -604,6 +605,8 @@ public class SimpleStreamSender implements StreamSender {
             .executionCondition(executionCondition)
             .expiresAt(DateUtils.now().plusSeconds(30L))
             .data(streamPacketData)
+            // Added here for JVM convenience, but only the bytes above are encoded to ASN.1 OER
+            .typedData(streamPacket)
             .build();
 
         // auth

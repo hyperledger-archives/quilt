@@ -32,6 +32,7 @@ import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * An extension of {@link InterledgerPreparePacket} that can be used as an IL-DCP request over Interledger.
@@ -62,9 +63,8 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   }
 
   /**
-   * The execution_condition of an ILP packet for IL-DCP is always
-   * {@code Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=} in Base64 format, which is the SHA-256 hash of a 32-byte
-   * array with all 0 values.
+   * The execution_condition of an ILP packet for IL-DCP is always {@code Zmh6rfhivXdsj8GLjp+OIAiXFIVu4jOzkCpZHQ1fKSU=}
+   * in Base64 format, which is the SHA-256 hash of a 32-byte array with all 0 values.
    */
   @Override
   default InterledgerCondition getExecutionCondition() {
@@ -96,6 +96,11 @@ public interface IldcpRequestPacket extends InterledgerPreparePacket {
   @Override
   default byte[] getData() {
     return EMPTY_DATA;
+  }
+
+  @Override
+  default Optional<Object> typedData() {
+    return Optional.empty();
   }
 
   /**
