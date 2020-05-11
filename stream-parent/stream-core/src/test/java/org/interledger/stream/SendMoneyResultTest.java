@@ -15,9 +15,20 @@ import java.time.Duration;
  */
 public class SendMoneyResultTest {
 
+  private static final Denomination SENDER_DENOMINATION = Denomination.builder()
+      .assetCode("USD")
+      .assetScale((short) 2)
+      .build();
+
+  private static final Denomination DESTINATION_DENOMINATION = Denomination.builder()
+      .assetCode("XRP")
+      .assetScale((short) 9)
+      .build();
+
   @Test
   public void testBuilderWithNoOptionals() {
     SendMoneyResult result = SendMoneyResult.builder()
+        .senderDenomination(SENDER_DENOMINATION)
         .destinationAddress(InterledgerAddress.of("example.destination"))
         .originalAmount(ZERO)
         .amountDelivered(UnsignedLong.ONE)
@@ -30,6 +41,7 @@ public class SendMoneyResultTest {
         .build();
     assertThat(result.senderAddress()).isEmpty();
     assertThat(result.destinationAddress()).isEqualTo(InterledgerAddress.of("example.destination"));
+    assertThat(result.destinationDenomination()).isEmpty();
     assertThat(result.originalAmount()).isEqualTo(ZERO);
     assertThat(result.amountDelivered()).isEqualTo(UnsignedLong.ONE);
     assertThat(result.amountSent()).isEqualTo(UnsignedLong.valueOf(2));
@@ -45,7 +57,9 @@ public class SendMoneyResultTest {
   public void testBuilderWithOptionals() {
     SendMoneyResult result = SendMoneyResult.builder()
         .senderAddress(InterledgerAddress.of("example.sender"))
+        .senderDenomination(SENDER_DENOMINATION)
         .destinationAddress(InterledgerAddress.of("example.destination"))
+        .destinationDenomination(DESTINATION_DENOMINATION)
         .originalAmount(ZERO)
         .amountDelivered(UnsignedLong.ONE)
         .amountSent(UnsignedLong.valueOf(2))
@@ -55,8 +69,11 @@ public class SendMoneyResultTest {
         .sendMoneyDuration(Duration.ofMillis(1000))
         .successfulPayment(false)
         .build();
+
     assertThat(result.senderAddress().get()).isEqualTo(InterledgerAddress.of("example.sender"));
+    assertThat(result.senderDenomination()).isEqualTo(SENDER_DENOMINATION);
     assertThat(result.destinationAddress()).isEqualTo(InterledgerAddress.of("example.destination"));
+    assertThat(result.destinationDenomination().get()).isEqualTo(DESTINATION_DENOMINATION);
     assertThat(result.originalAmount()).isEqualTo(ZERO);
     assertThat(result.amountDelivered()).isEqualTo(UnsignedLong.ONE);
     assertThat(result.amountSent()).isEqualTo(UnsignedLong.valueOf(2));

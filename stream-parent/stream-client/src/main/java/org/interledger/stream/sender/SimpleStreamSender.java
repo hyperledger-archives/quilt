@@ -367,7 +367,9 @@ public class SimpleStreamSender implements StreamSender {
             this.sendMoneyPacketized();
             return SendMoneyResult.builder()
                 .senderAddress(this.computeSenderAddressForReportingPurposes())
+                .senderDenomination(senderDenomination)
                 .destinationAddress(destinationAddress)
+                .destinationDenomination(receiverDenomination)
                 .amountDelivered(paymentTracker.getDeliveredAmountInReceiverUnits())
                 .amountSent(paymentTracker.getDeliveredAmountInSenderUnits())
                 .amountLeftToSend(paymentTracker.getOriginalAmountLeft())
@@ -400,7 +402,9 @@ public class SimpleStreamSender implements StreamSender {
       Objects.requireNonNull(startPreflight);
       return SendMoneyResult.builder()
           .senderAddress(this.computeSenderAddressForReportingPurposes())
+          .senderDenomination(senderDenomination)
           .destinationAddress(destinationAddress)
+          .destinationDenomination(receiverDenomination)
           .sendMoneyDuration(Duration.between(startPreflight, DateUtils.now()))
           .numRejectPackets(0)
           .numFulfilledPackets(0)
@@ -596,8 +600,8 @@ public class SimpleStreamSender implements StreamSender {
 
         // Create the ILP Prepare packet
         final byte[] streamPacketData = this.toEncrypted(sharedSecret, streamPacket);
-        final InterledgerCondition executionCondition;
-        executionCondition = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
+        final InterledgerCondition executionCondition
+            = generatedFulfillableFulfillment(sharedSecret, streamPacketData).getCondition();
 
         final Supplier<InterledgerPreparePacket> preparePacket = () -> InterledgerPreparePacket.builder()
             .destination(destinationAddress)

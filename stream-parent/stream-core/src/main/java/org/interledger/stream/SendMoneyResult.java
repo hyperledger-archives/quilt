@@ -26,11 +26,26 @@ public interface SendMoneyResult {
   Optional<InterledgerAddress> senderAddress();
 
   /**
+   * The {@link Denomination} of the sender address (i.e., the STREAM sender).
+   *
+   * @return The {@link Denomination} of the STREAM sender.
+   */
+  Denomination senderDenomination();
+
+  /**
    * The ILP address of the receiver.
    *
    * @return The {@link InterledgerAddress} of the Receiver.
    */
   InterledgerAddress destinationAddress();
+
+  /**
+   * The optionally-present {@link Denomination} of the destination address (i.e., the STREAM receiver). This value is
+   * optional because some receivers don't advertise their asset details.
+   *
+   * @return A {@link Denomination} of the STREAM receiver.
+   */
+  Optional<Denomination> destinationDenomination();
 
   /**
    * The original amount that was requested to be sent.
