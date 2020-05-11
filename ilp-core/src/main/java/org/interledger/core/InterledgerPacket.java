@@ -20,6 +20,8 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
+import java.util.Optional;
+
 public interface InterledgerPacket {
 
   /**
@@ -29,4 +31,12 @@ public interface InterledgerPacket {
    * @return A byte array.
    */
   byte[] getData();
+
+  /**
+   * Typed variant of {@link #getData}. This method exists so that implementations can constructed object (e.g., a
+   * StreamPacket) and use them in various places in code without having to decode this object's bytes more than once.
+   *
+   * @return An optionally-present {@link Object} that can be cast to an appropriate type.
+   */
+  Optional<Object> typedData();
 }

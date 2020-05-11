@@ -132,6 +132,7 @@ public class IlpPacketEmitter {
     return InterledgerFulfillPacket.builder()
         .fulfillment(InterledgerFulfillment.of(new byte[32]))
         .data(streamPacketData)
+        .typedData(streamPacket)
         .build();
   }
 
@@ -172,7 +173,8 @@ public class IlpPacketEmitter {
         .getCondition();
     return preparePacketBuilder()
         .executionCondition(executionCondition)
-        .data(streamPacketData);
+        .data(streamPacketData)
+        .typedData(streamPacket);
   }
 
   private static InterledgerRejectPacket rejectPacketWithStreamFrames() throws IOException {
