@@ -3,12 +3,14 @@ package org.interledger.stream;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import org.interledger.core.InterledgerPacketType;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.frames.StreamFrame;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link StreamPacket}.
@@ -43,6 +45,11 @@ public class StreamPacketTest {
       @Override
       public List<StreamFrame> frames() {
         return null;
+      }
+
+      @Override
+      public Optional<SharedSecret> sharedSecret() {
+        return Optional.empty();
       }
     };
     assertThat(interfacePacket.version()).isEqualTo((short) 1);

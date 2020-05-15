@@ -32,6 +32,8 @@ import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
+import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
@@ -50,6 +52,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -66,7 +69,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -382,6 +384,11 @@ public class SimpleStreamSender implements StreamSender {
           }, sendMoneyExecutor)
           .whenComplete(($, error) -> {
             sendMoneyExecutor.shutdown();
+            try {
+              closeStream();
+            } catch (StreamConnectionClosedException e) {
+              logger.error("closeStream failed", e);
+            }
             if (error != null) {
               logger.error("SendMoney Stream failed: " + error.getMessage(), error);
             }
@@ -964,26 +971,25 @@ public class SimpleStreamSender implements StreamSender {
       this.unrecoverableErrorEncountered.set(unrecoverableErrorEncountered);
     }
 
+    /**
+     * Close the current STREAM connection by sending a {@link StreamCloseFrame} to the receiver.
+     *
+     * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
+     */
+     @VisibleForTesting
+     void closeStream() throws StreamConnectionClosedException {
+       this.sendStreamFramesInZeroValuePacket(Lists.newArrayList(
+           StreamCloseFrame.builder()
+               .streamId(UnsignedLong.ONE)
+               .errorCode(ErrorCodes.NoError)
+               .build()
+       ));
+     }
+
     // TODO: FIXME per https://github.com/hyperledger/quilt/issues/308. Until this is completed, parallel STREAM send()
     //  operations are not thread-safe. Consider a new instance of everything on each sendMoney? In other words, each
     //  SendMoney requires its own connection information,
     // so as long as two senders don't use the same Connection details, everything should be thread-safe.
-
-    ///**
-    // * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
-    // *
-    // * @return An {@link UnsignedLong} representing the amount delivered by this individual stream.
-    // */
-    // TODO: Add unit test coverage here per See https://github.com/hyperledger/quilt/issues/308
-    // @VisibleForTesting
-    // void closeStream() throws StreamConnectionClosedException {
-    //   this.sendStreamFramesInZeroValuePacket(Lists.newArrayList(
-    //       StreamCloseFrame.builder()
-    //           .streamId(UnsignedLong.ONE)
-    //           .errorCode(ErrorCode.NoError)
-    //           .build()
-    //   ));
-    // }
 
     // /**
     //  * Close the current STREAM connection by sending a {@link ConnectionCloseFrame} to the receiver.
@@ -992,72 +998,68 @@ public class SimpleStreamSender implements StreamSender {
     //  */
     // // TODO: Add unit test coverage here per See https://github.com/hyperledger/quilt/issues/308
     // @VisibleForTesting
-    // void closeConnection() throws StreamConnectionClosedException {
-    //   this.sendStreamFramesInZeroValuePacket(Lists.newArrayList(
-    //       ConnectionCloseFrame.builder()
-    //           .errorCode(ErrorCode.NoError)
-    //           .build()
-    //   ));
-    // }
+//     void closeConnection() throws StreamConnectionClosedException {
+//       this.sendStreamFramesInZeroValuePacket(Lists.newArrayList(
+//           ConnectionCloseFrame.builder()
+//               .errorCode(ErrorCodes.NoError)
+//               .build()
+//       ));
+//     }
 
-    // private void sendStreamFramesInZeroValuePacket(final Collection<StreamFrame> streamFrames)
-    //     throws StreamConnectionClosedException {
-    //   Objects.requireNonNull(streamFrames);
-    //
-    //   if (streamFrames.size() <= 0) {
-    //     logger.warn("sendStreamFrames called with 0 frames");
-    //     return;
-    //   }
-    //
-    //   final StreamPacket streamPacket = StreamPacket.builder()
-    //       .interledgerPacketType(InterledgerPacketType.PREPARE)
-    //       .prepareAmount(UnsignedLong.ZERO)
-    //       .sequence(streamConnection.nextSequence())
-    //       .addAllFrames(streamFrames)
-    //       .build();
-    //
-    //   // Create the ILP Prepare packet using an encrypted StreamPacket as the encryptedStreamPacket payload...
-    //   final byte[] encryptedStreamPacket = this.toEncrypted(sharedSecret, streamPacket);
-    //   final InterledgerCondition executionCondition;
-    //   executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket).getCondition();
-    //
-    //   final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
-    //       .destination(destinationAddress)
-    //       .amount(UnsignedLong.ZERO)
-    //       .executionCondition(executionCondition)
-    //       .expiresAt(TimeUtils.now().plusSeconds(30L))
-    //       .data(encryptedStreamPacket)
-    //       .build();
-    //
-    //   final PrepareAmounts prepareAmounts = PrepareAmounts.from(preparePacket, streamPacket);
-    //
-    //   link.sendPacket(preparePacket).handle(
-    //       fulfillPacket -> handleFulfill(preparePacket, streamPacket, fulfillPacket, prepareAmounts),
-    //       rejectPacket -> handleReject(preparePacket, streamPacket, rejectPacket, prepareAmounts, numRejectedPackets,
-    //           congestionController)
-    //   );
-    //
-    //   // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
-    //   streamFrames.stream()
-    //       .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
-    //       .findAny()
-    //       .ifPresent($ -> {
-    //         streamConnection.closeConnection();
-    //         logger.info("STREAM Connection closed.");
-    //       });
-    //
-    //   // Emit a log statement if the called supplied a StreamCloseFrame
-    //   streamFrames.stream()
-    //       .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
-    //       .findAny()
-    //       .map($ -> (StreamCloseFrame) $)
-    //       .ifPresent($ -> {
-    //         logger.info(
-    //             "StreamId {} Closed. Delivered: {} ({} packets fulfilled, {} packets rejected)",
-    //             $.streamId(), paymentTracker.getDeliveredAmountInReceieverUnits(), this.numFulfilledPackets.get(),
-    //             this.numRejectedPackets.get()
-    //         );
-    //       });
-    // }
+     private void sendStreamFramesInZeroValuePacket(final Collection<StreamFrame> streamFrames)
+         throws StreamConnectionClosedException {
+       Objects.requireNonNull(streamFrames);
+
+       if (streamFrames.size() <= 0) {
+         logger.warn("sendStreamFrames called with 0 frames");
+         return;
+       }
+
+       final StreamPacket streamPacket = StreamPacket.builder()
+           .interledgerPacketType(InterledgerPacketType.PREPARE)
+           .prepareAmount(UnsignedLong.ZERO)
+           .sequence(streamConnection.nextSequence())
+           .addAllFrames(streamFrames)
+           .build();
+
+       // Create the ILP Prepare packet using an encrypted StreamPacket as the encryptedStreamPacket payload...
+       final byte[] encryptedStreamPacket = this.toEncrypted(sharedSecret, streamPacket);
+       final InterledgerCondition executionCondition;
+       executionCondition = generatedFulfillableFulfillment(sharedSecret, encryptedStreamPacket).getCondition();
+
+       final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+           .destination(destinationAddress)
+           .amount(UnsignedLong.ZERO)
+           .executionCondition(executionCondition)
+           .expiresAt(DateUtils.now().plusSeconds(30L))
+           .data(encryptedStreamPacket)
+           .typedData(streamPacket)
+           .build();
+
+       link.sendPacket(preparePacket);
+
+       //TODO: FIXME per https://github.com/hyperledger/quilt/issues/308
+       // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
+//       streamFrames.stream()
+//           .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
+//           .findAny()
+//           .ifPresent($ -> {
+//             streamConnection.closeConnection();
+//             logger.info("STREAM Connection closed.");
+//           });
+
+       // Emit a log statement if the called supplied a StreamCloseFrame
+       streamFrames.stream()
+           .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
+           .findAny()
+           .map($ -> (StreamCloseFrame) $)
+           .ifPresent($ -> {
+             logger.info(
+                 "StreamId {} Closed. Delivered: {} ({} packets fulfilled, {} packets rejected)",
+                 $.streamId(), paymentTracker.getDeliveredAmountInReceiverUnits(), this.numFulfilledPackets.get(),
+                 this.numRejectedPackets.get()
+             );
+           });
+     }
   }
 }

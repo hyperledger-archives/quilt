@@ -156,6 +156,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
           .interledgerPacketType(InterledgerPacketType.FULFILL)
           .prepareAmount(preparePacket.getAmount())
           .frames(responseFrames.build())
+          .sharedSecret(streamSharedSecret)
           .build();
 
       logger.debug(
