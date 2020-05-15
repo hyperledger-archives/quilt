@@ -24,6 +24,7 @@ import static org.interledger.stream.FluentCompareTo.is;
 
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 
@@ -31,6 +32,7 @@ import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>Interledger Payments moves assets of one party to another that consists of one or more ledger
@@ -134,5 +136,11 @@ public interface StreamPacket {
    * @return A {@link List} of Stream Frames that this packet contains.
    */
   List<StreamFrame> frames();
+
+  /**
+   * transient value of shared secret optionally set by local receiver but not encoded across the wire
+   * @return
+   */
+  Optional<SharedSecret> sharedSecret();
 
 }

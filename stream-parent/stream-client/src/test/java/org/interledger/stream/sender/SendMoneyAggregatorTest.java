@@ -23,6 +23,7 @@ import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDI
 import static org.interledger.core.InterledgerErrorCode.T05_RATE_LIMITED;
 import static org.interledger.core.InterledgerErrorCode.T99_APPLICATION_ERROR;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -56,6 +57,9 @@ import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.calculators.NoOpExchangeRateCalculator;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.frames.StreamCloseFrame;
+import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
 
@@ -75,6 +79,7 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -84,6 +89,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Unit tests for {@link SendMoneyAggregator}.
@@ -152,8 +158,7 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    assertOnlyPreflightAndClose();
   }
 
   @Test
@@ -165,8 +170,7 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    assertOnlyPreflightAndClose();
   }
 
   @Test
@@ -177,9 +181,7 @@ public class SendMoneyAggregatorTest {
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 
     sendMoneyAggregator.send().get();
-
-    // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    assertOnlyPreflightAndClose();
   }
 
   @Test
@@ -192,8 +194,7 @@ public class SendMoneyAggregatorTest {
 
     sendMoneyAggregator.send().get();
 
-    // Expect 1 Link call due to preflight check
-    Mockito.verify(linkMock, times(1)).sendPacket(any());
+    assertOnlyPreflightAndClose();
   }
 
   @Test
@@ -656,6 +657,7 @@ public class SendMoneyAggregatorTest {
     assertThat(result.amountLeftToSend()).isLessThanOrEqualTo(UnsignedLong.valueOf(9));
     verify(congestionControllerMock, atMost(11)).getMaxAmount();
     verify(linkMock, atMost(11)).sendPacket(any());
+    assertStreamCloseFrameSent();
   }
 
   /**
@@ -745,6 +747,40 @@ public class SendMoneyAggregatorTest {
         .data(new byte[0])
         .fulfillment(InterledgerFulfillment.of(new byte[32]))
         .build();
+  }
+
+  /**
+   * Extracts all the stream frames from all the prepare packets sent on the link.
+   * @return
+   */
+  private List<StreamFrame> getStreamFramesSent() {
+    ArgumentCaptor<InterledgerPreparePacket> prepareCaptor = ArgumentCaptor.forClass(InterledgerPreparePacket.class);
+    verify(linkMock, atLeastOnce()).sendPacket(prepareCaptor.capture());
+    return prepareCaptor.getAllValues().stream()
+        .map(InterledgerPreparePacket::typedData)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .filter($ -> $ instanceof StreamPacket)
+        .map($ -> (StreamPacket) $)
+        .flatMap(packet -> packet.frames().stream())
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Assert that only preflight and close frames were sent, as is the case when no other frames can/need to be sent.
+   */
+  private void assertOnlyPreflightAndClose() {
+    // Expect 2 Link calls due to preflight check and stream close
+    Mockito.verify(linkMock, times(2)).sendPacket(any());
+    assertStreamCloseFrameSent();
+  }
+
+  private void assertStreamCloseFrameSent() {
+    assertThat(getStreamFramesSent()).contains(closeFrame());
+  }
+
+  private StreamCloseFrame closeFrame() {
+    return StreamCloseFrame.builder().streamId(UnsignedLong.ONE).errorCode(ErrorCodes.NoError).build();
   }
 
 }
