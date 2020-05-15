@@ -1038,14 +1038,15 @@ public class SimpleStreamSender implements StreamSender {
 
        link.sendPacket(preparePacket);
 
+       //TODO: FIXME per https://github.com/hyperledger/quilt/issues/308
        // Mark the streamConnection object as closed if the caller supplied a ConnectionCloseFrame
-       streamFrames.stream()
-           .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
-           .findAny()
-           .ifPresent($ -> {
-             streamConnection.closeConnection();
-             logger.info("STREAM Connection closed.");
-           });
+//       streamFrames.stream()
+//           .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
+//           .findAny()
+//           .ifPresent($ -> {
+//             streamConnection.closeConnection();
+//             logger.info("STREAM Connection closed.");
+//           });
 
        // Emit a log statement if the called supplied a StreamCloseFrame
        streamFrames.stream()
