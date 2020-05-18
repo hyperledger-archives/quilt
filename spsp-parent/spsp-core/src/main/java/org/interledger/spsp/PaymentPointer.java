@@ -14,36 +14,42 @@ import org.immutables.value.Value.Immutable;
  */
 public interface PaymentPointer {
 
-  public static final String WELL_KNOWN = "/.well-known/pay";
-  
+  String WELL_KNOWN = "/.well-known/pay";
+
   /**
    * Parses a payment pointer string into a @{code PaymentPointer}.
+   *
    * @param value text
+   *
    * @return payment pointer
+   *
    * @throws IllegalArgumentException if cannot be parsed
-   * @throws IllegalStateException if parsed payment pointer has invalid host and/or path values
+   * @throws IllegalStateException    if parsed payment pointer has invalid host and/or path values
    */
   static PaymentPointer of(String value) {
     if (!value.startsWith("$")) {
       throw new IllegalArgumentException("PaymentPointers must begin with $");
     }
+    if (value.contains("://")) {
+      throw new IllegalArgumentException("PaymentPointers paths must not contain a scheme");
+    }
     String address = value.substring(1);
     int pathIndex = address.indexOf("/");
     if (pathIndex >= 0) {
       return ImmutablePaymentPointer.builder()
-        .host(address.substring(0, pathIndex))
-        .path(address.substring(pathIndex))
-        .build();
+          .host(address.substring(0, pathIndex))
+          .path(address.substring(pathIndex))
+          .build();
     } else {
       return ImmutablePaymentPointer.builder()
-        .host(address)
-        .build();
+          .host(address)
+          .build();
     }
   }
 
   /**
-   * A host as defined by RFC-3986, which is generally (though not always) a registered name intended for lookup in
-   * the DNS.
+   * A host as defined by RFC-3986, which is generally (though not always) a registered name intended for lookup in the
+   * DNS.
    *
    * @return A {@link String} containing the `host` portion of this Payment Pointer.
    *
@@ -62,6 +68,7 @@ public interface PaymentPointer {
 
   @Immutable
   abstract class AbstractPaymentPointer implements PaymentPointer {
+
     @Default
     public String path() {
       return WELL_KNOWN;
@@ -77,18 +84,21 @@ public interface PaymentPointer {
       Preconditions.checkState(!host().isEmpty(), "PaymentPointers must specify a host");
       if (Strings.isNullOrEmpty(path())) {
         return ImmutablePaymentPointer.builder().from(this)
-          .path(WELL_KNOWN)
-          .build();
+            .path(WELL_KNOWN)
+            .build();
       }
       // Normalize acceptable input.
       if (path().equals("/")) {
         return ImmutablePaymentPointer.builder().from(this)
-          .path(WELL_KNOWN)
-          .build();
+            .path(WELL_KNOWN)
+            .build();
       }
       Preconditions.checkState(path().startsWith("/"), "path must start with a forward-slash");
       Preconditions.checkState(
           CharMatcher.ascii().matchesAllOf(toString()), "PaymentPointers may only contain ASCII characters");
+
+      // Exclude the userinfo, port, query, and fragment in the URL.
+      Preconditions.checkState(path().contains("://") == false, "PaymentPointers paths must not contain a scheme");
 
       return this;
     }

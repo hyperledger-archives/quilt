@@ -43,8 +43,7 @@ public class PaymentPointerTest {
 
   @Test
   public void accountPath() {
-    assertThat(PaymentPointer.of("$example.com/foo").path())
-        .isEqualTo("/foo");
+    assertThat(PaymentPointer.of("$example.com/foo").path()).isEqualTo("/foo");
   }
 
   @Test
@@ -85,4 +84,10 @@ public class PaymentPointerTest {
     PaymentPointer.of("$ZA̡͊͠͝LGΌ IS̯͈͕̹̘̱ͮ TO͇̹̺ͅƝ̴ȳ̳ TH̘Ë͖́̉ ͠P̯͍̭O̚N̐Y̡");
   }
 
+  @Test
+  public void disallowScheme(){
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("PaymentPointers paths must not contain a scheme");
+    PaymentPointer.of("$https://dev.foo.example.com/someone");
+  }
 }
