@@ -656,7 +656,7 @@ public class SendMoneyAggregatorTest {
     assertThat(result.numRejectPackets()).isLessThanOrEqualTo(9);
     assertThat(result.amountLeftToSend()).isLessThanOrEqualTo(UnsignedLong.valueOf(9));
     verify(congestionControllerMock, atMost(11)).getMaxAmount();
-    verify(linkMock, atMost(11)).sendPacket(any());
+    verify(linkMock, atMost(12)).sendPacket(any());
     assertStreamCloseFrameSent();
   }
 
