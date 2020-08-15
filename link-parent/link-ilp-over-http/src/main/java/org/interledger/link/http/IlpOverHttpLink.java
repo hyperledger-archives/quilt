@@ -59,6 +59,7 @@ import java.util.stream.Stream;
  */
 public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> implements Link<IlpOverHttpLinkSettings> {
 
+  private static final String BEARER_WITH_SPACE = BEARER + " ";
   public static final String LINK_TYPE_STRING = "ILP_OVER_HTTP";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
 
@@ -83,7 +84,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
   private final Supplier<String> authTokenSupplier;
 
   private final HttpUrl outgoingUrl;
-  private final String BEARER_WITH_SPACE = BEARER + " ";
+
 
   /**
    * Required-args Constructor.
