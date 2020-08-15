@@ -12,6 +12,7 @@ import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 
 import java.util.Base64;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.function.Supplier;
 
 /**
@@ -77,5 +78,14 @@ public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link
 
       return rejectPacket;
     }
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", PingLoopbackLink.class.getSimpleName() + "[", "]")
+        .add("linkId=" + getLinkId())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("linkSettings=" + getLinkSettings())
+        .toString();
   }
 }

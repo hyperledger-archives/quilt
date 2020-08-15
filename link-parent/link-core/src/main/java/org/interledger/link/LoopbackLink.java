@@ -14,6 +14,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Supplier;
 
 /**
@@ -93,5 +94,14 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
     }
     return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T03_CONNECTOR_BUSY,
         "Loopback set to exceed timeout via simulate_timeout=T03");
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", LoopbackLink.class.getSimpleName() + "[", "]")
+        .add("linkId=" + getLinkId())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("linkSettings=" + getLinkSettings())
+        .toString();
   }
 }
