@@ -12,6 +12,7 @@ import org.interledger.stream.Denomination;
 import org.interledger.stream.receiver.StreamReceiver;
 
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.function.Supplier;
 
 /**
@@ -74,5 +75,16 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
               return rejectPacket;
             }
         );
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", StatelessSpspReceiverLink.class.getSimpleName() + "[", "]")
+        .add("linkId=" + getLinkId())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("streamReceiver=" + streamReceiver)
+        .add("denomination=" + denomination)
+        .add("linkSettings=" + getLinkSettings())
+        .toString();
   }
 }
