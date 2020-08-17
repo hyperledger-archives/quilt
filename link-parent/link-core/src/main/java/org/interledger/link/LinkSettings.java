@@ -3,6 +3,7 @@ package org.interledger.link;
 import org.immutables.value.Value;
 
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * Configuration information relating to a {@link Link}.
@@ -56,5 +57,12 @@ public interface LinkSettings {
       }
     }
 
+    @Override
+    public String toString() {
+      return new StringJoiner(", ", AbstractLinkSettings.class.getSimpleName() + "[", "]")
+          .add("linkType=" + getLinkType())
+          .add("customSettings=" + getCustomSettings())
+          .toString();
+    }
   }
 }

@@ -45,6 +45,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -58,6 +59,7 @@ import java.util.stream.Stream;
  */
 public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> implements Link<IlpOverHttpLinkSettings> {
 
+  private static final String BEARER_WITH_SPACE = BEARER + " ";
   public static final String LINK_TYPE_STRING = "ILP_OVER_HTTP";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
 
@@ -82,6 +84,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
   private final Supplier<String> authTokenSupplier;
 
   private final HttpUrl outgoingUrl;
+
 
   /**
    * Required-args Constructor.
@@ -123,9 +126,9 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
     Objects.requireNonNull(preparePacket);
 
     if (preparePacket.getExpiresAt() != null &&
-          okHttpClient.readTimeoutMillis() <= Duration.between(Instant.now(), preparePacket.getExpiresAt()).toMillis()) {
+        okHttpClient.readTimeoutMillis() <= Duration.between(Instant.now(), preparePacket.getExpiresAt()).toMillis()) {
       logger.warn("OkHttpClient read timeout is shorter than the Prepare Packet's timeout.  " +
-        "This may result in an HTTP timeout while unexpired ILP packets are in flight.");
+          "This may result in an HTTP timeout while unexpired ILP packets are in flight.");
     }
 
     final Request okHttpRequest;
@@ -154,18 +157,18 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
           if (response.code() == 401 || response.code() == 403) {
             // If this code is returned, we know the Link is misconfigured
             customErrorMessage = String.format("Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer " +
-              "Token. response=%s", response);
+                "Token. response=%s", response);
             logger.error(customErrorMessage);
           }
 
           String message = Stream.of(
-            customErrorMessage,
-            problem.map(Problem::getTitle).orElse(null),
-            errorResponseBody
+              customErrorMessage,
+              problem.map(Problem::getTitle).orElse(null),
+              errorResponseBody
           )
-          .filter(Objects::nonNull)
-          .findFirst()
-          .get();
+              .filter(Objects::nonNull)
+              .findFirst()
+              .get();
           // The request was bad for some reason, likely due to whatever is in the packet.
           rejectPacket = InterledgerRejectPacket.builder()
               .triggeredBy(getOperatorAddressSupplier().get())
@@ -249,7 +252,6 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
     }
   }
 
-  private final String BEARER_WITH_SPACE = BEARER + " ";
   /**
    * Construct headers for an ILP-over-HTTP request.
    *
@@ -326,4 +328,22 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
     }
   }
 
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", IlpOverHttpLink.class.getSimpleName() + "[", "]")
+        .add("linkId=" + getLinkId())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("outgoingUrl=" + outgoingUrl)
+        .add("linkSettings=" + getLinkSettings())
+        .toString();
+  }
+
+  /**
+   * Accessor for the "outgoing" URL that this link uses to make outgoing HTTP requests to its peer.
+   *
+   * @return A {@link okhttp3.HttpUrl}.
+   */
+  public HttpUrl getOutgoingUrl() {
+    return this.outgoingUrl;
+  }
 }

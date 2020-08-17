@@ -14,8 +14,6 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -29,8 +27,6 @@ public class IlpOverHttpLinkFactory implements LinkFactory {
   private final Decryptor decryptor;
   private final ObjectMapper objectMapper;
   private final CodecContext ilpCodecContext;
-
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   /**
    * Required-args Constructor.
