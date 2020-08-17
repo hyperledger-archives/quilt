@@ -43,18 +43,20 @@ public class IlpOverHttpLinkTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
+
   @Mock
-  OkHttpClient httpClient;
+  private OkHttpClient httpClientMock;
   @Mock
-  ObjectMapper objectMapper;
+  private ObjectMapper objectMapperMock;
   @Mock
-  CodecContext codecContext;
+  private CodecContext codecContextMock;
   @Mock
-  BearerTokenSupplier bearerTokenSupplier;
+  private BearerTokenSupplier bearerTokenSupplierMock;
   @Mock
-  InterledgerPreparePacket packet;
+  private InterledgerPreparePacket packetMock;
 
   private IlpOverHttpLink link;
 
@@ -63,26 +65,26 @@ public class IlpOverHttpLinkTest {
     link = new IlpOverHttpLink(
         () -> InterledgerAddress.of("example.destination"),
         HttpUrl.get("https://cannotspellsurgerywithouturges.com"),
-        httpClient,
-        objectMapper,
-        codecContext,
-        bearerTokenSupplier
+        httpClientMock,
+        objectMapperMock,
+        codecContextMock,
+        bearerTokenSupplierMock
     );
     link.setLinkId(LinkId.of("pepe silvia"));
-    packet = mock(InterledgerPreparePacket.class);
+    packetMock = mock(InterledgerPreparePacket.class);
   }
 
   @Test
   public void sendFailsOnBadWrite() throws Exception {
     expectedException.expect(LinkException.class);
-    doThrow(IOException.class).when(codecContext).write(any(), any());
-    link.sendPacket(packet);
+    doThrow(IOException.class).when(codecContextMock).write(any(), any());
+    link.sendPacket(packetMock);
   }
 
   @Test
   public void rejectOnNotAuthed() throws Exception {
     mockCall(401);
-    InterledgerResponsePacket responsePacket = link.sendPacket(packet);
+    InterledgerResponsePacket responsePacket = link.sendPacket(packetMock);
     assertThat(responsePacket).extracting("code", "message")
       .containsExactly(
         InterledgerErrorCode.F00_BAD_REQUEST,
@@ -94,7 +96,7 @@ public class IlpOverHttpLinkTest {
   @Test
   public void rejectOnForbidden() throws Exception {
     mockCall(403);
-    InterledgerResponsePacket responsePacket = link.sendPacket(packet);
+    InterledgerResponsePacket responsePacket = link.sendPacket(packetMock);
     assertThat(responsePacket).extracting("code", "message")
       .containsExactly(InterledgerErrorCode.F00_BAD_REQUEST,
         "Unable to connect to remote ILP-over-HTTP Link: Invalid Bearer Token. response=Response{protocol=h2, " +
@@ -105,7 +107,7 @@ public class IlpOverHttpLinkTest {
   @Test
   public void rejectOnBadRequest() throws Exception {
     mockCall(422);
-    InterledgerResponsePacket responsePacket = link.sendPacket(packet);
+    InterledgerResponsePacket responsePacket = link.sendPacket(packetMock);
     assertThat(responsePacket).extracting("code", "message")
         .containsExactly(InterledgerErrorCode.F00_BAD_REQUEST, "{}");
   }
@@ -113,7 +115,7 @@ public class IlpOverHttpLinkTest {
   @Test
   public void rejectOnInternalError() throws Exception {
     mockCall(500);
-    InterledgerResponsePacket responsePacket = link.sendPacket(packet);
+    InterledgerResponsePacket responsePacket = link.sendPacket(packetMock);
     assertThat(responsePacket).extracting("code", "message")
         .containsExactly(InterledgerErrorCode.T00_INTERNAL_ERROR, "{}");
   }
@@ -122,20 +124,20 @@ public class IlpOverHttpLinkTest {
   public void success() throws Exception {
     mockCall(200);
     InterledgerResponsePacket success = mock(InterledgerResponsePacket.class);
-    when(codecContext.read(any(), any())).thenReturn(success);
-    InterledgerResponsePacket responsePacket = link.sendPacket(packet);
+    when(codecContextMock.read(any(), any())).thenReturn(success);
+    InterledgerResponsePacket responsePacket = link.sendPacket(packetMock);
     assertThat(responsePacket).isEqualTo(success);
-    verify(codecContext, times(1)).read(any(), any());
+    verify(codecContextMock, times(1)).read(any(), any());
   }
 
   @Test
   public void fallThrough() throws Exception {
     mockCall(200);
-    when(codecContext.read(any(), any())).thenThrow(new IOException("i messed up"));
+    when(codecContextMock.read(any(), any())).thenThrow(new IOException("i messed up"));
     expectedException.expect(LinkException.class);
     expectedException.expectMessage("i messed up");
-    InterledgerResponsePacket responsePacket = link.sendPacket(packet);
-    verify(codecContext, times(1)).read(any(), any());
+    InterledgerResponsePacket responsePacket = link.sendPacket(packetMock);
+    verify(codecContextMock, times(1)).read(any(), any());
   }
 
   @Test
@@ -192,7 +194,7 @@ public class IlpOverHttpLinkTest {
   @Test
   public void testConnectionThrowsUnexpected() throws Exception {
     Call call = mock(Call.class);
-    when(httpClient.newCall(any())).thenReturn(call);
+    when(httpClientMock.newCall(any())).thenReturn(call);
     when(call.execute()).thenThrow(new IOException("hey a penny"));
     expectedException.expect(LinkException.class);
     expectedException.expectMessage("hey a penny");
@@ -212,7 +214,7 @@ public class IlpOverHttpLinkTest {
         .body(ResponseBody.create("{}", MediaType.get("application/json; charset=utf-8")))
         .build();
     Call call = mock(Call.class);
-    when(httpClient.newCall(any())).thenReturn(call);
+    when(httpClientMock.newCall(any())).thenReturn(call);
     when(call.execute()).thenReturn(response);
     return response;
   }

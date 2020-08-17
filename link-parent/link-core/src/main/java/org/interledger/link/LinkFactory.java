@@ -25,7 +25,6 @@ public interface LinkFactory {
   /**
    * Construct a new instance of {@link Link} using the supplied inputs.
    *
-   * @param clazz                   A {@link Class} to satisfy Java generics.
    * @param operatorAddressSupplier A supplier for the ILP address of this node operating this Link. This value may be
    *                                uninitialized, for example, in cases where the Link obtains its address from a *
    *                                parent node using IL-DCP. If an ILP address has not been assigned, or it has not
@@ -33,12 +32,13 @@ public interface LinkFactory {
    * @param linkSettings            A {@link LinkSettings} to use in order to construct a {@link Link}.
    * @param <LS>                    A type that extends {@link LinkSettings}.
    * @param <L>                     A type that extends {@link Link}.
+   * @param clazz                   A {@link Class} to satisfy Java generics.
    *
    * @return An instance of {@code L}.
    */
   @SuppressWarnings("MethodTypeParameterName")
   default <LS extends LinkSettings, L extends Link<LS>> L constructLink(
-      final Class<L> clazz, Supplier<InterledgerAddress> operatorAddressSupplier, final LS linkSettings
+      Supplier<InterledgerAddress> operatorAddressSupplier, final LS linkSettings, final Class<L> clazz
   ) {
     return (L) this.constructLink(operatorAddressSupplier, linkSettings);
   }

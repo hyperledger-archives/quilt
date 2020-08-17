@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -97,5 +98,14 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
   @Override
   public Optional<LinkHandler> getLinkHandler() {
     return Optional.ofNullable(linkHandlerAtomicReference.get());
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", AbstractLink.class.getSimpleName() + "[", "]")
+        .add("linkId=" + linkId)
+        .add("linkSettings=" + linkSettings)
+        .add("operatorAddressSupplier=" + operatorAddressSupplier)
+        .toString();
   }
 }
