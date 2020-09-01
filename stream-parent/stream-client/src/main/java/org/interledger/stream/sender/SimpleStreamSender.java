@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -1061,5 +1062,15 @@ public class SimpleStreamSender implements StreamSender {
              );
            });
      }
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", SimpleStreamSender.class.getSimpleName() + "[", "]")
+        .add("link=" + link)
+        .add("sendPacketSleepDuration=" + sendPacketSleepDuration)
+        .add("streamEncryptionService=" + streamEncryptionService)
+        .add("streamConnectionManager=" + streamConnectionManager)
+        .toString();
   }
 }
