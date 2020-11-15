@@ -18,9 +18,14 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 
+;
+
 /**
  * Unit tests for {@link SharedSecretModule}.
+ *
+ * @deprecated Prefer {@link org.interledger.quilt.jackson.stream.StreamSharedSecretSerializer} instead.
  */
+@Deprecated
 public class SharedSecretModuleTest {
 
   private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
@@ -33,18 +38,18 @@ public class SharedSecretModuleTest {
   @Before
   public void setup() {
     this.objectMapper = new ObjectMapper()
-        .registerModule(new SharedSecretModule());
+      .registerModule(new SharedSecretModule());
   }
 
   @Test
   public void shouldSerializeAndDeserialize() throws IOException {
     final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-        .sharedSecret(SHARED_SECRET)
-        .build();
+      .sharedSecret(SHARED_SECRET)
+      .build();
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     final SharedSecretContainer actualContainer = objectMapper
-        .readValue(json, SharedSecretContainer.class);
+      .readValue(json, SharedSecretContainer.class);
 
     assertThat(actualContainer).isEqualTo(expectedContainer);
   }
@@ -53,8 +58,8 @@ public class SharedSecretModuleTest {
   public void shouldNotSerializeAndDeserialize() throws IOException {
     ObjectMapper objectMapperWithoutModule = new ObjectMapper(); // No Module!
     final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-        .sharedSecret(SHARED_SECRET)
-        .build();
+      .sharedSecret(SHARED_SECRET)
+      .build();
 
     expectedException.expect(InvalidDefinitionException.class);
     final String actualJson = objectMapperWithoutModule.writeValueAsString(expectedContainer);

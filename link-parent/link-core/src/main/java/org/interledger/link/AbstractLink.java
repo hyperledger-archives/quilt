@@ -46,8 +46,8 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
    * @param linkSettings            A {@code L} that specified ledger link options.
    */
   protected AbstractLink(
-      final Supplier<InterledgerAddress> operatorAddressSupplier,
-      final L linkSettings
+    final Supplier<InterledgerAddress> operatorAddressSupplier,
+    final L linkSettings
   ) {
     this.operatorAddressSupplier = Objects.requireNonNull(operatorAddressSupplier);
     this.linkSettings = Objects.requireNonNull(linkSettings);
@@ -80,12 +80,12 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
 
   @Override
   public void registerLinkHandler(final LinkHandler ilpDataHandler)
-      throws LinkHandlerAlreadyRegisteredException {
+    throws LinkHandlerAlreadyRegisteredException {
     Objects.requireNonNull(ilpDataHandler, "ilpDataHandler must not be null!");
     if (!this.linkHandlerAtomicReference.compareAndSet(null, ilpDataHandler)) {
       throw new LinkHandlerAlreadyRegisteredException(
-          "DataHandler may not be registered twice. Call unregisterDataHandler first!",
-          this.getLinkId()
+        "DataHandler may not be registered twice. Call unregisterDataHandler first!",
+        this.getLinkId()
       );
     }
   }
@@ -103,9 +103,9 @@ public abstract class AbstractLink<L extends LinkSettings> implements Link<L> {
   @Override
   public String toString() {
     return new StringJoiner(", ", AbstractLink.class.getSimpleName() + "[", "]")
-        .add("linkId=" + linkId)
-        .add("linkSettings=" + linkSettings)
-        .add("operatorAddressSupplier=" + operatorAddressSupplier)
-        .toString();
+      .add("linkId=" + linkId)
+      .add("linkSettings=" + linkSettings)
+      .add("operatorAddressSupplier=" + operatorAddressSupplier.get())
+      .toString();
   }
 }

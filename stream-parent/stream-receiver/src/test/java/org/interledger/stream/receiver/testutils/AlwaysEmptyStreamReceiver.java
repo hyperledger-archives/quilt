@@ -1,6 +1,6 @@
 package org.interledger.stream.receiver.testutils;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;

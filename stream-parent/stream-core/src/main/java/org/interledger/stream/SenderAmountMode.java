@@ -2,7 +2,10 @@ package org.interledger.stream;
 
 /**
  * Defines the meaning of the {@link SendMoneyRequest#amount()} property.
+ *
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
  */
+@Deprecated
 public enum SenderAmountMode {
 
   /**

@@ -21,7 +21,6 @@ package org.interledger.ildcp;
  */
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;

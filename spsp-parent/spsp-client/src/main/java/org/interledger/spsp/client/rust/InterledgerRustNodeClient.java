@@ -1,13 +1,12 @@
 package org.interledger.spsp.client.rust;
 
-import org.interledger.spsp.client.InvalidReceiverClientException;
-import org.interledger.spsp.client.SpspClientDefaults;
-import org.interledger.spsp.client.SpspClientException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Objects;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -16,10 +15,9 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.immutables.value.Value.Immutable;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Objects;
+import org.interledger.spsp.client.InvalidReceiverClientException;
+import org.interledger.spsp.client.SpspClientDefaults;
+import org.interledger.spsp.client.SpspClientException;
 
 /**
  * Client for interacting with API on a Rust Interledger Node.
@@ -39,7 +37,6 @@ public class InterledgerRustNodeClient {
    * @param okHttpClient A {@link OkHttpClient}.
    * @param authToken    An authentication token for the Rust Connector.
    * @param baseUrl      An {@link String} that contains the Connector's base URL.
-   *
    * @deprecated Use the constructor that accepts a {@link HttpUrl} instead.
    */
   @Deprecated
@@ -53,8 +50,6 @@ public class InterledgerRustNodeClient {
    * @param okHttpClient A {@link OkHttpClient}.
    * @param authToken    An authentication token for the Rust Connector.
    * @param baseUrl      An {@link HttpUrl} that contains the Connector's base URL.
-   *
-   * @deprecated Use the constructor that accepts a {@link HttpUrl} instead.
    */
   public InterledgerRustNodeClient(
     final OkHttpClient okHttpClient, final String authToken, final HttpUrl baseUrl
@@ -70,6 +65,13 @@ public class InterledgerRustNodeClient {
       .url(baseUrl.newBuilder().addPathSegment("accounts").build())
       .post(RequestBody.create(objectMapper.writeValueAsString(rustNodeAccount), JSON))
       .build(), RustNodeAccount.class);
+  }
+
+  public UsdToXrpRatesResponse setUsdToXrpRate(UsdToXrpRatesRequest usDtoXRPRatesRequest) throws IOException {
+    return execute(requestBuilder()
+      .url(baseUrl.newBuilder().addPathSegment("rates").build())
+      .put(RequestBody.create(objectMapper.writeValueAsString(usDtoXRPRatesRequest), JSON))
+      .build(), UsdToXrpRatesResponse.class);
   }
 
   private Request.Builder requestBuilder() {

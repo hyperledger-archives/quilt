@@ -13,9 +13,14 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+;
+
 /**
  * Unit tests for {@link SharedSecretSerializer}.
+ *
+ * @deprecated Prefer {@link org.interledger.quilt.jackson.stream.StreamSharedSecretSerializer} instead.
  */
+@Deprecated
 public class SharedSecretSerializerTest {
 
   private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
@@ -25,7 +30,7 @@ public class SharedSecretSerializerTest {
   @Before
   public void setup() {
     this.objectMapper = new ObjectMapper()
-        .registerModule(new SharedSecretModule());
+      .registerModule(new SharedSecretModule());
   }
 
 
@@ -38,8 +43,8 @@ public class SharedSecretSerializerTest {
   @Test
   public void shouldSerializeInContainer() throws IOException {
     final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-        .sharedSecret(SHARED_SECRET)
-        .build();
+      .sharedSecret(SHARED_SECRET)
+      .build();
 
     final String actualJson = objectMapper.writeValueAsString(expectedContainer);
 

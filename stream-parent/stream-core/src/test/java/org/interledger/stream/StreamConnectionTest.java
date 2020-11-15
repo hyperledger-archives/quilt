@@ -8,6 +8,7 @@ import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
 import org.interledger.stream.StreamConnection.StreamConnectionState;
+import org.interledger.stream.errors.StreamConnectionClosedException;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;
@@ -25,6 +26,7 @@ import java.util.concurrent.Executors;
 /**
  * Unit tests for {@link StreamConnection}.
  */
+@SuppressWarnings("ALL")
 public class StreamConnectionTest {
 
   @Rule
@@ -62,7 +64,7 @@ public class StreamConnectionTest {
   public void testConstructorWithAddressAndSecret() {
     streamConnection = new StreamConnection(InterledgerAddress.of("example.foo"), SharedSecret.of(new byte[32]));
     assertThat(streamConnection.getStreamConnectionId())
-        .isEqualTo(StreamConnectionId.of("246307596a10c1ba057f56cd6d588ed0d11cf3f8817c937265e93950af53751f"));
+      .isEqualTo(StreamConnectionId.of("246307596a10c1ba057f56cd6d588ed0d11cf3f8817c937265e93950af53751f"));
   }
 
   @Test
@@ -88,14 +90,13 @@ public class StreamConnectionTest {
 
     for (int i = 0; i < numRepetitions; i++) {
       allFutures.add(
-          CompletableFuture.supplyAsync(() -> {
-            try {
-              UnsignedLong sequence = streamConnection.nextSequence();
-              return sequence;
-            } catch (StreamConnectionClosedException e) {
-              throw new RuntimeException(e);
-            }
-          }, executorService)
+        CompletableFuture.supplyAsync(() -> {
+          try {
+            return streamConnection.nextSequence();
+          } catch (StreamConnectionClosedException e) {
+            throw new RuntimeException(e);
+          }
+        }, executorService)
       );
     }
 
@@ -168,17 +169,17 @@ public class StreamConnectionTest {
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(5000L))).isTrue();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE))).isTrue();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION))
-        .isTrue();
+      .isTrue();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)))
+      .isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE))).isTrue();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.ONE)))
-        .isTrue();
+      .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.ONE)))
+      .isTrue();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.valueOf(2L))))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.valueOf(2L))))
+      .isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Long.MAX_VALUE))).isFalse();
   }
 
@@ -191,17 +192,17 @@ public class StreamConnectionTest {
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(5000L))).isTrue();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE))).isTrue();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION))
-        .isTrue();
+      .isTrue();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)))
+      .isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE))).isTrue();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.ONE)))
-        .isTrue();
+      .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.ONE)))
+      .isTrue();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.valueOf(2L))))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.valueOf(2L))))
+      .isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Long.MAX_VALUE))).isFalse();
   }
 
@@ -214,17 +215,17 @@ public class StreamConnectionTest {
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(5000L))).isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE))).isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION))
-        .isFalse();
+      .isFalse();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE)))
+      .isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE))).isFalse();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.ONE)))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.ONE)))
+      .isFalse();
     assertThat(streamConnection
-        .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.valueOf(2L))))
-        .isFalse();
+      .sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Integer.MAX_VALUE).plus(UnsignedLong.valueOf(2L))))
+      .isFalse();
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Long.MAX_VALUE))).isFalse();
   }
 
@@ -253,8 +254,8 @@ public class StreamConnectionTest {
   @Test
   public void testToString() {
     final String matchingSerializedRegex = "StreamConnection\\["
-        + "creationDateTime=[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.\\d+Z, "
-        + "streamConnectionId=\\S+ sequence=\\d+, connectionState=[A-Z]+]";
+      + "creationDateTime=[0-9]{4}\\-[0-9]{2}\\-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.\\d+Z, "
+      + "streamConnectionId=\\S+ sequence=\\d+, connectionState=[A-Z]+]";
 
     final String serializedStreamConnection = streamConnection.toString();
 

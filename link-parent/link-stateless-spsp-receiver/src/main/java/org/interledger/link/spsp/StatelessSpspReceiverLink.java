@@ -1,8 +1,13 @@
 package org.interledger.link.spsp;
 
+import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.link.AbstractLink;
 import org.interledger.link.Link;
 import org.interledger.link.LinkHandler;
@@ -11,6 +16,10 @@ import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.receiver.StreamReceiver;
 
+import com.google.common.primitives.UnsignedLong;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.function.Supplier;
@@ -19,7 +28,7 @@ import java.util.function.Supplier;
  * <p>A {@link Link} that attempts to fulfill packets using an SPSP receiver.</p>
  */
 public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceiverLinkSettings>
-    implements Link<StatelessSpspReceiverLinkSettings> {
+  implements Link<StatelessSpspReceiverLinkSettings> {
 
   public static final String LINK_TYPE_STRING = "STATELESS_SPSP_RECEIVER";
   public static final LinkType LINK_TYPE = LinkType.of(LINK_TYPE_STRING);
@@ -38,22 +47,22 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
    * @param streamReceiver          A {@link StreamReceiver} that can fulfill packets.
    */
   public StatelessSpspReceiverLink(
-      final Supplier<InterledgerAddress> operatorAddressSupplier,
-      final StatelessSpspReceiverLinkSettings linkSettings,
-      final StreamReceiver streamReceiver
+    final Supplier<InterledgerAddress> operatorAddressSupplier,
+    final StatelessSpspReceiverLinkSettings linkSettings,
+    final StreamReceiver streamReceiver
   ) {
     super(operatorAddressSupplier, linkSettings);
     this.denomination = Denomination.builder()
-        .assetCode(linkSettings.assetCode())
-        .assetScale((short) linkSettings.assetScale())
-        .build();
+      .assetCode(linkSettings.assetCode())
+      .assetScale((short) linkSettings.assetScale())
+      .build();
     this.streamReceiver = Objects.requireNonNull(streamReceiver);
   }
 
   @Override
   public void registerLinkHandler(final LinkHandler ilpDataHandler) throws LinkHandlerAlreadyRegisteredException {
     throw new RuntimeException(
-        "StatelessSpspReceiver links never emit data, and thus should not have a registered DataHandler."
+      "StatelessSpspReceiver links never emit data, and thus should not have a registered DataHandler."
     );
   }
 
@@ -61,30 +70,55 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
   public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket, "preparePacket must not be null");
 
-    return streamReceiver.receiveMoney(preparePacket, this.getOperatorAddressSupplier().get(), this.denomination)
+    final UnsignedLong maxPacketAmount = this.getLinkSettings()
+      .maxPacketAmount()
+      .orElse(UnsignedLong.MAX_VALUE);
+
+    if (FluentCompareTo.is(preparePacket.getAmount()).greaterThan(maxPacketAmount)) {
+      final AmountTooLargeErrorData amountTooLargeErrorData = AmountTooLargeErrorData.builder()
+        .maximumAmount(maxPacketAmount)
+        .receivedAmount(preparePacket.getAmount())
+        .build();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        InterledgerCodecContextFactory.oer().write(amountTooLargeErrorData, baos);
+      } catch (IOException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+
+      return InterledgerRejectPacket.builder()
+        .triggeredBy(this.getOperatorAddressSupplier().get())
+        .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
+        .message("Prepare packet amount was too large")
+        .data(baos.toByteArray())
+        .typedData(amountTooLargeErrorData)
+        .build();
+    } else {
+      return streamReceiver.receiveMoney(preparePacket, this.getOperatorAddressSupplier().get(), this.denomination)
         .map(fulfillPacket -> {
-              if (logger.isDebugEnabled()) {
-                logger.debug("Packet fulfilled! preparePacket={} fulfillPacket={}", preparePacket, fulfillPacket);
-              }
-              return fulfillPacket;
-            },
-            rejectPacket -> {
-              if (logger.isDebugEnabled()) {
-                logger.debug("Packet rejected! preparePacket={} rejectPacket={}", preparePacket, rejectPacket);
-              }
-              return rejectPacket;
+            if (logger.isDebugEnabled()) {
+              logger.debug("Packet fulfilled! preparePacket={} fulfillPacket={}", preparePacket, fulfillPacket);
             }
+            return fulfillPacket;
+          },
+          rejectPacket -> {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Packet rejected! preparePacket={} rejectPacket={}", preparePacket, rejectPacket);
+            }
+            return rejectPacket;
+          }
         );
+    }
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", StatelessSpspReceiverLink.class.getSimpleName() + "[", "]")
-        .add("linkId=" + getLinkId())
-        .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
-        .add("streamReceiver=" + streamReceiver)
-        .add("denomination=" + denomination)
-        .add("linkSettings=" + getLinkSettings())
-        .toString();
+      .add("linkId=" + getLinkId())
+      .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
+      .add("streamReceiver=" + streamReceiver)
+      .add("denomination=" + denomination)
+      .add("linkSettings=" + getLinkSettings())
+      .toString();
   }
 }

@@ -1,6 +1,6 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.stream.Denomination;
 import org.interledger.stream.PrepareAmounts;
@@ -18,7 +18,10 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * An implementation of {@link SenderAmountPaymentTracker} that uses a fixed amount to send, denominated in the sender's
  * units, as reflected in the `amountToDeliver`.
+ *
+ * @deprecated Will be removed in a future version. Prefer ILP-Pay functionality instead.
  */
+@Deprecated
 public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTracker {
 
   // The original amount, in sender's units, to send
@@ -96,11 +99,11 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   public boolean auth(final PrepareAmounts prepareAmounts) {
     Objects.requireNonNull(prepareAmounts);
 
-    if (is(sentAmount.get().plus(prepareAmounts.getAmountToSend())).greaterThan(amountToSend)
-        || is(amountLeftToSend.get()).lessThan(prepareAmounts.getAmountToSend())) {
+    if (is(sentAmount.get().plus(prepareAmounts.amountToSend())).greaterThan(amountToSend)
+        || is(amountLeftToSend.get()).lessThan(prepareAmounts.amountToSend())) {
       return false;
     } else {
-      this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
+      this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.amountToSend()));
       return true;
     }
 
@@ -110,7 +113,7 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   public void rollback(final PrepareAmounts prepareAmounts, final boolean packetRejected) {
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(packetRejected);
-    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getAmountToSend()));
+    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.amountToSend()));
   }
 
   @Override
@@ -118,7 +121,7 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(deliveredAmount);
     this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
-    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
+    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.amountToSend()));
   }
 
   @Override

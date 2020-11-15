@@ -28,11 +28,13 @@ import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 /**
  * An extension of {@link FromStringDeserializer} that deserializes a JSON string into an instance of {@link
  * SharedSecret}.
+ *
+ * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
  */
+@Deprecated
 public class SharedSecretDeserializer extends FromStringDeserializer<SharedSecret> {
 
-  public static final SharedSecretDeserializer INSTANCE
-      = new SharedSecretDeserializer();
+  public static final SharedSecretDeserializer INSTANCE = new SharedSecretDeserializer();
 
   /**
    * No-args Constructor.
@@ -43,7 +45,7 @@ public class SharedSecretDeserializer extends FromStringDeserializer<SharedSecre
 
   @Override
   protected SharedSecret _deserialize(
-      final String value, final DeserializationContext deserializationContext
+    final String value, final DeserializationContext deserializationContext
   ) {
     return SharedSecret.of(value);
   }

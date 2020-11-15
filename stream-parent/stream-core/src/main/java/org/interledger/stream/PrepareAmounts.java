@@ -7,7 +7,10 @@ import com.google.common.primitives.UnsignedLong;
 
 /**
  * A container object that captures amounts used in auth, rollback, and commit operations inside of the Stream Sender.
+ *
+ * @deprecated Will be removed once StreamSender is removed.
  */
+@Deprecated
 @Immutable
 public interface PrepareAmounts {
 
@@ -26,26 +29,26 @@ public interface PrepareAmounts {
    */
   static PrepareAmounts from(final InterledgerPreparePacket preparePacket, final StreamPacket streamPacket) {
     return PrepareAmounts.builder()
-        .amountToSend(preparePacket.getAmount())
-        .minimumAmountToAccept(streamPacket.prepareAmount())
-        .build();
+      .amountToSend(preparePacket.getAmount())
+      .minimumAmountToAccept(streamPacket.prepareAmount())
+      .build();
   }
 
   /**
    * The amount that should be sent in a prepare packet for purposes of STREAM.
    *
    * @return An {@link UnsignedLong} that represents the `amount` value in an ILPv4 Prepare packet when used by a STREAM
-   *     sender.
+   *   sender.
    */
-  UnsignedLong getAmountToSend();
+  UnsignedLong amountToSend();
 
   /**
    * The amount that should be put into a Stream Packet's amount field to indicate the minimum amount a receiver should
    * accept for a given Stream Packet payment.
    *
    * @return An {@link UnsignedLong} that represents the minimum `amount` that a Stream Receiver should accept in an
-   *     individual Stream Packet.
+   *   individual Stream Packet.
    */
-  UnsignedLong getMinimumAmountToAccept();
+  UnsignedLong minimumAmountToAccept();
 
 }

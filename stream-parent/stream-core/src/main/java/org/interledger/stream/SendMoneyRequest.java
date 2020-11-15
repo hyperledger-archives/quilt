@@ -11,6 +11,12 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Contains information to perform a "send money" operation.
+ *
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
+ */
+@Deprecated
 @Immutable
 public interface SendMoneyRequest {
 
@@ -33,7 +39,7 @@ public interface SendMoneyRequest {
    * that only the sender and receiver can decrypt them.
    *
    * @return A {@link SharedSecret} known only to the sender and receiver, negotiated using some higher-level protocol
-   *     (e.g., SPSP or something else).
+   *   (e.g., SPSP or something else).
    */
   SharedSecret sharedSecret();
 

@@ -16,7 +16,7 @@ public class FixedReceiverAmountPaymentTrackerTest {
   @Test
   public void checkAllInteractions() {
     FixedReceiverAmountPaymentTracker tracker = new FixedReceiverAmountPaymentTracker(UnsignedLong.valueOf(10L),
-        new HalfsiesExchangeRateCalculator());
+      new HalfsiesExchangeRateCalculator());
 
     assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.ZERO);
@@ -24,15 +24,16 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(10));
     assertThat(tracker.moreToSend()).isTrue();
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP_DROPS, Denominations.XRP_DROPS);
+    PrepareAmounts amounts = tracker
+      .getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
-    assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(amounts.amountToSend()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(amounts.minimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
 
     amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
-    assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.valueOf(6));
-    assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
+    assertThat(amounts.amountToSend()).isEqualTo(UnsignedLong.valueOf(6));
+    assertThat(amounts.minimumAmountToAccept()).isEqualTo(UnsignedLong.valueOf(3));
 
     tracker.auth(amounts);
     assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
@@ -81,8 +82,8 @@ public class FixedReceiverAmountPaymentTrackerTest {
 
     amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(6), Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
-    assertThat(amounts.getAmountToSend()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(amounts.getMinimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(amounts.amountToSend()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(amounts.minimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);
   }
 
   @Test

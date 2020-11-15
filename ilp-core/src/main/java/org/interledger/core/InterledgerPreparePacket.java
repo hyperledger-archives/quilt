@@ -133,6 +133,7 @@ public interface InterledgerPreparePacket extends InterledgerPacket {
           + ", executionCondition=" + getExecutionCondition()
           + ", destination=" + getDestination()
           + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + ", typedData=" + typedData().orElse("n/a")
           + "}";
     }
   }

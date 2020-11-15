@@ -3,7 +3,6 @@ package org.interledger.link.spsp;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.link.LinkId;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 import org.interledger.link.PacketRejector;
@@ -23,7 +22,6 @@ import org.mockito.MockitoAnnotations;
 public class StatelessSpspReceiverLinkFactoryTest {
 
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.operator");
-  private final LinkId linkId = LinkId.of("foo");
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -39,11 +37,12 @@ public class StatelessSpspReceiverLinkFactoryTest {
 
   private StatelessSpspReceiverLinkFactory statelessSpspReceiverLinkFactory;
 
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     this.statelessSpspReceiverLinkFactory = new StatelessSpspReceiverLinkFactory(
-        packetRejectorMock, statelessStreamReceiverMock
+      packetRejectorMock, statelessStreamReceiverMock
     );
   }
 
@@ -91,19 +90,19 @@ public class StatelessSpspReceiverLinkFactoryTest {
     expectedException.expectMessage("LinkType not supported by this factory. linkType=LinkType(FOO)");
 
     LinkSettings linkSettings = LinkSettings.builder()
-        .linkType(LinkType.of("foo"))
-        .build();
+      .linkType(LinkType.of("foo"))
+      .build();
     statelessSpspReceiverLinkFactory.constructLink(() -> OPERATOR_ADDRESS, linkSettings);
   }
 
   @Test
   public void constructLink() {
     LinkSettings linkSettings = StatelessSpspReceiverLinkSettings.builder()
-        .assetCode("USD")
-        .assetScale((short) 9)
-        .build();
+      .assetCode("USD")
+      .assetScale((short) 9)
+      .build();
     StatelessSpspReceiverLink link = (StatelessSpspReceiverLink) statelessSpspReceiverLinkFactory
-        .constructLink(() -> OPERATOR_ADDRESS, linkSettings);
+      .constructLink(() -> OPERATOR_ADDRESS, linkSettings);
 
     assertThat(link.getLinkSettings().assetCode()).isEqualTo("USD");
     assertThat(link.getLinkSettings().assetScale()).isEqualTo(9);

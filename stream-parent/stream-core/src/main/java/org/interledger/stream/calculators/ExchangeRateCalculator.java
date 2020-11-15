@@ -16,7 +16,10 @@ import java.util.Objects;
  * from an Oracle (e.g., the ECB) against the observed path-exchange rates. Using these metrics, the implementation
  * could adjust amounts in an effort to make sure the proper amount of value is traversing the payment path from sender
  * to receiver.</p>
+ *
+ * @deprecated Will be removed in a future version; prefer ILP Pay instead of Stream Sender functionality.
  */
+@Deprecated
 public interface ExchangeRateCalculator {
 
   /**
@@ -30,9 +33,11 @@ public interface ExchangeRateCalculator {
    * @return An {@link UnsignedLong} containing amount to send in the ILP packet (in sender's denomination).
    *
    * @throws NoExchangeRateException if exchange rate could not be calculated
+   * @deprecated Should be removed or moved if used somewhere in the receiver (not used in sender)
    */
+  @Deprecated
   UnsignedLong calculateAmountToSend(
-      UnsignedLong amountToReceive, Denomination sendDenomination, Denomination receiverDenomination
+    UnsignedLong amountToReceive, Denomination sendDenomination, Denomination receiverDenomination
   ) throws NoExchangeRateException;
 
   /**
@@ -45,7 +50,7 @@ public interface ExchangeRateCalculator {
    * @return An {@link UnsignedLong} containing the minimum amount the receiver should accept, in sender's units.
    */
   UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendAmountDenomination)
-      throws NoExchangeRateException;
+    throws NoExchangeRateException;
 
   /**
    * Calculate the minimum amount a receiver should accept based on the exchange rate applied to the {@code
@@ -58,7 +63,7 @@ public interface ExchangeRateCalculator {
    * @return An {@link UnsignedLong} containing the minimum amount the receiver should accept, in sender's units.
    */
   default UnsignedLong calculateMinAmountToAccept(
-      UnsignedLong sendAmount, Denomination sendAmountDenomination, Denomination receiverDenomination
+    UnsignedLong sendAmount, Denomination sendAmountDenomination, Denomination receiverDenomination
   ) throws NoExchangeRateException {
     return calculateMinAmountToAccept(sendAmount, sendAmountDenomination);
   }

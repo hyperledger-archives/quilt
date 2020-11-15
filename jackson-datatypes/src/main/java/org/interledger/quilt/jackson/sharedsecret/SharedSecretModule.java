@@ -27,7 +27,10 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * A Jackson {@link SimpleModule} for serializing and deserializing {@link SharedSecret} objects.
+ *
+ * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
  */
+@Deprecated
 public class SharedSecretModule extends SimpleModule {
 
   private static final String NAME = SharedSecretModule.class.getName();
@@ -38,8 +41,8 @@ public class SharedSecretModule extends SimpleModule {
   public SharedSecretModule() {
 
     super(
-        NAME,
-        new Version(1, 0, 0, null, "org.interledger", "jackson-datatype-shared-secret")
+      NAME,
+      new Version(1, 0, 0, null, "org.interledger", "jackson-datatype-shared-secret")
     );
 
     addSerializer(SharedSecret.class, SharedSecretSerializer.INSTANCE);

@@ -19,18 +19,17 @@ public class AsnSequenceOfSequenceCodecTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
-  private ArrayList<Object> newList;
+
   private AsnSequenceOfSequenceCodec codec;
 
   @Before
   public void setup() {
-    this.newList = new ArrayList<>();
     // Used to uniquely identify sub-codecs.
     final AtomicInteger subCodecIdentifier = new AtomicInteger(0);
 
     final Supplier<ArrayList> listSupplier = () -> new ArrayList<>(5);
     final Supplier<AsnSequenceCodec<Integer>> subCodecSupplier
-        = () -> new TestSubCodec(subCodecIdentifier.getAndIncrement());
+      = () -> new TestSubCodec(subCodecIdentifier.getAndIncrement());
 
     codec = new AsnSequenceOfSequenceCodec(listSupplier, subCodecSupplier);
   }
