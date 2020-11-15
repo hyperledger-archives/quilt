@@ -40,14 +40,14 @@ public interface IldcpResponse {
    *
    * @return An {@link InterledgerAddress}.
    */
-  InterledgerAddress getClientAddress();
+  InterledgerAddress clientAddress();
 
   /**
    * An asset code of the asset that two nodes participating in IL-DCP will use to settle.
    *
    * @return A {@link String}.
    */
-  String getAssetCode();
+  String assetCode();
 
   /**
    * <p>An asset scale for amounts that will be used in ILP packets exchanged between two nodes
@@ -64,7 +64,7 @@ public interface IldcpResponse {
    *
    * @return An {@link Integer} representing the asset scale.
    */
-  short getAssetScale();
+  short assetScale();
 
   @Immutable
   abstract class AbstractIldcpResponse implements IldcpResponse {

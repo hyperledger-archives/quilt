@@ -70,13 +70,13 @@ public class SimpleStreamSenderTests {
     );
   }
 
-  @Test
-  public void connectionStats() {
-    SimpleStreamSender.ConnectionStatistics stats = SimpleStreamSender.ConnectionStatistics.builder()
-        .numFulfilledPackets(10)
-        .numRejectPackets(5)
-        .amountDelivered(UnsignedLong.ONE)
-        .build();
-    assertThat(stats.totalPackets()).isEqualTo(15);
-  }
+//  @Test
+//  public void connectionStats() {
+//    SimpleStreamSender.ConnectionStatistics stats = SimpleStreamSender.ConnectionStatistics.builder()
+//        .numFulfilledPackets(10)
+//        .numRejectPackets(5)
+//        .amountDelivered(UnsignedLong.ONE)
+//        .build();
+//    assertThat(stats.totalPackets()).isEqualTo(15);
+//  }
 }

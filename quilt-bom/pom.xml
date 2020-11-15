@@ -58,6 +58,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>ilp-core-utils</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>jackson-datatypes</artifactId>
         <version>${project.version}</version>
       </dependency>

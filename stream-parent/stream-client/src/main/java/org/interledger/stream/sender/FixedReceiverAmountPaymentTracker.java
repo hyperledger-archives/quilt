@@ -1,8 +1,8 @@
 package org.interledger.stream.sender;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.PrepareAmounts;
 import org.interledger.stream.ReceiverAmountPaymentTracker;
 import org.interledger.stream.SenderAmountMode;

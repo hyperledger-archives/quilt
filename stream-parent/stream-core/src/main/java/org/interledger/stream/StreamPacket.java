@@ -20,7 +20,7 @@ package org.interledger.stream;
  * =========================LICENSE_END==================================
  */
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
@@ -103,6 +103,7 @@ public interface StreamPacket {
    *
    * @return A {@link UnsignedLong} for this packet's sequence.
    */
+  // TODO: Consider UnsignedInt
   UnsignedLong sequence();
 
   /**

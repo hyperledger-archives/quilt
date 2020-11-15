@@ -114,6 +114,24 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     }
   }
 
+  // TODO: Unit test.
+
+  /**
+   * Map this packet to another class using one of the two supplied functions, depending on the actual type of this
+   * response packet. If this packet is a fulfill packet, then {@code fulfillMapper} will be called. If this packet is a
+   * reject packet, then  {@code rejectMapper} will be called instead.
+   *
+   * @param responseMapper A {@link Function} to call if this packet is an instance of {@link
+   *                       InterledgerResponsePacket}.
+   * @param <R>            The return type of this mapping function.
+   *
+   * @return An instance of {@code R}.
+   */
+  default <R> R mapResponse(final Function<InterledgerResponsePacket, R> responseMapper) {
+    Objects.requireNonNull(responseMapper);
+    return responseMapper.apply(this);
+  }
+
   @Immutable
   abstract class AbstractInterledgerResponsePacket implements InterledgerResponsePacket {
 
@@ -132,6 +150,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     public String toString() {
       return "InterledgerResponsePacket{"
           + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + ", typedData=" + typedData().orElse("n/a")
           + "}";
     }
   }

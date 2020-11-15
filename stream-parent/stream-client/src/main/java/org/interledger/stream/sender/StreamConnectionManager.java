@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * <p>Manages all STREAM connections across this JVM.</p>
  *
- * <p>Connection management in STREAM is somewhat complicated by the fact that connection identifiers can be derieved
+ * <p>Connection management in STREAM is somewhat complicated by the fact that connection identifiers can be derived
  * from a destination address and shared secret. These values are often stored in a sender and/or receiver, so it can be
  * easy for implementations to accidentally re-use connection identifiers without knowing it.</p>
  *

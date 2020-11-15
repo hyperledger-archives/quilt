@@ -31,7 +31,7 @@ import org.interledger.codecs.stream.frame.helpers.StreamFrameFixture;
 import org.interledger.codecs.stream.frame.helpers.StreamTestFixture;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPacketType;
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;

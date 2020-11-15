@@ -5,6 +5,7 @@ import static org.interledger.stream.SenderAmountMode.RECEIVER_AMOUNT;
 import static org.interledger.stream.SenderAmountMode.SENDER_AMOUNT;
 
 import com.google.common.primitives.UnsignedLong;
+import org.interledger.fx.Denomination;
 import org.junit.Test;
 
 /**
@@ -41,7 +42,7 @@ public class PaymentTrackerTest {
   }
 
   private PaymentTracker<?> constructPaymentTracker(final SenderAmountMode originalAmountMode,
-      final boolean moreToSend) {
+    final boolean moreToSend) {
     return new PaymentTracker() {
       @Override
       public UnsignedLong getOriginalAmount() {
@@ -74,8 +75,9 @@ public class PaymentTrackerTest {
       }
 
       @Override
-      public PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit, Denomination senderDenomination,
-          Denomination receiverDenomination) {
+      public PrepareAmounts getSendPacketAmounts(
+        UnsignedLong congestionLimit, Denomination senderDenomination, Denomination receiverDenomination
+      ) {
         return null;
       }
 

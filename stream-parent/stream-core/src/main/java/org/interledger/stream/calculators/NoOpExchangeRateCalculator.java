@@ -1,6 +1,6 @@
 package org.interledger.stream.calculators;
 
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 
 import com.google.common.primitives.UnsignedLong;
 

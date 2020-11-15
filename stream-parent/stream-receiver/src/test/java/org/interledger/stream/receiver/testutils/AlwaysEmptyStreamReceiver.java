@@ -1,6 +1,6 @@
 package org.interledger.stream.receiver.testutils;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
@@ -13,7 +13,7 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;

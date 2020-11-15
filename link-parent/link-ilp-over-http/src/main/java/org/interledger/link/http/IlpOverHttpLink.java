@@ -202,7 +202,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
 
   /**
    * <p>Check the `/ilp` endpoint for ping by making an HTTP Head request with a ping packet, and
-   * asserting the values returned are one of the supported content-types required for ILP-over-HTTP.</p>
+   * then assert the values returned are one of the supported content-types required for ILP-over-HTTP.</p>
    *
    * <p>If the endpoint does not support producing ILP-over-HTTP responses, we expect a 406 NOT_ACCEPTABLE response. If
    * the endpoint does not support ILP-over-HTTP requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>

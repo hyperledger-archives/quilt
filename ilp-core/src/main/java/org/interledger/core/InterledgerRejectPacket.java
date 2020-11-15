@@ -87,6 +87,7 @@ public interface InterledgerRejectPacket extends InterledgerResponsePacket {
           + ", triggeredBy=" + getTriggeredBy()
           + ", message=" + getMessage()
           + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + ", typedData=" + typedData().orElse("n/a")
           + "}";
     }
   }

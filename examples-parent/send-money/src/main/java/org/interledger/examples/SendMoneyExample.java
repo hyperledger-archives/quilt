@@ -14,7 +14,7 @@ import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
-import org.interledger.stream.Denominations;
+import org.interledger.fx.Denominations;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;

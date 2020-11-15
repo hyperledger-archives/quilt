@@ -1,11 +1,15 @@
 package org.interledger.stream;
 
 import com.google.common.primitives.UnsignedLong;
+import org.interledger.fx.Denomination;
 
 /**
  * Defines how to track a payment while considering the amount sent vs amount received, allowing room for
  * path-exchange-rate fluctuations and implementation-defined rules relating to whether or not to continue a payment.
+ *
+ * @deprecated TODO: Remove
  */
+@Deprecated
 public interface PaymentTracker<T extends SenderAmountMode> {
 
   /**

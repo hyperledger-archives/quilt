@@ -2,7 +2,7 @@ package org.interledger.stream.calculators;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.stream.Denominations;
+import org.interledger.fx.Denominations;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;

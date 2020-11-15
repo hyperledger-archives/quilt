@@ -1,6 +1,6 @@
 package org.interledger.stream.calculators;
 
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 
 import com.google.common.primitives.UnsignedLong;
 
@@ -16,7 +16,11 @@ import java.util.Objects;
  * from an Oracle (e.g., the ECB) against the observed path-exchange rates. Using these metrics, the implementation
  * could adjust amounts in an effort to make sure the proper amount of value is traversing the payment path from sender
  * to receiver.</p>
+ *
+ * @deprecated Should be removed or moved if used somewhere in the receiver (not used in sender)
  */
+@Deprecated
+// TODO: Should this inteface go away in-favor of rates and static calculations in the aggregator?
 public interface ExchangeRateCalculator {
 
   /**
@@ -30,7 +34,10 @@ public interface ExchangeRateCalculator {
    * @return An {@link UnsignedLong} containing amount to send in the ILP packet (in sender's denomination).
    *
    * @throws NoExchangeRateException if exchange rate could not be calculated
+   * @deprecated Should be removed or moved if used somewhere in the receiver (not used in sender)
    */
+  @Deprecated
+  // Probably will go away since this is calculating a sender-rate based upon what the receiver needs to receive.
   UnsignedLong calculateAmountToSend(
       UnsignedLong amountToReceive, Denomination sendDenomination, Denomination receiverDenomination
   ) throws NoExchangeRateException;
@@ -43,7 +50,10 @@ public interface ExchangeRateCalculator {
    * @param sendAmountDenomination asset code and scale of the amount to send.
    *
    * @return An {@link UnsignedLong} containing the minimum amount the receiver should accept, in sender's units.
+   *
+   * @deprecated Should be removed or moved if used somewhere in the receiver (not used in sender)
    */
+  @Deprecated
   UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendAmountDenomination)
       throws NoExchangeRateException;
 
@@ -56,7 +66,10 @@ public interface ExchangeRateCalculator {
    * @param receiverDenomination   A {@link Denomination} for the receiver.
    *
    * @return An {@link UnsignedLong} containing the minimum amount the receiver should accept, in sender's units.
+   *
+   * @deprecated Should be removed or moved if used somewhere in the receiver (not used in sender)
    */
+  @Deprecated
   default UnsignedLong calculateMinAmountToAccept(
       UnsignedLong sendAmount, Denomination sendAmountDenomination, Denomination receiverDenomination
   ) throws NoExchangeRateException {
@@ -70,7 +83,10 @@ public interface ExchangeRateCalculator {
    * @param denomination definition of the scale
    *
    * @return the scaled decimal amount
+   *
+   * @deprecated Should be removed or moved if used somewhere in the receiver (not used in sender)
    */
+  @Deprecated
   default BigDecimal scaled(final UnsignedLong amount, final Denomination denomination) {
     Objects.requireNonNull(amount);
     Objects.requireNonNull(denomination);

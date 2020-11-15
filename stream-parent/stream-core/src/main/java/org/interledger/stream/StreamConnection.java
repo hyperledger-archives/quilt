@@ -1,10 +1,11 @@
 package org.interledger.stream;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
+import org.interledger.stream.errors.StreamConnectionClosedException;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
@@ -22,7 +23,10 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>Any given Connection in a JVM manages a unique sequence id that can be incremented for each Stream Packet sent
  * over the connection.</p>
+ *
+ * @deprecated Replace this with the varant that maintains the SharedSecret for the connection.
  */
+@Deprecated
 public class StreamConnection implements Closeable {
 
   // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max per IL-RFC-29.

@@ -1,6 +1,6 @@
 package org.interledger.stream;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
@@ -18,8 +18,13 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Utilities to support the STREAM protocol.
+ *
+ * @deprecated Use StreamPacketUtils instead.
  */
+@Deprecated
 public class StreamUtils {
+
+  // TODO: Capture unit tests and move to StreamPacketUtils.
 
   /**
    * The string "ilp_stream_fulfillment" is encoded as UTF-8 or ASCII (the byte representation is the same with both
@@ -34,7 +39,10 @@ public class StreamUtils {
    * can generate an unfulfillable random condition.
    *
    * @return A {@link InterledgerCondition} that is not fulfillable.
+   *
+   * @deprecated Use StreamPacketUtils instead.
    */
+  @Deprecated
   public static InterledgerCondition unfulfillableCondition() {
     return InterledgerCondition.of(Random.randBytes(32));
   }
@@ -49,7 +57,10 @@ public class StreamUtils {
    * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
    *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
+   *
+   * @deprecated Use StreamPacketUtils instead.
    */
+  @Deprecated
   public static InterledgerFulfillment generatedFulfillableFulfillment(
       final SharedSecret sharedSecret, final byte[] data
   ) {
@@ -74,7 +85,11 @@ public class StreamUtils {
    * @param value2 The second value.
    *
    * @return The smaller of the two supplied values.
+   *
+   * @deprecated Use version in FluentCompareTo instead.
    */
+  // TODO: DELETE ME
+  @Deprecated
   public static UnsignedLong min(final UnsignedLong value1, final UnsignedLong value2) {
     Objects.requireNonNull(value1);
     Objects.requireNonNull(value2);
@@ -92,8 +107,10 @@ public class StreamUtils {
    * @param value1 The first value.
    * @param value2 The second value.
    *
-   * @return The smaller of the two supplied values.
+   * @deprecated Use version in FluentCompareTo instead.
    */
+  // TODO: DELETE ME
+  @Deprecated
   public static UnsignedLong max(final UnsignedLong value1, final UnsignedLong value2) {
     Objects.requireNonNull(value1);
     Objects.requireNonNull(value2);

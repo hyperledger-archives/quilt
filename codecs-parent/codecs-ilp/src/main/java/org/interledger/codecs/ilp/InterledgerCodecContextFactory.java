@@ -20,17 +20,7 @@ package org.interledger.codecs.ilp;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.codecs.ilp.AsnConditionCodec;
-import org.interledger.codecs.ilp.AsnFulfillmentCodec;
-import org.interledger.codecs.ilp.AsnInterledgerAddressCodec;
-import org.interledger.codecs.ilp.AsnInterledgerAddressPrefixCodec;
-import org.interledger.codecs.ilp.AsnInterledgerErrorCodeCodec;
-import org.interledger.codecs.ilp.AsnInterledgerFulfillPacketCodec;
-import org.interledger.codecs.ilp.AsnInterledgerPacketCodec;
-import org.interledger.codecs.ilp.AsnInterledgerPreparePacketCodec;
-import org.interledger.codecs.ilp.AsnInterledgerRejectPacketCodec;
-import org.interledger.codecs.ilp.AsnTimestampCodec;
-
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
@@ -40,7 +30,6 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
-
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
 import org.interledger.encoding.asn.serializers.oer.AsnCharStringOerSerializer;
@@ -70,6 +59,7 @@ public class InterledgerCodecContextFactory {
    * Register the ILP codecs into the provided context.
    *
    * @param context the context to register the codecs into
+   *
    * @return The supplied {@code context} with ILP Codecs registered into it.
    */
   public static CodecContext register(final CodecContext context) {
@@ -77,6 +67,7 @@ public class InterledgerCodecContextFactory {
 
     return context
         .register(Instant.class, AsnTimestampCodec::new)
+        .register(AmountTooLargeErrorData.class, AsnAmountTooLargeDataCodec::new)
         .register(InterledgerCondition.class, AsnConditionCodec::new, new AsnOctetStringOerSerializer())
         .register(InterledgerFulfillment.class, AsnFulfillmentCodec::new, new AsnOctetStringOerSerializer())
         .register(InterledgerAddress.class, AsnInterledgerAddressCodec::new, new AsnCharStringOerSerializer())

@@ -1,15 +1,14 @@
 package org.interledger.stream;
 
-import org.interledger.core.Immutable;
-import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
-
 import com.google.common.primitives.UnsignedLong;
-import org.immutables.value.Value.Default;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
+import org.immutables.value.Value.Default;
+import org.interledger.core.Immutable;
+import org.interledger.core.InterledgerAddress;
+import org.interledger.core.SharedSecret;
+import org.interledger.fx.Denomination;
 
 @Immutable
 public interface SendMoneyRequest {
@@ -33,7 +32,7 @@ public interface SendMoneyRequest {
    * that only the sender and receiver can decrypt them.
    *
    * @return A {@link SharedSecret} known only to the sender and receiver, negotiated using some higher-level protocol
-   *     (e.g., SPSP or something else).
+   * (e.g., SPSP or something else).
    */
   SharedSecret sharedSecret();
 
@@ -88,7 +87,6 @@ public interface SendMoneyRequest {
 
   /**
    * @return this instance
-   *
    * @deprecated no longer performs a check on compatible SenderAmountMode since payment tracker is the authority
    */
   @Deprecated

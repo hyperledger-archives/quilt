@@ -7,7 +7,7 @@ import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
@@ -610,6 +610,7 @@ public class SenderReceiverTest {
   /**
    * An {@link ExchangeRateCalculator} that specifies a fixed exchange rate forever.
    */
+  @Deprecated
   static class FixedRateExchangeCalculator implements ExchangeRateCalculator {
 
     // exchange rate from sender unit's to receiver unit's

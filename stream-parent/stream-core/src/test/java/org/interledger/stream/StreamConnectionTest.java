@@ -8,6 +8,7 @@ import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
 import org.interledger.stream.StreamConnection.StreamConnectionState;
+import org.interledger.stream.errors.StreamConnectionClosedException;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;

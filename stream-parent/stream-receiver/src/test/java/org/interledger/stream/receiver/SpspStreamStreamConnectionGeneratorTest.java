@@ -8,7 +8,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.Random;
 

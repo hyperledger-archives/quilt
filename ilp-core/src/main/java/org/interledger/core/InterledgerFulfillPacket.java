@@ -62,6 +62,7 @@ public interface InterledgerFulfillPacket extends InterledgerResponsePacket {
       return "InterledgerFulfillPacket{"
           + ", fulfillment=" + getFulfillment()
           + ", data=" + Base64.getEncoder().encodeToString(getData())
+          + ", typedData=" + typedData().orElse("n/a")
           + "}";
     }
   }

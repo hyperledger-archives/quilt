@@ -20,8 +20,19 @@
       <artifactId>ilp-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>fx-core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+    </dependency>
+    <!-- TODO: Fixme for version -->
+    <dependency>
+      <groupId>org.javamoney</groupId>
+      <artifactId>moneta</artifactId>
+      <version>1.4.2</version>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

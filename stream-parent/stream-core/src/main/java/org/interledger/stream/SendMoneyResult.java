@@ -1,12 +1,11 @@
 package org.interledger.stream;
 
-import org.interledger.core.Immutable;
-import org.interledger.core.InterledgerAddress;
-
 import com.google.common.primitives.UnsignedLong;
-
 import java.time.Duration;
 import java.util.Optional;
+import org.interledger.core.Immutable;
+import org.interledger.core.InterledgerAddress;
+import org.interledger.fx.Denomination;
 
 /**
  * The result of a request to send money using the STREAM protocol.

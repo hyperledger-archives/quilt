@@ -8,7 +8,7 @@ import org.interledger.link.Link;
 import org.interledger.link.LinkHandler;
 import org.interledger.link.LinkType;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.receiver.StreamReceiver;
 
 import java.util.Objects;

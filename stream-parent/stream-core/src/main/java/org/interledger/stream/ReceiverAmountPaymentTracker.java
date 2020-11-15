@@ -1,10 +1,13 @@
 package org.interledger.stream;
 
 import com.google.common.primitives.UnsignedLong;
+import org.interledger.fx.Denomination;
 
 /**
  * An extension of {@link PaymentTracker} that defines the {@link #getOriginalAmount()} to be in the receiver's units.
+ * @deprecated TODO: Remove
  */
+@Deprecated
 public interface ReceiverAmountPaymentTracker extends PaymentTracker<SenderAmountMode> {
 
   @Override

@@ -230,9 +230,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       } catch (EncryptionException e) {
         logger.warn(
             "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
-            EncryptionMode.ENCRYPT_NON_STANDARD,
-            EncryptionMode.ENCRYPT_STANDARD,
-            e
+            EncryptionMode.ENCRYPT_NON_STANDARD, EncryptionMode.ENCRYPT_STANDARD
         );
         return this.standardModeDecrypt(sharedSecret, cipherMessage);
       }

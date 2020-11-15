@@ -24,7 +24,7 @@ import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
-import org.interledger.stream.Denomination;
+import org.interledger.fx.Denomination;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 
 public class AsnConnectionAssetDetailsFrameDataCodec extends AsnSequenceCodec<ConnectionAssetDetailsFrame> {
@@ -34,19 +34,19 @@ public class AsnConnectionAssetDetailsFrameDataCodec extends AsnSequenceCodec<Co
    */
   public AsnConnectionAssetDetailsFrameDataCodec() {
     super(
-        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED),
-        new AsnUint8Codec()
+      new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED),
+      new AsnUint8Codec()
     );
   }
 
   @Override
   public ConnectionAssetDetailsFrame decode() {
     return ConnectionAssetDetailsFrame.builder()
-        .sourceDenomination(Denomination.builder()
-            .assetCode(getValueAt(0))
-            .assetScale(getValueAt(1))
-            .build())
-        .build();
+      .sourceDenomination(Denomination.builder()
+        .assetCode(getValueAt(0))
+        .assetScale(getValueAt(1))
+        .build())
+      .build();
   }
 
   @Override

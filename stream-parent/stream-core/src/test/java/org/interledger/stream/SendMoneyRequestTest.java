@@ -2,17 +2,16 @@ package org.interledger.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.primitives.UnsignedLong;
+import java.time.Duration;
+import java.util.UUID;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
-
-import com.google.common.primitives.UnsignedLong;
+import org.interledger.fx.Denomination;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.time.Duration;
-import java.util.UUID;
 
 /**
  * Unit tests for {@link SendMoneyRequest}.
@@ -21,7 +20,7 @@ public class SendMoneyRequestTest {
 
   private static final UUID RANDOM_UUID = UUID.randomUUID();
   private static final Denomination DENOMINATION = Denomination.builder().assetCode("USD").assetScale((short) 2)
-      .build();
+    .build();
   private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
 
   @Mock
@@ -35,13 +34,13 @@ public class SendMoneyRequestTest {
   @Test
   public void testBuilderWithoutOptionals() {
     SendMoneyRequest result = SendMoneyRequest.builder()
-        .amount(UnsignedLong.valueOf(10))
-        .destinationAddress(InterledgerAddress.of("example.destination"))
-        .sharedSecret(SHARED_SECRET)
-        .denomination(DENOMINATION)
-        .requestId(RANDOM_UUID)
-        .paymentTracker(paymentTrackerMock)
-        .build();
+      .amount(UnsignedLong.valueOf(10))
+      .destinationAddress(InterledgerAddress.of("example.destination"))
+      .sharedSecret(SHARED_SECRET)
+      .denomination(DENOMINATION)
+      .requestId(RANDOM_UUID)
+      .paymentTracker(paymentTrackerMock)
+      .build();
 
     assertThat(result.sourceAddress()).isEmpty();
     assertThat(result.amount()).isEqualTo(UnsignedLong.valueOf(10));
@@ -56,15 +55,15 @@ public class SendMoneyRequestTest {
   @Test
   public void testBuilderWithOptionals() {
     SendMoneyRequest result = SendMoneyRequest.builder()
-        .sourceAddress(InterledgerAddress.of("example.sender"))
-        .amount(UnsignedLong.valueOf(10))
-        .destinationAddress(InterledgerAddress.of("example.destination"))
-        .sharedSecret(SHARED_SECRET)
-        .denomination(DENOMINATION)
-        .timeout(Duration.ZERO)
-        .requestId(RANDOM_UUID)
-        .paymentTracker(paymentTrackerMock)
-        .build();
+      .sourceAddress(InterledgerAddress.of("example.sender"))
+      .amount(UnsignedLong.valueOf(10))
+      .destinationAddress(InterledgerAddress.of("example.destination"))
+      .sharedSecret(SHARED_SECRET)
+      .denomination(DENOMINATION)
+      .timeout(Duration.ZERO)
+      .requestId(RANDOM_UUID)
+      .paymentTracker(paymentTrackerMock)
+      .build();
 
     assertThat(result.sourceAddress().get()).isEqualTo(InterledgerAddress.of("example.sender"));
     assertThat(result.amount()).isEqualTo(UnsignedLong.valueOf(10));
