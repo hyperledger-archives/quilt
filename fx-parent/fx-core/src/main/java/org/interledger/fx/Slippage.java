@@ -5,6 +5,7 @@ import org.immutables.value.Value;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
 import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.core.fluent.Percentage;
 
 /**
  * <p>The amount of exchange rate fluctuation, in percentage terms, that a system or operation will tolerate. For

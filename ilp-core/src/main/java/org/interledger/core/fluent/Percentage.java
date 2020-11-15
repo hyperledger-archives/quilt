@@ -1,7 +1,6 @@
-package org.interledger.fx;
+package org.interledger.core.fluent;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import org.immutables.value.Value.Immutable;
 
 /**
@@ -17,7 +16,7 @@ public interface Percentage extends Comparable<Percentage> {
 
   static Percentage of(final BigDecimal value) {
     return ImmutablePercentage.builder()
-      .value(value.setScale(4, RoundingMode.HALF_UP))
+      .value(value)
       .build();
   }
 

@@ -7,10 +7,9 @@ import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.core.fluent.FluentUnsignedLong;
 import org.interledger.core.fluent.Ratio;
-import org.interledger.fx.FluentBigInteger;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.model.PaymentTargetConditions;
@@ -96,9 +95,9 @@ public class AmountTracker {
 
     // Packets that aren't at least this minimum source amount *may* fail due to rounding.
     // If the max packet amount is insufficient, fail fast, since the payment is unlikely to succeed.
-    final UnsignedLong minSourcePacketAmount = FluentUnsignedLong.of(UnsignedLong.ONE)
+    final UnsignedLong minSourcePacketAmount = FluentBigInteger.of(BigInteger.ONE)
       // per the checks above, reciprocal will be present.
-      .timesCeil(marginOfError.reciprocal().get()).getValue();
+      .timesCeil(marginOfError.reciprocal().get()).toUnsignedLong();
     if (FluentCompareTo.is(maxSourcePacketAmount).notGreaterThanEqualTo(minSourcePacketAmount)) {
       final String errorMessage = String.format(
         "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",

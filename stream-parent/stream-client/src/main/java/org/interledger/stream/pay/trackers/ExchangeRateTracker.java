@@ -61,15 +61,8 @@ public class ExchangeRateTracker {
     Objects.requireNonNull(sourceAmount);
     Objects.requireNonNull(receivedAmount);
 
-    final Ratio packetLowerBoundRate = Ratio.builder()
-      .numerator(receivedAmount)
-      .denominator(sourceAmount)
-      .build();
-
-    final Ratio packetUpperBoundRate = Ratio.builder()
-      .numerator(receivedAmount.plus(UnsignedLong.ONE))
-      .denominator(sourceAmount)
-      .build();
+    final Ratio packetLowerBoundRate = Ratio.from(sourceAmount, receivedAmount);
+    final Ratio packetUpperBoundRate = Ratio.from(sourceAmount.plus(UnsignedLong.ONE), receivedAmount);
 
     // If the exchange rate fluctuated and is "out of bounds," reset it
     Optional.ofNullable(this.receivedAmounts.get(sourceAmount)).ifPresent(previousReceivedAmount ->
@@ -123,12 +116,12 @@ public class ExchangeRateTracker {
 
         // TODO: What happens if the lowerBound and upperBounds aren't set yet? It's likely that if receivedAmounts
         // is not empty, then these will be populated, but worth a unit test.
-        UnsignedLong lowEndDestination = getLowerBoundRate().timesFloor(sourceAmount);
+        UnsignedLong lowEndDestination = getLowerBoundRate().multiplyFloor(sourceAmount);
 
-        // Because the upper0bound exchange rate is exclusive:
+        // Because the upperBound exchange rate is exclusive:
         // If source amount converts exactly to an integer, destination amount MUST be 1 unit less
         // If source amount doesn't convert precisely, we can't narrow it any better than that amount, floored ¯\_(ツ)_/¯
-        UnsignedLong highEndDestination = getUpperBoundRate().timesCeil(sourceAmount).minus(UnsignedLong.ONE);
+        UnsignedLong highEndDestination = getUpperBoundRate().multiplyCeil(sourceAmount).minus(UnsignedLong.ONE);
         return ExchangeRateBound.builder().lowEndEstimate(lowEndDestination).highEndEstimate(highEndDestination)
           .build();
       });

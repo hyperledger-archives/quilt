@@ -3,10 +3,9 @@ package org.interledger.core.fluent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.primitives.UnsignedLong;
-import org.junit.Test;
-
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link Ratio}.
@@ -14,11 +13,21 @@ import java.math.BigDecimal;
 public class RatioTest {
 
   @Test
+  public void testFrom() {
+    Ratio r = Ratio.from(new BigDecimal("86.8056180495575233622"));
+
+    assertThat(r).isEqualTo(Ratio.builder()
+      .numerator(new BigInteger("868056180495575233622"))
+      .denominator(new BigInteger("10000000000000000000"))
+      .build());
+  }
+
+  @Test
   public void compareToWhenSmaller() {
-    Ratio r1 = Ratio.builder().numerator(UnsignedLong.valueOf(1)).denominator(UnsignedLong.valueOf(8))
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(8))
       .build();
-    Ratio r2 = Ratio.builder().numerator(UnsignedLong.valueOf(1))
-      .denominator(UnsignedLong.valueOf(4)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1))
+      .denominator(BigInteger.valueOf(4)).build();
 
     assertThat(r1.compareTo(r2) < 0).isTrue();
     assertThat(r1.compareTo(r2) == 0).isFalse();
@@ -27,9 +36,9 @@ public class RatioTest {
 
   @Test
   public void compareToWhenEqual() {
-    Ratio r1 = Ratio.builder().numerator(UnsignedLong.valueOf(1)).denominator(UnsignedLong.valueOf(2))
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2))
       .build();
-    Ratio r2 = Ratio.builder().numerator(UnsignedLong.valueOf(1)).denominator(UnsignedLong.valueOf(2))
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2))
       .build();
 
     assertThat(r1.compareTo(r2) < 0).isFalse();
@@ -39,9 +48,9 @@ public class RatioTest {
 
   @Test
   public void compareToWhenBigger() {
-    Ratio r1 = Ratio.builder().numerator(UnsignedLong.valueOf(1))
-      .denominator(UnsignedLong.valueOf(2)).build();
-    Ratio r2 = Ratio.builder().numerator(UnsignedLong.valueOf(1)).denominator(UnsignedLong.valueOf(4))
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1))
+      .denominator(BigInteger.valueOf(2)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4))
       .build();
 
     assertThat(r1.compareTo(r2) < 0).isFalse();
@@ -51,22 +60,53 @@ public class RatioTest {
 
   @Test
   public void toBigDecimal() {
-    Ratio r1 = Ratio.builder().numerator(UnsignedLong.valueOf(1)).denominator(UnsignedLong.valueOf(2)).build();
-    assertThat(r1.toBigDecimal()).isEqualTo(new BigDecimal("0.5000000000"));
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+    assertThat(r1.toBigDecimal()).isEqualTo(new BigDecimal("0.5"));
 
-    r1 = Ratio.builder().numerator(UnsignedLong.valueOf(2)).denominator(UnsignedLong.valueOf(2)).build();
-    assertThat(r1.toBigDecimal()).isEqualTo(new BigDecimal("1.0000000000"));
+    r1 = Ratio.builder().numerator(BigInteger.valueOf(2)).denominator(BigInteger.valueOf(2)).build();
+    assertThat(r1.toBigDecimal()).isEqualTo(new BigDecimal("1"));
 
-    r1 = Ratio.builder().numerator(UnsignedLong.valueOf(1)).denominator(UnsignedLong.MAX_VALUE).build();
-    assertThat(r1.toBigDecimal()).isEqualTo(new BigDecimal("0e-10"));
+    r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(Integer.MAX_VALUE)).build();
+    assertThat(r1.toBigDecimal()).isEqualTo(new BigDecimal("5e-10"));
   }
 
   @Test
-  public void subtract() {
+  public void testSubtract() {
+    // From JS
+    // lowerBoundRate.subtract(minExchangeRate) ==> 38195044246000 / 100000000000000000
 
-    Ratio r1 = Ratio.builder().numerator(BigDecimal.valueOf(86806L)).denominator(BigDecimal.valueOf(1000L)).build();
-    Ratio r1 = Ratio.builder().numerator(new BigDecimal("8680561804955754")).denominator(100000000000000).build();
+    Ratio minExchangeRateFromJs = Ratio.builder()
+      .numerator(BigInteger.valueOf(8680561804955754L))
+      .denominator(BigInteger.valueOf(100000000000000L))
+      .build();
+    Ratio lowerBoundRateFromJS = Ratio.builder()
+      .numerator(BigInteger.valueOf(86806L))
+      .denominator(BigInteger.valueOf(1000L))
+      .build();
 
+    Ratio marginOfErrorFromJs = Ratio.builder()
+      .numerator(BigInteger.valueOf(38195044246000L))
+      .denominator(BigInteger.valueOf(100000000000000000L))
+      .build();
+    assertThat(lowerBoundRateFromJS.subtract(minExchangeRateFromJs)).isEqualTo(marginOfErrorFromJs);
+  }
+
+  @Test
+  public void testRecipricol() {
+    Ratio r = Ratio.builder()
+      .numerator(BigInteger.valueOf(38195044246000L))
+      .denominator(BigInteger.valueOf(100000000000000000L))
+      .build();
+
+    Ratio reciprocal = Ratio.builder()
+      .numerator(BigInteger.valueOf(100000000000000000L))
+      .denominator(BigInteger.valueOf(38195044246000L))
+      .build();
+
+    assertThat(r.reciprocal().get()).isEqualTo(reciprocal);
+    assertThat(r.reciprocal().get().reciprocal().get()).isEqualTo(r);
+    assertThat(reciprocal.reciprocal().get()).isEqualTo(r);
+    assertThat(reciprocal.reciprocal().get().reciprocal().get()).isEqualTo(reciprocal);
   }
 
 }

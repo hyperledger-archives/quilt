@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import org.interledger.core.fluent.Percentage;
+import org.interledger.core.fluent.Ratio;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -89,5 +91,36 @@ public class ScaledExchangeRateTest {
     assertThat(scaledExchangeRate1.equals(scaledExchangeRate0)).isFalse();
   }
 
+  @Test
+  public void testBounds() {
+    ScaledExchangeRate scaledExchangeRate = ScaledExchangeRate.builder()
+      .value(new BigDecimal("86.84991150442478"))
+      .inputScale((short) 0)
+      .slippage(Slippage.of(Percentage.of(new BigDecimal("0.00051"))))
+      .build();
+
+    assertThat(scaledExchangeRate.slippage().value().value()).isEqualTo(new BigDecimal("0.00051"));
+
+    // Lower Bound / MinRate from JS
+    BigDecimal minimumRate = BigDecimal.ONE.subtract(scaledExchangeRate.slippage().value().value())
+      .multiply(scaledExchangeRate.value());
+    assertThat(minimumRate).isEqualTo(new BigDecimal("86.8056180495575233622"));
+
+    // LowerBound
+    final BigDecimal lowerBoundFromJS = new BigDecimal("86.8056180495575233622");
+    assertThat(scaledExchangeRate.lowerBound()).isEqualTo(lowerBoundFromJS);
+    assertThat(Ratio.builder()
+      .numerator(BigInteger.valueOf(8680561804955754L))
+      .denominator(BigInteger.valueOf(100000000000000L))
+      .build().toBigDecimal())
+      .isEqualTo(new BigDecimal("86.80561804955754"));
+    assertThat(scaledExchangeRate.lowerBound()).isEqualTo(lowerBoundFromJS);
+
+    // Value
+    assertThat(scaledExchangeRate.value()).isEqualTo(new BigDecimal("86.84991150442478"));
+
+    // Upper Bound
+    assertThat(scaledExchangeRate.upperBound()).isEqualTo(new BigDecimal("86.8942049592920366378"));
+  }
 
 }

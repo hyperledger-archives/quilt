@@ -27,7 +27,7 @@ import org.interledger.core.SharedSecret;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
 import org.interledger.fx.Denominations;
-import org.interledger.fx.Percentage;
+import org.interledger.core.fluent.Percentage;
 import org.interledger.fx.ScaledExchangeRate;
 import org.interledger.fx.Slippage;
 import org.interledger.link.LinkId;
@@ -111,8 +111,11 @@ public class StreamPayerDefaultTest {
 
     StreamPayer streamPayer = new StreamPayer.Default(
       simulatedLink,
-      newExternalExchangeRateProvider(
-        Ratio.builder().numerator(UnsignedLong.ONE).denominator(UnsignedLong.MAX_VALUE).build()),
+      newExternalExchangeRateProvider(Ratio.builder()
+        .numerator(BigInteger.ONE)
+        .denominator(BigInteger.valueOf(Integer.MAX_VALUE))
+        .build()
+      ),
       spspMockClientWithErrors()
     );
 
@@ -272,7 +275,10 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.builder().numerator(UnsignedLong.ONE).denominator(UnsignedLong.MAX_VALUE).build();
+    final Ratio exchangeRate = Ratio.builder()
+      .numerator(BigInteger.ONE)
+      .denominator(BigInteger.valueOf(Integer.MAX_VALUE))
+      .build();
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
       sourceAccountDetails, destinationAccountDetails, exchangeRate
     );
@@ -331,7 +337,10 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.builder().numerator(UnsignedLong.ONE).denominator(UnsignedLong.MAX_VALUE).build();
+    final Ratio exchangeRate = Ratio.builder()
+      .numerator(BigInteger.ONE)
+      .denominator(BigInteger.valueOf(Integer.MAX_VALUE))
+      .build();
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
       sourceAccountDetails, destinationAccountDetails, exchangeRate
     );
@@ -830,12 +839,12 @@ public class StreamPayerDefaultTest {
     );
 
     final Ratio trackedLowerBoundRate = Ratio.builder()
-      .numerator(UnsignedLong.valueOf(86806L))
-      .denominator(UnsignedLong.valueOf(1000L))
+      .numerator(BigInteger.valueOf(86806L))
+      .denominator(BigInteger.valueOf(1000L))
       .build();
     final Ratio trackedUpperBoundRate = Ratio.builder()
-      .numerator(UnsignedLong.valueOf(86807L))
-      .denominator(UnsignedLong.valueOf(1000L))
+      .numerator(BigInteger.valueOf(86807L))
+      .denominator(BigInteger.valueOf(1000L))
       .build();
 
     final ExchangeRateTracker exchangeRateTracker = mock(ExchangeRateTracker.class);
@@ -869,8 +878,8 @@ public class StreamPayerDefaultTest {
               .sourceDenomination(sourceAccountDetails.denomination())
               .destinationDenomination(destinationAccountDetails.denomination())
               .maxPacketAmount(MaxPacketAmount.builder()
-                .maxPacketState(MaxPacketState.ImpreciseMax)
-                .value(UnsignedLong.MAX_VALUE)
+                .maxPacketState(MaxPacketState.PreciseMax)
+                .value(UnsignedLong.valueOf(1000L)) // <-- This is required to make this test fail properly.
                 .build()
               )
               .lowerBoundRate(trackedLowerBoundRate)
@@ -898,7 +907,7 @@ public class StreamPayerDefaultTest {
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("foo");
+        assertThat(throwable.getCause().getMessage()).contains("Rate enforcement may incur rounding errors.");
         assertThat(throwable.getCause() instanceof StreamPayerException);
         assertThat(((StreamPayerException) throwable.getCause()).getSendState())
           .isEqualTo(SendState.ExchangeRateRoundingError);

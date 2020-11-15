@@ -38,8 +38,7 @@ public class FluentUnsignedLong {
     // TODO: Unit test: numbers bigger than unsigned-long.
 
     return FluentUnsignedLong.of(
-      UnsignedLong.valueOf(this.value.bigIntegerValue().multiply(ratio.numerator().bigIntegerValue())
-        .divide(ratio.denominator().bigIntegerValue()))
+      UnsignedLong.valueOf(this.value.bigIntegerValue().multiply(ratio.numerator()).divide(ratio.denominator()))
     );
   }
 
@@ -53,10 +52,14 @@ public class FluentUnsignedLong {
   public FluentUnsignedLong timesCeil(final Ratio ratio) {
     Objects.requireNonNull(ratio);
 
-    // TODO: Unit test: numbers bigger than unsigned-long.
+    // TODO: Unit test: numbers bigger than unsigned-long. Perhaps we can convert to BigDecimal and round in order to
+    //  keep the UnsignedLong correct?
 
     return FluentUnsignedLong
-      .of(this.value.times(ratio.numerator()).dividedBy(ratio.denominator()).plus(UnsignedLong.ONE));
+      .of(this.value.times(
+        // TODO: These will overflow on big ratios.
+        UnsignedLong.valueOf(ratio.numerator().longValueExact()))
+        .dividedBy(UnsignedLong.valueOf(ratio.denominator().longValueExact())).plus(UnsignedLong.ONE));
   }
 
   public FluentUnsignedLong divideCeil(final UnsignedLong divisor) {

@@ -67,7 +67,7 @@ public class MaxPacketAmountTracker {
         }
 
         // Convert remote max packet amount into source units
-        final Ratio exchangeRate = Ratio.builder().numerator(sourceAmount).denominator(totalReceivedByRemote).build();
+        final Ratio exchangeRate = Ratio.from(sourceAmount, totalReceivedByRemote);
         final UnsignedLong newMaxAmount = FluentUnsignedLong.of(remoteMaximum).timesFloor(exchangeRate).getValue();
 
         return Optional.<MaxPacketAmount>of(

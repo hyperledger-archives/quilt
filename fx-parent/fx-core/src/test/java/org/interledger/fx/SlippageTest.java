@@ -3,6 +3,7 @@ package org.interledger.fx;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
+import org.interledger.core.fluent.Percentage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

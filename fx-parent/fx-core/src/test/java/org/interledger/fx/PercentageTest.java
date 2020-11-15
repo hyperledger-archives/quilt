@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import org.interledger.core.fluent.Percentage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

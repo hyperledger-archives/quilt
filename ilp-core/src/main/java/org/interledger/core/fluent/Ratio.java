@@ -25,8 +25,8 @@ public interface Ratio extends Comparable<Ratio> {
     return ImmutableRatio.builder();
   }
 
-  Ratio ZERO = builder().numerator(UnsignedLong.ZERO).denominator(UnsignedLong.ONE).build();
-  Ratio ONE = builder().numerator(UnsignedLong.ONE).denominator(UnsignedLong.ONE).build();
+  Ratio ZERO = builder().numerator(BigInteger.ZERO).denominator(BigInteger.ONE).build();
+  Ratio ONE = builder().numerator(BigInteger.ONE).denominator(BigInteger.ONE).build();
 
   /**
    * The numerator, greater than or equal to {@link UnsignedLong#ZERO}.
@@ -34,33 +34,26 @@ public interface Ratio extends Comparable<Ratio> {
    * @return An {@link UnsignedLong}.
    */
   @Default
-  default UnsignedLong numerator() {
-    return UnsignedLong.ONE;
+  default BigInteger numerator() {
+    return BigInteger.ONE;
   }
 
   /**
-   * The denominator, greater than {@link UnsignedLong#ZERO}.
+   * The denominator, greater than {@link BigInteger#ZERO}.
    *
-   * @return An {@link UnsignedLong}.
+   * @return An {@link BigInteger}.
    */
   @Default
-  default UnsignedLong denominator() {
-    return UnsignedLong.ONE;
-  }
-
-  @Derived
-  default boolean isPositive() {
-    return FluentCompareTo.is(this.numerator()).greaterThan(UnsignedLong.ZERO);
+  default BigInteger denominator() {
+    return BigInteger.ONE;
   }
 
   @Derived
   default BigDecimal toBigDecimal() {
     try {
-      return new BigDecimal(this.numerator().bigIntegerValue())
-        .divide(new BigDecimal(this.denominator().bigIntegerValue()));
+      return new BigDecimal(this.numerator()).divide(new BigDecimal(this.denominator()));
     } catch (ArithmeticException e) {
-      return new BigDecimal(this.numerator().bigIntegerValue())
-        .divide(new BigDecimal(this.denominator().bigIntegerValue()), 10, RoundingMode.HALF_EVEN);
+      return new BigDecimal(this.numerator()).divide(new BigDecimal(this.denominator()), 10, RoundingMode.HALF_EVEN);
     }
   }
 
@@ -69,9 +62,9 @@ public interface Ratio extends Comparable<Ratio> {
    * number.
    *
    * @param bigDecimal A {@link BigDecimal} to turn into a {@link Ratio}.
-   * @return The constructed {@link Ratio} that holds two {@link UnsignedLong} values.
+   * @return The constructed {@link Ratio} that holds two {@link BigInteger} values.
    */
-  static Ratio from(BigDecimal bigDecimal) {
+  static Ratio from(final BigDecimal bigDecimal) {
     Objects.requireNonNull(bigDecimal);
 
     BigDecimal e = BigDecimal.TEN;
@@ -90,31 +83,31 @@ public interface Ratio extends Comparable<Ratio> {
    *
    * @param numerator
    * @param denominator
-   * @return The constructed {@link Ratio} that holds two {@link UnsignedLong} values.
+   * @return The constructed {@link Ratio} that holds two {@link BigInteger} values.
    */
   static Ratio from(final BigInteger numerator, final BigInteger denominator) {
     Objects.requireNonNull(numerator);
     Objects.requireNonNull(denominator);
 
-    // toBigIntegerExact should never throw because of the scaling operation above.
-    final UnsignedLong a;
-    if (numerator.compareTo(UnsignedLong.MAX_VALUE.bigIntegerValue()) > 0) {
-      a = UnsignedLong.MAX_VALUE;
-    } else {
-      a = UnsignedLong.valueOf(numerator);
-    }
-
-    final UnsignedLong b;
-    if (denominator.compareTo(UnsignedLong.MAX_VALUE.bigIntegerValue()) > 0) {
-      b = UnsignedLong.MAX_VALUE;
-    } else {
-      b = UnsignedLong.valueOf(denominator);
-    }
-
     return Ratio.builder()
-      .numerator(a)
-      .denominator(b)
+      .numerator(numerator)
+      .denominator(denominator)
       .build();
+  }
+
+  /**
+   * Construct a new {@link Ratio} from the supplied {@code bigInteger} by scaling the value until it is a whole
+   * number.
+   *
+   * @param numerator
+   * @param denominator
+   * @return The constructed {@link Ratio} that holds two {@link BigInteger} values.
+   */
+  static Ratio from(final UnsignedLong numerator, final UnsignedLong denominator) {
+    Objects.requireNonNull(numerator);
+    Objects.requireNonNull(denominator);
+
+    return Ratio.from(numerator.bigIntegerValue(), denominator.bigIntegerValue());
   }
 
   static boolean isIntegerValue(final BigDecimal bd) {
@@ -124,13 +117,14 @@ public interface Ratio extends Comparable<Ratio> {
 
   // TODO: Unit test.
   @Derived
-  default int compareTo(Ratio other) {
-    if (FluentCompareTo.is(this.numerator().times(other.denominator()))
-      .greaterThan(this.denominator().times(other.numerator()))
+  default int compareTo(final Ratio other) {
+    Objects.requireNonNull(other);
+    if (FluentCompareTo.is(this.numerator().multiply(other.denominator()))
+      .greaterThan(this.denominator().multiply(other.numerator()))
     ) {
       return 1;
-    } else if (FluentCompareTo.is(this.numerator().times(other.denominator()))
-      .lessThan(this.denominator().times(other.numerator()))) {
+    } else if (FluentCompareTo.is(this.numerator().multiply(other.denominator()))
+      .lessThan(this.denominator().multiply(other.numerator()))) {
       return -1;
     } else {
       return 0;
@@ -145,25 +139,61 @@ public interface Ratio extends Comparable<Ratio> {
    */
   // TODO: Unit test to validate floor.
   @Derived
-  default UnsignedLong timesFloor(final UnsignedLong amount) {
+  default BigInteger multiplyFloor(final BigInteger amount) {
     Objects.requireNonNull(amount);
-    return amount.times(this.numerator()).dividedBy(this.denominator());
+    return amount.multiply(this.numerator()).divide(this.denominator());
+  }
+
+  /**
+   * Multiply a number by a ratio and return the "floor" value.
+   *
+   * @param amount
+   * @return
+   */
+  // TODO: Unit test to validate floor.
+  @Derived
+  default UnsignedLong multiplyFloor(final UnsignedLong amount) {
+    Objects.requireNonNull(amount);
+    BigInteger newValue = multiplyFloor(amount.bigIntegerValue());
+
+    if (FluentCompareTo.is(newValue).greaterThan(UnsignedLong.MAX_VALUE.bigIntegerValue())) {
+      // Overflow detected. We need to round to MAX_VALUE probably.
+      return UnsignedLong.MAX_VALUE;
+    } else {
+      return UnsignedLong.valueOf(newValue);
+    }
   }
 
   // TODO: Unit test
   @Derived
-  default UnsignedLong timesCeil(UnsignedLong amount) {
-    boolean isPositive = FluentCompareTo.is(modulo(amount, this)).greaterThan(UnsignedLong.ZERO);
+  default BigInteger multiplyCeil(final BigInteger amount) {
+    Objects.requireNonNull(amount);
+    boolean isPositive = FluentCompareTo.is(modulo(amount, this)).greaterThan(BigInteger.ZERO);
     if (isPositive) {
-      return (amount.times(this.numerator()).dividedBy(this.denominator())).plus(UnsignedLong.ONE);
+      return (amount.multiply(this.numerator()).divide(this.denominator())).add(BigInteger.ONE);
     } else {
-      return amount.times(this.numerator()).dividedBy(this.denominator());
+      return amount.multiply(this.numerator()).divide(this.denominator());
+    }
+  }
+
+  // TODO: Unit test
+  @Derived
+  default UnsignedLong multiplyCeil(final UnsignedLong amount) {
+    Objects.requireNonNull(amount);
+    Objects.requireNonNull(amount);
+    BigInteger newValue = multiplyCeil(amount.bigIntegerValue());
+
+    if (FluentCompareTo.is(newValue).greaterThan(UnsignedLong.MAX_VALUE.bigIntegerValue())) {
+      // Overflow detected. We need to round to MAX_VALUE probably.
+      return UnsignedLong.MAX_VALUE;
+    } else {
+      return UnsignedLong.valueOf(newValue);
     }
   }
 
   @Lazy
   default Optional<Ratio> reciprocal() {
-    if (FluentUnsignedLong.of(this.numerator()).isPositive()) {
+    if (FluentBigInteger.of(this.numerator()).isPositive()) {
       return Optional.of(Ratio.builder()
         .numerator(this.denominator())
         .denominator(this.numerator())
@@ -174,27 +204,35 @@ public interface Ratio extends Comparable<Ratio> {
   }
 
   // TODO: Unit test
-  static UnsignedLong modulo(UnsignedLong amount1, final Ratio r) {
-    return amount1.times(r.numerator()).mod(r.denominator());
+  static BigInteger modulo(BigInteger amount, final Ratio ratio) {
+    Objects.requireNonNull(amount);
+    Objects.requireNonNull(ratio);
+    return amount.multiply(ratio.numerator()).mod(ratio.denominator());
   }
 
-  // TODO: Unit test
   @Derived
-  default Ratio subtract(final Ratio r) {
-    // TODO: Remove this check and introduce isPostive.
-    if (FluentCompareTo.is(r).greaterThan(this)) {
+  default Ratio subtract(final Ratio ratio) {
+    Objects.requireNonNull(ratio);
+    if (FluentCompareTo.is(this).lessThanOrEqualTo(ratio)) {
       return Ratio.ZERO;
     } else {
-      final UnsignedLong a = this.numerator().times(r.denominator()).minus(r.numerator().times(this.denominator()));
-      final UnsignedLong b = this.denominator().times(r.denominator());
+      final BigInteger a = this.numerator().multiply(ratio.denominator())
+        .subtract(ratio.numerator().multiply(this.denominator()));
+      final BigInteger b = this.denominator().multiply(ratio.denominator());
       return Ratio.builder().numerator(a).denominator(b).build();
     }
   }
 
+  @Derived
+  default boolean isPositive() {
+    return FluentCompareTo.is(this.numerator()).greaterThan(BigInteger.ZERO);
+  }
+
   @Value.Check
   default void check() {
+    // Denominator must be positive!
     Preconditions.checkState(
-      FluentCompareTo.is(denominator()).greaterThan(UnsignedLong.ZERO), "Denominator must be greater-than 0"
+      FluentCompareTo.is(denominator()).greaterThan(BigInteger.ZERO), "Denominator must be greater-than 0"
     );
   }
 }
