@@ -1,4 +1,4 @@
-package org.interledger.stream.pay.model;
+package org.interledger.stream.pay.probing.model;
 
 import com.google.common.base.Preconditions;
 import java.math.BigDecimal;
@@ -6,7 +6,6 @@ import java.math.BigInteger;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
 import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.stream.pay.model.ImmutablePaymentTargetConditions.Builder;
 
 /**
  * Amount and exchange rate conditions that must be met for the payment to complete.
@@ -14,14 +13,24 @@ import org.interledger.stream.pay.model.ImmutablePaymentTargetConditions.Builder
 @Immutable
 public interface PaymentTargetConditions {
 
-  static Builder builder() {
+  static ImmutablePaymentTargetConditions.Builder builder() {
     return ImmutablePaymentTargetConditions.builder();
   }
 
   PaymentType paymentType();
 
+  /**
+   * The maximum total amount that can be sent for this entire payment, in scaled source account units.
+   *
+   * @return A {@link BigInteger}.
+   */
   BigInteger maxSourceAmount();
 
+  /**
+   * The minimum total amount that must be sent for this entire payment, in scaled destination account units.
+   *
+   * @return A {@link BigInteger}.
+   */
   BigInteger minDeliveryAmount();
 
   BigDecimal minExchangeRate();

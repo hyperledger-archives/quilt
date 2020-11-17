@@ -7,7 +7,6 @@ import org.interledger.stream.pay.filters.StreamPacketFilter;
  */
 public enum SendState {
 
-
   /**
    * Ready to send money and apply the next ILP Prepare
    */

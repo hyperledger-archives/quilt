@@ -1,21 +1,22 @@
-package org.interledger.stream.pay.model;
+package org.interledger.stream.pay.probing.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.util.Optional;
+import org.immutables.value.Value.Immutable;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
-import org.interledger.stream.pay.model.ImmutableExchangeRateProbeOutcome.Builder;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketAmount;
-
-import org.immutables.value.Value.Immutable;
-
-import java.util.Optional;
 
 /**
  * The outcome of an ExchangeRate probe operation.
  */
 @Immutable
+@JsonSerialize(as = ImmutableExchangeRateProbeOutcome.class)
+@JsonDeserialize(as = ImmutableExchangeRateProbeOutcome.class)
 public interface ExchangeRateProbeOutcome {
 
-  static Builder builder() {
+  static ImmutableExchangeRateProbeOutcome.Builder builder() {
     return ImmutableExchangeRateProbeOutcome.builder();
   }
 

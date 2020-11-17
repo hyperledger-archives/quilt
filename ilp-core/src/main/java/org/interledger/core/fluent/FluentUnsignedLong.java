@@ -102,7 +102,20 @@ public class FluentUnsignedLong {
     return FluentCompareTo.is(this.getValue()).greaterThan(UnsignedLong.ZERO);
   }
 
+  public boolean isNotPositive() {
+    return !this.isPositive();
+  }
+
   public UnsignedLong getValue() {
     return value;
+  }
+
+  public FluentUnsignedLong minusOrZero(final UnsignedLong amount) {
+    Objects.requireNonNull(amount);
+    if (FluentCompareTo.is(this.getValue()).greaterThanEqualTo(amount)) {
+      return FluentUnsignedLong.of(this.getValue().minus(amount));
+    } else {
+      return FluentUnsignedLong.of(UnsignedLong.ZERO);
+    }
   }
 }

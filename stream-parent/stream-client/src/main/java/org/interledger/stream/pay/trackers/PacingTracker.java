@@ -3,6 +3,7 @@ package org.interledger.stream.pay.trackers;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -15,22 +16,22 @@ public class PacingTracker {
   /**
    * Maximum number of packets to have in-flight, yet to receive a Fulfill or Reject.
    */
-  private static int MAX_INFLIGHT_PACKETS = 20;
+  public static int MAX_INFLIGHT_PACKETS = 20;
 
   /**
    * Initial number of packets to send in 1 second interval (25ms delay between packets).
    */
-  private static int DEFAULT_PACKETS_PER_SECOND = 40;
+  public static int DEFAULT_PACKETS_PER_SECOND = 40;
 
   /**
    * Always try to send at least 1 packet in 1 second (unless RTT is very high).
    */
-  private static int MIN_PACKETS_PER_SECOND = 1;
+  public static int MIN_PACKETS_PER_SECOND = 1;
 
   /**
    * Maximum number of packets to send in a 1 second interval, after ramp up (5ms delay).
    */
-  private static int MAX_PACKETS_PER_SECOND = 200;
+  public static int MAX_PACKETS_PER_SECOND = 200;
 
   /**
    * RTT to use for pacing before an average can be ascertained.
@@ -82,4 +83,36 @@ public class PacingTracker {
     return this.lastPacketSentTime.get().plus(delayDuration);
   }
 
+  public int getNumberInFlight() {
+    return numberInFlight.get();
+  }
+
+  public void setLastPacketSentTime(final Instant lastPacketSentTime) {
+    Objects.requireNonNull(lastPacketSentTime);
+    this.lastPacketSentTime.set(lastPacketSentTime);
+  }
+
+  public void incrementNumPacketsInFlight() {
+    this.numberInFlight.getAndIncrement();
+  }
+
+  public void decrementNumPacketsInFlight() {
+    this.numberInFlight.getAndDecrement();
+  }
+
+  // TODO: Unit test!
+  public void updateAverageRoundTripTime(final int roundTripTime) {
+    this.averageRoundTrip.getAndAccumulate(roundTripTime, (rtt, existingValue) -> {
+      float foo = (rtt * ROUND_TRIP_AVERAGE_WEIGHT) + (rtt * (1 - ROUND_TRIP_AVERAGE_WEIGHT));
+      return (int) foo;
+    });
+  }
+
+  public void setPacketsPerSecond(int reducedRate) {
+    this.packetsPerSecond.set(reducedRate);
+  }
+
+  public int getPacketsPerSecond() {
+    return this.packetsPerSecond.get();
+  }
 }

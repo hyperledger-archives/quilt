@@ -3,6 +3,7 @@ package org.interledger.stream.pay;
 import static okhttp3.CookieJar.NO_COOKIES;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -42,6 +43,7 @@ import org.zalando.problem.violations.ConstraintViolationProblemModule;
 
 public abstract class AbstractIT {
 
+  private final ObjectMapper objectMapperForPrettyPrinting = new ObjectMapper();
   // TODO: Re-work these tests with the Rust Connector in a Docker container from interledger4j so that we're not at
   //  the whim of rafiki.money.
 
@@ -170,5 +172,14 @@ public abstract class AbstractIT {
       );
     }
 
+  }
+
+  protected <T> String pretty(final T jsonObject) {
+    try {
+      return objectMapperForPrettyPrinting.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
+    } catch (JsonProcessingException e) {
+      e.printStackTrace();
+      return jsonObject.toString();
+    }
   }
 }

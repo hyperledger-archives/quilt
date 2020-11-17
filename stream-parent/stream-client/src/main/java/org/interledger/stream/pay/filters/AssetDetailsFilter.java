@@ -16,9 +16,8 @@ import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
+import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Determines how the maximum packet amount is known or discovered.
@@ -26,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class AssetDetailsFilter implements StreamPacketFilter {
 
   // Static because these filters will be constructed a lot.
-  private static final Logger logger = LoggerFactory.getLogger(AssetDetailsFilter.class.getClass());
+  // private static final Logger logger = LoggerFactory.getLogger(AssetDetailsFilter.class);
 
   private PaymentSharedStateTracker paymentSharedStateTracker;
 
@@ -35,25 +34,17 @@ public class AssetDetailsFilter implements StreamPacketFilter {
   }
 
   @Override
-  public StreamPacketReply doFilter(
-    final ModifiableStreamPacketRequest streamRequest, final StreamPacketFilterChain filterChain
-  ) {
-    Objects.requireNonNull(streamRequest);
-    Objects.requireNonNull(filterChain);
+  public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
+    Objects.requireNonNull(streamPacketRequest);
 
     if (this.paymentSharedStateTracker.getAssetDetailsTracker().getRemoteAssetChanged()) {
-      // TODO: We send an optional close frame in the StreamPacketReply, but this is technically an error condition.
-      // As an alternative, we could throw an exception, but this would change the API contract, esp something like
-      // the "End" state.
-      return StreamPacketReply.builder()
-        .sendState(SendState.DestinationAssetConflict)
-        // Inject a frame into the streamRequest so that it will be sent during close.
-        .addStreamFramesForConnectionClose(
-          ConnectionCloseFrame.builder()
-            .errorCode(ErrorCodes.ProtocolViolation)
-            .errorMessage("Destination asset changed, but this is prohibited by the IL-RFC-29.")
-            .build())
-        .build();
+      streamPacketRequest.requestFrames().add(
+        ConnectionCloseFrame.builder()
+          .errorCode(ErrorCodes.ProtocolViolation)
+          .errorMessage("Destination asset changed, but this is prohibited by the IL-RFC-29.")
+          .build()
+      );
+      return SendState.DestinationAssetConflict;
     }
 
     // This implementation doesn't receive packets, so only send a `ConnectionNewAddress` for backwards
@@ -80,7 +71,7 @@ public class AssetDetailsFilter implements StreamPacketFilter {
          * Since both Rust & Java won't ever send any packets, we can use any address here, since it's just so they
          * reply with asset details.
          */
-        streamRequest.requestFrames().add(ConnectionNewAddressFrame.builder().sourceAddress(
+        streamPacketRequest.requestFrames().add(ConnectionNewAddressFrame.builder().sourceAddress(
           this.paymentSharedStateTracker.getAssetDetailsTracker().getSourceAccountDetails().interledgerAddress()
           ).build()
         );
@@ -89,13 +80,13 @@ public class AssetDetailsFilter implements StreamPacketFilter {
          * For `ilp-protocol-stream` >= 2.5.0, send `ConnectionNewAddress` with an empty address, which will (1)
          * trigger a reply with asset details, and (2) not trigger a send loop.
          */
-        streamRequest.requestFrames().add(ConnectionNewAddressFrame.builder().build());
+        streamPacketRequest.requestFrames().add(ConnectionNewAddressFrame.builder().build());
       }
     }
 
     // Notify the recipient of our limits
     if (!this.paymentSharedStateTracker.getAssetDetailsTracker().getRemoteKnowsOurAccount()) {
-      streamRequest.requestFrames().addAll(Lists.newArrayList(
+      streamPacketRequest.requestFrames().addAll(Lists.newArrayList(
         // Disallow incoming money (JS auto opens a new stream for this)
         StreamMoneyMaxFrame.builder()
           .streamId(DEFAULT_STREAM_ID)
@@ -113,7 +104,19 @@ public class AssetDetailsFilter implements StreamPacketFilter {
       ));
     }
 
-    return filterChain.doFilter(streamRequest);
+    return SendState.Ready;
+  }
+
+  @Override
+  public StreamPacketReply doFilter(StreamPacketRequest streamRequest, StreamPacketFilterChain filterChain) {
+    Objects.requireNonNull(streamRequest);
+    Objects.requireNonNull(filterChain);
+
+    StreamPacketReply streamPacketReply = filterChain.doFilter(streamRequest);
+
+    this.paymentSharedStateTracker.getAssetDetailsTracker().handleDestinationDetails(streamPacketReply);
+
+    return streamPacketReply;
   }
 
 }

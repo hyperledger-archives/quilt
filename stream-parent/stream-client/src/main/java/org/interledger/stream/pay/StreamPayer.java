@@ -29,13 +29,22 @@ import org.interledger.stream.StreamException;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
+import org.interledger.stream.pay.filters.AmountFilter;
+import org.interledger.stream.pay.filters.AssetDetailsFilter;
+import org.interledger.stream.pay.filters.ExchangeRateFilter;
+import org.interledger.stream.pay.filters.FailureFilter;
+import org.interledger.stream.pay.filters.MaxPacketAmountFilter;
+import org.interledger.stream.pay.filters.PacingFilter;
+import org.interledger.stream.pay.filters.SequenceFilter;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
-import org.interledger.stream.pay.model.EstimatedPaymentOutcome;
-import org.interledger.stream.pay.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.model.PaymentOptions;
-import org.interledger.stream.pay.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.model.Quote;
+import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.probing.ExchangeRateProber;
+import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
+import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
+import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.trackers.AssetDetailsTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 import org.slf4j.Logger;
@@ -58,6 +67,8 @@ public interface StreamPayer {
    */
   CompletableFuture<Quote> getQuote(PaymentOptions paymentOptions) throws StreamException;
 
+  CompletableFuture<Receipt> pay(Quote quote);
+
   /**
    * The default implementation of {@link StreamPayer}.
    */
@@ -65,7 +76,7 @@ public interface StreamPayer {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final List<StreamPacketFilter> streamPacketFilters;
+    //private final List<StreamPacketFilter> streamPacketFilters;
     private final Link<? extends LinkSettings> link;
     private final SpspClient spspClient;
     private final StreamEncryptionUtils streamEncryptionUtils;
@@ -75,30 +86,31 @@ public interface StreamPayer {
       this(link, oracleExchangeRateProvider, new SimpleSpspClient());
     }
 
-    public Default(
-      final Link<? extends LinkSettings> link,
-      final ExchangeRateProvider oracleExchangeRateProvider,
-      final SpspClient spspClient
-    ) {
-      this(
-        Lists.newArrayList(
-          //new AssetDetailsFilter()
-          //new MaxPacketAmountFilter(maxPacketAmountService)
-        ),
-        link,
-        oracleExchangeRateProvider, spspClient
-      );
-    }
+//    public Default(
+//      final Link<? extends LinkSettings> link,
+//      final ExchangeRateProvider oracleExchangeRateProvider,
+//      final SpspClient spspClient
+//    ) {
+//      this(
+////        Lists.newArrayList(
+////          // First so all other controllers log the sequence number
+////          new SequenceFilter()
+////          //new AssetDetailsFilter()
+////          //new MaxPacketAmountFilter(maxPacketAmountService)
+////        ),
+//        link, oracleExchangeRateProvider, spspClient
+//      );
+//    }
 
     // TODO: Re-work Constructors.
     @VisibleForTesting
     Default(
-      final List<StreamPacketFilter> streamPacketFilters,
+      // final List<StreamPacketFilter> streamPacketFilters,
       final Link<? extends LinkSettings> link,
       final ExchangeRateProvider oracleExchangeRateProvider,
       final SpspClient spspClient
     ) {
-      this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
+      // this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
       this.link = Objects.requireNonNull(link);
       this.spspClient = Objects.requireNonNull(spspClient);
       this.oracleExchangeRateProvider = Objects.requireNonNull(oracleExchangeRateProvider);
@@ -117,13 +129,7 @@ public interface StreamPayer {
         this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
 
         // Construct StreamConnection.
-        final StreamConnection streamConnection = new StreamConnection(
-          paymentOptions.senderAccountDetails(),
-          // SPSP Details.
-          streamConnectionDetails.destinationAddress(),
-          streamConnectionDetails.sharedSecret()
-          // No dest denomination known yet.
-        );
+        final StreamConnection streamConnection = this.newStreamConnection(paymentOptions, streamConnectionDetails);
 
         // Probe the path.
         final ExchangeRateProber exchangeRateProber = newExchangeRateProber();
@@ -150,8 +156,8 @@ public interface StreamPayer {
         logger.debug("Calculated min exchange rate of {}", minScaledExchangeRate);
 
         // Invoices are fixed delivery, but not yet supported.
-        final EstimatedPaymentOutcome estimatedPaymentOutcome = paymentSharedStateTracker.getAmountTracker()
-          .setPaymentTarget(
+        final EstimatedPaymentOutcome estimatedPaymentOutcome = paymentSharedStateTracker
+          .getAmountTracker().setPaymentTarget(
             PaymentType.FIXED_SEND,  // Invoices are fixed delivery, but not yet supported.
             minScaledExchangeRate,
             rateProbeOutcome.maxPacketAmount().value().orElseThrow(() -> new StreamPayerException(
@@ -174,12 +180,12 @@ public interface StreamPayer {
         final BigDecimal upperBoundRate = shiftRate
           .apply(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate().toBigDecimal());
         final BigDecimal minExchangeRate = shiftRate.apply(minScaledExchangeRate);
-        final BigInteger maxSourceAmount = new BigDecimal(estimatedPaymentOutcome.maxSourceAmountInSourceUnits())
+        final BigInteger maxSourceAmount = new BigDecimal(estimatedPaymentOutcome.maxSendAmountInWholeSourceUnits())
           .movePointLeft(sourceDenomination.assetScale())
           .setScale(0, RoundingMode.HALF_EVEN)
           .toBigIntegerExact();
         final BigInteger minDeliveryAmount = new BigDecimal(
-          estimatedPaymentOutcome.minDeliveryAmountInDestinationUnits())
+          estimatedPaymentOutcome.minDeliveryAmountInWholeDestinationUnits())
           .movePointLeft(destinationDenomination.assetScale())
           .setScale(0, RoundingMode.HALF_EVEN)
           .toBigIntegerExact();
@@ -201,8 +207,8 @@ public interface StreamPayer {
           .estimatedDuration(estimatedDuration)
           .estimatedPaymentOutcome(
             EstimatedPaymentOutcome.builder()
-              .minDeliveryAmountInDestinationUnits(minDeliveryAmount)
-              .maxSourceAmountInSourceUnits(maxSourceAmount)
+              .maxSendAmountInWholeSourceUnits(maxSourceAmount)
+              .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
               .estimatedNumberOfPackets(estimatedPaymentOutcome.estimatedNumberOfPackets())
               .build()
           )
@@ -221,15 +227,66 @@ public interface StreamPayer {
 
     }
 
+    @Override
+    public CompletableFuture<Receipt> pay(final Quote quote) {
+      Objects.requireNonNull(quote);
+
+      final List<StreamPacketFilter> streamPacketFilters = Lists.newArrayList(
+        // First so all other controllers log the sequence number
+        new SequenceFilter(quote.paymentSharedStateTracker()),
+        // Fail-fast on terminal rejects or timeouts
+        new FailureFilter(),
+        // Fail-fast on destination asset detail conflict
+        new AssetDetailsFilter(quote.paymentSharedStateTracker()),
+        // Fail-fast if max packet amount is 0
+        new MaxPacketAmountFilter(quote.paymentSharedStateTracker().getMaxPacketAmountTracker()),
+        // Limit how frequently packets are sent and early return
+        new PacingFilter(quote.paymentSharedStateTracker().getPacingTracker()),
+        new AmountFilter(quote.paymentSharedStateTracker()),
+        new ExchangeRateFilter(quote.paymentSharedStateTracker().getExchangeRateTracker())
+        // TODO: PendingRequestTracker?
+      );
+
+      return new RunLoop(link, streamPacketFilters, streamEncryptionUtils, quote.paymentSharedStateTracker())
+        .start(quote);
+    }
+
+    //////////////////////
+    // Visible for Testing
+    //////////////////////
+
     /**
-     * Merely constructs a new instance of {@link ExchangeRateProber} whenever getQuote is called. However, this
-     * function exists for mocking during tests in order to simulate various exchange-rate scenarios.
+     * Merely constructs a new instance of {@link ExchangeRateProber} whenever getQuote is called. Exists for mocking
+     * during tests in order to simulate various exchange-rate scenarios.
      *
      * @return
      */
     @VisibleForTesting
     protected ExchangeRateProber newExchangeRateProber() {
       return new ExchangeRateProber.Default(streamEncryptionUtils, link);
+    }
+
+    /**
+     * Constructs a new instance of {@link StreamConnection}. Exists for mocking during tests in order to simulate
+     * various exchange-rate scenarios.
+     *
+     * @param paymentOptions          A {@link PaymentOptions}.
+     * @param streamConnectionDetails A {@link StreamConnectionDetails}.
+     * @return
+     */
+    @VisibleForTesting
+    protected StreamConnection newStreamConnection(
+      final PaymentOptions paymentOptions, final StreamConnectionDetails streamConnectionDetails
+    ) {
+      Objects.requireNonNull(paymentOptions);
+      Objects.requireNonNull(streamConnectionDetails);
+      return new StreamConnection(
+        paymentOptions.senderAccountDetails(),
+        // SPSP Details.
+        streamConnectionDetails.destinationAddress(),
+        streamConnectionDetails.sharedSecret()
+        // No dest denomination known yet.
+      );
     }
 
     //////////////////
@@ -477,6 +534,7 @@ public interface StreamPayer {
           .movePointRight(sourceDenomination.assetScale()).toBigIntegerExact();
         return scaledSendAmount;
       } catch (Exception e) {
+        // TODO: Unit test this.
         throw new StreamPayerException("Invalid source scale", e, SendState.InvalidSourceAmount);
       }
     }

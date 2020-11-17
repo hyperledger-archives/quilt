@@ -43,9 +43,9 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
    * @param packetRejector          A {@link PacketRejector} to aid in rejecting packets in a uniform manner.
    */
   public LoopbackLink(
-      final Supplier<InterledgerAddress> operatorAddressSupplier,
-      final LinkSettings linkSettings,
-      final PacketRejector packetRejector
+    final Supplier<InterledgerAddress> operatorAddressSupplier,
+    final LinkSettings linkSettings,
+    final PacketRejector packetRejector
   ) {
     super(operatorAddressSupplier, linkSettings);
     this.packetRejector = Objects.requireNonNull(packetRejector);
@@ -53,9 +53,7 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
 
   @Override
   public void registerLinkHandler(LinkHandler ilpDataHandler) throws LinkHandlerAlreadyRegisteredException {
-    throw new RuntimeException(
-        "Loopback links never have incoming data, and thus should not have a registered DataHandler."
-    );
+    logger.warn("Loopback links never have incoming data, and thus should not have a registered DataHandler.");
   }
 
   @Override
@@ -63,25 +61,25 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
     Objects.requireNonNull(preparePacket, "preparePacket must not be null");
 
     return Optional.ofNullable(this.getLinkSettings().getCustomSettings().get(SIMULATED_REJECT_ERROR_CODE))
-        .map((value) -> {
-          if (value.equals("T02")) {
-            return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T02_PEER_BUSY,
-                "Loopback set to manually reject via simulate_timeout=T02");
-          } else if (value.equals("T03")) {
-            return sleepAndReject(preparePacket, 60000);
-          }
-          if (value.equals("T99")) {
-            throw new RuntimeException("T99 APPLICATION ERROR");
-          } else {
-            return InterledgerFulfillPacket.builder()
-                .fulfillment(LOOPBACK_FULFILLMENT)
-                .data(preparePacket.getData())
-                .build();
-          }
-        })
-        .orElseGet(InterledgerFulfillPacket.builder()
+      .map((value) -> {
+        if (value.equals("T02")) {
+          return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T02_PEER_BUSY,
+            "Loopback set to manually reject via simulate_timeout=T02");
+        } else if (value.equals("T03")) {
+          return sleepAndReject(preparePacket, 60000);
+        }
+        if (value.equals("T99")) {
+          throw new RuntimeException("T99 APPLICATION ERROR");
+        } else {
+          return InterledgerFulfillPacket.builder()
             .fulfillment(LOOPBACK_FULFILLMENT)
-            .data(preparePacket.getData())::build);
+            .data(preparePacket.getData())
+            .build();
+        }
+      })
+      .orElseGet(InterledgerFulfillPacket.builder()
+        .fulfillment(LOOPBACK_FULFILLMENT)
+        .data(preparePacket.getData())::build);
   }
 
   @VisibleForTesting
@@ -93,15 +91,15 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
       throw new RuntimeException(e);
     }
     return packetRejector.reject(this.getLinkId(), preparePacket, InterledgerErrorCode.T03_CONNECTOR_BUSY,
-        "Loopback set to exceed timeout via simulate_timeout=T03");
+      "Loopback set to exceed timeout via simulate_timeout=T03");
   }
 
   @Override
   public String toString() {
     return new StringJoiner(", ", LoopbackLink.class.getSimpleName() + "[", "]")
-        .add("linkId=" + getLinkId())
-        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
-        .add("linkSettings=" + getLinkSettings())
-        .toString();
+      .add("linkId=" + getLinkId())
+      .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+      .add("linkSettings=" + getLinkSettings())
+      .toString();
   }
 }

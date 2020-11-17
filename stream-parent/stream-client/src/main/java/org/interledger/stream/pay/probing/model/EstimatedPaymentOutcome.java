@@ -1,17 +1,20 @@
-package org.interledger.stream.pay.model;
+package org.interledger.stream.pay.probing.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.math.BigInteger;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
-import org.interledger.stream.pay.model.ImmutableEstimatedPaymentOutcome.Builder;
 
 /**
  * An estimate of the outcome of a stream payment.
  */
 @Immutable
+@JsonSerialize(as = ImmutableEstimatedPaymentOutcome.class)
+@JsonDeserialize(as = ImmutableEstimatedPaymentOutcome.class)
 public interface EstimatedPaymentOutcome {
 
-  static Builder builder() {
+  static ImmutableEstimatedPaymentOutcome.Builder builder() {
     return ImmutableEstimatedPaymentOutcome.builder();
   }
 
@@ -23,18 +26,20 @@ public interface EstimatedPaymentOutcome {
   BigInteger estimatedNumberOfPackets();
 
   /**
-   * The estimated maximum amount that will be sent as part of this payment, in source units.
+   * The estimated maximum amount that will be sent as part of this payment, denominated in source units with scale
+   * equal to 0 (i.e., for dollars, a value of 1 would be $1 dollar).
    *
    * @return A {@link BigInteger}.
    */
-  BigInteger maxSourceAmountInSourceUnits();
+  BigInteger maxSendAmountInWholeSourceUnits();
 
   /**
-   * The estimated minimum amount that will be delivered as part of this payment, in destination units.
+   * The estimated minimum amount that will be delivered as part of this payment, denominated in destination units with
+   * scale equal to 0 (i.e., for dollars, a value of 1 would be $1 dollar).
    *
    * @return A {@link BigInteger}.
    */
-  BigInteger minDeliveryAmountInDestinationUnits();
+  BigInteger minDeliveryAmountInWholeDestinationUnits();
 
   @Value.Check
   default void check() {

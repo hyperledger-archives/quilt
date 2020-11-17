@@ -1,7 +1,8 @@
-package org.interledger.stream.pay.model;
+package org.interledger.stream.pay.probing.model;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
+import org.interledger.stream.pay.model.ImmutableQuoteRequest;
 import org.interledger.stream.pay.model.ImmutableQuoteRequest.Builder;
 
 import org.immutables.value.Value.Immutable;

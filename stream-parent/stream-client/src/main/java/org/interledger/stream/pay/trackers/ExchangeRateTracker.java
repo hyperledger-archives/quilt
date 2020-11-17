@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
-import org.interledger.stream.pay.model.ExchangeRateBound;
 import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.probing.model.ExchangeRateBound;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ExchangeRateTracker {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final static Logger logger = LoggerFactory.getLogger(ExchangeRateTracker.class);
 
   /**
    * Realized exchange rate is greater than or equal to this ratio (inclusive) (i.e., destination / source).
@@ -61,8 +61,8 @@ public class ExchangeRateTracker {
     Objects.requireNonNull(sourceAmount);
     Objects.requireNonNull(receivedAmount);
 
-    final Ratio packetLowerBoundRate = Ratio.from(sourceAmount, receivedAmount);
-    final Ratio packetUpperBoundRate = Ratio.from(sourceAmount.plus(UnsignedLong.ONE), receivedAmount);
+    final Ratio packetUpperBoundRate = Ratio.from(receivedAmount.plus(UnsignedLong.ONE), sourceAmount);
+    final Ratio packetLowerBoundRate = Ratio.from(receivedAmount, sourceAmount);
 
     // If the exchange rate fluctuated and is "out of bounds," reset it
     Optional.ofNullable(this.receivedAmounts.get(sourceAmount)).ifPresent(previousReceivedAmount ->
@@ -107,24 +107,45 @@ public class ExchangeRateTracker {
    *   <li>High-end estimate: no more than this amount will get delivered, if the rate hasn't fluctuated.</li>
    * </ol>
    */
+  // TODO: No need to synchronize if only called from nextState
   public synchronized ExchangeRateBound estimateDestinationAmount(final UnsignedLong sourceAmount) {
     // If we already sent a packet for this amount, return how much the recipient got
     return Optional.ofNullable(this.receivedAmounts.get(sourceAmount))
-      .map(amountReceived -> ExchangeRateBound.builder().lowEndEstimate(amountReceived).highEndEstimate(amountReceived)
-        .build())
+      .map(amountReceived ->
+        ExchangeRateBound.builder().lowEndEstimate(amountReceived).highEndEstimate(amountReceived).build()
+      )
       .orElseGet(() -> {
 
         // TODO: What happens if the lowerBound and upperBounds aren't set yet? It's likely that if receivedAmounts
         // is not empty, then these will be populated, but worth a unit test.
-        UnsignedLong lowEndDestination = getLowerBoundRate().multiplyFloor(sourceAmount);
+        final UnsignedLong lowEndDestination = getLowerBoundRate().multiplyFloor(sourceAmount);
 
         // Because the upperBound exchange rate is exclusive:
         // If source amount converts exactly to an integer, destination amount MUST be 1 unit less
         // If source amount doesn't convert precisely, we can't narrow it any better than that amount, floored ¯\_(ツ)_/¯
-        UnsignedLong highEndDestination = getUpperBoundRate().multiplyCeil(sourceAmount).minus(UnsignedLong.ONE);
-        return ExchangeRateBound.builder().lowEndEstimate(lowEndDestination).highEndEstimate(highEndDestination)
+        final UnsignedLong highEndDestination = getUpperBoundRate().multiplyCeil(sourceAmount).minus(UnsignedLong.ONE);
+        return ExchangeRateBound.builder()
+          .lowEndEstimate(lowEndDestination)
+          .highEndEstimate(highEndDestination)
           .build();
       });
+  }
+
+  // TODO: No need to synchronize if only called from nextState
+
+  /**
+   * Estimate the source amount that delivers the given destination amount.
+   * <p>
+   * <ol>
+   *   <li>Low-end estimate: (may under-deliver, won't over-deliver): lowest source amount
+   *     that *may* deliver the given destination amount, if the rate hasn't fluctuated.</li>
+   *   <li>High-end estimate: (won't under-deliver, may over-deliver): lowest source amount that
+   *     delivers at least the given destination amount, if the rate hasn't fluctuated.</li>
+   * </ol>
+   */
+  public ExchangeRateBound estimateSourceAmount(final UnsignedLong destinationAmount) {
+    Objects.requireNonNull(destinationAmount);
+    throw new RuntimeException("Not yet implemented");
   }
 
   public Ratio getLowerBoundRate() {

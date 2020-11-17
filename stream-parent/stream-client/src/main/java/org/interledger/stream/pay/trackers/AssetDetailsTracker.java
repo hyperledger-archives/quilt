@@ -54,6 +54,8 @@ public class AssetDetailsTracker {
   public void handleDestinationDetails(final StreamPacketReply streamPacketReply) {
     Objects.requireNonNull(streamPacketReply);
 
+    this.remoteKnowsOurAccount.set(this.remoteKnowsOurAccount.get() || streamPacketReply.isAuthentic());
+
     // TODO: Create a new Tracker that can handle a CNA frame (ConnectionAddressTracker). Should work like this one,
     // but allow a receiver to migrate their address during a STREAM. Note, check RFC first to ensure this is still
     // legal.
@@ -67,7 +69,7 @@ public class AssetDetailsTracker {
       .filter($ -> StreamPacket.class.isAssignableFrom($.getClass()))
       .map($ -> (StreamPacket) $)
       // Map streamPacket to CAD frame.
-      .map(streamPacket -> StreamPacketUtils.getConnectionAssetDetailsFrame(streamPacket))
+      .map(streamPacket -> StreamPacketUtils.findConnectionAssetDetailsFrame(streamPacket))
       .filter(Optional::isPresent)
       .map(Optional::get)
       .ifPresent(connectionAssetDetailsFrame -> {

@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 // TODO: Capture StreamConnectionTest and add constructor tests.
 public class StreamConnection implements Closeable {
 
-  public static final UnsignedInteger MAX_FRAMES_PER_CONNECTION = UnsignedInteger.valueOf(2 ^ 31);
+  public static final UnsignedInteger MAX_FRAMES_PER_CONNECTION = UnsignedInteger.valueOf((long) Math.pow(2, 31));
 
   /**
    * The unique identifier of this Connection. A Connection is unique to a destination {@link InterledgerAddress} and a
@@ -77,9 +77,9 @@ public class StreamConnection implements Closeable {
    * @param sharedSecret         The {@link SharedSecret} used to encrypt and decrypt packets transmitted over this.
    */
   public StreamConnection(
-      final AccountDetails sourceAccountDetails,
-      final InterledgerAddress destinationAddress,
-      final SharedSecret sharedSecret
+    final AccountDetails sourceAccountDetails,
+    final InterledgerAddress destinationAddress,
+    final SharedSecret sharedSecret
   ) {
     this(sourceAccountDetails, destinationAddress, sharedSecret, Optional.empty());
   }
@@ -96,10 +96,10 @@ public class StreamConnection implements Closeable {
    * @param destinationDenomination
    */
   public StreamConnection(
-      final AccountDetails sourceAccountDetails,
-      final InterledgerAddress destinationAddress,
-      final SharedSecret sharedSecret,
-      final Optional<Denomination> destinationDenomination
+    final AccountDetails sourceAccountDetails,
+    final InterledgerAddress destinationAddress,
+    final SharedSecret sharedSecret,
+    final Optional<Denomination> destinationDenomination
   ) {
     this.sourceAccountDetails = Objects.requireNonNull(sourceAccountDetails);
     this.destinationAddress = Objects.requireNonNull(destinationAddress);
@@ -118,13 +118,12 @@ public class StreamConnection implements Closeable {
    * monotonically up to {2<sup>31</sup>}, after which the connection will be closed.
    *
    * @return A {@link UnsignedInteger} representing the next sequence number that can safely be used by a Stream Sender.
-   *
    * @throws StreamConnectionClosedException if the sequence can no longer be safely incremented.
    */
   public UnsignedInteger nextSequence() throws StreamConnectionClosedException {
     // Unique per-thread.
     final UnsignedInteger nextSequence = sequence
-        .getAndUpdate(currentSequence -> currentSequence.plus(UnsignedInteger.ONE));
+      .getAndUpdate(currentSequence -> currentSequence.plus(UnsignedInteger.ONE));
     if (sequenceIsSafeForSingleSharedSecret(nextSequence)) {
       return nextSequence;
     } else {
@@ -140,7 +139,7 @@ public class StreamConnection implements Closeable {
    * because both endpoints encrypt packets with the same key).
    *
    * @return {@code true} if the current sequence can safely be used with a single shared-secret; {@code false}
-   *     otherwise.
+   * otherwise.
    */
   @VisibleForTesting
   boolean sequenceIsSafeForSingleSharedSecret(final UnsignedInteger sequence) {
@@ -258,11 +257,11 @@ public class StreamConnection implements Closeable {
   @Override
   public String toString() {
     return new StringJoiner(", ", StreamConnection.class.getSimpleName() + "[", "]")
-        .add("creationDateTime=" + creationDateTime)
-        .add("streamConnectionId=" + streamConnectionId)
-        .add("sequence=" + sequence)
-        .add("connectionState=" + connectionState)
-        .toString();
+      .add("creationDateTime=" + creationDateTime)
+      .add("streamConnectionId=" + streamConnectionId)
+      .add("sequence=" + sequence)
+      .add("connectionState=" + connectionState)
+      .toString();
   }
 
   @Override

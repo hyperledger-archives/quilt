@@ -6,25 +6,24 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
-import org.interledger.stream.pay.model.EstimatedPaymentOutcome;
-import org.interledger.stream.pay.model.PaymentTargetConditions;
-import org.interledger.stream.pay.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.model.SendState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
+import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
+import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 
 /**
- * Tracks the amounts that should
+ * Tracks the amounts that should be sent and delivered.
  */
-// TODO: Consider just moving thet fields in here to PaymentSharedStateTracker?
 public class AmountTracker {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+//  private final static Logger LOGGER = LoggerFactory.getLogger(AmountTracker.class);
 
   /**
    * Conditions that must be met for the payment to complete, and parameters of its execution.
@@ -32,9 +31,39 @@ public class AmountTracker {
   private final AtomicReference<PaymentTargetConditions> paymentTargetConditionsAtomicReference;
 
   /**
-   * Amount in destination units allowed to be lost to rounding, below the enforced exchange rate
+   * Total amount sent and fulfilled, in scaled units of the sending account
+   */
+  private AtomicReference<BigInteger> amountSentInSourceUnitsRef = new AtomicReference<>(BigInteger.ZERO);
+
+  /**
+   * Total amount delivered and fulfilled, in scaled units of the receiving account
+   */
+  private AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef = new AtomicReference<>(BigInteger.ZERO);
+
+  /**
+   * Amount sent that is yet to be fulfilled or rejected, in scaled units of the sending account
+   */
+  private AtomicReference<BigInteger> sourceAmountInFlightRef = new AtomicReference<>(BigInteger.ZERO);
+
+  /**
+   * Estimate of the amount that may be delivered from in-flight packets, in scaled units of the receiving account
+   */
+  private AtomicReference<BigInteger> destinationAmountInFlightRef = new AtomicReference<>(BigInteger.ZERO);
+
+  /**
+   * Amount in destination units allowed to be lost to rounding, below the enforced exchange rate.
    */
   private final AtomicReference<BigInteger> availableDeliveryShortfallRef = new AtomicReference<>(BigInteger.ZERO);
+
+  /**
+   * Maximum amount the recipient can receive on the default stream
+   */
+  private final AtomicReference<Optional<UnsignedLong>> remoteReceivedMaxRef = new AtomicReference<>(Optional.empty());
+
+  /**
+   * Should the connection be closed because the receiver violated the STREAM protocol?
+   */
+  private final AtomicBoolean encounteredProtocolViolation = new AtomicBoolean();
 
   private final ExchangeRateTracker exchangeRateTracker;
 
@@ -42,15 +71,6 @@ public class AmountTracker {
     this.exchangeRateTracker = exchangeRateTracker;
     this.paymentTargetConditionsAtomicReference = new AtomicReference<>();
   }
-
-  //    targetAmount: PositiveInt,
-//    targetType:PaymentType,
-//    minExchangeRate:Ratio,
-//    rateCalculator:ExchangeRateCalculator,
-//    maxSourcePacketAmount: Int,
-//    log: Logger
-//  )
-  //: EstimatedPaymentOutcome | PaymentError {
 
   // TODO: Javadoc
   public EstimatedPaymentOutcome setPaymentTarget(
@@ -97,12 +117,13 @@ public class AmountTracker {
     // If the max packet amount is insufficient, fail fast, since the payment is unlikely to succeed.
     final UnsignedLong minSourcePacketAmount = FluentBigInteger.of(BigInteger.ONE)
       // per the checks above, reciprocal will be present.
-      .timesCeil(marginOfError.reciprocal().get()).toUnsignedLong();
+      .timesCeil(marginOfError.reciprocal().get()).orMaxUnsignedLong();
     if (FluentCompareTo.is(maxSourcePacketAmount).notGreaterThanEqualTo(minSourcePacketAmount)) {
       final String errorMessage = String.format(
         "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",
         maxSourcePacketAmount, minSourcePacketAmount
       );
+      // TODO: Should be ConnectorError once the max-packet tracker is working properly.
       throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
     }
 
@@ -129,8 +150,8 @@ public class AmountTracker {
         .build());
 
       return EstimatedPaymentOutcome.builder()
-        .maxSourceAmountInSourceUnits(maxSourceAmount)
-        .minDeliveryAmountInDestinationUnits(minDeliveryAmount)
+        .maxSendAmountInWholeSourceUnits(maxSourceAmount)
+        .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
         .estimatedNumberOfPackets(estimatedNumberOfPackets)
         .build();
 
@@ -160,8 +181,8 @@ public class AmountTracker {
         .build());
 
       return EstimatedPaymentOutcome.builder()
-        .maxSourceAmountInSourceUnits(maxSourceAmount)
-        .minDeliveryAmountInDestinationUnits(minDeliveryAmount)
+        .maxSendAmountInWholeSourceUnits(maxSourceAmount)
+        .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
         .estimatedNumberOfPackets(estimatedNumberOfPackets)
         .build();
     } else {
@@ -170,5 +191,94 @@ public class AmountTracker {
         SendState.RateProbeFailed
       );
     }
+  }
+
+  public boolean encounteredProtocolViolation() {
+    return encounteredProtocolViolation.get();
+  }
+
+  public Optional<PaymentTargetConditions> getPaymentTargetConditions() {
+    return Optional.ofNullable(this.paymentTargetConditionsAtomicReference.get());
+  }
+
+  public Optional<UnsignedLong> getRemoteReceivedMax() {
+    return remoteReceivedMaxRef.get();
+  }
+
+  public BigInteger getAmountSentInSourceUnits() {
+    return amountSentInSourceUnitsRef.get();
+  }
+
+  public BigInteger getAmountDeliveredInDestinationUnits() {
+    return amountDeliveredInDestinationUnitsRef.get();
+  }
+
+  public BigInteger getSourceAmountInFlight() {
+    return sourceAmountInFlightRef.get();
+  }
+
+  public BigInteger getDestinationAmountInFlight() {
+    return destinationAmountInFlightRef.get();
+  }
+
+  public BigInteger getAvailableDeliveryShortfall() {
+    return this.availableDeliveryShortfallRef.get();
+  }
+
+  // TODO: Unit-test with threads to validate this is safe.
+  public void addToSourceAmountInFlight(final UnsignedLong amountToAdd) {
+    Objects.requireNonNull(amountToAdd);
+    this.sourceAmountInFlightRef.getAndAccumulate(amountToAdd.bigIntegerValue(), BigInteger::add);
+  }
+
+  // TODO: Unit-test with threads to validate this is safe.
+  public void addToDestinationAmountInFlight(final UnsignedLong amountToAdd) {
+    Objects.requireNonNull(amountToAdd);
+    this.destinationAmountInFlightRef.getAndAccumulate(amountToAdd.bigIntegerValue(), BigInteger::add);
+  }
+
+  // TODO: Unit-test with threads to validate this is safe.
+  public void subtractFromSourceAmountInFlight(final UnsignedLong amountToSubtract) {
+    Objects.requireNonNull(amountToSubtract);
+    this.sourceAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(), BigInteger::subtract);
+  }
+
+  // TODO: Unit-test with threads to validate this is safe.
+  public void subtractFromDestinationAmountInFlight(final UnsignedLong amountToSubtract) {
+    Objects.requireNonNull(amountToSubtract);
+    this.destinationAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(), BigInteger::subtract);
+  }
+
+  // TODO: Unit-test with threads to validate this is safe.
+  public void reduceDeliveryShortfall(final UnsignedLong amountToReduce) {
+    Objects.requireNonNull(amountToReduce);
+    this.availableDeliveryShortfallRef.getAndAccumulate(amountToReduce.bigIntegerValue(), BigInteger::subtract);
+  }
+
+  // TODO: Unit-test with threads to validate this is safe.
+  public void increaseDeliveryShortfall(final UnsignedLong amountToIncrease) {
+    Objects.requireNonNull(amountToIncrease);
+    this.availableDeliveryShortfallRef.getAndAccumulate(amountToIncrease.bigIntegerValue(), BigInteger::add);
+  }
+
+  public void setEncounteredProtocolViolation() {
+    this.encounteredProtocolViolation.set(true);
+  }
+
+  public void addAmountSent(final UnsignedLong sourceAmount) {
+    Objects.requireNonNull(sourceAmount);
+    this.amountSentInSourceUnitsRef.getAndAccumulate(sourceAmount.bigIntegerValue(), BigInteger::add);
+  }
+
+  public void addAmountDelivered(final Optional<UnsignedLong> destinationAmount) {
+    Objects.requireNonNull(destinationAmount);
+    destinationAmount.ifPresent(amount -> {
+      this.amountDeliveredInDestinationUnitsRef.getAndAccumulate(amount.bigIntegerValue(), BigInteger::add);
+    });
+  }
+
+  public void updateRemoteMax(final UnsignedLong remoteMax) {
+    Objects.requireNonNull(remoteMax);
+    this.remoteReceivedMaxRef.set(Optional.of(remoteMax));
   }
 }

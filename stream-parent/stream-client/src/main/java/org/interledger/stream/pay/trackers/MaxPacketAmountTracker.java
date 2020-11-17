@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public class MaxPacketAmountTracker {
 
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final static Logger logger = LoggerFactory.getLogger(MaxPacketAmountTracker.class);
 
   /**
    * How to interpret the {@code maxPacketAmount}.
@@ -151,6 +151,7 @@ public class MaxPacketAmountTracker {
    * Increase the greatest amount acknowledged by the recipient, which indicates the path is capable of sending packets
    * of at least that amount.
    */
+  // TODO: If this is called from nextState, then no need to synchronize.
   public synchronized void adjustPathCapacity(final UnsignedLong ackAmount) {
     final MaxPacketAmount maxPacketAmountSnapshot = this.maxPacketAmount.get();
 
@@ -188,15 +189,41 @@ public class MaxPacketAmountTracker {
 
   }
 
-  // TODO: getNextMaxPacketAmount
-
-
   public MaxPacketAmount getMaxPacketAmount() {
     return maxPacketAmount.get();
   }
 
   public boolean isNoCapacityAvailable() {
     return noCapacityAvailable.get();
+  }
+
+  /**
+   * Return a limit on the amount of the next packet: the precise max packet amount, or a probe amount if the precise
+   * max packet amount is yet to be discovered.
+   */
+  public Optional<UnsignedLong> getNextMaxPacketAmount() {
+    switch (this.maxPacketAmount.get().maxPacketState()) {
+      case PreciseMax: {
+        return this.maxPacketAmount.get().value(); // <-- When PreciseMax is set, the value must exist.
+      }
+      // Use a binary search to discover the precise max
+      case ImpreciseMax: {
+        // Always positive: if verifiedCapacity=0, maxPacketAmount / 2
+        // must round up to 1, or if verifiedCapacity=maxPacketAmount,
+        // verifiedCapacity is positive, so adding it will always be positive
+        return this.maxPacketAmount.get().value()
+          .map(FluentUnsignedLong::of)
+          .map(ful -> ful.minusOrZero(this.verifiedPathCapacity.get()))
+          .map(ful -> ful.divideCeil(UnsignedLong.valueOf(2)))
+          .map(FluentUnsignedLong::getValue)
+          .map(ul -> ul.plus(this.verifiedPathCapacity.get()));
+      }
+      case UnknownMax:
+      default: {
+        // Do nothing.
+        return Optional.empty();
+      }
+    }
   }
 
   public enum MaxPacketState {

@@ -1,6 +1,4 @@
-package org.interledger.stream.pay.model;
-
-import org.interledger.stream.pay.model.ImmutableExchangeRateBound.Builder;
+package org.interledger.stream.pay.probing.model;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Immutable;
@@ -11,7 +9,7 @@ import org.immutables.value.Value.Immutable;
 @Immutable
 public interface ExchangeRateBound {
 
-  static Builder builder() {
+  static ImmutableExchangeRateBound.Builder builder() {
     return ImmutableExchangeRateBound.builder();
   }
 

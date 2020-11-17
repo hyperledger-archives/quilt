@@ -1,4 +1,4 @@
-package org.interledger.stream.pay;
+package org.interledger.stream.pay.probing;
 
 import static org.interledger.stream.utils.StreamPacketUtils.DEFAULT_STREAM_ID;
 
@@ -35,7 +35,8 @@ import org.interledger.stream.errors.StreamConnectionClosedException;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
-import org.interledger.stream.pay.model.ExchangeRateProbeOutcome;
+import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 import org.interledger.stream.utils.StreamPacketUtils;
@@ -46,7 +47,6 @@ import org.slf4j.LoggerFactory;
  * A service for probing a particular path in order to determine exchange rates.
  */
 public interface ExchangeRateProber {
-
 
   /**
    * Accessor for the {@link PaymentSharedStateTracker} for the supplied {@code streamConnection}.
@@ -205,8 +205,8 @@ public interface ExchangeRateProber {
                   //.filter(StreamUtils::isAuthentic)
                   .map(StreamPacket::prepareAmount)
                   .filter(receivedAmount -> FluentCompareTo.is(prepareAmount).greaterThan(UnsignedLong.ZERO))
-                  .ifPresent(receivedAmount ->
-                    paymentSharedStateTracker.getExchangeRateTracker().updateRate(prepareAmount, receivedAmount)
+                  .ifPresent(claimedReceivedAmount ->
+                    paymentSharedStateTracker.getExchangeRateTracker().updateRate(prepareAmount, claimedReceivedAmount)
                   );
 
                 return streamPacketReply;

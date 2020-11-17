@@ -107,6 +107,10 @@ public class FluentBigInteger {
     return FluentCompareTo.is(this.getValue()).greaterThan(BigInteger.ZERO);
   }
 
+  public boolean isNotPositive() {
+    return !isPositive();
+  }
+
   public BigInteger getValue() {
     return value;
   }
@@ -163,7 +167,7 @@ public class FluentBigInteger {
     );
   }
 
-  public UnsignedLong toUnsignedLong() {
+  public UnsignedLong orMaxUnsignedLong() {
     if (FluentCompareTo.is(this.getValue()).greaterThan(UNSIGNED_LONG_MAX)) {
       return UnsignedLong.MAX_VALUE;
     } else {

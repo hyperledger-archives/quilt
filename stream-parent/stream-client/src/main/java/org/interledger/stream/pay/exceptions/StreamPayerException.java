@@ -42,7 +42,6 @@ public class StreamPayerException extends StreamException {
    * @param cause     the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A {@code null}
    *                  value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @param sendState
-   *
    * @since 1.4
    */
   public StreamPayerException(String message, Throwable cause, SendState sendState) {
@@ -58,7 +57,6 @@ public class StreamPayerException extends StreamException {
    * @param cause     the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A {@code null}
    *                  value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @param sendState
-   *
    * @since 1.4
    */
   public StreamPayerException(Throwable cause, SendState sendState) {
@@ -76,11 +74,10 @@ public class StreamPayerException extends StreamException {
    * @param enableSuppression  whether or not suppression is enabled or disabled
    * @param writableStackTrace whether or not the stack trace should be writable
    * @param sendState
-   *
    * @since 1.7
    */
   protected StreamPayerException(String message, Throwable cause, boolean enableSuppression,
-      boolean writableStackTrace, SendState sendState) {
+    boolean writableStackTrace, SendState sendState) {
     super(message, cause, enableSuppression, writableStackTrace);
     this.sendState = sendState;
   }
@@ -108,12 +105,11 @@ public class StreamPayerException extends StreamException {
 
   @Override
   public String toString() {
-    String s = getClass().getName();
     String message = getLocalizedMessage();
-    String output = "StreamPayerException{" +
-        "sendState=" + sendState +
-        "message=" + message +
-        "}";
-    return (message != null) ? (s + ": " + message) : s;
+    String output = "StreamPayerException{ " +
+      " message=" + message +
+      ", sendState=" + sendState +
+      " }";
+    return output;
   }
 }

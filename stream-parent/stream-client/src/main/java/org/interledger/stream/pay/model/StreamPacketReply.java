@@ -8,10 +8,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 import org.immutables.value.Value.Immutable;
 import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.stream.StreamPacket;
@@ -19,7 +19,7 @@ import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.pay.model.ImmutableStreamPacketReply.Builder;
 
 /**
- * The parent interface for a Stream reply.
+ * Holds all information concerning a reply for a stream request.
  */
 @Immutable
 public interface StreamPacketReply {
@@ -37,7 +37,7 @@ public interface StreamPacketReply {
    */
   @Deprecated
   @Derived
-  default Optional<UnsignedLong> amountDelivered() {
+  default Optional<UnsignedLong> destinationAmountClaimed() {
     return interledgerResponsePacket()
       .map(InterledgerResponsePacket::typedData)
       .filter(Optional::isPresent)
@@ -67,6 +67,13 @@ public interface StreamPacketReply {
   }
 
   /**
+   * The prepare packet the prompted this stream packet reply.
+   *
+   * @return
+   */
+  Optional<InterledgerPreparePacket> interledgerPreparePacket();
+
+  /**
    * The actual response from the Stream packet send operation; empty if there was no response or if this reply should
    * be ignored.
    *
@@ -74,10 +81,12 @@ public interface StreamPacketReply {
    */
   Optional<InterledgerResponsePacket> interledgerResponsePacket();
 
-  @Default
-  default SendState sendState() {
-    return SendState.Ready;
-  }
+//  // TODO: Extract PaymentErrors out of StreamPacketReply's SendState on ground that we should throw an exception
+//  // instead.
+//  @Default
+//  default SendState sendState() {
+//    return SendState.Ready;
+//  }
 
   /**
    * Contains STREAM frames that should be sent to the receiver if {@link #sendState()} is {@link SendState#End}.
@@ -107,6 +116,20 @@ public interface StreamPacketReply {
       .orElse(false);
 
     return isFulfillPacket || hasStreamPacket;
+  }
+
+  @Derived
+  default boolean isReject() {
+    return this.interledgerResponsePacket()
+      .filter(packet -> InterledgerRejectPacket.class.isAssignableFrom(packet.getClass()))
+      .isPresent();
+  }
+
+  @Derived
+  default boolean isFulfill() {
+    return this.interledgerResponsePacket()
+      .filter(packet -> InterledgerFulfillPacket.class.isAssignableFrom(packet.getClass()))
+      .isPresent();
   }
 
   /**

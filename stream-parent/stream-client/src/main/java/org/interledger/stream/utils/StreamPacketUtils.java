@@ -4,9 +4,11 @@ import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.interledger.core.InterledgerAddress;
@@ -24,9 +26,12 @@ import org.interledger.stream.StreamPacket;
 import org.interledger.stream.crypto.Random;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
+import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
+import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
+import org.interledger.stream.frames.StreamMoneyMaxFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,11 +44,12 @@ public class StreamPacketUtils {
    * The string "ilp_stream_fulfillment" is encoded as UTF-8 or ASCII (the byte representation is the same with both
    * encodings).
    */
-  private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment" .getBytes(StandardCharsets.UTF_8);
 
   private static final String HMAC_SHA256_ALG_NAME = "HmacSHA256";
 
   public static final UnsignedLong DEFAULT_STREAM_ID = UnsignedLong.ONE;
+
   /**
    * If the sender does not want the receiver to be able to fulfill the payment (as for an informational quote), they
    * can generate an unfulfillable random condition.
@@ -62,11 +68,10 @@ public class StreamPacketUtils {
    *
    * @param sharedSecret The cryptographic seed exchanged during STREAM Setup.
    * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
-   *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
    */
   public static InterledgerFulfillment generatedFulfillableFulfillment(
-      final SharedSecret sharedSecret, final byte[] data
+    final SharedSecret sharedSecret, final byte[] data
   ) {
     Objects.requireNonNull(sharedSecret);
     Objects.requireNonNull(data);
@@ -85,86 +90,141 @@ public class StreamPacketUtils {
   // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
   // TODO: See StreamUtils in Connector too.
   public static Optional<StreamPacket> getStreamPacket(
-      final InterledgerPacket packet,
-      final SharedSecret sharedSecret,
-      final StreamEncryptionUtils streamEncryptionUtils
+    final InterledgerPacket packet,
+    final SharedSecret sharedSecret,
+    final StreamEncryptionUtils streamEncryptionUtils
   ) {
     return packet.typedData()
-        .filter($ -> $.getClass().isAssignableFrom(StreamPacket.class))
-        .map($ -> (StreamPacket) $)
-        .map(Optional::of)
-        .orElseGet(() -> {
-          try {
-            return Optional.ofNullable(packet.getData())
-                .filter(data -> data.length > 0)
-                .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
-          } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            return Optional.empty();
-          }
-        });
+      .filter($ -> $.getClass().isAssignableFrom(StreamPacket.class))
+      .map($ -> (StreamPacket) $)
+      .map(Optional::of)
+      .orElseGet(() -> {
+        try {
+          return Optional.ofNullable(packet.getData())
+            .filter(data -> data.length > 0)
+            .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
+        } catch (Exception e) {
+          LOGGER.error(e.getMessage(), e);
+          return Optional.empty();
+        }
+      });
   }
 
   // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
   // TODO: See StreamUtils in Connector too.
   public static InterledgerResponsePacket withStreamPacket(
-      final InterledgerResponsePacket responsePacket,
-      final SharedSecret sharedSecret,
-      final StreamEncryptionUtils streamEncryptionUtils
+    final InterledgerResponsePacket responsePacket,
+    final SharedSecret sharedSecret,
+    final StreamEncryptionUtils streamEncryptionUtils
   ) {
     return responsePacket.map(
-        interledgerFulfillPacket -> getStreamPacket(interledgerFulfillPacket, sharedSecret, streamEncryptionUtils)
-            .map(streamPacket -> InterledgerFulfillPacket.builder()
-                .from(interledgerFulfillPacket)
-                .typedData(streamPacket)
-                .build())
-            .orElse((AbstractInterledgerFulfillPacket) interledgerFulfillPacket),
-        interledgerRejectPacket -> getStreamPacket(interledgerRejectPacket, sharedSecret, streamEncryptionUtils)
-            .map(streamPacket -> InterledgerRejectPacket.builder()
-                .from(interledgerRejectPacket)
-                .typedData(streamPacket)
-                .build())
-            .orElse((AbstractInterledgerRejectPacket) interledgerRejectPacket));
+      interledgerFulfillPacket -> getStreamPacket(interledgerFulfillPacket, sharedSecret, streamEncryptionUtils)
+        .map(streamPacket -> InterledgerFulfillPacket.builder()
+          .from(interledgerFulfillPacket)
+          .typedData(streamPacket)
+          .build())
+        .orElse((AbstractInterledgerFulfillPacket) interledgerFulfillPacket),
+      interledgerRejectPacket -> getStreamPacket(interledgerRejectPacket, sharedSecret, streamEncryptionUtils)
+        .map(streamPacket -> InterledgerRejectPacket.builder()
+          .from(interledgerRejectPacket)
+          .typedData(streamPacket)
+          .build())
+        .orElse((AbstractInterledgerRejectPacket) interledgerRejectPacket));
   }
 
   public static final Set<StreamFrameType> CLOSING_FRAMES = Sets.newHashSet(
-      StreamFrameType.ConnectionClose,
-      StreamFrameType.StreamClose
+    StreamFrameType.ConnectionClose,
+    StreamFrameType.StreamClose
   );
 
   public static Optional<Denomination> getDenomination(StreamPacket streamPacket) {
     Objects.requireNonNull(streamPacket);
 
     return streamPacket.frames().stream()
-        .filter(frame -> frame.streamFrameType().equals(StreamFrameType.ConnectionAssetDetails))
-        .map(frame -> ((ConnectionAssetDetailsFrame) frame))
-        .map(ConnectionAssetDetailsFrame::sourceDenomination)
-        .findFirst();
+      .filter(frame -> frame.streamFrameType().equals(StreamFrameType.ConnectionAssetDetails))
+      .map(frame -> ((ConnectionAssetDetailsFrame) frame))
+      .map(ConnectionAssetDetailsFrame::sourceDenomination)
+      .findFirst();
   }
 
   public static boolean hasCloseFrame(StreamPacket streamPacket) {
     Objects.requireNonNull(streamPacket);
-    return streamPacket.frames().stream()
-        .map(StreamFrame::streamFrameType)
-        .anyMatch(CLOSING_FRAMES::contains);
+    return hasCloseFrame(streamPacket.frames());
   }
 
-  public static Optional<ConnectionAssetDetailsFrame> getConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
+  public static boolean hasCloseFrame(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .map(StreamFrame::streamFrameType)
+      .anyMatch(CLOSING_FRAMES::contains);
+  }
+
+  // TODO: Unit tests
+  public static Optional<ConnectionCloseFrame> findConnectionCloseFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findConnectionCloseFrame(streamPacket.frames());
+  }
+
+  // TODO: Unit tests
+  public static Optional<ConnectionCloseFrame> findConnectionCloseFrame(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
+      .filter(streamFrame -> ConnectionCloseFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionCloseFrame) $)
+      .findFirst();
+  }
+
+  // TODO: Unit tests
+  public static Optional<StreamCloseFrame> findStreamCloseFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findStreamCloseFrame(streamPacket.frames());
+  }
+
+  // TODO: Unit tests
+  public static Optional<StreamCloseFrame> findStreamCloseFrame(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
+      .filter(streamFrame -> StreamCloseFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (StreamCloseFrame) $)
+      .findFirst();
+  }
+
+  // TODO: Unit tests
+  public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
     Objects.requireNonNull(streamPacket);
     return streamPacket.frames().stream()
-        .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
-        .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(ConnectionAssetDetailsFrame.class))
-        .map($ -> (ConnectionAssetDetailsFrame) $)
-        .findFirst();
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
+      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionAssetDetailsFrame) $)
+      .findFirst();
   }
 
-  public static Optional<InterledgerAddress> getSourceAddress(StreamPacket streamPacket) {
+  // TODO: Unit tests
+  public static Collection<StreamMoneyMaxFrame> findStreamMaxMoneyFrames(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findStreamMaxMoneyFrames(streamPacket.frames());
+  }
+
+  // TODO: Unit tests
+  public static Collection<StreamMoneyMaxFrame> findStreamMaxMoneyFrames(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.StreamMoneyMax)
+      .filter(streamFrame -> StreamMoneyMaxFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (StreamMoneyMaxFrame) $)
+      .collect(Collectors.toList());
+  }
+
+  // TODO: Unit tests
+  public static Optional<InterledgerAddress> findSourceAddress(StreamPacket streamPacket) {
     return streamPacket.frames().stream()
-        .filter(frame -> frame.streamFrameType().equals(StreamFrameType.ConnectionNewAddress))
-        .map(frame -> ((ConnectionNewAddressFrame) frame).sourceAddress())
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .findFirst();
+      .filter(frame -> frame.streamFrameType().equals(StreamFrameType.ConnectionNewAddress))
+      .map(frame -> ((ConnectionNewAddressFrame) frame).sourceAddress())
+      .filter(Optional::isPresent)
+      .map(Optional::get)
+      .findFirst();
   }
 
   /**
@@ -172,7 +232,6 @@ public class StreamPacketUtils {
    * fulfilled if they were unable to decrypt packets.
    *
    * @param interledgerFulfillPacket
-   *
    * @return
    */
   @Deprecated
@@ -187,7 +246,6 @@ public class StreamPacketUtils {
    * packet.
    *
    * @param interledgerRejectPacket
-   *
    * @return
    */
   // TODO: Used? See StreamPacketReply instead.
@@ -196,10 +254,10 @@ public class StreamPacketUtils {
     Objects.requireNonNull(interledgerRejectPacket);
 
     return interledgerRejectPacket.typedData()
-        .filter($ -> StreamPacket.class.isAssignableFrom($.getClass()))
-        .map($ -> (StreamPacket) $)
-        .map(Optional::of)
-        .map(streamPacket -> true)
-        .orElse(false);
+      .filter($ -> StreamPacket.class.isAssignableFrom($.getClass()))
+      .map($ -> (StreamPacket) $)
+      .map(Optional::of)
+      .map(streamPacket -> true)
+      .orElse(false);
   }
 }
