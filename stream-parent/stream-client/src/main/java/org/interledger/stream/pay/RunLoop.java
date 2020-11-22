@@ -1,7 +1,6 @@
 package org.interledger.stream.pay;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +19,7 @@ import org.interledger.stream.pay.model.QuoteRequest;
 import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
+import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,13 +162,60 @@ class RunLoop {
     }
 
     return CompletableFuture.supplyAsync(() -> Receipt.builder()
-      // TODO: FIXME
-      .amountDeliveredInDestinationUnits(BigInteger.ZERO)
-      // TODO: FIXME
-      .amountSentInSendersUnits(BigInteger.ZERO)
+      .amountDeliveredInDestinationUnits(
+        this.paymentSharedStateTracker.getAmountTracker().getAmountDeliveredInDestinationUnits()
+      )
+      .amountSentInSendersUnits(
+        this.paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits()
+      )
       .originalQuote(quote)
       .build());
   }
+
+  /**
+   * <p>The 'nextState' functionality of the filter-chain constructs a fully initialized {@link StreamPacketRequest}
+   * based upon the current state of all filters. However, actual sending of this packet is done in a separate thread
+   * using an {@link ExecutorService}, so adjusting in-flight amounts inside of the filter-chain is not reliable without
+   * synchronization of the amounts. Instead, we adjust any sensitive values here (in a non-concurrent fashion as part
+   * of each run-loop) so that these values are always consistent.</p>
+   *
+   * <p>The primary reason that the amount adjustments performed in this method are _not_ performed in the nextState
+   * calls in the filter-chain is that we want to make sure these adjustments are _always_ made, no matter how the logic
+   * in the filters is adjusted. Likewise, performing this logic here allows us to revert any amounts on a failure in a
+   * controlled fashion.</p>
+   *
+   * @param streamPacketRequest A fully assembled bucket of information that can be sued to assemble and transmit a
+   *                            stream packet as part of an overall payment.
+   */
+//  @VisibleForTesting
+//  protected CompletableFuture<Void> schedulePacketSend(
+//    final StreamPacketFilterChain filterChain, final StreamPacketRequest streamPacketRequest
+//  ) {
+//    Objects.requireNonNull(streamPacketRequest);
+//
+//    ////////////////////////
+//    // First, reduce any tracking amounts in the amountFilter.
+//    final ComputedStreamPacketAmounts computedAmounts = this.paymentSharedStateTracker
+//      .getAmountTracker().reserveTrackedAmounts(streamPacketRequest);
+//    return CompletableFuture
+//      .supplyAsync(() -> filterChain.doFilter(streamPacketRequest), executorService)
+//      .handle((streamPacketReply, throwable) -> {
+//
+//        ////////////////////////
+//        // If the filter-chain fails,
+//
+//        if (throwable != null) {
+//          logger.error(throwable.getMessage(), throwable);
+//          return null;
+//        } else if (streamPacketReply != null) {
+//          this.paymentSharedStateTracker.getAmountTracker().commitTrackedAmounts(
+//            streamPacketRequest, computedAmounts, streamPacketReply
+//          );
+//        }
+//
+//        return null; // <-- For Void return type.
+//      });
+//  }
 
   /**
    * Based upon the supplied {@code sendState}, determines if a Connection Close frame should be sent to the

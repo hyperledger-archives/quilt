@@ -89,12 +89,16 @@ public class AmountFilter implements StreamPacketFilter {
           }
         }
 
-        // Ensure we never overpay the maximum source amount
+        // Ensure we never overpay the maximum source amount. Note that this only works because this evaluation is
+        // performed as part of the `nextState` operations, which are always run on a single-thread in the RunLoop.
+        // Thus, this calculation is always accurate (i.e., there is no other thread that could be mutating the
+        // available send to be higher than it should be because multi-threaded behavior is only ever reducing the
+        // AmountSentInSourceUnits, never increasing it.
         final BigInteger availableToSend = target.maxSourceAmount()
           .subtract(amountTracker.getAmountSentInSourceUnits())
           .subtract(amountTracker.getSourceAmountInFlight());
         if (FluentBigInteger.of(availableToSend).isNotPositive()) {
-          return SendState.Ready;
+          return SendState.Wait; // <-- Don't schedule this packet, but keep trying in the run-loop.
         }
 
         // Compute source amount (always positive)

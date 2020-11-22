@@ -20,6 +20,7 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
+import java.util.Optional;
 import org.immutables.value.Value.Default;
 
 import java.util.Base64;
@@ -53,7 +54,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
    */
   default void handle(
-      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+    final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
   ) {
     Objects.requireNonNull(fulfillHandler);
     Objects.requireNonNull(rejectHandler);
@@ -78,11 +79,10 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link
    *                       InterledgerFulfillPacket}.
    * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
-   *
    * @return This instance of {@link InterledgerResponsePacket}.
    */
   default InterledgerResponsePacket handleAndReturn(
-      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+    final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
   ) {
     this.handle(fulfillHandler, rejectHandler);
     return this;
@@ -96,11 +96,10 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param fulfillMapper A {@link Function} to call if this packet is an instance of {@link InterledgerFulfillPacket}.
    * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link InterledgerRejectPacket}.
    * @param <R>           The return type of this mapping function.
-   *
    * @return An instance of {@code R}.
    */
   default <R> R map(
-      final Function<InterledgerFulfillPacket, R> fulfillMapper, final Function<InterledgerRejectPacket, R> rejectMapper
+    final Function<InterledgerFulfillPacket, R> fulfillMapper, final Function<InterledgerRejectPacket, R> rejectMapper
   ) {
     Objects.requireNonNull(fulfillMapper);
     Objects.requireNonNull(rejectMapper);
@@ -124,12 +123,30 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param responseMapper A {@link Function} to call if this packet is an instance of {@link
    *                       InterledgerResponsePacket}.
    * @param <R>            The return type of this mapping function.
-   *
    * @return An instance of {@code R}.
    */
   default <R> R mapResponse(final Function<InterledgerResponsePacket, R> responseMapper) {
     Objects.requireNonNull(responseMapper);
     return responseMapper.apply(this);
+  }
+
+
+  /**
+   * Return a copy of this packet with the supplied {@code typedData} included.
+   *
+   * @param typedData An arbitrary object for the data field.
+   * @return A {@link InterledgerResponsePacket}.
+   */
+// TODO: Unit test
+  default InterledgerResponsePacket withTypedDataOrThis(final Optional<?> optTypedData) {
+    Objects.requireNonNull(optTypedData);
+    return optTypedData
+      .map(typedData -> this.map(
+        // Hydrate the packet with this typed data.
+        fulfillPacket -> InterledgerFulfillPacket.builder().from(fulfillPacket).typedData(typedData).build(),
+        rejectPacket -> InterledgerRejectPacket.builder().from(rejectPacket).typedData(typedData).build()
+      ))
+      .orElse(this); // <-- Return this packet without typedData if `typedData` is null
   }
 
   @Immutable
@@ -149,9 +166,9 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     @Override
     public String toString() {
       return "InterledgerResponsePacket{"
-          + ", data=" + Base64.getEncoder().encodeToString(getData())
-          + ", typedData=" + typedData().orElse("n/a")
-          + "}";
+        + ", data=" + Base64.getEncoder().encodeToString(getData())
+        + ", typedData=" + typedData().orElse("n/a")
+        + "}";
     }
   }
 

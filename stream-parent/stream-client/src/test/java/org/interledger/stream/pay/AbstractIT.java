@@ -1,20 +1,21 @@
 package org.interledger.stream.pay;
 
 import static okhttp3.CookieJar.NO_COOKIES;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.money.convert.ConversionQuery;
+import javax.money.CurrencyUnit;
 import javax.money.convert.ExchangeRate;
 import javax.money.convert.ExchangeRateProvider;
 import okhttp3.ConnectionPool;
@@ -25,7 +26,6 @@ import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.fx.Denomination;
-import org.interledger.fx.javax.money.providers.CryptoCompareRateProvider;
 import org.interledger.ildcp.IldcpFetcher;
 import org.interledger.ildcp.IldcpRequest;
 import org.interledger.ildcp.IldcpResponse;
@@ -38,6 +38,7 @@ import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
+import org.javamoney.moneta.spi.DefaultNumberValue;
 import org.zalando.problem.ProblemModule;
 import org.zalando.problem.violations.ConstraintViolationProblemModule;
 
@@ -56,8 +57,8 @@ public abstract class AbstractIT {
   private static final InterledgerAddressPrefix SENDER_ADDRESS_PREFIX
     = InterledgerAddressPrefix.of("private.quilt.it");
 
-  private static final String SENDER_ACCOUNT_USERNAME = "demo_user";
-  private static final String SENDER_PASS_KEY = "M2MxYWUwMTUtM2VhOC00ZTdmLWFmMjMtNGRiZWFiZDcyOTY0";
+  private static final String SENDER_ACCOUNT_USERNAME = "quiltit";
+  private static final String SENDER_PASS_KEY = "YTc1OWVkNzMtODBkMi00ZjYyLWIxMTAtMjk2ZmU0YjA5MjU5";
 
   ////////////////////
   // Protected Helpers
@@ -107,19 +108,6 @@ public abstract class AbstractIT {
       newObjectMapperForProblemsJson(),
       InterledgerCodecContextFactory.oer(),
       new SimpleBearerTokenSupplier(SENDER_PASS_KEY)
-    );
-  }
-
-  protected ExchangeRateProvider newExchangeRateProvider() {
-    final Cache<ConversionQuery, ExchangeRate> fxCache = Caffeine.newBuilder()
-      .expireAfterWrite(30, TimeUnit.MINUTES) // Cache all rates for all tests if possible.
-      .build(); // No default loading function.
-
-    return new CryptoCompareRateProvider(
-      () -> "", // No API token provided for this test.
-      newObjectMapperForProblemsJson(),
-      newHttpClient(),
-      fxCache
     );
   }
 
@@ -182,4 +170,33 @@ public abstract class AbstractIT {
       return jsonObject.toString();
     }
   }
+
+  protected ExchangeRateProvider mockExchangeRateProvider() {
+    final ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
+
+    ExchangeRate xrpUsdRate = mock(ExchangeRate.class);
+    when(xrpUsdRate.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("0.26")));
+    when(exchangeRateProvider.getExchangeRate("XRP", "USD")).thenReturn(xrpUsdRate);
+
+    CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
+    when(xrpUsdRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
+
+    CurrencyUnit currencyUnit = mock(CurrencyUnit.class);
+    when(xrpUsdRate.getCurrency()).thenReturn(currencyUnit);
+
+    return exchangeRateProvider;
+  }
+
+//  protected ExchangeRateProvider newExchangeRateProvider() {
+//    final Cache<ConversionQuery, ExchangeRate> fxCache = Caffeine.newBuilder()
+//      .expireAfterWrite(30, TimeUnit.MINUTES) // Cache all rates for all tests if possible.
+//      .build(); // No default loading function.
+//
+//    return new CryptoCompareRateProvider(
+//      () -> "", // No API token provided for this test.
+//      newObjectMapperForProblemsJson(),
+//      newHttpClient(),
+//      fxCache
+//    );
+//  }
 }

@@ -1,6 +1,7 @@
 package org.interledger.stream.pay;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -9,7 +10,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.cf.Tuple;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
@@ -46,13 +46,14 @@ public class StreamPayerIT extends AbstractIT {
     // IL-DCP
     /////////
     final Link ildcpLink = newIlpOverHttpLink(getSenderAddressForIlDcp());
+    ildcpLink.setLinkId(LinkId.of("ildcp-link"));
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ildcpLink);
 
     final Link ilpLink = this.newIlpOverHttpLink(senderAccountDetails.interledgerAddress());
     ilpLink.setLinkId(LinkId.of("exchange-rate-probe-it"));
 
     this.streamPayer = new StreamPayer.Default(
-      ilpLink, newExchangeRateProvider(), new SimpleSpspClient()
+      ilpLink, mockExchangeRateProvider(), new SimpleSpspClient()
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
@@ -125,13 +126,14 @@ public class StreamPayerIT extends AbstractIT {
     // IL-DCP
     /////////
     final Link ildcpLink = newIlpOverHttpLink(getSenderAddressForIlDcp());
+    ildcpLink.setLinkId(LinkId.of("ildcp-link"));
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ildcpLink);
 
     final Link ilpLink = this.newIlpOverHttpLink(senderAccountDetails.interledgerAddress());
     ilpLink.setLinkId(LinkId.of("exchange-rate-probe-it"));
 
     this.streamPayer = new StreamPayer.Default(
-      ilpLink, newExchangeRateProvider(), new SimpleSpspClient()
+      ilpLink, mockExchangeRateProvider(), new SimpleSpspClient()
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
@@ -205,13 +207,14 @@ public class StreamPayerIT extends AbstractIT {
     // IL-DCP
     /////////
     final Link ildcpLink = newIlpOverHttpLink(getSenderAddressForIlDcp());
+    ildcpLink.setLinkId(LinkId.of("ildcp-link"));
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ildcpLink);
 
     final Link ilpLink = this.newIlpOverHttpLink(senderAccountDetails.interledgerAddress());
     ilpLink.setLinkId(LinkId.of("exchange-rate-probe-it"));
 
     this.streamPayer = new StreamPayer.Default(
-      ilpLink, newExchangeRateProvider(), new SimpleSpspClient()
+      ilpLink, mockExchangeRateProvider(), new SimpleSpspClient()
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("0.01");
@@ -282,13 +285,14 @@ public class StreamPayerIT extends AbstractIT {
     // IL-DCP
     /////////
     final Link ildcpLink = newIlpOverHttpLink(getSenderAddressForIlDcp());
+    ildcpLink.setLinkId(LinkId.of("ildcp-link"));
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ildcpLink);
 
     final Link ilpLink = this.newIlpOverHttpLink(senderAccountDetails.interledgerAddress());
     ilpLink.setLinkId(LinkId.of("exchange-rate-probe-it"));
 
     this.streamPayer = new StreamPayer.Default(
-      ilpLink, newExchangeRateProvider(), new SimpleSpspClient()
+      ilpLink, mockExchangeRateProvider(), new SimpleSpspClient()
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
@@ -303,28 +307,28 @@ public class StreamPayerIT extends AbstractIT {
     streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         if (throwable != null) {
-          logger.error(throwable.getMessage(), throwable);
+          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
+          return null;
+        } else if (quote != null) {
+          logger.info("Quote={}", quote);
+          final Receipt receipt = streamPayer.pay(quote).join();
+          logger.info("Receipt={}", receipt);
+          assertThat(receipt.paymentError()).isEmpty();
+          assertThat(receipt.originalQuote()).isEqualTo(quote);
+          assertThat(receipt.amountSentInSendersUnits()).isEqualTo(
+            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+          );
+          assertThat(receipt.amountDeliveredInDestinationUnits()).isLessThan(
+            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+          );
+          // TODO: Once Rust connector is being used instead, assert the actual amount based on the pegged FX rate.
+          return quote;
         } else {
-          try {
-            // TODO: Is a timeout here needed too in addition do down below?
-            final Receipt receipt = streamPayer.pay(quote).get(15, TimeUnit.SECONDS);
-            assertThat(receipt.paymentError()).isEmpty();
-            assertThat(receipt.originalQuote()).isEqualTo(quote);
-            assertThat(receipt.amountSentInSendersUnits()).isEqualTo(amountToSendInXrp);
-            assertThat(receipt.amountDeliveredInDestinationUnits()).isLessThan(amountToSendInXrp.toBigInteger());
-          } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            logger.error(e.getMessage(), e);
-          }
+          fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
+          return null;
         }
+      }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
 
-        return Tuple.builder()
-          .result(quote)
-          .throwable(throwable)
-          .build();
-      })
-      .get(15, TimeUnit.SECONDS);
-
-//
 //    // The current price of XRP in USD is ~$0.24. Thus, for this test we only really care if the price is accurate to
 //    // within a 100% margin of error.
 //
@@ -382,7 +386,7 @@ public class StreamPayerIT extends AbstractIT {
   //////////////////
 
   private InterledgerAddress getSenderAddressForIlDcp() {
-    return InterledgerAddress.of(getSenderAddressPrefix().with("ilcdp" .toLowerCase()).getValue());
+    return InterledgerAddress.of(getSenderAddressPrefix().with("ilcdp".toLowerCase()).getValue());
   }
 
 

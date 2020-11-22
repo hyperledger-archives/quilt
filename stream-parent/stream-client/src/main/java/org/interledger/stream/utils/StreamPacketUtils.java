@@ -14,12 +14,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillPacket;
-import org.interledger.core.InterledgerFulfillPacket.AbstractInterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
-import org.interledger.core.InterledgerPacket;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.InterledgerRejectPacket.AbstractInterledgerRejectPacket;
-import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamPacket;
@@ -44,7 +40,7 @@ public class StreamPacketUtils {
    * The string "ilp_stream_fulfillment" is encoded as UTF-8 or ASCII (the byte representation is the same with both
    * encodings).
    */
-  private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment" .getBytes(StandardCharsets.UTF_8);
+  private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment".getBytes(StandardCharsets.UTF_8);
 
   private static final String HMAC_SHA256_ALG_NAME = "HmacSHA256";
 
@@ -87,50 +83,77 @@ public class StreamPacketUtils {
     return InterledgerFulfillment.of(fulfillmentBytes);
   }
 
-  // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
-  // TODO: See StreamUtils in Connector too.
-  public static Optional<StreamPacket> getStreamPacket(
-    final InterledgerPacket packet,
+  public static Optional<StreamPacket> mapToStreamPacket(
+    final byte[] ilpPacketData,
     final SharedSecret sharedSecret,
     final StreamEncryptionUtils streamEncryptionUtils
   ) {
-    return packet.typedData()
-      .filter($ -> $.getClass().isAssignableFrom(StreamPacket.class))
-      .map($ -> (StreamPacket) $)
-      .map(Optional::of)
-      .orElseGet(() -> {
-        try {
-          return Optional.ofNullable(packet.getData())
-            .filter(data -> data.length > 0)
-            .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
-        } catch (Exception e) {
-          LOGGER.error(e.getMessage(), e);
-          return Optional.empty();
-        }
-      });
+    try {
+      return Optional.ofNullable(ilpPacketData)
+        .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
+        .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
+    } catch (Exception e) {
+      LOGGER.error(
+        "Unable to decrypt ILP response packet's data. packetData={}", ilpPacketData, e
+      );
+      return Optional.empty();
+    }
   }
 
-  // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
-  // TODO: See StreamUtils in Connector too.
-  public static InterledgerResponsePacket withStreamPacket(
-    final InterledgerResponsePacket responsePacket,
-    final SharedSecret sharedSecret,
-    final StreamEncryptionUtils streamEncryptionUtils
-  ) {
-    return responsePacket.map(
-      interledgerFulfillPacket -> getStreamPacket(interledgerFulfillPacket, sharedSecret, streamEncryptionUtils)
-        .map(streamPacket -> InterledgerFulfillPacket.builder()
-          .from(interledgerFulfillPacket)
-          .typedData(streamPacket)
-          .build())
-        .orElse((AbstractInterledgerFulfillPacket) interledgerFulfillPacket),
-      interledgerRejectPacket -> getStreamPacket(interledgerRejectPacket, sharedSecret, streamEncryptionUtils)
-        .map(streamPacket -> InterledgerRejectPacket.builder()
-          .from(interledgerRejectPacket)
-          .typedData(streamPacket)
-          .build())
-        .orElse((AbstractInterledgerRejectPacket) interledgerRejectPacket));
-  }
+//  // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
+//  // TODO: See StreamUtils in Connector too.
+//  public static Optional<StreamPacket> mapToStreamPacket(
+//    final byte[] packetData,
+//    final SharedSecret sharedSecret,
+//    final StreamEncryptionUtils streamEncryptionUtils
+//  ) {
+//    return packet.typedData()
+//      .filter($ -> $.getClass().isAssignableFrom(StreamPacket.class))
+//      .map($ -> (StreamPacket) $)
+//      .map(Optional::of)
+//      .orElseGet(() -> {
+//        try {
+//          return Optional.ofNullable(packet.getData())
+//            .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
+//            .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
+//        } catch (Exception e) {
+//          LOGGER.error(
+//            "Unable to decrypt ILP response packet's data. packet={}", packet, e
+//          );
+//          return Optional.empty();
+//        }
+//      });
+//  }
+
+//  public static Optional<StreamPacket> constructStreamPacket(
+//    final InterledgerPreparePacket packet,
+//    final SharedSecret sharedSecret,
+//    final StreamEncryptionUtils streamEncryptionUtils
+//  ) {
+//
+//  }
+
+//  // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
+//  // TODO: See StreamUtils in Connector too.
+//  public static InterledgerResponsePacket withStreamPacket(
+//    final InterledgerResponsePacket responsePacket,
+//    final SharedSecret sharedSecret,
+//    final StreamEncryptionUtils streamEncryptionUtils
+//  ) {
+//    return responsePacket.map(
+//      interledgerFulfillPacket -> mapToStreamPacket(interledgerFulfillPacket, sharedSecret, streamEncryptionUtils)
+//        .map(streamPacket -> InterledgerFulfillPacket.builder()
+//          .from(interledgerFulfillPacket)
+//          .typedData(streamPacket)
+//          .build())
+//        .orElse((AbstractInterledgerFulfillPacket) interledgerFulfillPacket),
+//      interledgerRejectPacket -> mapToStreamPacket(interledgerRejectPacket, sharedSecret, streamEncryptionUtils)
+//        .map(streamPacket -> InterledgerRejectPacket.builder()
+//          .from(interledgerRejectPacket)
+//          .typedData(streamPacket)
+//          .build())
+//        .orElse((AbstractInterledgerRejectPacket) interledgerRejectPacket));
+//  }
 
   public static final Set<StreamFrameType> CLOSING_FRAMES = Sets.newHashSet(
     StreamFrameType.ConnectionClose,

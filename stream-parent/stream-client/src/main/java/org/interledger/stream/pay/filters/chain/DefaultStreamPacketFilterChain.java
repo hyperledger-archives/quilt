@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -129,7 +130,6 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
             // instead. That means isPaymentError will go away and not need to be handled.
             return StreamPacketReply.builder()
               .interledgerPreparePacket(streamPacketRequest.interledgerPreparePacket())
-//              .sendState(streamPacketRequest.sendState())
               .build();
           } else { // Ready
 
@@ -145,7 +145,6 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
               logger.error("Invalid timeout. timeoutDuration={}", timeoutDuration);
               return StreamPacketReply.builder()
                 .interledgerPreparePacket(preparePacket)
-//                .sendState(SendState.End)
                 .build();
             }
 
@@ -156,23 +155,26 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                 .get(timeoutDuration.getSeconds(), TimeUnit.SECONDS);
 
               // Map to a StreamPacketReply
+              final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
+                interledgerResponsePacket.getData(),
+                this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
+                streamEncryptionUtils
+              );
+
               return interledgerResponsePacket.map(
                 interledgerFulfillPacket -> StreamPacketReply.builder()
                   .interledgerPreparePacket(preparePacket)
-                  .interledgerResponsePacket(interledgerFulfillPacket)
-//                  .sendState(streamPacketRequest.sendState())
+                  .interledgerResponsePacket(interledgerFulfillPacket.withTypedDataOrThis(typedStreamPacket))
                   .build(),
                 interledgerRejectPacket -> StreamPacketReply.builder()
                   .interledgerPreparePacket(preparePacket)
-                  .interledgerResponsePacket(interledgerRejectPacket)
-//                  .sendState(streamPacketRequest.sendState())
+                  .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedStreamPacket))
                   .build()
               );
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
               logger.error(e.getMessage(), e);
               return StreamPacketReply.builder()
                 .interledgerPreparePacket(preparePacket)
-//                .sendState(SendState.End)
                 .build();
             }
           }

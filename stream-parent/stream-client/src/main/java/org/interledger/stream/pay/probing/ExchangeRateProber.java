@@ -137,16 +137,20 @@ public interface ExchangeRateProber {
 
             final InterledgerPreparePacket preparePacket = preparePacketSupplier.get();
             logger.debug("Probing with packet={}", preparePacket);
-            return link.sendPacket(preparePacket)
-              ///////////////////////////
-              // Capture the StreamPacket response
+            final InterledgerResponsePacket responsePacket = link.sendPacket(preparePacket);
+
+            // Map to a StreamPacketReply
+            final Optional<StreamPacket> optTypedStreamPacket = StreamPacketUtils.mapToStreamPacket(
+              responsePacket.getData(), streamConnection.getSharedSecret(), streamEncryptionUtils
+            );
+            return responsePacket
+              // Hydrate the typedData into the response packet.
               .map(
-                fulfillPacket -> StreamPacketUtils
-                  .withStreamPacket(fulfillPacket, streamConnection.getSharedSecret(), streamEncryptionUtils),
-                rejectPacket -> StreamPacketUtils
-                  .withStreamPacket(rejectPacket, streamConnection.getSharedSecret(), streamEncryptionUtils)
+                (fulfillPacket) -> fulfillPacket.withTypedDataOrThis(optTypedStreamPacket),
+                (rejectPacket) -> rejectPacket.withTypedDataOrThis(optTypedStreamPacket)
               )
-              .handleAndReturn(interledgerFulfillPacket -> {
+              .handleAndReturn(
+                interledgerFulfillPacket -> {
                   // TODO: Move this down to where CAD are processed on the StreamPacketReply
                   if (StreamPacketUtils.isAuthentic(interledgerFulfillPacket)) {
                     // Adjust the path capacity with the ack'd amount

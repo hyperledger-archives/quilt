@@ -10,6 +10,7 @@ import org.immutables.value.Value.Immutable;
  * @param <T>
  */
 @Immutable
+// TODO Remove if unused
 public interface Tuple<T> {
 
   static ImmutableTuple.Builder builder() {

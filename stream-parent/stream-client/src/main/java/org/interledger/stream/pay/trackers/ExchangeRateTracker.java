@@ -150,14 +150,14 @@ public class ExchangeRateTracker {
 
   public Ratio getLowerBoundRate() {
     if (lowerBoundRate.get() == null) {
-      throw new StreamPayerException("No lowerBoundRate was detected from the receiver.", SendState.RateProbeFailed);
+      throw new StreamPayerException("No lowerBoundRate was detected from the receiver", SendState.RateProbeFailed);
     }
     return lowerBoundRate.get();
   }
 
   public Ratio getUpperBoundRate() {
     if (upperBoundRate.get() == null) {
-      throw new StreamPayerException("No upperBoundRate was detected from the receiver.", SendState.RateProbeFailed);
+      throw new StreamPayerException("No upperBoundRate was detected from the receiver", SendState.RateProbeFailed);
     }
     return upperBoundRate.get();
   }

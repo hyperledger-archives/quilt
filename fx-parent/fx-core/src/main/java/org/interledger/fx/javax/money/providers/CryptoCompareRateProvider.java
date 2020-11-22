@@ -2,7 +2,9 @@ package org.interledger.fx.javax.money.providers;
 
 import static org.javamoney.moneta.spi.AbstractCurrencyConversion.KEY_SCALE;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.net.HttpHeaders;
@@ -194,6 +196,8 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
             .orElseThrow(
               () -> new ExchangeRateException(String.format("No Rate found for ConversionQuery: %s", conversionQuery))
             );
+        } catch (JsonParseException | JsonMappingException e) {
+          logger.error(e.getMessage(), e);
         } catch (ExchangeRateException e) {
           throw e;
         } catch (Exception e) {

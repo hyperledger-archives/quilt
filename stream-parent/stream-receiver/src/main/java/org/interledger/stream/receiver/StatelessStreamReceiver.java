@@ -84,6 +84,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(receiverAddress);
 
+    // TODO: Use StreamPacketUtils here instead.
+
     // Will throw if there's an error...
     final SharedSecret spspSharedSecret = this.streamConnectionGenerator
         .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());

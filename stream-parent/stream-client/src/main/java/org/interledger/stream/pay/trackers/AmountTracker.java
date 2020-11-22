@@ -17,13 +17,15 @@ import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tracks the amounts that should be sent and delivered.
  */
 public class AmountTracker {
 
-//  private final static Logger LOGGER = LoggerFactory.getLogger(AmountTracker.class);
+  private final static Logger LOGGER = LoggerFactory.getLogger(AmountTracker.class);
 
   /**
    * Conditions that must be met for the payment to complete, and parameters of its execution.
@@ -281,4 +283,170 @@ public class AmountTracker {
     Objects.requireNonNull(remoteMax);
     this.remoteReceivedMaxRef.set(Optional.of(remoteMax));
   }
+
+//  /**
+//   * Sets aside in-flight amounts for the values found in {@code streamPacketRequest}. Note that if an exception is
+//   * thrown anywhere in the Stream Pay run-loop, the payment will fail, so no need to do anything with tracked amounts
+//   * in that case.
+//   *
+//   * @param streamPacketRequest
+//   */
+//  public ComputedStreamPacketAmounts reserveTrackedAmounts(final StreamPacketRequest streamPacketRequest) {
+//    Objects.requireNonNull(streamPacketRequest);
+//
+//    UnsignedLong highEndDestinationAmount = UnsignedLong.ZERO;
+//    UnsignedLong deliveryDeficit = UnsignedLong.ZERO;
+//
+//    if (this.getPaymentTargetConditions().isPresent()) {
+//      PaymentTargetConditions target = this.getPaymentTargetConditions().get();
+//
+//      // Estimate the most that this packet will deliver
+//      highEndDestinationAmount = FluentUnsignedLong.of(streamPacketRequest.minDestinationAmount())
+//        .orGreater(
+//          this.exchangeRateTracker.estimateDestinationAmount(streamPacketRequest.sourceAmount()).highEndEstimate()
+//        ).getValue();
+//
+//      // Update in-flight amounts
+//      this.addToSourceAmountInFlight(streamPacketRequest.sourceAmount());
+//      this.addToDestinationAmountInFlight(highEndDestinationAmount);
+//
+//      // Update the delivery shortfall, if applicable
+//      final UnsignedLong baselineMinDestinationAmount = FluentUnsignedLong
+//        .of(streamPacketRequest.sourceAmount())
+//        .timesCeil(Ratio.from(target.minExchangeRate()))
+//        .getValue();
+//      deliveryDeficit = baselineMinDestinationAmount.minus(streamPacketRequest.minDestinationAmount());
+//      if (FluentUnsignedLong.of(deliveryDeficit).isPositive()) {
+//        this.reduceDeliveryShortfall(deliveryDeficit);
+//      }
+//    }
+//
+//    return ComputedStreamPacketAmounts.builder()
+//      .highEndDestinationAmount(highEndDestinationAmount)
+//      .deliveryDeficit(deliveryDeficit)
+//      .build();
+//  }
+//
+//  /**
+//   * Executed after a stream-packet is processed. Note that if an exception is thrown anywhere in the Stream Pay
+//   * run-loop, the payment will fail, so no need to do anything with tracked amounts in that case.
+//   *
+//   * @param streamPacketRequest
+//   * @param computedStreamPacketAmounts
+//   * @param streamPacketReply
+//   */
+//  public void commitTrackedAmounts(
+//    final StreamPacketRequest streamPacketRequest,
+//    final ComputedStreamPacketAmounts computedStreamPacketAmounts,
+//    final StreamPacketReply streamPacketReply
+//  ) {
+//    Objects.requireNonNull(streamPacketRequest);
+//    Objects.requireNonNull(computedStreamPacketAmounts);
+//    Objects.requireNonNull(streamPacketReply);
+//
+//    Optional<UnsignedLong> destinationAmount = streamPacketReply.destinationAmountClaimed();
+//    if (streamPacketReply.isFulfill()) {
+//      // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
+//      // No matter what, since they fulfilled it, we must assume they got at least the minimum
+//      if (!streamPacketReply.destinationAmountClaimed().isPresent()) {
+//        // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
+//        LOGGER.warn("Ending payment: packet fulfilled with no authentic STREAM data");
+//        destinationAmount = Optional.of(streamPacketRequest.minDestinationAmount());
+//        this.setEncounteredProtocolViolation();
+//      } else if (destinationAmount.isPresent() && FluentCompareTo.is(destinationAmount.get())
+//        .lessThan(streamPacketRequest.minDestinationAmount())) {
+//        if (LOGGER.isWarnEnabled()) {
+//          LOGGER.warn(
+//            "Ending payment: receiver violated protocol. packet below minimum exchange rate was fulfilled. "
+//              + "destinationAmount={}  minDestinationAmount={}",
+//            destinationAmount,
+//            streamPacketRequest.minDestinationAmount()
+//          );
+//        }
+//        destinationAmount = Optional.of(streamPacketRequest.minDestinationAmount());
+//        this.setEncounteredProtocolViolation();
+//      } else {
+//        if (LOGGER.isTraceEnabled()) {
+//          LOGGER.trace(
+//            "Packet sent: sourceAmount={}  destinationAmount={} minDestinationAmount={}",
+//            streamPacketRequest.sourceAmount(), destinationAmount, streamPacketRequest.minDestinationAmount()
+//          );
+//        }
+//      }
+//
+//      this.addAmountSent(streamPacketRequest.sourceAmount());
+//      this.addAmountDelivered(destinationAmount);
+//    } else if (destinationAmount.isPresent() && FluentCompareTo.is(destinationAmount.get())
+//      .lessThan(streamPacketRequest.minDestinationAmount())) {
+//      if (LOGGER.isDebugEnabled()) {
+//        LOGGER.debug(
+//          "Packet rejected for insufficient rate: minDestinationAmount={} destinationAmount={}",
+//          streamPacketRequest.minDestinationAmount(), destinationAmount
+//        );
+//      }
+//    }
+//
+//    this.subtractFromSourceAmountInFlight(streamPacketRequest.sourceAmount());
+//    this.subtractFromDestinationAmountInFlight(computedStreamPacketAmounts.highEndDestinationAmount());
+//
+//    // If this packet failed, "refund" the delivery deficit so it may be retried
+//    if (FluentUnsignedLong.of(computedStreamPacketAmounts.deliveryDeficit()).isPositive() && streamPacketReply
+//      .isReject()) {
+//      this.increaseDeliveryShortfall(computedStreamPacketAmounts.deliveryDeficit());
+//    }
+//
+//    this.getPaymentTargetConditions().ifPresent(target -> {
+//      if (target.paymentType() == PaymentType.FIXED_SEND) {
+//        if (LOGGER.isTraceEnabled()) {
+//          LOGGER.trace(
+//            "Fixed Send Payment has sent {} of {}, {} in-flight",
+//            this.getAmountSentInSourceUnits(),
+//            target.maxSourceAmount(),
+//            this.getSourceAmountInFlight()
+//          );
+//        }
+//      } else if (target.paymentType() == PaymentType.FIXED_DELIVERY) {
+//        if (LOGGER.isTraceEnabled()) {
+//          LOGGER.trace(
+//            "Fixed Delivery Payment has sent {} of {}, {} in-flight",
+//            this.getAmountDeliveredInDestinationUnits(),
+//            target.minDeliveryAmount(),
+//            this.getDestinationAmountInFlight()
+//          );
+//        }
+//      }
+//    });
+//  }
+//
+//  /**
+//   * An interstitial object for holding return values for amount tracking.
+//   */
+//  @Immutable
+//  public interface ComputedStreamPacketAmounts {
+//
+//    static ImmutableComputedStreamPacketAmounts.Builder builder() {
+//      return ImmutableComputedStreamPacketAmounts.builder();
+//    }
+//
+//    /**
+//     * The computed (high-end) estimate of the amount that will be delivered by a particular stream packet.
+//     *
+//     * @return An {@link UnsignedLong}.
+//     */
+//    @Default
+//    default UnsignedLong highEndDestinationAmount() {
+//      return UnsignedLong.ZERO;
+//    }
+//
+//    /**
+//     * A delivery deficit, if any, which is the micro-amount allowed for the final packet to not send (because of
+//     * rounding errors) and have the payment still complete.
+//     *
+//     * @return An {@link UnsignedLong}.
+//     */
+//    @Default
+//    default UnsignedLong deliveryDeficit() {
+//      return UnsignedLong.ZERO;
+//    }
+//  }
 }

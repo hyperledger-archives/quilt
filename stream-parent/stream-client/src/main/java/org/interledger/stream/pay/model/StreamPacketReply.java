@@ -103,8 +103,6 @@ public interface StreamPacketReply {
   //  Check usages.
   @Derived
   default boolean isAuthentic() {
-    // Was there a fulfill?
-    boolean isFulfillPacket = InterledgerFulfillPacket.class.isAssignableFrom(interledgerResponsePacket().getClass());
     // Or was there a STREAM reply.
     boolean hasStreamPacket = interledgerResponsePacket()
       .map(InterledgerResponsePacket::typedData)
@@ -115,7 +113,7 @@ public interface StreamPacketReply {
       .map($ -> true)
       .orElse(false);
 
-    return isFulfillPacket || hasStreamPacket;
+    return isFulfill() || hasStreamPacket;
   }
 
   @Derived
