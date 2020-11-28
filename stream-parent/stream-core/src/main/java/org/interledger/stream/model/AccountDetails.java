@@ -8,7 +8,6 @@ import org.interledger.fx.Denomination;
 /**
  * The details about an Interledger Account, which is one side of a trustline between two parties.
  */
-// TODO: AccountDetails is actually a function of a link, so consider moving this there (or maybe in some core location)? Likewise for Denomination. Think more about this.
 @Immutable
 public interface AccountDetails {
 

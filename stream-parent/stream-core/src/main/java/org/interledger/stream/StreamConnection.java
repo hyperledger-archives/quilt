@@ -2,20 +2,18 @@ package org.interledger.stream;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
-import org.interledger.core.DateUtils;
-import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
-import org.interledger.stream.errors.StreamConnectionClosedException;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedLong;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
+import org.interledger.core.DateUtils;
+import org.interledger.core.InterledgerAddress;
+import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.errors.StreamConnectionClosedException;
 
 /**
  * <p>The session established between two endpoints that uses a single shared secret and multiplexes multiple streams
@@ -31,7 +29,7 @@ public class StreamConnection implements Closeable {
 
   // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max per IL-RFC-29.
   public static final UnsignedLong MAX_FRAMES_PER_CONNECTION =
-      UnsignedLong.valueOf((long) Integer.MAX_VALUE + 1L);
+    UnsignedLong.valueOf((long) Integer.MAX_VALUE + 1L);
 
   /**
    * The unique identifier of this Connection. A Connection is unique to a destination {@link InterledgerAddress} and a
@@ -74,7 +72,6 @@ public class StreamConnection implements Closeable {
    * monotonically up to {2<sup>31</sup>}, after which the connection will be closed.
    *
    * @return A {@link UnsignedLong} representing the next sequence number that can safely be used by a Stream Sender.
-   *
    * @throws StreamConnectionClosedException if the sequence can no longer be safely incremented.
    */
   public UnsignedLong nextSequence() throws StreamConnectionClosedException {
@@ -95,7 +92,7 @@ public class StreamConnection implements Closeable {
    * because both endpoints encrypt packets with the same key).
    *
    * @return {@code true} if the current sequence can safely be used with a single shared-secret; {@code false}
-   *     otherwise.
+   * otherwise.
    */
   @VisibleForTesting
   boolean sequenceIsSafeForSingleSharedSecret(final UnsignedLong sequence) {
@@ -182,11 +179,11 @@ public class StreamConnection implements Closeable {
   @Override
   public String toString() {
     return new StringJoiner(", ", StreamConnection.class.getSimpleName() + "[", "]")
-        .add("creationDateTime=" + creationDateTime)
-        .add("streamConnectionId=" + streamConnectionId)
-        .add("sequence=" + sequence)
-        .add("connectionState=" + connectionState)
-        .toString();
+      .add("creationDateTime=" + creationDateTime)
+      .add("streamConnectionId=" + streamConnectionId)
+      .add("sequence=" + sequence)
+      .add("connectionState=" + connectionState)
+      .toString();
   }
 
   @Override

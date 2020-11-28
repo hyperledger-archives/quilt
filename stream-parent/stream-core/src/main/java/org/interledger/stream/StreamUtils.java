@@ -2,19 +2,16 @@ package org.interledger.stream;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
-import org.interledger.core.InterledgerCondition;
-import org.interledger.core.InterledgerFulfillment;
-import org.interledger.core.SharedSecret;
-import org.interledger.stream.crypto.Random;
-
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerFulfillment;
+import org.interledger.stream.crypto.Random;
+import org.interledger.stream.crypto.SharedSecret;
 
 /**
  * Utilities to support the STREAM protocol.
@@ -39,7 +36,6 @@ public class StreamUtils {
    * can generate an unfulfillable random condition.
    *
    * @return A {@link InterledgerCondition} that is not fulfillable.
-   *
    * @deprecated Use StreamPacketUtils instead.
    */
   @Deprecated
@@ -55,14 +51,12 @@ public class StreamUtils {
    *
    * @param sharedSecret The cryptographic seed exchanged during STREAM Setup.
    * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
-   *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
-   *
    * @deprecated Use StreamPacketUtils instead.
    */
   @Deprecated
   public static InterledgerFulfillment generatedFulfillableFulfillment(
-      final SharedSecret sharedSecret, final byte[] data
+    final SharedSecret sharedSecret, final byte[] data
   ) {
     Objects.requireNonNull(sharedSecret);
     Objects.requireNonNull(data);
@@ -83,9 +77,7 @@ public class StreamUtils {
    *
    * @param value1 The first value.
    * @param value2 The second value.
-   *
    * @return The smaller of the two supplied values.
-   *
    * @deprecated Use version in FluentCompareTo instead.
    */
   // TODO: DELETE ME
@@ -106,7 +98,6 @@ public class StreamUtils {
    *
    * @param value1 The first value.
    * @param value2 The second value.
-   *
    * @deprecated Use version in FluentCompareTo instead.
    */
   // TODO: DELETE ME

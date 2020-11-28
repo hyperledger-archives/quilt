@@ -51,6 +51,8 @@ import java.util.stream.IntStream;
  */
 public class SenderReceiverTest {
 
+  // TODO: Rework this for new Stream Payer
+
   private static final String SHARED_SECRET_HEX = "9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D";
 
   private static final InterledgerAddress LEFT_ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.left");

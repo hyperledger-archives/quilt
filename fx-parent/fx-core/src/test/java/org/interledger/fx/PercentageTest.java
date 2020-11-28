@@ -3,7 +3,6 @@ package org.interledger.fx;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import org.interledger.core.fluent.Percentage;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,10 +18,10 @@ public class PercentageTest {
 
   @Test
   public void testPreBuildValues() {
-    assertThat(Percentage.ZERO_PERCENT.value()).isEqualTo(BigDecimal.ZERO.setScale(4));
-    assertThat(Percentage.ONE_PERCENT.value()).isEqualTo(new BigDecimal(0.01).setScale(4, RoundingMode.HALF_UP));
-    assertThat(Percentage.FIFTY_PERCENT.value()).isEqualTo(new BigDecimal(0.5).setScale(4, RoundingMode.HALF_UP));
-    assertThat(Percentage.ONE_HUNDRED_PERCENT.value()).isEqualTo(new BigDecimal(1).setScale(4, RoundingMode.HALF_UP));
+    assertThat(Percentage.ZERO_PERCENT.value()).isEqualTo(BigDecimal.ZERO);
+    assertThat(Percentage.ONE_PERCENT.value()).isEqualTo(new BigDecimal("0.01"));
+    assertThat(Percentage.FIFTY_PERCENT.value()).isEqualTo(new BigDecimal("0.5"));
+    assertThat(Percentage.ONE_HUNDRED_PERCENT.value()).isEqualTo(BigDecimal.ONE);
   }
 
   @Test
@@ -33,16 +32,17 @@ public class PercentageTest {
   @Test
   public void testBuildWithMoreThan100() {
     Percentage percentage = Percentage.of(BigDecimal.valueOf(2L));
-    assertThat(percentage.value()).isEqualTo(new BigDecimal("2.0000"));
+    assertThat(percentage.value()).isEqualTo(new BigDecimal("2"));
+    assertThat(percentage.toString()).isEqualTo("200%");
   }
 
   @Test
   public void testToString() {
-    assertThat(Percentage.ZERO_PERCENT.toString()).isEqualTo("0.00%");
-    assertThat(Percentage.ONE_PERCENT.toString()).isEqualTo("1.00%");
-    assertThat(Percentage.FIFTY_PERCENT.toString()).isEqualTo("50.00%");
-    assertThat(Percentage.ONE_HUNDRED_PERCENT.toString()).isEqualTo("100.00%");
-    assertThat(Percentage.of(new BigDecimal("0.012555")).toString()).isEqualTo("1.26%");
+    assertThat(Percentage.ZERO_PERCENT.toString()).isEqualTo("0%");
+    assertThat(Percentage.ONE_PERCENT.toString()).isEqualTo("1%");
+    assertThat(Percentage.FIFTY_PERCENT.toString()).isEqualTo("50%");
+    assertThat(Percentage.ONE_HUNDRED_PERCENT.toString()).isEqualTo("100%");
+    assertThat(Percentage.of(new BigDecimal("0.012555")).toString()).isEqualTo("1.2555%");
   }
 
   @Test

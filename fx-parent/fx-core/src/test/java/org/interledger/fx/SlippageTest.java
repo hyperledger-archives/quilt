@@ -37,8 +37,8 @@ public class SlippageTest {
 
   @Test
   public void testToString() {
-    assertThat(Slippage.NONE.toString()).isEqualTo("Slippage{value=0.00%}");
-    assertThat(Slippage.ONE_PERCENT.toString()).isEqualTo("Slippage{value=1.00%}");
+    assertThat(Slippage.NONE.toString()).isEqualTo("Slippage{value=0%}");
+    assertThat(Slippage.ONE_PERCENT.toString()).isEqualTo("Slippage{value=1%}");
   }
 
   @Test

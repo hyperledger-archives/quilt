@@ -4,7 +4,7 @@ import static okhttp3.CookieJar.NO_COOKIES;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.link.Link;
 import org.interledger.link.http.IlpOverHttpLink;
 import org.interledger.link.http.auth.SimpleBearerTokenSupplier;

@@ -26,7 +26,7 @@ public class ScaledExchangeRateTest {
       .inputScale((short) 9)
       .build();
 
-    assertThat(scaledExchangeRate.value()).isEqualTo(BigInteger.TEN);
+    assertThat(scaledExchangeRate.value()).isEqualTo(BigDecimal.TEN);
     assertThat(scaledExchangeRate.slippage()).isEqualTo(Slippage.ONE_PERCENT);
     assertThat(scaledExchangeRate.inputScale()).isEqualTo((short) 9);
   }
@@ -56,7 +56,7 @@ public class ScaledExchangeRateTest {
       .build();
 
     assertThat(scaledExchangeRate.toString())
-      .isEqualTo("ScaledExchangeRate{value=1, inputScale=2, slippage=Slippage{value=0.00%}}");
+      .isEqualTo("ScaledExchangeRate{value=1, inputScale=2, slippage=Slippage{value=0%}}");
   }
 
   @Test

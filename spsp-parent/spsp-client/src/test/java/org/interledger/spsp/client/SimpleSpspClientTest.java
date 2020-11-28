@@ -9,7 +9,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 

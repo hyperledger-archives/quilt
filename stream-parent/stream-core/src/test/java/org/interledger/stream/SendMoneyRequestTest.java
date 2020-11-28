@@ -6,7 +6,7 @@ import com.google.common.primitives.UnsignedLong;
 import java.time.Duration;
 import java.util.UUID;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.fx.Denomination;
 import org.junit.Before;
 import org.junit.Test;

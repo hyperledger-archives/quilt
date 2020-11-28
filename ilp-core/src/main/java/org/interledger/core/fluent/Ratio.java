@@ -115,19 +115,31 @@ public interface Ratio extends Comparable<Ratio> {
     return bd.signum() == 0 || bd.scale() <= 0 || bd.stripTrailingZeros().scale() <= 0;
   }
 
-  // TODO: Unit test.
   @Derived
   default int compareTo(final Ratio other) {
     Objects.requireNonNull(other);
-    if (FluentCompareTo.is(this.numerator().multiply(other.denominator()))
-      .greaterThan(this.denominator().multiply(other.numerator()))
-    ) {
-      return 1;
-    } else if (FluentCompareTo.is(this.numerator().multiply(other.denominator()))
-      .lessThan(this.denominator().multiply(other.numerator()))) {
-      return -1;
+
+    BigInteger first = this.numerator().multiply(other.denominator());
+    BigInteger second = this.denominator().multiply(other.numerator());
+
+    return first.compareTo(second);
+  }
+
+  @Derived
+  default int comparePrecisionTo(final Ratio other) {
+    Objects.requireNonNull(other);
+
+    BigInteger first = this.numerator().multiply(other.denominator());
+    BigInteger second = this.denominator().multiply(other.numerator());
+
+    int result = first.compareTo(second);
+
+    if (result == 0) {
+      // If the two ratios are equal, then check to see which denominator is bigger. The larger denominator has more
+      // precision.
+      return this.denominator().compareTo(other.denominator());
     } else {
-      return 0;
+      return result;
     }
   }
 

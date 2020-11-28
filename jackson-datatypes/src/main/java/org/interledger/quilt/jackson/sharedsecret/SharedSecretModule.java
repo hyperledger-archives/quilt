@@ -20,10 +20,9 @@ package org.interledger.quilt.jackson.sharedsecret;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.SharedSecret;
-
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.interledger.stream.crypto.SharedSecret;
 
 /**
  * A Jackson {@link SimpleModule} for serializing and deserializing {@link SharedSecret} objects.
@@ -38,8 +37,8 @@ public class SharedSecretModule extends SimpleModule {
   public SharedSecretModule() {
 
     super(
-        NAME,
-        new Version(1, 0, 0, null, "org.interledger", "jackson-datatype-shared-secret")
+      NAME,
+      new Version(1, 0, 0, null, "org.interledger", "jackson-datatype-shared-secret")
     );
 
     addSerializer(SharedSecret.class, SharedSecretSerializer.INSTANCE);

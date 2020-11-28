@@ -7,8 +7,6 @@ import org.interledger.stream.sender.SimpleStreamSender.SendMoneyAggregator;
  */
 public class SendMoneyAggregatorTest {
 
-  // TODO: FIXME
-
 //  // 5 seconds max per method tested
 //  @Rule
 //  public Timeout globalTimeout = Timeout.seconds(600);
@@ -46,17 +44,17 @@ public class SendMoneyAggregatorTest {
 //    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 //    this.paymentTracker = new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator());
 //    SendMoneyRequest request = SendMoneyRequest.builder()
-//        .sharedSecret(sharedSecret)
-//        .sourceAddress(sourceAddress)
-//        .destinationAddress(destinationAddress)
-//        .amount(originalAmountToSend)
-//        .timeout(Optional.of(Duration.ofSeconds(60)))
-//        .denomination(Denominations.XRP_DROPS)
-//        .paymentTracker(paymentTracker)
-//        .build();
+//      .sharedSecret(sharedSecret)
+//      .sourceAddress(sourceAddress)
+//      .destinationAddress(destinationAddress)
+//      .amount(originalAmountToSend)
+//      .timeout(Optional.of(Duration.ofSeconds(60)))
+//      .denomination(Denominations.XRP_DROPS)
+//      .paymentTracker(paymentTracker)
+//      .build();
 //    this.sendMoneyAggregator = new SendMoneyAggregator(
-//        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-//        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+//      executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+//      streamEncryptionServiceMock, Duration.ofMillis(10L), request
 //    );
 //
 //    defaultPrepareAmounts = PrepareAmounts.from(samplePreparePacket(), sampleStreamPacket());
@@ -64,7 +62,7 @@ public class SendMoneyAggregatorTest {
 //
 //  @Test
 //  public void sendMoneyWhenTimedOut()
-//      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+//    throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 //
 //    setSoldierOnBooleans(false, false, false);
 //    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
@@ -76,7 +74,7 @@ public class SendMoneyAggregatorTest {
 //
 //  @Test
 //  public void sendMoneyWhenMoreToSendButTimedOut()
-//      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+//    throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 //
 //    setSoldierOnBooleans(false, false, false);
 //    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
@@ -88,7 +86,7 @@ public class SendMoneyAggregatorTest {
 //
 //  @Test
 //  public void sendMoneyWhenNoMoreToSend()
-//      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+//    throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 //
 //    setSoldierOnBooleans(false, false, false);
 //    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
@@ -99,11 +97,11 @@ public class SendMoneyAggregatorTest {
 //
 //  @Test
 //  public void sendMoneyWhenConnectionIsClosed()
-//      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+//    throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 //
 //    setSoldierOnBooleans(false, true, true);
 //    when(streamConnectionMock.nextSequence())
-//        .thenReturn(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE));
+//      .thenReturn(StreamConnection.MAX_FRAMES_PER_CONNECTION.plus(UnsignedLong.ONE));
 //
 //    sendMoneyAggregator.send().get();
 //
@@ -112,22 +110,22 @@ public class SendMoneyAggregatorTest {
 //
 //  @Test
 //  public void sendMoneyFailsPreflightSequenceIncrement()
-//      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+//    throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 //
 //    setSoldierOnBooleans(false, true, true);
 //    when(streamConnectionMock.nextSequence())
-//        .thenThrow(new StreamConnectionClosedException(StreamConnectionId.of("whoops")));
+//      .thenThrow(new StreamConnectionClosedException(StreamConnectionId.of("whoops")));
 //
 //    sendMoneyAggregator.send().get();
 //
 //    // Expect 0 link calls
-//    Mockito.verify(linkMock).getOperatorAddressSupplier();
+//    verify(linkMock).getOperatorAddressSupplier();
 //    Mockito.verifyNoMoreInteractions(linkMock);
 //  }
 //
 //  @Test
 //  public void sendMoneyWhenSequenceCannotIncrement()
-//      throws ExecutionException, InterruptedException, StreamConnectionClosedException {
+//    throws ExecutionException, InterruptedException, StreamConnectionClosedException {
 //
 //    setSoldierOnBooleans(false, true, true);
 //    when(streamConnectionMock.nextSequence()).thenAnswer(new Answer<UnsignedLong>() {
@@ -146,40 +144,40 @@ public class SendMoneyAggregatorTest {
 //    sendMoneyAggregator.send().get();
 //
 //    // Expect 1 Link call due to preflight check
-//    Mockito.verify(linkMock, times(1)).sendPacket(any());
+//    verify(linkMock, times(1)).sendPacket(any());
 //  }
 //
 //  @Test
 //  public void failureToSchedulePutsMoneyBack() {
 //    SendMoneyRequest request = SendMoneyRequest.builder()
-//        .sharedSecret(sharedSecret)
-//        .sourceAddress(sourceAddress)
-//        .amount(originalAmountToSend)
-//        .destinationAddress(destinationAddress)
-//        .timeout(Optional.of(Duration.ofSeconds(60)))
-//        .denomination(Denominations.XRP_DROPS)
-//        .paymentTracker(new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator()))
-//        .build();
+//      .sharedSecret(sharedSecret)
+//      .sourceAddress(sourceAddress)
+//      .amount(originalAmountToSend)
+//      .destinationAddress(destinationAddress)
+//      .timeout(Optional.of(Duration.ofSeconds(60)))
+//      .denomination(Denominations.XRP_DROPS)
+//      .paymentTracker(new FixedSenderAmountPaymentTracker(originalAmountToSend, new NoOpExchangeRateCalculator()))
+//      .build();
 //    ExecutorService executor = mock(ExecutorService.class);
 //    this.sendMoneyAggregator = new SendMoneyAggregator(
-//        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-//        streamEncryptionServiceMock, Duration.ofSeconds(10L), request
+//      executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+//      streamEncryptionServiceMock, Duration.ofSeconds(10L), request
 //    );
 //
 //    when(executor.submit(any(Runnable.class))).thenThrow(new RejectedExecutionException());
 //
 //    InterledgerPreparePacket prepare = samplePreparePacket();
 //    InterledgerRejectPacket expectedReject = InterledgerRejectPacket.builder()
-//        .code(F00_BAD_REQUEST)
-//        .message(
-//            String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", prepare,
-//                "java.util.concurrent.RejectedExecutionException")
-//        )
-//        .build();
+//      .code(F00_BAD_REQUEST)
+//      .message(
+//        String.format("Unable to schedule sendMoney task. preparePacket=%s error=%s", prepare,
+//          "java.util.concurrent.RejectedExecutionException")
+//      )
+//      .build();
 //
 //    expectedException.expect(RejectedExecutionException.class);
 //    sendMoneyAggregator.schedule(new AtomicBoolean(false), () -> prepare, sampleStreamPacket(),
-//        PrepareAmounts.from(prepare, sampleStreamPacket()));
+//      PrepareAmounts.from(prepare, sampleStreamPacket()));
 //    verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, expectedReject);
 //  }
 //
@@ -188,11 +186,11 @@ public class SendMoneyAggregatorTest {
 //    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 //    when(linkMock.sendPacket(any())).thenReturn(sampleFulfillPacket());
 //    StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
-//        .addFrames(StreamMoneyFrame.builder()
-//            .shares(UnsignedLong.ONE)
-//            .streamId(UnsignedLong.ONE)
-//            .build())
-//        .build();
+//      .addFrames(StreamMoneyFrame.builder()
+//        .shares(UnsignedLong.ONE)
+//        .streamId(UnsignedLong.ONE)
+//        .build())
+//      .build();
 //    when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
 //
 //    Optional<Denomination> denomination = sendMoneyAggregator.preflightCheck();
@@ -204,11 +202,11 @@ public class SendMoneyAggregatorTest {
 //    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 //    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(T00_INTERNAL_ERROR));
 //    StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
-//        .addFrames(StreamMoneyFrame.builder()
-//            .shares(UnsignedLong.ONE)
-//            .streamId(UnsignedLong.ONE)
-//            .build())
-//        .build();
+//      .addFrames(StreamMoneyFrame.builder()
+//        .shares(UnsignedLong.ONE)
+//        .streamId(UnsignedLong.ONE)
+//        .build())
+//      .build();
 //    when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
 //    Optional<Denomination> denomination = sendMoneyAggregator.preflightCheck();
 //    assertThat(denomination).isEmpty();
@@ -278,9 +276,9 @@ public class SendMoneyAggregatorTest {
 //  public void breakLoopToPreventOversend() throws Exception {
 //    PaymentTracker tracker = mock(PaymentTracker.class);
 //    PrepareAmounts prepare = PrepareAmounts.builder()
-//        .amountToSend(UnsignedLong.valueOf(10L))
-//        .minimumAmountToAccept(UnsignedLong.ZERO)
-//        .build();
+//      .amountToSend(UnsignedLong.valueOf(10L))
+//      .minimumAmountToAccept(UnsignedLong.ZERO)
+//      .build();
 //    when(tracker.getSendPacketAmounts(any(), any())).thenReturn(prepare);
 //    when(tracker.auth(any())).thenReturn(false);
 //    when(tracker.getOriginalAmountMode()).thenReturn(SenderAmountMode.SENDER_AMOUNT);
@@ -292,19 +290,19 @@ public class SendMoneyAggregatorTest {
 //    when(tracker.successful()).thenReturn(false);
 //
 //    SendMoneyRequest request = SendMoneyRequest.builder()
-//        .sharedSecret(sharedSecret)
-//        .sourceAddress(sourceAddress)
-//        .destinationAddress(destinationAddress)
-//        .amount(originalAmountToSend)
-//        .timeout(Optional.of(Duration.ofSeconds(60)))
-//        .denomination(Denominations.XRP_DROPS)
-//        .paymentTracker(tracker)
-//        .build();
+//      .sharedSecret(sharedSecret)
+//      .sourceAddress(sourceAddress)
+//      .destinationAddress(destinationAddress)
+//      .amount(originalAmountToSend)
+//      .timeout(Optional.of(Duration.ofSeconds(60)))
+//      .denomination(Denominations.XRP_DROPS)
+//      .paymentTracker(tracker)
+//      .build();
 //
 //    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 //    this.sendMoneyAggregator = new SendMoneyAggregator(
-//        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-//        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+//      executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+//      streamEncryptionServiceMock, Duration.ofMillis(10L), request
 //    );
 //
 //    setSoldierOnBooleans(false, false, true);
@@ -333,47 +331,47 @@ public class SendMoneyAggregatorTest {
 //  public void handleRejectHatesNullPrepare() {
 //    expectedException.expect(NullPointerException.class);
 //    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-//        sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
-//        congestionControllerMock);
+//      sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
+//      congestionControllerMock);
 //  }
 //
 //  @Test
 //  public void handleRejectHatesNullStreamPacket() {
 //    expectedException.expect(NullPointerException.class);
 //    sendMoneyAggregator.handleReject(samplePreparePacket(), null,
-//        sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
-//        congestionControllerMock);
+//      sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
+//      congestionControllerMock);
 //  }
 //
 //  @Test
 //  public void handleRejectHatesNullReject() {
 //    expectedException.expect(NullPointerException.class);
 //    sendMoneyAggregator.handleReject(null, sampleStreamPacket(), null, defaultPrepareAmounts,
-//        new AtomicInteger(), congestionControllerMock);
+//      new AtomicInteger(), congestionControllerMock);
 //  }
 //
 //  @Test
 //  public void handleRejectHatesNullNumReject() {
 //    expectedException.expect(NullPointerException.class);
 //    sendMoneyAggregator
-//        .handleReject(null, sampleStreamPacket(), sampleRejectPacket(T00_INTERNAL_ERROR),
-//            null, null, congestionControllerMock);
+//      .handleReject(null, sampleStreamPacket(), sampleRejectPacket(T00_INTERNAL_ERROR),
+//        null, null, congestionControllerMock);
 //  }
 //
 //  @Test
 //  public void handleRejectHatesNullCongestionController() {
 //    expectedException.expect(NullPointerException.class);
 //    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-//        sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
-//        null);
+//      sampleRejectPacket(T00_INTERNAL_ERROR), defaultPrepareAmounts, new AtomicInteger(),
+//      null);
 //  }
 //
 //  @Test
 //  public void handleRejectHatesNullPrepareAmounts() {
 //    expectedException.expect(NullPointerException.class);
 //    sendMoneyAggregator.handleReject(null, sampleStreamPacket(),
-//        sampleRejectPacket(T00_INTERNAL_ERROR), null, new AtomicInteger(),
-//        congestionControllerMock);
+//      sampleRejectPacket(T00_INTERNAL_ERROR), null, new AtomicInteger(),
+//      congestionControllerMock);
 //  }
 //
 //  @Test
@@ -383,7 +381,7 @@ public class SendMoneyAggregatorTest {
 //    InterledgerPreparePacket prepare = samplePreparePacket();
 //    InterledgerRejectPacket reject = sampleRejectPacket(T00_INTERNAL_ERROR);
 //    sendMoneyAggregator.handleReject(prepare, sampleStreamPacket(),
-//        reject, defaultPrepareAmounts, numReject, congestionControllerMock);
+//      reject, defaultPrepareAmounts, numReject, congestionControllerMock);
 //    assertThat(numReject.get()).isEqualTo(1);
 //    assertThat(paymentTracker.getOriginalAmountLeft()).isEqualTo(originalAmountToSend.plus(prepare.getAmount()));
 //    verify(congestionControllerMock, times(1)).reject(UnsignedLong.ONE, reject);
@@ -420,7 +418,7 @@ public class SendMoneyAggregatorTest {
 //  }
 //
 //  private void handleRejectTestHelper(
-//      final InterledgerErrorCode errorCodeToTest, final boolean expectedUnrecoverableState
+//    final InterledgerErrorCode errorCodeToTest, final boolean expectedUnrecoverableState
 //  ) {
 //    Objects.requireNonNull(errorCodeToTest);
 //
@@ -435,7 +433,7 @@ public class SendMoneyAggregatorTest {
 //    ///////
 //    // Do test
 //    sendMoneyAggregator.handleReject(
-//        prepare, sampleStreamPacket(), reject, defaultPrepareAmounts, numReject, congestionControllerMock
+//      prepare, sampleStreamPacket(), reject, defaultPrepareAmounts, numReject, congestionControllerMock
 //    );
 //
 //    ///////
@@ -477,7 +475,7 @@ public class SendMoneyAggregatorTest {
 //  }
 //
 //  private void testCheckForAndTriggerUnrecoverableErrorHelper(
-//      final InterledgerErrorCode errorCodeToTest, final boolean expectedUnrecoverableState
+//    final InterledgerErrorCode errorCodeToTest, final boolean expectedUnrecoverableState
 //  ) {
 //    Objects.requireNonNull(errorCodeToTest);
 //    InterledgerRejectPacket reject = sampleRejectPacket(errorCodeToTest);
@@ -491,11 +489,11 @@ public class SendMoneyAggregatorTest {
 //    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 //    when(linkMock.sendPacket(any())).thenReturn(sampleRejectPacket(F00_BAD_REQUEST));
 //    StreamPacket streamPacket = StreamPacket.builder().from(sampleStreamPacket())
-//        .addFrames(StreamMoneyFrame.builder()
-//            .shares(UnsignedLong.ONE)
-//            .streamId(UnsignedLong.ONE)
-//            .build())
-//        .build();
+//      .addFrames(StreamMoneyFrame.builder()
+//        .shares(UnsignedLong.ONE)
+//        .streamId(UnsignedLong.ONE)
+//        .build())
+//      .build();
 //    when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
 //    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
 //    sendMoneyAggregator.preflightCheck();
@@ -505,22 +503,22 @@ public class SendMoneyAggregatorTest {
 //  @Test
 //  public void stopSendingWhenUnrecoverableErrorEncountered() throws Exception {
 //    SendMoneyRequest request = SendMoneyRequest.builder()
-//        .sharedSecret(sharedSecret)
-//        .sourceAddress(sourceAddress)
-//        .destinationAddress(destinationAddress)
-//        .amount(originalAmountToSend)
-//        .timeout(Optional.of(Duration.ofSeconds(60)))
-//        .denomination(Denominations.XRP_DROPS)
-//        .paymentTracker(
-//            new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator())
-//        )
-//        .build();
+//      .sharedSecret(sharedSecret)
+//      .sourceAddress(sourceAddress)
+//      .destinationAddress(destinationAddress)
+//      .amount(originalAmountToSend)
+//      .timeout(Optional.of(Duration.ofSeconds(60)))
+//      .denomination(Denominations.XRP_DROPS)
+//      .paymentTracker(
+//        new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator())
+//      )
+//      .build();
 //
 //    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 //
 //    this.sendMoneyAggregator = new SendMoneyAggregator(
-//        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-//        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+//      executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+//      streamEncryptionServiceMock, Duration.ofMillis(10L), request
 //    );
 //
 //    when(congestionControllerMock.hasInFlight()).thenAnswer(new Answer<Boolean>() {
@@ -549,22 +547,22 @@ public class SendMoneyAggregatorTest {
 //      }
 //    });
 //    StreamPacket streamPacket = StreamPacket.builder()
-//        .prepareAmount(UnsignedLong.ONE)
-//        .sequence(UnsignedLong.ZERO)
-//        .interledgerPacketType(InterledgerPacketType.FULFILL)
-//        .addFrames(StreamMoneyFrame.builder()
-//            .shares(UnsignedLong.ONE)
-//            .streamId(UnsignedLong.ONE)
-//            .build())
-//        .build();
+//      .prepareAmount(UnsignedLong.ONE)
+//      .sequence(UnsignedLong.ZERO)
+//      .interledgerPacketType(InterledgerPacketType.FULFILL)
+//      .addFrames(StreamMoneyFrame.builder()
+//        .shares(UnsignedLong.ONE)
+//        .streamId(UnsignedLong.ONE)
+//        .build())
+//      .build();
 //    when(streamCodecContextMock.read(any(), any())).thenReturn(streamPacket);
 //    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isFalse();
 //    SendMoneyResult result = sendMoneyAggregator.send().get();
 //    assertThat(sendMoneyAggregator.isUnrecoverableErrorEncountered()).isTrue();
 //    assertThat(result)
-//        .extracting("amountDelivered", "amountSent", "numFulfilledPackets",
-//            "successfulPayment")
-//        .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, 1, false);
+//      .extracting("amountDelivered", "amountSent", "numFulfilledPackets",
+//        "successfulPayment")
+//      .containsExactly(UnsignedLong.ONE, UnsignedLong.ONE, 1, false);
 //    // depending on execution order, we may halt sooner than trying all 10 potential times
 //    assertThat(result.numRejectPackets()).isLessThanOrEqualTo(9);
 //    assertThat(result.amountLeftToSend()).isLessThanOrEqualTo(UnsignedLong.valueOf(9));
@@ -580,15 +578,15 @@ public class SendMoneyAggregatorTest {
 //  @Test
 //  public void packetExpiryIsComputedJustBeforeSending() throws InterruptedException {
 //    SendMoneyRequest request = SendMoneyRequest.builder()
-//        .sharedSecret(sharedSecret)
-//        .sourceAddress(sourceAddress)
-//        .destinationAddress(destinationAddress)
-//        .amount(originalAmountToSend)
-//        .timeout(Optional.of(Duration.ofSeconds(60)))
-//        .denomination(Denominations.XRP_DROPS)
-//        .paymentTracker(
-//            new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
-//        .build();
+//      .sharedSecret(sharedSecret)
+//      .sourceAddress(sourceAddress)
+//      .destinationAddress(destinationAddress)
+//      .amount(originalAmountToSend)
+//      .timeout(Optional.of(Duration.ofSeconds(60)))
+//      .denomination(Denominations.XRP_DROPS)
+//      .paymentTracker(
+//        new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(10l), new NoOpExchangeRateCalculator()))
+//      .build();
 //
 //    // use a SleepyExecutorService with a non-trivial sleep so that we can verify that expiresAt is calculated
 //    // AFTER the scheduler woke up to process the packet.
@@ -597,13 +595,13 @@ public class SendMoneyAggregatorTest {
 //    Instant minExpectedExpiresAt = DateUtils.now().plusMillis(scheduleDelayMillis);
 //
 //    this.sendMoneyAggregator = new SendMoneyAggregator(
-//        executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
-//        streamEncryptionServiceMock, Duration.ofMillis(10L), request
+//      executor, streamConnectionMock, streamCodecContextMock, linkMock, congestionControllerMock,
+//      streamEncryptionServiceMock, Duration.ofMillis(10L), request
 //    );
 //
 //    sendMoneyAggregator.schedule(new AtomicBoolean(false),
-//        () -> samplePreparePacket(), sampleStreamPacket(),
-//        PrepareAmounts.builder().amountToSend(UnsignedLong.ONE).minimumAmountToAccept(UnsignedLong.ONE).build());
+//      () -> samplePreparePacket(), sampleStreamPacket(),
+//      PrepareAmounts.builder().amountToSend(UnsignedLong.ONE).minimumAmountToAccept(UnsignedLong.ONE).build());
 //    Thread.sleep(scheduleDelayMillis);
 //    ArgumentCaptor<InterledgerPreparePacket> prepareCaptor = ArgumentCaptor.forClass(InterledgerPreparePacket.class);
 //
@@ -617,7 +615,7 @@ public class SendMoneyAggregatorTest {
 //   * Helper method to set the soldierOn mock values for clearer test coverage.
 //   */
 //  private void setSoldierOnBooleans(
-//      final boolean moneyInFlight, final boolean streamConnectionClosed, final boolean moreToSend
+//    final boolean moneyInFlight, final boolean streamConnectionClosed, final boolean moreToSend
 //  ) {
 //    when(congestionControllerMock.hasInFlight()).thenReturn(moneyInFlight);
 //    when(streamConnectionMock.isClosed()).thenReturn(streamConnectionClosed);
@@ -631,52 +629,55 @@ public class SendMoneyAggregatorTest {
 //
 //  private StreamPacket sampleStreamPacket() {
 //    return StreamPacket.builder()
-//        .prepareAmount(UnsignedLong.ZERO)
-//        .sequence(UnsignedLong.ZERO)
-//        .interledgerPacketType(InterledgerPacketType.PREPARE)
-//        .build();
+//      .prepareAmount(UnsignedLong.ZERO)
+//      .sequence(UnsignedLong.ZERO)
+//      .interledgerPacketType(InterledgerPacketType.PREPARE)
+//      .build();
 //  }
 //
 //  private InterledgerPreparePacket samplePreparePacket() {
 //    return InterledgerPreparePacket.builder()
-//        .destination(destinationAddress)
-//        .amount(UnsignedLong.ONE)
-//        .expiresAt(DateUtils.now())
-//        .executionCondition(InterledgerCondition.of(new byte[32]))
-//        .build();
+//      .destination(destinationAddress)
+//      .amount(UnsignedLong.ONE)
+//      .expiresAt(DateUtils.now())
+//      .executionCondition(InterledgerCondition.of(new byte[32]))
+//      .build();
 //  }
 //
 //  private InterledgerRejectPacket sampleRejectPacket(InterledgerErrorCode errorCode) {
 //    return InterledgerRejectPacket.builder()
-//        .code(errorCode)
-//        .message("too many cooks!")
-//        .triggeredBy(destinationAddress)
-//        .data(new byte[0])
-//        .build();
+//      .code(errorCode)
+//      .message("too many cooks!")
+//      .triggeredBy(destinationAddress)
+//      .data(new byte[0])
+//      .build();
 //  }
 //
 //  private InterledgerFulfillPacket sampleFulfillPacket() {
 //    return InterledgerFulfillPacket.builder()
-//        .data(new byte[0])
-//        .fulfillment(InterledgerFulfillment.of(new byte[32]))
-//        .build();
+//      .data(new byte[0])
+//      .fulfillment(InterledgerFulfillment.of(new byte[32]))
+//      .build();
 //  }
 //
 //  /**
 //   * Extracts all the stream frames from all the prepare packets sent on the link.
+//   *
 //   * @return
 //   */
 //  private List<StreamFrame> getStreamFramesSent() {
 //    ArgumentCaptor<InterledgerPreparePacket> prepareCaptor = ArgumentCaptor.forClass(InterledgerPreparePacket.class);
 //    verify(linkMock, atLeastOnce()).sendPacket(prepareCaptor.capture());
-//    return prepareCaptor.getAllValues().stream()
-//        .map(InterledgerPreparePacket::typedData)
-//        .filter(Optional::isPresent)
-//        .map(Optional::get)
-//        .filter($ -> $ instanceof StreamPacket)
-//        .map($ -> (StreamPacket) $)
-//        .flatMap(packet -> packet.frames().stream())
-//        .collect(Collectors.toList());
+//    List<StreamFrame> foo = prepareCaptor.getAllValues().stream()
+//      .map(InterledgerPreparePacket::typedData)
+//      .filter(Optional::isPresent)
+//      .map(Optional::get)
+//      .filter($ -> $ instanceof StreamPacket)
+//      .map($ -> (StreamPacket) $)
+//      .flatMap(packet -> packet.frames().stream())
+//      .collect(Collectors.toList());
+//
+//    return foo;
 //  }
 //
 //  /**
@@ -684,7 +685,7 @@ public class SendMoneyAggregatorTest {
 //   */
 //  private void assertOnlyPreflightAndClose() {
 //    // Expect 2 Link calls due to preflight check and stream close
-//    Mockito.verify(linkMock, times(2)).sendPacket(any());
+//    verify(linkMock, times(2)).sendPacket(any());
 //    assertStreamCloseFrameSent();
 //  }
 //

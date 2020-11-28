@@ -2,23 +2,21 @@ package org.interledger.stream.pay;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
-import org.interledger.core.DateUtils;
-import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
-import org.interledger.fx.Denomination;
-import org.interledger.stream.StreamConnectionId;
-import org.interledger.stream.errors.StreamConnectionClosedException;
-import org.interledger.stream.model.AccountDetails;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedInteger;
-
 import java.io.Closeable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicReference;
+import org.interledger.core.DateUtils;
+import org.interledger.core.InterledgerAddress;
+import org.interledger.fx.Denomination;
+import org.interledger.stream.StreamConnectionId;
+import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.errors.StreamConnectionClosedException;
+import org.interledger.stream.model.AccountDetails;
 
 /**
  * <p>The session established between two endpoints that uses a single shared secret and multiplexes multiple streams

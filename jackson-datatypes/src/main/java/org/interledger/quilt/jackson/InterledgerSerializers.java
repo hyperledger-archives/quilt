@@ -24,7 +24,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.link.LinkId;
 import org.interledger.link.LinkType;
 import org.interledger.quilt.jackson.address.InterledgerAddressSerializer;

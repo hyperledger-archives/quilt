@@ -18,5 +18,6 @@
     <module>stream-client</module>
     <module>stream-receiver</module>
     <module>stream-pay</module>
+    <module>stream-crypto</module>
   </modules>
 </project>

@@ -10,7 +10,7 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.fx.Denomination;
@@ -214,6 +214,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
         return InterledgerRejectPacket.builder()
             .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
+          // TODO: Could be due to correct amounts just not fulfillilable.
             .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
             .triggeredBy(receiverAddress)
             .data(encryptedReturnableStreamPacketBytes)

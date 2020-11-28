@@ -20,7 +20,7 @@ package org.interledger.quilt.jackson.sharedsecret;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;

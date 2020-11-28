@@ -37,7 +37,7 @@ public interface PrepareAmounts {
    * @return An {@link UnsignedLong} that represents the `amount` value in an ILPv4 Prepare packet when used by a STREAM
    *     sender.
    */
-  UnsignedLong getAmountToSend();
+  UnsignedLong amountToSend();
 
   /**
    * The amount that should be put into a Stream Packet's amount field to indicate the minimum amount a receiver should
@@ -46,6 +46,6 @@ public interface PrepareAmounts {
    * @return An {@link UnsignedLong} that represents the minimum `amount` that a Stream Receiver should accept in an
    *     individual Stream Packet.
    */
-  UnsignedLong getMinimumAmountToAccept();
+  UnsignedLong minimumAmountToAccept();
 
 }

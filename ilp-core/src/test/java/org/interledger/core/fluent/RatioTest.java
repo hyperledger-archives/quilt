@@ -24,10 +24,8 @@ public class RatioTest {
 
   @Test
   public void compareToWhenSmaller() {
-    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(8))
-      .build();
-    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1))
-      .denominator(BigInteger.valueOf(4)).build();
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(8)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4)).build();
 
     assertThat(r1.compareTo(r2) < 0).isTrue();
     assertThat(r1.compareTo(r2) == 0).isFalse();
@@ -36,10 +34,18 @@ public class RatioTest {
 
   @Test
   public void compareToWhenEqual() {
-    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2))
-      .build();
-    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2))
-      .build();
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+
+    assertThat(r1.compareTo(r2) < 0).isFalse();
+    assertThat(r1.compareTo(r2) == 0).isTrue();
+    assertThat(r1.compareTo(r2) > 0).isFalse();
+  }
+
+  @Test
+  public void compareToWhenEqualWithMorePrecision() {
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(100)).denominator(BigInteger.valueOf(100)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(10000L)).denominator(BigInteger.valueOf(10000L)).build();
 
     assertThat(r1.compareTo(r2) < 0).isFalse();
     assertThat(r1.compareTo(r2) == 0).isTrue();
@@ -48,14 +54,52 @@ public class RatioTest {
 
   @Test
   public void compareToWhenBigger() {
-    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1))
-      .denominator(BigInteger.valueOf(2)).build();
-    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4))
-      .build();
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4)).build();
 
     assertThat(r1.compareTo(r2) < 0).isFalse();
     assertThat(r1.compareTo(r2) == 0).isFalse();
     assertThat(r1.compareTo(r2) > 0).isTrue();
+  }
+
+  @Test
+  public void comparePrecisionToWhenSmaller() {
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(8)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4)).build();
+
+    assertThat(r1.comparePrecisionTo(r2) < 0).isTrue();
+    assertThat(r1.comparePrecisionTo(r2) == 0).isFalse();
+    assertThat(r1.comparePrecisionTo(r2) > 0).isFalse();
+  }
+
+  @Test
+  public void comparePrecisionToWhenEqual() {
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+
+    assertThat(r1.comparePrecisionTo(r2) < 0).isFalse();
+    assertThat(r1.comparePrecisionTo(r2) == 0).isTrue();
+    assertThat(r1.comparePrecisionTo(r2) > 0).isFalse();
+  }
+
+  @Test
+  public void comparePrecisionToWhenEqualWithMorePrecision() {
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(100)).denominator(BigInteger.valueOf(100)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(10000L)).denominator(BigInteger.valueOf(10000L)).build();
+
+    assertThat(r1.comparePrecisionTo(r2) < 0).isTrue();
+    assertThat(r1.comparePrecisionTo(r2) == 0).isFalse();
+    assertThat(r1.comparePrecisionTo(r2) > 0).isFalse();
+  }
+
+  @Test
+  public void comparePrecisionToWhenBigger() {
+    Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
+    Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4)).build();
+
+    assertThat(r1.comparePrecisionTo(r2) < 0).isFalse();
+    assertThat(r1.comparePrecisionTo(r2) == 0).isFalse();
+    assertThat(r1.comparePrecisionTo(r2) > 0).isTrue();
   }
 
   @Test

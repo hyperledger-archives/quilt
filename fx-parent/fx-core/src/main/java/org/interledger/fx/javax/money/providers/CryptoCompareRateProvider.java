@@ -96,7 +96,7 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
   public ExchangeRate getExchangeRate(ConversionQuery conversionQuery) {
     Objects.requireNonNull(conversionQuery);
     try {
-      // TODO: Interface contract says "never-null" but all implementations return null. :(
+      // NOTE: Interface contract says "never-null" but all implementations return null. :(
       return this.exchangeRateCache.get(conversionQuery, fxLoader());
     } catch (Exception e) {
       throw new MonetaryException("Failed to load currency conversion data", e);
@@ -153,7 +153,6 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
         // containing a map of values keyed by each `tsym`. So, we can map the `tsym` to the terminating currency.
 
         final Request okHttpRequest = new Request.Builder()
-          // TODO: Keep?
           .header(HttpHeaders.ACCEPT, MediaType.JSON_UTF_8.toString())
           // Authorization: Apikey {your_api_key}=
           .header(AUTHORIZATION, String.format("Apikey %s", apiKeySupplier.get()))
@@ -168,6 +167,7 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
           .get()
           .build();
 
+        String cryptoCompareResponse = null;
         try (Response okHttpResponse = okHttpClient.newCall(okHttpRequest).execute()) {
           if (!okHttpResponse.isSuccessful()) {
             final String errorMessage = String.format(
@@ -177,10 +177,9 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
             throw new ExchangeRateException(errorMessage);
           }
 
+          cryptoCompareResponse = okHttpResponse.body().string(); // <-- Capture for error logging.
           // Marshal the okHttpResponse to the correct object.
-          final Map<String, String> ratesResponse = objectMapper.readValue(
-            okHttpResponse.body().byteStream(), MAP_TYPE_REFERENCE
-          );
+          final Map<String, String> ratesResponse = objectMapper.readValue(cryptoCompareResponse, MAP_TYPE_REFERENCE);
 
           if (logger.isTraceEnabled()) {
             logger.trace("CryptoCompare rates retrieved successfully. okHttpRequest={} okHttpResponse={} rates={}",
@@ -197,7 +196,7 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
               () -> new ExchangeRateException(String.format("No Rate found for ConversionQuery: %s", conversionQuery))
             );
         } catch (JsonParseException | JsonMappingException e) {
-          logger.error(e.getMessage(), e);
+          logger.error("Unable to parse CryptoCompare response. value={},", cryptoCompareResponse, e);
         } catch (ExchangeRateException e) {
           throw e;
         } catch (Exception e) {

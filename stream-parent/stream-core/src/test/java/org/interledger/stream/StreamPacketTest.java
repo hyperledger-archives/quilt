@@ -3,7 +3,7 @@ package org.interledger.stream;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 import org.interledger.core.InterledgerPacketType;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.frames.StreamFrame;
 
 import com.google.common.primitives.UnsignedLong;

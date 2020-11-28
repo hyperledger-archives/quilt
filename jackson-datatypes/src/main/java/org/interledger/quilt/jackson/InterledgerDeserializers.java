@@ -24,7 +24,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.link.LinkId;
 import org.interledger.link.LinkType;
 import org.interledger.quilt.jackson.address.InterledgerAddressDeserializer;
@@ -35,7 +35,6 @@ import org.interledger.quilt.jackson.conditions.FulfillmentDeserializer;
 import org.interledger.quilt.jackson.link.LinkIdDeserializer;
 import org.interledger.quilt.jackson.link.LinkTypeDeserializer;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretDeserializer;
-import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;

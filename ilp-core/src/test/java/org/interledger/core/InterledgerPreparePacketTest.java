@@ -210,7 +210,7 @@ public class InterledgerPreparePacketTest {
     assertThat(interledgerPreparePacket.toString())
         .isEqualTo("InterledgerPreparePacket{, amount=11, expiresAt=2007-12-03T10:15:30Z, "
             + "executionCondition=Condition{hash=AAECAwQFBgcICQECAwQFBgcICQABAgMEBQYHCAkAAQI=}, "
-            + "destination=InterledgerAddress{value=test.foo}, data=fw==}");
+            + "destination=InterledgerAddress{value=test.foo}, data=fw==, typedData=n/a}");
   }
 
 }

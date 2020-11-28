@@ -25,6 +25,11 @@ public final class Denominations {
     .assetScale((short) 2)
     .build();
 
+  public static final Denomination USD_MILLI_DOLLARS = Denomination.builder()
+    .assetCode("USD")
+    .assetScale((short) 6)
+    .build();
+
   public static final Denomination EUR = Denomination.builder()
     .assetCode("EUR")
     .assetScale((short) 0)

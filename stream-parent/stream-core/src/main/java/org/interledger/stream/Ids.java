@@ -1,7 +1,7 @@
 package org.interledger.stream;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.core.Wrapped;
 import org.interledger.core.Wrapper;
 

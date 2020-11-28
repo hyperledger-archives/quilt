@@ -12,6 +12,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
+import java.util.Optional;
 import javax.money.MonetaryException;
 import javax.money.convert.ConversionQuery;
 import javax.money.convert.ConversionQueryBuilder;
@@ -29,6 +30,7 @@ import org.junit.rules.ExpectedException;
  */
 public class CryptoCompareRateProviderIT {
 
+  private static final String CC_API_KEY_ENV_NAME = "CRYPTOCOMPARE_API_KEY";
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
@@ -37,7 +39,9 @@ public class CryptoCompareRateProviderIT {
   @Before
   public void setUp() {
     provider = new CryptoCompareRateProvider(
-      () -> "",
+      () -> Optional.ofNullable(System.getenv(CC_API_KEY_ENV_NAME))
+        .map(String::trim)
+        .orElse(""),
       createObjectMapperForProblemsJson(),
       new OkHttpClient(),
       fxCache(Duration.of(30, ChronoUnit.SECONDS))

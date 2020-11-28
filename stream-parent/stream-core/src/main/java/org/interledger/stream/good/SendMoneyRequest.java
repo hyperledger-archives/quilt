@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.immutables.value.Value.Default;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.fx.Denomination;
 
 @Immutable

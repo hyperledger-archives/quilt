@@ -2,7 +2,7 @@ package org.interledger.quilt.jackson.spsp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretModule;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

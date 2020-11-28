@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.StreamConnection.StreamConnectionState;
 import org.interledger.stream.errors.StreamConnectionClosedException;
 

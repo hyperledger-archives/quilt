@@ -10,8 +10,8 @@ import org.immutables.value.Value.Immutable;
 public interface Percentage extends Comparable<Percentage> {
 
   Percentage ZERO_PERCENT = of(BigDecimal.ZERO);
-  Percentage ONE_PERCENT = of(BigDecimal.valueOf(0.01));
-  Percentage FIFTY_PERCENT = of(BigDecimal.valueOf(0.5));
+  Percentage ONE_PERCENT = of(new BigDecimal("0.01"));
+  Percentage FIFTY_PERCENT = of(new BigDecimal("0.5"));
   Percentage ONE_HUNDRED_PERCENT = of(BigDecimal.ONE);
 
   static Percentage of(final BigDecimal value) {

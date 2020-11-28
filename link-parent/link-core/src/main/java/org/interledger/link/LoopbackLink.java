@@ -53,7 +53,9 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
 
   @Override
   public void registerLinkHandler(LinkHandler ilpDataHandler) throws LinkHandlerAlreadyRegisteredException {
-    logger.warn("Loopback links never have incoming data, and thus should not have a registered DataHandler.");
+    throw new RuntimeException(
+      "Loopback links never have incoming data, and thus should not have a registered DataHandler."
+    );
   }
 
   @Override
@@ -98,7 +100,7 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
   public String toString() {
     return new StringJoiner(", ", LoopbackLink.class.getSimpleName() + "[", "]")
       .add("linkId=" + getLinkId())
-      .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+      .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
       .add("linkSettings=" + getLinkSettings())
       .toString();
   }

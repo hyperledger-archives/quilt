@@ -1,10 +1,8 @@
 package org.interledger.stream.receiver;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;
-import org.interledger.spsp.ImmutableStreamConnectionDetails.Builder;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.stream.StreamException;
 import org.interledger.stream.crypto.Random;
 
 import com.google.common.base.Preconditions;
@@ -12,7 +10,6 @@ import com.google.common.hash.Hashing;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.function.Supplier;

@@ -15,7 +15,7 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.fx.Denomination;
@@ -516,8 +516,8 @@ public class SimpleStreamSender implements StreamSender {
             congestionController.getMaxAmount(), senderDenomination
           ));
 
-        UnsignedLong amountToSend = amounts.getAmountToSend();
-        UnsignedLong receiverMinimum = amounts.getMinimumAmountToAccept();
+        UnsignedLong amountToSend = amounts.amountToSend();
+        UnsignedLong receiverMinimum = amounts.minimumAmountToAccept();
 
         if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get() || unrecoverableErrorEncountered.get()) {
           try {

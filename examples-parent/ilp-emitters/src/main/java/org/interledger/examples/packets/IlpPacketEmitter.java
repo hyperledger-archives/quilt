@@ -15,7 +15,7 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerPreparePacketBuilder;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.link.PingLoopbackLink;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamPacket;

@@ -332,7 +332,7 @@ public class IlpOverHttpLink extends AbstractLink<IlpOverHttpLinkSettings> imple
   public String toString() {
     return new StringJoiner(", ", IlpOverHttpLink.class.getSimpleName() + "[", "]")
         .add("linkId=" + getLinkId())
-        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
         .add("outgoingUrl=" + outgoingUrl)
         .add("linkSettings=" + getLinkSettings())
         .toString();

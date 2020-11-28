@@ -101,6 +101,7 @@
 
     <guava.version>28.1-jre</guava.version>
     <jackson.version>2.10.0.pr3</jackson.version>
+    <!-- TODO: Updgrade to 1.4.2 -->
     <moneta.version>1.3</moneta.version>
     <okhttp.version>4.9.0</okhttp.version>
     <slf4j.version>1.7.30</slf4j.version>
@@ -217,6 +218,16 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>stream-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-crypto</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-pay</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -348,6 +359,12 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-jdk14</artifactId>
         <version>${slf4j.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>1.15.0</version>
         <scope>test</scope>
       </dependency>
       <dependency>
