@@ -105,7 +105,7 @@ public abstract class AbstractRustIT {
     .withExposedPorts(7770)
     .withNetwork(network)
     // uncomment to see logs
-    .withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer(connectorLogger))
+    //.withLogConsumer(new org.testcontainers.containers.output.Slf4jLogConsumer(connectorLogger))
     .withCommand(""
       + "--admin_auth_token " + AUTH_TOKEN + " "
       + "--database_url redis://redis:6379 "
@@ -287,12 +287,12 @@ public abstract class AbstractRustIT {
       .assetScale(9)
       .minBalance(new BigInteger("-100000000000000"))
       .roundTripTime(new BigInteger("500"))
-      .maxPacketAmount(new BigInteger("50000"))
+      .maxPacketAmount(BigInteger.valueOf(50000))
       .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
       .build();
     RustNodeAccount result = nodeClient.createAccount(sender);
     assertThat(result.maxPacketAmount().isPresent()).isTrue();
-    assertThat(result.maxPacketAmount().get()).isEqualTo(new BigInteger("50000"));
+    assertThat(result.maxPacketAmount().get()).isEqualTo(BigInteger.valueOf(50000));
 
     /////////////////////////
     // Create `xrp_account`
@@ -322,12 +322,12 @@ public abstract class AbstractRustIT {
       .assetScale(6)
       .minBalance(new BigInteger("-10000000000"))
       .roundTripTime(new BigInteger("500"))
-      .maxPacketAmount(new BigInteger("50000"))
+      .maxPacketAmount(BigInteger.valueOf(50000))
       .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
       .build();
     result = nodeClient.createAccount(sender);
     assertThat(result.maxPacketAmount().isPresent()).isTrue();
-    assertThat(result.maxPacketAmount().get()).isEqualTo(new BigInteger("50000"));
+    assertThat(result.maxPacketAmount().get()).isEqualTo(BigInteger.valueOf(50000));
 
     /////////////////////////
     // Create `usd_account`
@@ -462,15 +462,23 @@ public abstract class AbstractRustIT {
   protected ExchangeRateProvider mockExchangeRateProvider() {
     final ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
 
-    ExchangeRate xrpUsdRate = mock(ExchangeRate.class);
-    when(xrpUsdRate.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("0.2429546")));
-    when(exchangeRateProvider.getExchangeRate("XRP", "USD")).thenReturn(xrpUsdRate);
-
-    CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
-    when(xrpUsdRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
-
-    CurrencyUnit currencyUnit = mock(CurrencyUnit.class);
-    when(xrpUsdRate.getCurrency()).thenReturn(currencyUnit);
+    {
+      ExchangeRate xrpUsdRate = mock(ExchangeRate.class);
+      when(xrpUsdRate.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("0.2429546")));
+      when(exchangeRateProvider.getExchangeRate("XRP", "USD")).thenReturn(xrpUsdRate);
+      CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
+      when(xrpUsdRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
+      when(xrpUsdRate.getCurrency()).thenReturn(baseCurrencyUnit);
+    }
+    {
+      ExchangeRate identityRate = mock(ExchangeRate.class);
+      when(identityRate.getFactor()).thenReturn(DefaultNumberValue.of(BigDecimal.ONE));
+      when(exchangeRateProvider.getExchangeRate("XRP", "XRP")).thenReturn(identityRate);
+      when(exchangeRateProvider.getExchangeRate("USD", "USD")).thenReturn(identityRate);
+      CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
+      when(identityRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
+      when(identityRate.getCurrency()).thenReturn(baseCurrencyUnit);
+    }
 
     return exchangeRateProvider;
   }

@@ -77,7 +77,7 @@ public class MaxPacketAmountTracker {
 
         // F08 is invalid if the remote received less than their own maximum! This check ensures that remoteReceived
         // is always > 0
-        if (FluentCompareTo.is(totalReceivedByRemote).greaterThan(remoteMaximum)) {
+        if (FluentCompareTo.is(totalReceivedByRemote).notGreaterThan(remoteMaximum)) {
           return Optional.<MaxPacketAmount>empty();
         }
 

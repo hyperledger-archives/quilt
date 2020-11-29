@@ -5,6 +5,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.putRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
@@ -84,7 +86,7 @@ public class InterledgerRustNodeClientTest {
       + "\"XRP\":1.0"
       + "}";
 
-    stubFor(post(urlEqualTo("/rates"))
+    stubFor(put(urlEqualTo("/rates"))
       .withHeader("Authorization", equalTo("Bearer passwordin"))
       .willReturn(aResponse()
         .withStatus(201)
@@ -98,7 +100,7 @@ public class InterledgerRustNodeClientTest {
 
     UsdToXrpRatesResponse response = client.setUsdToXrpRate(request);
 
-    verify(postRequestedFor(urlMatching("/rates"))
+    verify(putRequestedFor(urlMatching("/rates"))
       .withRequestBody(equalTo(ratesRequestBody)));
 
     assertThat(response.usd()).isEqualTo(request.usd());

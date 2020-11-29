@@ -209,7 +209,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
   }
 
   @Test
-  public void testPay1XRP() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testPay1XRPtoUSDAccount() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
@@ -219,7 +219,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final PaymentOptions paymentOptions = PaymentOptions.builder()
       .senderAccountDetails(senderAccountDetails)
       .amountToSend(amountToSendInXrp)
-      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD))
+      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD_50K))
       .slippage(Slippage.of(Percentage.of(new BigDecimal("0.01")))) // <-- Allow up to 1% slippage.
       .build();
 
@@ -289,23 +289,18 @@ public class StreamPayerRustIT extends AbstractRustIT {
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }
 
-  /**
-   * 1 drop is too small to make its way to the USD account, which has a precision of 6. Therefore, the only way to get
-   * 1 unit to rafiki from an account with scale 9 is to send at least 1000 drops, or .001 XRP. This test validates that
-   * arithmetic.
-   */
   @Test
-  public void testPay1Drop() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testPay4XRPtoXrpAccount() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
     this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
 
-    final BigDecimal amountToSendInXrp = new BigDecimal("0.000001"); // <-- Send 1 XRP Drop
+    final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
       .senderAccountDetails(senderAccountDetails)
       .amountToSend(amountToSendInXrp)
-      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD))
+      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_XRP_50K))
       .slippage(Slippage.of(Percentage.of(new BigDecimal("0.01")))) // <-- Allow up to 1% slippage.
       .build();
 
@@ -320,36 +315,38 @@ public class StreamPayerRustIT extends AbstractRustIT {
           ///////////////////
           // Quote Assertions
           ///////////////////
-          // The current price of XRP is pegged at $0.2429546 USD in rafiki.
           assertThat(quote).isNotNull();
           assertThat(quote.estimatedDuration()).isBetween(Duration.ofMillis(5), Duration.ofMillis(100));
           assertThat(quote.sourceAccount()).isEqualTo(paymentOptions.senderAccountDetails());
           assertThat(quote.destinationAccount().interledgerAddress().getValue()).startsWith(HOST_ADDRESS.getValue());
-          assertThat(quote.destinationAccount().denomination()).isPresent();
           assertThat(quote.destinationAccount().denomination().get())
-            .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
+            .isEqualTo(Denomination.builder().assetCode("XRP").assetScale((short) 9).build());
           // In Source Units.
-          assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.ZERO);
+          assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits())
+            .isEqualTo(BigInteger.valueOf(4L));
           assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
           assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
-            .isEqualTo(BigInteger.ZERO);
+            .isEqualTo(BigInteger.valueOf(4L));
           // Min ExchangeRate, due to slippage
-          assertThat(quote.minExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(240525054),
-            BigInteger.valueOf(1000000000L)));
+          assertThat(quote.minExchangeRate()).isEqualTo(Ratio.builder()
+            .numerator(BigInteger.valueOf(99))
+            .denominator(BigInteger.valueOf(100))
+            .build()
+          );
 
           ///////////////////
           // EstimatedExchangeRate Assertions
           ///////////////////
           assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-            .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
+            .isEqualTo(Ratio.from(BigInteger.TEN, BigInteger.TEN));
           assertThat(quote.estimatedExchangeRate().upperBoundRate())
-            .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+            .isEqualTo(Ratio.from(BigInteger.valueOf(1000000000001L), BigInteger.valueOf(1000000000000L)));
           assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
           assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
           assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
           assertThat(quote.estimatedExchangeRate().destinationDenomination()).isPresent();
-          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetCode()).isEqualTo("USD");
-          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetScale()).isEqualTo((short) 6);
+          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetCode()).isEqualTo("XRP");
+          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetScale()).isEqualTo((short) 9);
           assertThat(quote.estimatedExchangeRate().maxPacketAmount().maxPacketState())
             .isEqualTo(MaxPacketState.UnknownMax);
           assertThat(quote.estimatedExchangeRate().maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
@@ -360,8 +357,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
           logger.info("Receipt={}", receipt);
           assertThat(receipt.paymentError()).isEmpty();
           assertThat(receipt.originalQuote()).isEqualTo(quote);
-          assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
-          assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
+          assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(4000000000L));
+          assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(4000000000L));
           return quote;
         } else {
           fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
@@ -369,5 +366,4 @@ public class StreamPayerRustIT extends AbstractRustIT {
         }
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }
-
 }

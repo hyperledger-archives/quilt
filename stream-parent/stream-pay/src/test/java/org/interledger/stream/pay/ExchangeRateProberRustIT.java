@@ -25,7 +25,7 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
    */
   @Test
   public void testRateProbeWithMaxPacket50kViaXrpToUsd() {
-    final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
+    final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT_50K); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
     ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamEncryptionUtils, ilpLink);
 
@@ -38,10 +38,10 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
     assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
     assertThat(exchangeRateProbeOutcome.destinationDenomination().get()).isEqualTo(Denominations.USD_MILLI_DOLLARS);
     assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(
-      Ratio.builder().numerator(BigInteger.valueOf(242954600)).denominator(BigInteger.valueOf(1000000000000L)).build()
+      Ratio.builder().numerator(BigInteger.valueOf(2)).denominator(BigInteger.valueOf(10000L)).build()
     );
     assertThat(exchangeRateProbeOutcome.upperBoundRate()).isEqualTo(
-      Ratio.builder().numerator(BigInteger.valueOf(242954601)).denominator(BigInteger.valueOf(1000000000000L)).build()
+      Ratio.builder().numerator(BigInteger.valueOf(3)).denominator(BigInteger.valueOf(10000L)).build()
     );
 
     // Even though none of the probe packets are exactly 50k, The MaxPacketAmount should be discovered imprecisely.
@@ -52,9 +52,11 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
 //    assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
 
     // Likewise, for the RustConnector, it doesn't send _any_ F08 rejections for the max-packet amount.
-    assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.UnknownMax);
-    assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
-    assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(1000000000000L));
+    assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.PreciseMax);
+    assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(50000L));
+    // This value is 10000 because the probe amount of 100000 is rejected via F08, so we never actually validate
+    // anything greater than 10,000.
+    assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
   }
 
   /**
@@ -72,23 +74,23 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
     ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamEncryptionUtils, ilpLink);
 
     final StreamConnection streamConnection = this.getNewStreamConnection(
-      senderAccountDetails, PaymentPointer.of(PAYMENT_POINTER_USD_50K)
+      senderAccountDetails, PaymentPointer.of(PAYMENT_POINTER_XRP)
     );
 
     final ExchangeRateProbeOutcome exchangeRateProbeOutcome = exchangeRateProber.probePath(streamConnection);
 
     assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
-    assertThat(exchangeRateProbeOutcome.destinationDenomination().get()).isEqualTo(Denominations.USD_MILLI_DOLLARS);
+    assertThat(exchangeRateProbeOutcome.destinationDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
     assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.UnknownMax);
     assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
     assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(1000000000000L));
     assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(Ratio.builder()
-      .numerator(BigInteger.valueOf(242954600L))
+      .numerator(BigInteger.valueOf(1000000000000L))
       .denominator(BigInteger.valueOf(1000000000000L))
       .build()
     );
     assertThat(exchangeRateProbeOutcome.upperBoundRate()).isEqualTo(Ratio.builder()
-      .numerator(BigInteger.valueOf(242954601L))
+      .numerator(BigInteger.valueOf(1000000000001L))
       .denominator(BigInteger.valueOf(1000000000000L))
       .build()
     );

@@ -1,6 +1,8 @@
 package org.interledger.stream.pay.filters.chain;
 
 import com.google.common.primitives.UnsignedLong;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -13,11 +15,15 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.interledger.codecs.stream.StreamCodecContextFactory;
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.link.Link;
 import org.interledger.link.LinkSettings;
 import org.interledger.stream.StreamPacket;
@@ -47,6 +53,8 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
   private final StreamEncryptionUtils streamEncryptionUtils;
 
   private final PaymentSharedStateTracker paymentSharedStateTracker;
+
+  private final CodecContext streamCodecContext = StreamCodecContextFactory.oer();
 
   // Executes the link sendMoney.
   private static final Executor EXECUTOR = Executors.newCachedThreadPool();
@@ -154,22 +162,48 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                 .supplyAsync(() -> link.sendPacket(preparePacket), EXECUTOR)
                 .get(timeoutDuration.getSeconds(), TimeUnit.SECONDS);
 
-              // Map to a StreamPacketReply
-              final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
-                interledgerResponsePacket.getData(),
-                this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
-                streamEncryptionUtils
-              );
+              // Map to a StreamPacketReply or an F08 payload.
 
               return interledgerResponsePacket.map(
-                interledgerFulfillPacket -> StreamPacketReply.builder()
-                  .interledgerPreparePacket(preparePacket)
-                  .interledgerResponsePacket(interledgerFulfillPacket.withTypedDataOrThis(typedStreamPacket))
-                  .build(),
-                interledgerRejectPacket -> StreamPacketReply.builder()
-                  .interledgerPreparePacket(preparePacket)
-                  .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedStreamPacket))
-                  .build()
+                interledgerFulfillPacket -> {
+                  final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
+                    interledgerResponsePacket.getData(),
+                    this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
+                    streamEncryptionUtils
+                  );
+                  return StreamPacketReply.builder()
+                    .interledgerPreparePacket(preparePacket)
+                    .interledgerResponsePacket(interledgerFulfillPacket.withTypedDataOrThis(typedStreamPacket))
+                    .build();
+                },
+                interledgerRejectPacket -> {
+                  if (interledgerRejectPacket.getCode() == InterledgerErrorCode.F08_AMOUNT_TOO_LARGE) {
+                    Optional<?> typedData = Optional.empty();
+                    // Decode the F08
+                    try {
+                      typedData = Optional.ofNullable(
+                        streamCodecContext.read(AmountTooLargeErrorData.class,
+                          new ByteArrayInputStream(interledgerRejectPacket.getData()))
+                      );
+                    } catch (IOException e) {
+                      logger.warn("Unable to decode AmountTooLargeErrorData", e);
+                    }
+                    return StreamPacketReply.builder()
+                      .interledgerPreparePacket(preparePacket)
+                      .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedData))
+                      .build();
+                  } else {
+                    final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
+                      interledgerResponsePacket.getData(),
+                      this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
+                      streamEncryptionUtils
+                    );
+                    return StreamPacketReply.builder()
+                      .interledgerPreparePacket(preparePacket)
+                      .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedStreamPacket))
+                      .build();
+                  }
+                }
               );
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
               logger.error(e.getMessage(), e);
