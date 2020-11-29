@@ -143,19 +143,15 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>org.javamoney</groupId>
       <artifactId>moneta</artifactId>
-      <version>1.4.2</version>
       <type>pom</type>
     </dependency>
     <dependency>
       <groupId>org.javamoney.moneta</groupId>
       <artifactId>moneta-core</artifactId>
-      <version>1.4.2</version>
     </dependency>
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>

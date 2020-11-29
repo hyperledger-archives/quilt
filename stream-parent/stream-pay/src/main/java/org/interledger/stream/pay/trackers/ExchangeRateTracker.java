@@ -87,7 +87,7 @@ public class ExchangeRateTracker {
 
     if (lowerBoundRateSnapshot == null ||
       FluentCompareTo.is(packetLowerBoundRate).greaterThan(lowerBoundRateSnapshot) ||
-      packetLowerBoundRate.comparePrecisionTo(lowerBoundRateSnapshot) == 1 // <-- More precise wins!
+      packetLowerBoundRate.equalButMorePrecise(lowerBoundRateSnapshot) // <-- More precise wins when equal!
     ) {
       logger.debug("Increasing probed rate lower bound from {} to {}", lowerBoundRateSnapshot, packetLowerBoundRate);
       this.lowerBoundRate.set(packetLowerBoundRate);
@@ -95,7 +95,7 @@ public class ExchangeRateTracker {
 
     if (upperBoundRateSnapshot == null ||
       FluentCompareTo.is(packetUpperBoundRate).lessThan(upperBoundRateSnapshot) ||
-      packetUpperBoundRate.comparePrecisionTo(upperBoundRateSnapshot) == -1 // <-- More precise wins!
+      packetUpperBoundRate.equalButMorePrecise(upperBoundRateSnapshot) // <-- More precise wins when equal!
     ) {
       logger.debug("Reducing probed rate upper bound from {} to {}", upperBoundRateSnapshot, packetUpperBoundRate);
       this.upperBoundRate.set(packetUpperBoundRate);

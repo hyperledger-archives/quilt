@@ -126,7 +126,7 @@ public interface Ratio extends Comparable<Ratio> {
   }
 
   @Derived
-  default int comparePrecisionTo(final Ratio other) {
+  default boolean equalButMorePrecise(final Ratio other) {
     Objects.requireNonNull(other);
 
     BigInteger first = this.numerator().multiply(other.denominator());
@@ -135,11 +135,11 @@ public interface Ratio extends Comparable<Ratio> {
     int result = first.compareTo(second);
 
     if (result == 0) {
-      // If the two ratios are equal, then check to see which denominator is bigger. The larger denominator has more
-      // precision.
-      return this.denominator().compareTo(other.denominator());
+      // If the two ratios are equal, then check to see which denominator is bigger.
+      // If this has a larger denominator, then it is equal but has more precision, so return true.
+      return this.denominator().compareTo(other.denominator()) == 1;
     } else {
-      return result;
+      return false;
     }
   }
 

@@ -37,6 +37,7 @@ public interface Quote {
    */
   AccountDetails destinationAccount();
 
+  // TODO: Enable this and validate in ITs
 //  /**
 //   * The maximum amount that will be sent for this payment, in source units.
 //   */

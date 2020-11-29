@@ -158,13 +158,11 @@ public interface StreamPayer {
         final BigDecimal minScaledExchangeRate = scaledExternalRate.lowerBound();
         logger.debug("Calculated min exchange rate of {}", minScaledExchangeRate);
 
-        // Invoices are fixed delivery, but not yet supported.
         final EstimatedPaymentOutcome estimatedPaymentOutcome = paymentSharedStateTracker
           .getAmountTracker().setPaymentTarget(
             PaymentType.FIXED_SEND,  // Invoices are fixed delivery, but not yet supported.
             minScaledExchangeRate,
-            rateProbeOutcome.maxPacketAmount().value().orElseThrow(() -> new StreamPayerException(
-              "RateProbe did not yield a maxPacketAmount.", SendState.UnknownPaymentTarget)),
+            rateProbeOutcome.maxPacketAmount().value(),
             amountToSendInSourceUnits
           );
 

@@ -67,9 +67,8 @@ public class RatioTest {
     Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(8)).build();
     Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4)).build();
 
-    assertThat(r1.comparePrecisionTo(r2) < 0).isTrue();
-    assertThat(r1.comparePrecisionTo(r2) == 0).isFalse();
-    assertThat(r1.comparePrecisionTo(r2) > 0).isFalse();
+    assertThat(r1.equalButMorePrecise((r2))).isFalse();
+    assertThat(r2.equalButMorePrecise(r1)).isFalse();
   }
 
   @Test
@@ -77,9 +76,8 @@ public class RatioTest {
     Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
     Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
 
-    assertThat(r1.comparePrecisionTo(r2) < 0).isFalse();
-    assertThat(r1.comparePrecisionTo(r2) == 0).isTrue();
-    assertThat(r1.comparePrecisionTo(r2) > 0).isFalse();
+    assertThat(r1.equalButMorePrecise((r2))).isFalse();
+    assertThat(r2.equalButMorePrecise(r1)).isFalse();
   }
 
   @Test
@@ -87,9 +85,8 @@ public class RatioTest {
     Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(100)).denominator(BigInteger.valueOf(100)).build();
     Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(10000L)).denominator(BigInteger.valueOf(10000L)).build();
 
-    assertThat(r1.comparePrecisionTo(r2) < 0).isTrue();
-    assertThat(r1.comparePrecisionTo(r2) == 0).isFalse();
-    assertThat(r1.comparePrecisionTo(r2) > 0).isFalse();
+    assertThat(r1.equalButMorePrecise((r2))).isFalse();
+    assertThat(r2.equalButMorePrecise(r1)).isTrue();
   }
 
   @Test
@@ -97,9 +94,8 @@ public class RatioTest {
     Ratio r1 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(2)).build();
     Ratio r2 = Ratio.builder().numerator(BigInteger.valueOf(1)).denominator(BigInteger.valueOf(4)).build();
 
-    assertThat(r1.comparePrecisionTo(r2) < 0).isFalse();
-    assertThat(r1.comparePrecisionTo(r2) == 0).isFalse();
-    assertThat(r1.comparePrecisionTo(r2) > 0).isTrue();
+    assertThat(r1.equalButMorePrecise((r2))).isFalse();
+    assertThat(r2.equalButMorePrecise(r1)).isFalse();
   }
 
   @Test

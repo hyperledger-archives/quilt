@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.immutables.value.Value;
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.fluent.FluentCompareTo;
@@ -100,8 +101,7 @@ public class MaxPacketAmountTracker {
       })
       .ifPresent(newMaxPacketAmount -> {
 
-        if (newMaxPacketAmount.value().isPresent() &&
-          FluentUnsignedLong.of(newMaxPacketAmount.value().get()).isNotPositive()) {
+        if (FluentUnsignedLong.of(newMaxPacketAmount.value()).isNotPositive()) {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Ending payment: max packet amount is 0, cannot send over path");
           }
@@ -121,14 +121,12 @@ public class MaxPacketAmountTracker {
             break;
           }
           case ImpreciseMax: {
-            if (originalMaxPacketStateSnapshot.value().isPresent() && newMaxPacketAmount.value().isPresent() &&
-              FluentCompareTo.is(newMaxPacketAmount.value().get())
-                .lessThan(originalMaxPacketStateSnapshot.value().get())
+            if (FluentCompareTo.is(newMaxPacketAmount.value()).lessThan(originalMaxPacketStateSnapshot.value())
             ) {
               if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(
                   "Reducing max packet amount from {} to {}",
-                  originalMaxPacketStateSnapshot.value().get(), newMaxPacketAmount.value().get()
+                  originalMaxPacketStateSnapshot.value(), newMaxPacketAmount.value()
                 );
               }
               this.maxPacketAmountRef.set(newMaxPacketAmount);
@@ -162,8 +160,7 @@ public class MaxPacketAmountTracker {
 
     final UnsignedLong originalVerifiedPathCapacitySnapshot = this.verifiedPathCapacityRef.get();
     final MaxPacketAmount maxPacketAmountSnapshot = this.maxPacketAmountRef.get();
-    final UnsignedLong maxPacketAmountValue = maxPacketAmountSnapshot.maxPacketState() == UnknownMax ?
-      UnsignedLong.MAX_VALUE : maxPacketAmountSnapshot.value().get(); // <-- Will always work due to PreCond
+    final UnsignedLong maxPacketAmountValue = maxPacketAmountSnapshot.value();
 
     final UnsignedLong newPathCapacity = FluentUnsignedLong.of(originalVerifiedPathCapacitySnapshot)
       .orGreater(ackAmount)
@@ -222,27 +219,26 @@ public class MaxPacketAmountTracker {
    * Return a limit on the amount of the next packet: the precise max packet amount, or a probe amount if the precise
    * max packet amount is yet to be discovered.
    */
-  public Optional<UnsignedLong> getNextMaxPacketAmount() {
+  public UnsignedLong getNextMaxPacketAmount() {
     switch (this.maxPacketAmountRef.get().maxPacketState()) {
-      case PreciseMax: {
-        return this.maxPacketAmountRef.get().value(); // <-- When PreciseMax is set, the value must exist.
-      }
       // Use a binary search to discover the precise max
       case ImpreciseMax: {
         final UnsignedLong verifiedPathCapacitySnapshot = this.verifiedPathCapacityRef.get();
         // Always positive: if verifiedCapacity=0, maxPacketAmount / 2 must round up to 1,
         // or if verifiedCapacity=maxPacketAmount, verifiedCapacity is positive, so adding it will always be positive
-        return this.getMaxPacketAmount().value()
+        return Optional.of(this.getMaxPacketAmount().value())
           .map(FluentUnsignedLong::of)
           .map(ful -> ful.minusOrZero(verifiedPathCapacitySnapshot))
           .map(ful -> ful.divideCeil(UnsignedLong.valueOf(2)))
           .map(FluentUnsignedLong::getValue)
-          .map(ul -> ul.plus(verifiedPathCapacitySnapshot));
+          .map(ul -> ul.plus(verifiedPathCapacitySnapshot))
+          .get(); // <-- Will always be present due to the usage of `Optional.of()` above.
       }
+      case PreciseMax:
       case UnknownMax:
       default: {
         // Do nothing.
-        return Optional.empty();
+        return this.maxPacketAmountRef.get().value();
       }
     }
   }
@@ -253,19 +249,19 @@ public class MaxPacketAmountTracker {
    * has been encountered yet.
    */
   // TODO: Use this during rate-probe.
-  public Optional<UnsignedLong> getDiscoveredMaxPacketAmount() {
-    if (FluentUnsignedLong.of(verifiedPathCapacityRef.get()).isPositive()) {
-      if (this.getMaxPacketAmount().maxPacketState() == PreciseMax) {
-        return this.getMaxPacketAmount().value();
-      } else if (this.getMaxPacketAmount().maxPacketState() == UnknownMax) {
-        return Optional.of(UnsignedLong.MAX_VALUE);
-      } else {
-        return Optional.empty();
-      }
-    } else {
-      return Optional.empty();
-    }
-  }
+//  public Optional<UnsignedLong> getDiscoveredMaxPacketAmount() {
+//    if (FluentUnsignedLong.of(verifiedPathCapacityRef.get()).isPositive()) {
+//      if (this.getMaxPacketAmount().maxPacketState() == PreciseMax) {
+//        return Optional.of(this.getMaxPacketAmount().value());
+//      } else if (this.getMaxPacketAmount().maxPacketState() == UnknownMax) {
+//        return Optional.of(UnsignedLong.MAX_VALUE);
+//      } else {
+//        return Optional.empty();
+//      }
+//    } else {
+//      return Optional.empty();
+//    }
+//  }
 
   public enum MaxPacketState {
     /**
@@ -307,17 +303,22 @@ public class MaxPacketAmountTracker {
     MaxPacketState maxPacketState();
 
     /**
-     * The max packet amount for the ILP payment path. This value generally comes from an ILP F08 error.
+     * The max packet amount for the ILP payment path. This value generally comes from an ILP F08 errors, but is {@link
+     * UnsignedLong#MAX_VALUE} if no F08 errors have been returned for a given STREAM Connection.
      *
      * @return An {@link UnsignedLong}.
      */
-    Optional<UnsignedLong> value();
+    @Default
+    default UnsignedLong value() {
+      return UnsignedLong.MAX_VALUE;
+    }
 
     @Value.Check
     default void check() {
-      if (maxPacketState() == ImpreciseMax || maxPacketState() == PreciseMax) {
+      if (maxPacketState() == UnknownMax) {
         Preconditions.checkState(
-          value().isPresent(), "MaxPacketAmount must have a value if the state is not `UnknownMax`"
+          value().equals(UnsignedLong.MAX_VALUE),
+          "MaxPacketAmount must be `UnsignedLong.MAX_VALUE` if the state is not `UnknownMax`"
         );
       }
     }

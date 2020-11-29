@@ -100,10 +100,10 @@ public class AmountFilter implements StreamPacketFilter {
         }
 
         // Compute source amount (always positive)
-        final Optional<UnsignedLong> maxPacketAmount = paymentSharedStateTracker.getMaxPacketAmountTracker()
+        final UnsignedLong maxPacketAmount = paymentSharedStateTracker.getMaxPacketAmountTracker()
           .getNextMaxPacketAmount();
         UnsignedLong sourceAmount = FluentUnsignedLong.of(FluentBigInteger.of(availableToSend).orMaxUnsignedLong())
-          .orLesser(maxPacketAmount.orElse(UnsignedLong.MAX_VALUE)).getValue();
+          .orLesser(maxPacketAmount).getValue();
 
         // Check if fixed delivery payment is complete, and apply limits
         if (target.paymentType() == PaymentType.FIXED_DELIVERY) {
