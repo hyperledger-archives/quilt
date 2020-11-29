@@ -451,6 +451,9 @@
               <exclude>**/generated-sources/**/*</exclude>
             </excludes>
             <source>8</source>
+            <!-- See
+            https://docs.oracle.com/javase/9/tools/javadoc.htm#JSWOR-GUID-9D532574-1CDB-4D30-99F3-A308DCAEE55F-->
+            <doclint>none</doclint>
           </configuration>
           <executions>
             <execution>
@@ -459,10 +462,7 @@
                 <goal>jar</goal>
               </goals>
               <configuration>
-                <!-- TODO: Remove this! -->
-                <!--                <additionalparam>-Xdoclint:none</additionalparam>-->
-                <additionalOptions>-Xdoclint:none</additionalOptions>
-                <additionalJOption>-Xdoclint:none</additionalJOption>
+                <doclint>none</doclint>
               </configuration>
             </execution>
           </executions>
