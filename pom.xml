@@ -551,7 +551,8 @@
           <version>2.22.2</version>
           <configuration>
             <!-- CircleCI build workaround -->
-            <argLine>@{argLine} -Xms1024m -Xmx2048m</argLine>
+            <!-- see: https://stackoverflow.com/questions/53010200/maven-surefire-could-not-find-forkedbooter-class -->
+            <argLine>@{argLine} -Xms1024m -Xmx2048m -Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
             <reuseForks>true</reuseForks>
             <useSystemClassLoader>false</useSystemClassLoader>
           </configuration>
