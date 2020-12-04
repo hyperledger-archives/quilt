@@ -29,7 +29,7 @@ _run:
   installjava14: &installjava14
     name: "Download and install Java 14 from source OpenJDK"
     command: |
-      JDK14_URL=$(curl -s https://jdk.java.net/14/ | egrep -o "https://download.java.net/java/GA/jdk14.*?/.*?linux-x64.*?tar.gz" | head -1)
+      JDK14_URL=https://download.java.net/java/GA/jdk14/076bab302c7b4508975440c56f6cc26a/36/GPL/openjdk-14_linux-x64_bin.tar.gz
       wget $JDK14_URL -O /tmp/openjdk14.tar.gz
       tar -xvzf /tmp/openjdk14.tar.gz
       sudo mv jdk-14.0.2/ /usr/lib/jvm/
