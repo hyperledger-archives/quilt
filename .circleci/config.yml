@@ -342,3 +342,4 @@ workflows:
       - build_java12
       - build_java13
       - build_java14
+      - build_java15
