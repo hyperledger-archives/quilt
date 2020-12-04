@@ -15,6 +15,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -373,5 +374,12 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
      * non-standard mode in the event of an {@link EncryptionException}.
      */
     ENCRYPT_STANDARD
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", AesGcmStreamEncryptionService.class.getSimpleName() + "[", "]")
+        .add("encryptionMode=" + encryptionMode)
+        .toString();
   }
 }
