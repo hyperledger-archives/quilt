@@ -38,7 +38,7 @@ _run:
     name: "Download and install Java 15 from source OpenJDK"
     command: |
       JDK15_URL=$(curl -s https://jdk.java.net/15/ | egrep -o "https://download.java.net/java/GA/jdk15.*?/.*?linux-x64.*?tar.gz" | head -1)
-      wget $JDK15_URL -O /tmp/openjdk14.tar.gz
+      wget $JDK15_URL -O /tmp/openjdk15.tar.gz
       tar -xvzf /tmp/openjdk15.tar.gz
       sudo mv jdk-15.0.1/ /usr/lib/jvm/
 jobs:
