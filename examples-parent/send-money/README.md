@@ -7,27 +7,27 @@ Complete working code for this tutorial can be found in [SendMoneyExample](./src
 ## Testnet Account Setup
 
 For this example, we need 2 different accounts on ILP Testnet, a sender and a receiver. You can create 
-accounts using the **Generate XRP Credentials** button on https://xpring.io/ilp-testnet-creds
+accounts using the **Generate XRP Credentials** button on [https://ripplex.io/](https://ripplex.io/).
 
 In this example, we will use the following account details:
 
 Sender:
-- Username: user_qb4yklwd
-- Passkey: jxelaxvqz2ne6
-- Payment Pointer: $rs3.xpring.dev/accounts/user_qb4yklwd/spsp
-- Asset code: XRP _(note: this is actually XRP millidrops)_
+- Username: `demo_user`
+- Passkey: `OWIyMzUwMzgtNWUzZi00MDU1LWJlMmUtZjk4NjdmMTJlOWYz`
+- Payment Pointer: `$ripplex.money/demo_user`
+- Asset code: `XRP` _(note: this is actually XRP millidrops)_
 
 Receiver:
-- Username: user_jwmqq7kv
-- Passkey: 58jehip9dktep
-- Payment Pointer: $rs3.xpring.dev/accounts/user_jmchnh6k/spsp
-- Asset code: XRP
+- Username: `demo_receiver`
+- Passkey: `MjI5ODUxZWMtYzA4OC00ZjBkLWI2ZjktOTA4MmYxNGZiODAw`
+- Payment Pointer: `$ripplex.money/demo_receiver`
+- Asset code: `XRP` _(note: this is actually XRP millidrops)_
 
 ## Sending STREAM Payment
 
 High-level approach:
 - Fetch the shared secret and destination address. We'll use Quilt's [SimpleSpspClient](../../spsp-parent/spsp-client/src/main/java/org/interledger/spsp/client/SimpleSpspClient.java)
-since our Testnet account was created on an ILP node running  [Interledger.rs](https://github.com/interledger-rs/interledger-rs). 
+because our Testnet account was created on an ILP node running [Interledger4j](https://connector.interledger4j.dev). 
 - Create an [ILP over HTTP](https://interledger.org/rfcs/0035-ilp-over-http/) link using Quilt's 
 [IlpOverHttpLink](../../link-parent/link-ilp-over-http/src/main/java/org/interledger/link/http/IlpOverHttpLink.java). 
 - Create a STREAM connection using Quilt's [SimpleStreamSender](../../stream-parent/stream-client/src/main/java/org/interledger/stream/sender/SimpleStreamSender.java)
@@ -37,10 +37,10 @@ since our Testnet account was created on an ILP node running  [Interledger.rs](h
 
 The following constants are used in the code snippets. These should be replaced with your own account values:
 ```java
-private static final String SENDER_ACCOUNT_USERNAME = "user_qb4yklwd";
-private static final String SENDER_PASS_KEY = "jxelaxvqz2ne6";
-private static final String RECEIVER_PAYMENT_POINTER = "$rs3.xpring.dev/accounts/user_jwmqq7kv/spsp";
-private static final String TESTNET_URI = "https://rs3.xpring.dev";
+private static final String SENDER_ACCOUNT_USERNAME = "demo_user";
+private static final String SENDER_PASS_KEY = "...";
+private static final String RECEIVER_PAYMENT_POINTER = "$ripplex.money/demo_receiver";
+private static final String TESTNET_URI = "https://rxprod.wc.wallet.ripplex.io";
 ```
 
 First, we create an `SPSPClient`:
@@ -58,7 +58,7 @@ We can create a link using the following code:
 ```java
 Link link = new IlpOverHttpLink(
     () -> SENDER_ADDRESS,
-    HttpUrl.parse("https://example.com/accounts/peer/ilp"),
+    HttpUrl.parse("https://rxprod.wc.wallet.ripplex.io/accounts/demo_user/ilp"),
     newHttpClient(),
     new ObjectMapper(),
     InterledgerCodecContextFactory.oer(),
@@ -84,10 +84,11 @@ SendMoneyRequest sendMoneyRequest = SendMoneyRequest.builder()
 SendMoneyResult result = simpleStreamSender.sendMoney(sendMoneyRequest).get();
 ```
 
-Finally, we can verify the account balance of the receiver using the Rust admin client:
-```java
-InterledgerRustNodeClient rustClient =
-    new InterledgerRustNodeClient(newHttpClient(), SENDER_ACCOUNT_USERNAME + ":" + SENDER_PASS_KEY, TESTNET_URI);
-System.out.println("Ending balance for sender: " + rustClient.getBalance(SENDER_ACCOUNT_USERNAME));
+Finally,we can verify the account balance using curl:
+
+```bash
+curl --location --request GET 'https://rxprod.wc.wallet.ripplex.io/accounts/demo_receiver/balance' \
+--header 'Accept: application/json' \
+--header 'Authorization: MjI5ODUxZWMtYzA4OC00ZjBkLWI2ZjktOTA4MmYxNGZiODAw'
 ``` 
 
