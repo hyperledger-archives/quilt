@@ -100,7 +100,7 @@ public class LoopbackLink extends AbstractLink<LinkSettings> implements Link<Lin
   public String toString() {
     return new StringJoiner(", ", LoopbackLink.class.getSimpleName() + "[", "]")
         .add("linkId=" + getLinkId())
-        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
         .add("linkSettings=" + getLinkSettings())
         .toString();
   }
