@@ -84,7 +84,7 @@ public class PingLoopbackLink extends AbstractLink<LinkSettings> implements Link
   public String toString() {
     return new StringJoiner(", ", PingLoopbackLink.class.getSimpleName() + "[", "]")
         .add("linkId=" + getLinkId())
-        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
         .add("linkSettings=" + getLinkSettings())
         .toString();
   }

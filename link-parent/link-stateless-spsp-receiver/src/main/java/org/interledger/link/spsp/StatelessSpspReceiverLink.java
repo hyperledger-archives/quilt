@@ -81,7 +81,7 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
   public String toString() {
     return new StringJoiner(", ", StatelessSpspReceiverLink.class.getSimpleName() + "[", "]")
         .add("linkId=" + getLinkId())
-        .add("operatorAddressSupplier=" + getOperatorAddressSupplier())
+        .add("operatorAddressSupplier=" + getOperatorAddressSupplier().get())
         .add("streamReceiver=" + streamReceiver)
         .add("denomination=" + denomination)
         .add("linkSettings=" + getLinkSettings())
