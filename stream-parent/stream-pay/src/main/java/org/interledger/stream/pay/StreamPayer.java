@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import javax.money.convert.ExchangeRate;
@@ -138,6 +139,17 @@ public interface StreamPayer {
         // Probe the path.
         //////////////////
         final ExchangeRateProbeOutcome rateProbeOutcome = exchangeRateProber.probePath(streamConnection);
+
+        // If there's an error, then throw immediately.
+        rateProbeOutcome.errorPackets().stream().findFirst()
+          .map(streamPacketReply -> streamPacketReply.exception())
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .filter($ -> StreamPayerException.class.isAssignableFrom($.getClass()))
+          .map($ -> (StreamPayerException) $)
+          .ifPresent(error -> {
+            throw error;
+          });
 
         final PaymentSharedStateTracker paymentSharedStateTracker = exchangeRateProber
           .getPaymentSharedStateTracker(streamConnection).orElseThrow(() -> new StreamPayerException(
@@ -325,7 +337,7 @@ public interface StreamPayer {
         throw spe;
       } catch (Exception e) {
         throw new StreamPayerException(String.format(
-          "No rate found in oracleExchangeRateProvider. paymentOptions=%s rateProbeOutcoime=%s",
+          "No rate found in oracleExchangeRateProvider. paymentOptions=%s rateProbeOutcome=%s",
           paymentOptions, rateProbeOutcome
         ), e, SendState.ExternalRateUnavailable
         );

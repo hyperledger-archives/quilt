@@ -3,11 +3,14 @@ package org.interledger.stream.pay.probing.model;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.primitives.UnsignedLong;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
+import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketAmount;
 
 /**
@@ -70,5 +73,12 @@ public interface ExchangeRateProbeOutcome {
    * The realized exchange rate is greater than or equal to this ratio (inclusive) (i.e., destination / source).
    */
   Ratio lowerBoundRate();
+
+  /**
+   * A collection of replies of type {@link StreamPacketReply} that had an error during transmission.
+   *
+   * @return A {@link Collection} of type {@link StreamPacketReply}.
+   */
+  List<StreamPacketReply> errorPackets();
 
 }

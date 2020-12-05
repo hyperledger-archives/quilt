@@ -228,11 +228,28 @@ public class StreamPacketUtils {
   // TODO: Unit tests
   public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
     Objects.requireNonNull(streamPacket);
-    return streamPacket.frames().stream()
+    return findConnectionAssetDetailsFrame(streamPacket.frames());
+  }
+
+  public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(
+    final Collection<StreamFrame> streamPacketFrames
+  ) {
+    Objects.requireNonNull(streamPacketFrames);
+    return streamPacketFrames.stream()
       .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
       .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
       .map($ -> (ConnectionAssetDetailsFrame) $)
       .findFirst();
+  }
+
+  // TODO: Unit tests
+  public static long countConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return streamPacket.frames().stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
+      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionAssetDetailsFrame) $)
+      .count();
   }
 
   // TODO: Unit tests

@@ -28,6 +28,28 @@ public interface StreamPacketReply {
   }
 
   /**
+   * An optionally-present exception that was thrown while tryin to assemble
+   *
+   * @return
+   */
+  Optional<Throwable> exception();
+
+  /**
+   * The {@link StreamPacket} that was returned from the destination.
+   *
+   * @return A {@link StreamPacket}.
+   */
+  @Derived
+  default Optional<StreamPacket> streamPacket() {
+    return interledgerResponsePacket()
+      .map(InterledgerResponsePacket::typedData)
+      .filter(Optional::isPresent)
+      .map(Optional::get)
+      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
+      .map($ -> (StreamPacket) $);
+  }
+
+  /**
    * Amount the recipient claimed to receive. Omitted if no authentic STREAM reply.
    *
    * @deprecated Move to StreamPacketUtils? Upside is it's all in one place. Downside is it's potentially computed more
@@ -37,12 +59,7 @@ public interface StreamPacketReply {
   @Deprecated
   @Derived
   default Optional<UnsignedLong> destinationAmountClaimed() {
-    return interledgerResponsePacket()
-      .map(InterledgerResponsePacket::typedData)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
-      .map($ -> (StreamPacket) $)
+    return this.streamPacket()
       .map(StreamPacket::prepareAmount);
   }
 
@@ -55,12 +72,7 @@ public interface StreamPacketReply {
    */
   @Deprecated
   default Collection<StreamFrame> frames() {
-    return interledgerResponsePacket()
-      .map(InterledgerResponsePacket::typedData)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
-      .map($ -> (StreamPacket) $)
+    return this.streamPacket()
       .map(StreamPacket::frames)
       .orElseGet(Collections::emptyList);
   }
@@ -80,15 +92,8 @@ public interface StreamPacketReply {
    */
   Optional<InterledgerResponsePacket> interledgerResponsePacket();
 
-//  // TODO: Extract PaymentErrors out of StreamPacketReply's SendState on ground that we should throw an exception
-//  // instead.
-//  @Default
-//  default SendState sendState() {
-//    return SendState.Ready;
-//  }
-
   /**
-   * Contains STREAM frames that should be sent to the receiver if {@link #sendState()} is {@link SendState#End}.
+   * Contains STREAM frames that should be sent to the receiver when a connection should be closed.
    *
    * @return A {@link Set} of {@link StreamFrame} for sending on a connection-close operation.
    */

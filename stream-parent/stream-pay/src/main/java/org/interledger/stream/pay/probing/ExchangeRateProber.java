@@ -1,16 +1,18 @@
 package org.interledger.stream.pay.probing;
 
-import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -42,6 +44,7 @@ import org.interledger.stream.pay.filters.SequenceFilter;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.DefaultStreamPacketFilterChain;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
+import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
@@ -148,6 +151,9 @@ public interface ExchangeRateProber {
         // TODO: PendingRequestTracker?
       );
 
+      // Collects any replies that have an exception.
+      final Set<StreamPacketReply> errorReplies = Collections.synchronizedSet(new HashSet<>());
+
       // Assemble a bunch of packets for each amount.
       // Send the packets in parallel.
       // Process each response in parallel.
@@ -155,11 +161,11 @@ public interface ExchangeRateProber {
 
       // Handle the result
       // TODO: Ignore replies that aren't authentic
-      List<CompletableFuture<Optional<StreamPacketReply>>> allProbePackets = this.initialTestPacketAmounts.stream()
+      List<CompletableFuture<StreamPacketReply>> allProbePackets = this.initialTestPacketAmounts.stream()
         .map($ -> UnsignedLong.valueOf($))
         .map(prepareAmount -> {
           // Send a StreamPacket and get a response.
-          final Supplier<Optional<StreamPacketReply>> streamResponseSupplier = () -> {
+          final Supplier<StreamPacketReply> streamResponseSupplier = () -> {
 
             // Probe packets should never fulfill.
             final ModifiableStreamPacketRequest streamPacketRequest = ModifiableStreamPacketRequest.create()
@@ -174,33 +180,34 @@ public interface ExchangeRateProber {
             if (nextSendState == SendState.Ready) {
 
               // Packet is sent via Link at end of this chain.
-              final StreamPacketReply streamPacketReply = filterChain.doFilter(streamPacketRequest);
-              return Optional.of(streamPacketReply);
-
+              return filterChain.doFilter(streamPacketRequest);
             } else if (nextSendState == SendState.End || nextSendState.isPaymentError()) {
               // Wait for any requests to stop.
 //                if (shouldCloseConnection(nextSendState)) {
               // TODO: Close connection
 //                }
-              return Optional.empty();
+              return filterChain.doFilter(streamPacketRequest);
             } else {
               // TODO: Log a Wait?
-              return Optional.empty();
+              return filterChain.doFilter(streamPacketRequest);
             }
           };
 
-          final CompletableFuture<Optional<StreamPacketReply>> future = CompletableFuture
+          final CompletableFuture<StreamPacketReply> future = CompletableFuture
             .supplyAsync(streamResponseSupplier, executorService)
-            .handle((streamPacketReply, throwable) -> { // <-- Handle the StreamPacketResult
+            // Logging
+            .handle((streamPacketReply, throwable) -> {
               if (throwable != null) {
                 logger.error("ExchangeRateProbe packet failed", throwable.getMessage(), throwable);
-                return streamPacketReply;
-              } else {
-                if (logger.isDebugEnabled()) {
-                  logger.debug("StreamPacketReply={}", streamPacketReply.orElse(null));
-                }
-                return streamPacketReply;
               }
+              if (streamPacketReply != null) {
+                if (logger.isDebugEnabled()) {
+                  logger.debug("StreamPacketReply={}", streamPacketReply);
+                }
+                // Add the packet to the error packets if there's an exception
+                streamPacketReply.exception().ifPresent(e -> errorReplies.add(streamPacketReply));
+              }
+              return streamPacketReply; // Null or not.
             });
 
           return future;
@@ -239,6 +246,7 @@ public interface ExchangeRateProber {
         .verifiedPathCapacity(paymentSharedStateTracker.getMaxPacketAmountTracker().verifiedPathCapacity())
         .lowerBoundRate(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate())
         .upperBoundRate(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate())
+        .errorPackets(errorReplies)
         .build();
     }
 

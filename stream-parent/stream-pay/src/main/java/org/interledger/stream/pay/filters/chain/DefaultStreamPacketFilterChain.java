@@ -92,8 +92,6 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
   public SendState nextState(final ModifiableStreamPacketRequest streamPacketRequest) {
     Objects.requireNonNull(streamPacketRequest);
 
-    // TODO: Try/catch?
-//    try {
     for (int i = 0; i < streamPacketFilters.size(); i++) {
       final SendState nextState = streamPacketFilters.get(i).nextState(streamPacketRequest);
 
@@ -208,29 +206,19 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
               logger.error(e.getMessage(), e);
               return StreamPacketReply.builder()
+                .exception(e)
                 .interledgerPreparePacket(preparePacket)
                 .build();
             }
           }
         }
       }
-      return StreamPacketReply.builder()
-//        .sendState(SendState.End)
-        .build();
+      return StreamPacketReply.builder().build();
     }
-    //catch (StreamPayerException spe) {
-//      logger.error(spe.getMessage(), spe);
-//      return StreamPacketReply.builder()
-//        .interledgerPreparePacket(spe.)
-//        .sendState(SendState.End).build();
-//    }
     catch (Exception e) {
       // Handler of last resort.
-      // TOdO: FIXME!
       logger.error(e.getMessage(), e);
-      return StreamPacketReply.builder()
-//        .sendState(SendState.End)
-        .build();
+      return StreamPacketReply.builder().exception(e).build();
     }
   }
 

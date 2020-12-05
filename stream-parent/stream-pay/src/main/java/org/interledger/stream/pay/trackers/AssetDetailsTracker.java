@@ -5,9 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.InterledgerPacket;
 import org.interledger.fx.Denomination;
-import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
@@ -60,16 +58,17 @@ public class AssetDetailsTracker {
     // but allow a receiver to migrate their address during a STREAM. Note, check RFC first to ensure this is still
     // legal.
 
-    // TODO: Prefer using StreamPacketUtils
-    streamPacketReply.interledgerResponsePacket()
-      // Assume the the StreamPacket is inside of typedData.
-      .map(InterledgerPacket::typedData)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter($ -> StreamPacket.class.isAssignableFrom($.getClass()))
-      .map($ -> (StreamPacket) $)
-      // Map streamPacket to CAD frame.
-      .map(streamPacket -> StreamPacketUtils.findConnectionAssetDetailsFrame(streamPacket))
+    streamPacketReply.streamPacket()
+      .filter(streamPacket -> StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket) > 1)
+      .ifPresent(streamPacket -> {
+        throw new StreamPayerException(
+          "Only one ConnectionAssetDetails frame allowed on a single connection",
+          SendState.DestinationAssetConflict
+        );
+      });
+
+    streamPacketReply.streamPacket()
+      .map(StreamPacketUtils::findConnectionAssetDetailsFrame)
       .filter(Optional::isPresent)
       .map(Optional::get)
       .ifPresent(connectionAssetDetailsFrame -> {

@@ -2,6 +2,15 @@ package org.interledger.stream.receiver;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.primitives.UnsignedLong;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillPacket;
@@ -10,13 +19,13 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.fx.Denomination;
+import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
+import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
@@ -25,17 +34,8 @@ import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Objects;
 
 /**
  * <p>A stateless implementation of {@link StreamReceiver} that does **not** maintain STREAM state, but instead
@@ -59,14 +59,14 @@ public class StatelessStreamReceiver implements StreamReceiver {
   private final CodecContext streamCodecContext;
 
   public StatelessStreamReceiver(
-      final ServerSecretSupplier serverSecretSupplier, final StreamConnectionGenerator streamConnectionGenerator,
-      final StreamEncryptionService streamEncryptionService, final CodecContext streamCodecContext
+    final ServerSecretSupplier serverSecretSupplier, final StreamConnectionGenerator streamConnectionGenerator,
+    final StreamEncryptionService streamEncryptionService, final CodecContext streamCodecContext
   ) {
     this.serverSecretSupplier = Objects.requireNonNull(serverSecretSupplier, "serverSecretSupplier must not be null");
     this.streamConnectionGenerator = Objects
-        .requireNonNull(streamConnectionGenerator, "connectionGenerator must not be null");
+      .requireNonNull(streamConnectionGenerator, "connectionGenerator must not be null");
     this.streamEncryptionService = Objects
-        .requireNonNull(streamEncryptionService, "streamEncryptionService must not be null");
+      .requireNonNull(streamEncryptionService, "streamEncryptionService must not be null");
     this.streamCodecContext = Objects.requireNonNull(streamCodecContext, "streamCodecContext must not be null");
   }
 
@@ -78,8 +78,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
   @Override
   public InterledgerResponsePacket receiveMoney(
-      final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress,
-      final Denomination denomination
+    final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress,
+    final Denomination denomination
   ) {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(receiverAddress);
@@ -88,17 +88,17 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     // Will throw if there's an error...
     final SharedSecret spspSharedSecret = this.streamConnectionGenerator
-        .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
+      .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
     final SharedSecret streamSharedSecret = SharedSecret.of(spspSharedSecret.key());
 
     final StreamPacket streamPacket;
     try {
       if (preparePacket.getData().length == 0) {
         return InterledgerRejectPacket.builder()
-            .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
-            .message("No STREAM packet bytes available to decrypt")
-            .triggeredBy(receiverAddress)
-            .build();
+          .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
+          .message("No STREAM packet bytes available to decrypt")
+          .triggeredBy(receiverAddress)
+          .build();
       }
       // TODO: Replace this with the StreamEncryptionUtils?
       // Try to parse the STREAM data from the payload.
@@ -106,65 +106,36 @@ public class StatelessStreamReceiver implements StreamReceiver {
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
     } catch (Exception e) {
       logger.error(
-          "Unable to decrypt packet. preparePacket={} receiverAddress={} error={}",
-          preparePacket, receiverAddress, e
+        "Unable to decrypt packet. preparePacket={} receiverAddress={} error={}",
+        preparePacket, receiverAddress, e
       );
       return InterledgerRejectPacket.builder()
-          .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
-          .message("Could not decrypt data")
-          .triggeredBy(receiverAddress)
-          .build();
+        .code(InterledgerErrorCode.F06_UNEXPECTED_PAYMENT)
+        .message("Could not decrypt data")
+        .triggeredBy(receiverAddress)
+        .build();
     }
 
-    final Builder<StreamFrame> responseFrames = ImmutableList.builder();
-
-    if (streamPacket.sequenceIsSafeForSingleSharedSecret()) {
-      streamPacket.frames().stream()
-          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
-          .map($ -> (StreamMoneyFrame) $)
-          // Tell the sender the stream can handle lots of money
-          .forEach(streamMoneyFrame -> responseFrames.add(StreamMoneyMaxFrame.builder()
-              .streamId(streamMoneyFrame.streamId())
-              .totalReceived(UnsignedLong.ZERO)
-              .receiveMax(UnsignedLong.MAX_VALUE)
-              .build()));
-
-      // Add ConnectionNewAddress, but only if the sender sent one. This allows the sender to ask multiple times, if
-      // desired.
-      streamPacket.frames().stream()
-          .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionNewAddress)
-          .findFirst()
-          .map(streamFrame -> responseFrames.add(ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(denomination)
-              .build()));
-    } else {
-      logger.warn("This STREAM Connection's sequence {} was too high for safe encryption. CLOSING the stream!",
-          streamPacket.sequence());
-      // If the sequence it too high, we should close the Connection.
-      responseFrames.add(ConnectionCloseFrame.builder()
-          .errorCode(ErrorCodes.ProtocolViolation)
-          .errorMessage("Sequence number was to too high for safe encryption")
-          .build());
-    }
+    final List<StreamFrame> responseFrames = this.constructResponseFrames(streamPacket, denomination);
 
     // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
     final InterledgerFulfillment fulfillment = StreamUtils
-        .generatedFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
+      .generatedFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
     final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
 
     // Return Fulfill or Reject Packet
     if (isFulfillable && is(preparePacket.getAmount()).greaterThanEqualTo(streamPacket.prepareAmount())) {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
-          .sequence(streamPacket.sequence())
-          .interledgerPacketType(InterledgerPacketType.FULFILL)
-          .prepareAmount(preparePacket.getAmount())
-          .frames(responseFrames.build())
-          .sharedSecret(streamSharedSecret)
-          .build();
+        .sequence(streamPacket.sequence())
+        .interledgerPacketType(InterledgerPacketType.FULFILL)
+        .prepareAmount(preparePacket.getAmount())
+        .frames(responseFrames)
+        .sharedSecret(streamSharedSecret)
+        .build();
 
       logger.debug(
-          "Fulfilling prepare packet. preparePacket={} fulfillment={} returnableStreamPacketResponse={}",
-          preparePacket, fulfillment, returnableStreamPacketResponse
+        "Fulfilling prepare packet. preparePacket={} fulfillment={} returnableStreamPacketResponse={}",
+        preparePacket, fulfillment, returnableStreamPacketResponse
       );
 
       try {
@@ -172,37 +143,37 @@ public class StatelessStreamReceiver implements StreamReceiver {
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
         final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-            .encrypt(streamSharedSecret, returnableStreamPacketBytes);
+          .encrypt(streamSharedSecret, returnableStreamPacketBytes);
 
         return InterledgerFulfillPacket.builder()
-            .fulfillment(fulfillment)
-            .data(encryptedReturnableStreamPacketBytes)
-            .typedData(returnableStreamPacketResponse)
-            .build();
+          .fulfillment(fulfillment)
+          .data(encryptedReturnableStreamPacketBytes)
+          .typedData(returnableStreamPacketResponse)
+          .build();
 
       } catch (IOException e) {
         throw new StreamException(e.getMessage(), e);
       }
     } else {
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
-          .sequence(streamPacket.sequence())
-          .interledgerPacketType(InterledgerPacketType.REJECT)
-          .prepareAmount(preparePacket.getAmount())
-          .frames(responseFrames.build())
-          .build();
+        .sequence(streamPacket.sequence())
+        .interledgerPacketType(InterledgerPacketType.REJECT)
+        .prepareAmount(preparePacket.getAmount())
+        .frames(responseFrames)
+        .build();
 
       if (isFulfillable) {
         logger.debug("Packet is unfulfillable. preparePacket={}", preparePacket);
       } else if (is(preparePacket.getAmount()).lessThan(streamPacket.prepareAmount())) {
         logger.debug(
-            "Received only: {} when we should have received at least: {}",
-            preparePacket.getAmount(), streamPacket.prepareAmount()
+          "Received only: {} when we should have received at least: {}",
+          preparePacket.getAmount(), streamPacket.prepareAmount()
         );
       }
 
       logger.debug(
-          "Rejecting Prepare and including encrypted stream packet. preparePacket={} returnableStreamPacketResponse={}",
-          preparePacket, returnableStreamPacketResponse
+        "Rejecting Prepare and including encrypted stream packet. preparePacket={} returnableStreamPacketResponse={}",
+        preparePacket, returnableStreamPacketResponse
       );
 
       try {
@@ -210,19 +181,68 @@ public class StatelessStreamReceiver implements StreamReceiver {
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
         final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-            .encrypt(streamSharedSecret, returnableStreamPacketBytes);
+          .encrypt(streamSharedSecret, returnableStreamPacketBytes);
 
         return InterledgerRejectPacket.builder()
-            .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
+          .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
           // TODO: Could be due to correct amounts just not fulfillilable.
-            .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
-            .triggeredBy(receiverAddress)
-            .data(encryptedReturnableStreamPacketBytes)
-            .typedData(returnableStreamPacketResponse)
-            .build();
+          .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
+          .triggeredBy(receiverAddress)
+          .data(encryptedReturnableStreamPacketBytes)
+          .typedData(returnableStreamPacketResponse)
+          .build();
       } catch (IOException e) {
         throw new StreamException(e.getMessage(), e);
       }
     }
+  }
+
+  /**
+   * Construct the proper Collection of frames for this STREAM response. This method is visible for enhanced test
+   * coverage.
+   *
+   * @param streamPacket A {@link StreamPacket} to inspect when creating response frames.
+   * @param denomination The {@link Denomination} of the incoming packet payment.
+   * @return A {@link List} of {@link StreamFrame}.
+   */
+  @VisibleForTesting
+  protected List<StreamFrame> constructResponseFrames(
+    final StreamPacket streamPacket, final Denomination denomination
+  ) {
+    Objects.requireNonNull(streamPacket);
+    Objects.requireNonNull(denomination);
+
+    final Builder<StreamFrame> responseFrames = ImmutableList.builder();
+
+    if (streamPacket.sequenceIsSafeForSingleSharedSecret()) {
+      streamPacket.frames().stream()
+        .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.StreamMoney)
+        .map($ -> (StreamMoneyFrame) $)
+        // Tell the sender the stream can handle lots of money
+        .forEach(streamMoneyFrame -> responseFrames.add(StreamMoneyMaxFrame.builder()
+          .streamId(streamMoneyFrame.streamId())
+          .totalReceived(UnsignedLong.ZERO)
+          .receiveMax(UnsignedLong.MAX_VALUE)
+          .build()));
+
+      // Add ConnectionNewAddress, but only if the sender sent one. This allows the sender to ask multiple times, if
+      // desired.
+      streamPacket.frames().stream()
+        .filter(streamFrame -> streamFrame.streamFrameType() == StreamFrameType.ConnectionNewAddress)
+        .findFirst()
+        .map(streamFrame -> responseFrames.add(ConnectionAssetDetailsFrame.builder()
+          .sourceDenomination(denomination)
+          .build()));
+    } else {
+      logger.warn("This STREAM Connection's sequence {} was too high for safe encryption. CLOSING the stream!",
+        streamPacket.sequence());
+      // If the sequence it too high, we should close the Connection.
+      responseFrames.add(ConnectionCloseFrame.builder()
+        .errorCode(ErrorCodes.ProtocolViolation)
+        .errorMessage("Sequence number was to too high for safe encryption")
+        .build());
+    }
+
+    return responseFrames.build();
   }
 }
