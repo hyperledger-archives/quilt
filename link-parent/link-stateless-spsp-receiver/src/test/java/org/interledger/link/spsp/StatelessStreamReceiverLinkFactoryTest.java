@@ -20,7 +20,7 @@ import org.mockito.MockitoAnnotations;
 /**
  * Unit tests for {@link StatelessSpspReceiverLinkFactory}.
  */
-public class StatelessSpspReceiverLinkFactoryTest {
+public class StatelessStreamReceiverLinkFactoryTest {
 
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.operator");
   private final LinkId linkId = LinkId.of("foo");
@@ -65,7 +65,7 @@ public class StatelessSpspReceiverLinkFactoryTest {
 
   @Test
   public void supports() {
-    assertThat(statelessSpspReceiverLinkFactory.supports(StatelessSpspReceiverLink.LINK_TYPE)).isEqualTo(true);
+    assertThat(statelessSpspReceiverLinkFactory.supports(StatelessStreamReceiverLink.LINK_TYPE)).isEqualTo(true);
     assertThat(statelessSpspReceiverLinkFactory.supports(LinkType.of("foo"))).isEqualTo(false);
   }
 
@@ -102,7 +102,7 @@ public class StatelessSpspReceiverLinkFactoryTest {
         .assetCode("USD")
         .assetScale((short) 9)
         .build();
-    StatelessSpspReceiverLink link = (StatelessSpspReceiverLink) statelessSpspReceiverLinkFactory
+    StatelessStreamReceiverLink link = (StatelessStreamReceiverLink) statelessSpspReceiverLinkFactory
         .constructLink(() -> OPERATOR_ADDRESS, linkSettings);
 
     assertThat(link.getLinkSettings().assetCode()).isEqualTo("USD");

@@ -100,11 +100,13 @@ public class AmountTracker {
       throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
     }
 
+    // The rate is insufficient only if the marginOfError is negative. A zero-margin is still valid.
     final Ratio minExchangeRateRatio = Ratio.from(minExchangeRate);
     final Ratio marginOfError = lowerBoundRate.subtract(minExchangeRateRatio);
-    if (!marginOfError.isPositive()) {
+    if (marginOfError.isNegative()) {
       final String errorMessage = String.format(
-        "Rate Probed exchange rate of %s is not greater than minimum of %s", lowerBoundRate, minExchangeRate
+        "Rate-probed exchange-rate of %s is less-than than the minimum exchange-rate of %s",
+        lowerBoundRate.toBigDecimal(), minExchangeRateRatio.toBigDecimal()
       );
       throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
     }
@@ -119,7 +121,7 @@ public class AmountTracker {
     // If the max packet amount is insufficient, fail fast, since the payment is unlikely to succeed.
     final UnsignedLong minSourcePacketAmount = FluentBigInteger.of(BigInteger.ONE)
       // per the checks above, reciprocal will be present.
-      .timesCeil(marginOfError.reciprocal().get()).orMaxUnsignedLong();
+      .timesCeil(marginOfError.reciprocal().orElse(Ratio.ONE)).orMaxUnsignedLong();
     if (FluentCompareTo.is(maxSourcePacketAmount).notGreaterThanEqualTo(minSourcePacketAmount)) {
       final String errorMessage = String.format(
         "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",

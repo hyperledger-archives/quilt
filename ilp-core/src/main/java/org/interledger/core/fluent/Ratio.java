@@ -225,14 +225,10 @@ public interface Ratio extends Comparable<Ratio> {
   @Derived
   default Ratio subtract(final Ratio ratio) {
     Objects.requireNonNull(ratio);
-    if (FluentCompareTo.is(this).lessThanOrEqualTo(ratio)) {
-      return Ratio.ZERO;
-    } else {
-      final BigInteger a = this.numerator().multiply(ratio.denominator())
-        .subtract(ratio.numerator().multiply(this.denominator()));
-      final BigInteger b = this.denominator().multiply(ratio.denominator());
-      return Ratio.builder().numerator(a).denominator(b).build();
-    }
+    final BigInteger a = this.numerator().multiply(ratio.denominator())
+      .subtract(ratio.numerator().multiply(this.denominator()));
+    final BigInteger b = this.denominator().multiply(ratio.denominator());
+    return Ratio.builder().numerator(a).denominator(b).build();
   }
 
   @Derived
@@ -246,5 +242,10 @@ public interface Ratio extends Comparable<Ratio> {
     Preconditions.checkState(
       FluentCompareTo.is(denominator()).greaterThan(BigInteger.ZERO), "Denominator must be greater-than 0"
     );
+  }
+
+  @Derived
+  default boolean isNegative() {
+    return FluentCompareTo.is(this.numerator()).lessThan(BigInteger.ZERO);
   }
 }

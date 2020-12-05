@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * An implementation of {@link LinkFactory} for constructing instances of {@link StatelessSpspReceiverLink}.
+ * An implementation of {@link LinkFactory} for constructing instances of {@link StatelessStreamReceiverLink}.
  */
 public class StatelessSpspReceiverLinkFactory implements LinkFactory {
 
@@ -57,14 +57,14 @@ public class StatelessSpspReceiverLinkFactory implements LinkFactory {
         "Constructing an instance of StatelessSpspReceiverLink requires an instance of StatelessSpspReceiverLinkSettings"
     );
 
-    return new StatelessSpspReceiverLink(
+    return new StatelessStreamReceiverLink(
         operatorAddressSupplier, (StatelessSpspReceiverLinkSettings) linkSettings, statelessStreamReceiver
     );
   }
 
   @Override
   public boolean supports(LinkType linkType) {
-    return StatelessSpspReceiverLink.LINK_TYPE.equals(linkType);
+    return StatelessStreamReceiverLink.LINK_TYPE.equals(linkType);
   }
 
 }

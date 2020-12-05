@@ -35,6 +35,8 @@ import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 import org.interledger.link.LoopbackLink;
 import org.interledger.link.PacketRejector;
+import org.interledger.link.spsp.StatelessSpspReceiverLinkSettings;
+import org.interledger.link.spsp.StatelessStreamReceiverLink;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.InvalidReceiverClientException;
@@ -47,6 +49,8 @@ import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamPayer.Default;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.PaymentOptions;
+import org.interledger.stream.pay.model.Quote;
+import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
@@ -57,6 +61,8 @@ import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketAmoun
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketState;
 import org.interledger.stream.pay.trackers.PacingTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+import org.interledger.stream.receiver.SpspStreamConnectionGenerator;
+import org.interledger.stream.receiver.StatelessStreamReceiver;
 import org.javamoney.moneta.CurrencyUnitBuilder;
 import org.javamoney.moneta.convert.ExchangeRateBuilder;
 import org.javamoney.moneta.spi.DefaultNumberValue;
@@ -106,12 +112,15 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions).exceptionally(throwable -> {
-      assertThat(throwable.getCause().getMessage()).isEqualTo("Unable to obtain STREAM connection details via SPSP.");
-      assertThat(throwable.getCause() instanceof StreamPayerException);
-      assertThat(((StreamPayerException) throwable.getCause()).getSendState()).isEqualTo(SendState.QueryFailed);
-      return null;
+    Throwable error = streamPayer.getQuote(paymentOptions).handle((quote, throwable) -> {
+      assertThat(quote).isNull();
+      assertThat(throwable).isNotNull();
+      return throwable;
     }).get();
+
+    assertThat(error.getCause().getMessage()).isEqualTo("Unable to obtain STREAM connection details via SPSP.");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.QueryFailed);
   }
 
   @Test
@@ -136,7 +145,7 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions).exceptionally(throwable -> {
+    streamPayer.getQuote(paymentOptions).handle(($, throwable) -> {
       assertThat(throwable.getCause().getMessage()).isEqualTo("Unable to obtain STREAM connection details via SPSP.");
       assertThat(throwable.getCause() instanceof StreamPayerException);
       assertThat(((StreamPayerException) throwable.getCause()).getSendState()).isEqualTo(SendState.QueryFailed);
@@ -157,12 +166,13 @@ public class StreamPayerDefaultTest {
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
-    PaymentOptions.builder()
+
+    streamPayer.getQuote(PaymentOptions.builder()
       .senderAccountDetails(sourceAccountDetails)
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
-      .slippage(Slippage.of(Percentage.of(BigDecimal.valueOf(100L))))
-      .build();
+      .slippage(Slippage.of(Percentage.of(BigDecimal.valueOf(200L))))
+      .build());
   }
 
   @Test
@@ -181,14 +191,16 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions)
-      .exceptionally(throwable -> {
-        assertThat(throwable.getCause().getMessage()).isEqualTo("No lowerBoundRate was detected from the receiver");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState()).isEqualTo(SendState.RateProbeFailed);
-        return null;
+    Throwable error = streamPayer.getQuote(paymentOptions)
+      .handle(($, throwable) -> {
+        assertThat($).isNull();
+        assertThat(throwable).isNotNull();
+        return throwable;
       })
       .get();
+    assertThat(error.getCause().getMessage()).isEqualTo("No lowerBoundRate was detected from the receiver");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.RateProbeFailed);
   }
 
   @Test
@@ -210,7 +222,7 @@ public class StreamPayerDefaultTest {
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
     streamPayer.getQuote(paymentOptions)
-      .exceptionally(throwable -> {
+      .handle(($, throwable) -> {
         assertThat(throwable.getCause().getMessage())
           .contains("Quote failed: incompatible sender/receiver address schemes.");
         assertThat(throwable.getCause() instanceof StreamPayerException);
@@ -239,7 +251,7 @@ public class StreamPayerDefaultTest {
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
     streamPayer.getQuote(paymentOptions)
-      .exceptionally(throwable -> {
+      .handle(($, throwable) -> {
         assertThat(throwable.getCause().getMessage())
           .contains("Payment source amount must be a non-negative amount.");
         assertThat(throwable.getCause() instanceof StreamPayerException);
@@ -273,7 +285,7 @@ public class StreamPayerDefaultTest {
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
     streamPayer.getQuote(paymentOptions)
-      .exceptionally(throwable -> {
+      .handle(($, throwable) -> {
         assertThat(throwable.getCause().getMessage()).contains("Invalid source scale");
         assertThat(throwable.getCause() instanceof StreamPayerException);
         assertThat(((StreamPayerException) throwable.getCause()).getSendState())
@@ -289,17 +301,21 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.builder()
-      .numerator(BigInteger.ONE)
-      .denominator(BigInteger.valueOf(Integer.MAX_VALUE))
-      .build();
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final Ratio trackedLowerBoundRate = externalExchangeRate;
+    final Ratio trackedUpperBoundRate = externalExchangeRate;
+
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-      sourceAccountDetails, destinationAccountDetails, exchangeRate
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
     );
 
-    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
+
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(exchangeRate),
+      streamEncryptionUtils,
+      simulatedLink,
+      externalExchangeRateProviderMock,
       this.spspMockClient(InterledgerAddress.of("example.receiver"))
     ) {
       @Override
@@ -309,15 +325,15 @@ public class StreamPayerDefaultTest {
         when(exchangeRateProberMock.probePath(any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
-              .sourceDenomination(Denominations.USD)
-              .destinationDenomination(Denominations.EUR)
+              .sourceDenomination(sourceAccountDetails.denomination())
+              .destinationDenomination(destinationAccountDetails.denomination())
               .maxPacketAmount(MaxPacketAmount.builder()
-                .maxPacketState(MaxPacketState.ImpreciseMax)
+                .maxPacketState(MaxPacketState.PreciseMax)
                 .value(UnsignedLong.MAX_VALUE)
                 .build()
               )
-              .lowerBoundRate(exchangeRate)
-              .upperBoundRate(exchangeRate)
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
         when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
@@ -332,14 +348,15 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
-        if (throwable != null) {
-          assertThat(throwable.getCause().getMessage()).contains("targetAmount must be greater-than 0");
-        }
-        return null;
+        assertThat(quote).isNull();
+        assertThat(throwable).isNotNull();
+        return throwable;
       })
       .get();
+
+    assertThat(error.getCause().getMessage()).contains("targetAmount must be greater-than 0");
   }
 
   @Test
@@ -348,14 +365,21 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.ONE;
-    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-      sourceAccountDetails, destinationAccountDetails, exchangeRate
-    );
+    final Ratio externalExchangeRate =
+      Ratio.builder().numerator(BigInteger.ONE).denominator(BigInteger.valueOf(2L)).build();
+    final Ratio trackedLowerBoundRate = externalExchangeRate;
+    final Ratio trackedUpperBoundRate = externalExchangeRate;
 
-    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
+    );
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
+
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(exchangeRate),
+      streamEncryptionUtils,
+      simulatedLink,
+      externalExchangeRateProviderMock,
       this.spspMockClient(InterledgerAddress.of("example.receiver"))
     ) {
       @Override
@@ -372,8 +396,8 @@ public class StreamPayerDefaultTest {
                 .value(UnsignedLong.ZERO) // <-- Key part of this test!
                 .build()
               )
-              .lowerBoundRate(exchangeRate)
-              .upperBoundRate(exchangeRate)
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
         when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
@@ -382,22 +406,24 @@ public class StreamPayerDefaultTest {
       }
     };
 
-    final BigDecimal amountToSendInXrp = new BigDecimal("0.000000001");
+    final BigDecimal amountToSendInXrp = new BigDecimal("1");
     final PaymentOptions paymentOptions = PaymentOptions.builder()
       .senderAccountDetails(sourceAccountDetails)
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
+        assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("Rate enforcement may incur rounding errors. "
-          + "maxPacketAmount=0 is below proposed minimum of 100");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.ExchangeRateRoundingError);
-        return null;
+        return throwable;
       }).get();
+
+    assertThat(error.getCause().getMessage()).contains(
+      "Rate enforcement may incur rounding errors. maxPacketAmount=0 is below proposed minimum of 200"
+    );
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
   }
 
   @Test
@@ -453,15 +479,17 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions)
-      .handle((result, throwable) -> {
+    Throwable error = streamPayer.getQuote(paymentOptions)
+      .handle((quote, throwable) -> {
+        assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("Receiver never shared destination asset details.");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.UnknownDestinationAsset);
-        return null;
-      }).get();
+        return throwable;
+      })
+      .get();
+
+    assertThat(error.getCause().getMessage()).contains("Receiver never shared destination asset details.");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.UnknownDestinationAsset);
   }
 
   @Test
@@ -480,12 +508,16 @@ public class StreamPayerDefaultTest {
       .build();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.ONE;
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final Ratio trackedLowerBoundRate = externalExchangeRate;
+    final Ratio trackedUpperBoundRate = externalExchangeRate;
+
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-      sourceAccountDetails, destinationAccountDetails, exchangeRate
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
     );
 
-    final ExchangeRateProvider exchangeRateProviderMock = newExternalExchangeRateProvider(exchangeRate);
+    final ExchangeRateProvider exchangeRateProviderMock = newExternalExchangeRateProvider(externalExchangeRate);
     doThrow(new RuntimeException("no rate found")).when(exchangeRateProviderMock).getExchangeRate("FOO", "USD");
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
@@ -507,8 +539,8 @@ public class StreamPayerDefaultTest {
                 .value(UnsignedLong.MAX_VALUE)
                 .build()
               )
-              .lowerBoundRate(exchangeRate)
-              .upperBoundRate(exchangeRate)
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
         when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
@@ -523,16 +555,18 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("No rate found in oracleExchangeRateProvider");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.ExternalRateUnavailable);
-        return null;
-      }).get();
+        return throwable;
+      })
+      .get();
+
+    assertThat(error).isNotNull();
+    assertThat(error.getCause().getMessage()).contains("No rate found in oracleExchangeRateProvider");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExternalRateUnavailable);
   }
 
   @Test
@@ -550,12 +584,16 @@ public class StreamPayerDefaultTest {
       .build();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.ONE;
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final Ratio trackedLowerBoundRate = externalExchangeRate;
+    final Ratio trackedUpperBoundRate = externalExchangeRate;
+
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-      sourceAccountDetails, destinationAccountDetails, exchangeRate
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
     );
 
-    final ExchangeRateProvider exchangeRateProviderMock = newExternalExchangeRateProvider(exchangeRate);
+    final ExchangeRateProvider exchangeRateProviderMock = newExternalExchangeRateProvider(externalExchangeRate);
     doThrow(new RuntimeException("no rate found")).when(exchangeRateProviderMock).getExchangeRate("USD", "FOO");
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
@@ -577,8 +615,8 @@ public class StreamPayerDefaultTest {
                 .value(UnsignedLong.MAX_VALUE)
                 .build()
               )
-              .lowerBoundRate(exchangeRate)
-              .upperBoundRate(exchangeRate)
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
         when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
@@ -593,30 +631,100 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("No rate found in oracleExchangeRateProvider");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.ExternalRateUnavailable);
-        return null;
+        return throwable;
       }).get();
+
+    assertThat(error.getCause().getMessage()).contains("No rate found in oracleExchangeRateProvider");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExternalRateUnavailable);
   }
 
   @Test
-  public void testFailIfExchangeRateIs0() throws ExecutionException, InterruptedException {
+  public void testFailIfExternalExchangeRateIs0() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio exchangeRate = Ratio.ZERO;
+    final Ratio externalExchangeRate = Ratio.ZERO;
+    final Ratio trackedLowerBoundRate = externalExchangeRate;
+    final Ratio trackedUpperBoundRate = externalExchangeRate;
+
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-      sourceAccountDetails, destinationAccountDetails, exchangeRate
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
     );
 
-    final ExchangeRateProvider externalExchangeRateProviderMock = this.newExternalExchangeRateProvider(exchangeRate);
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
+
+    StreamPayer streamPayer = new StreamPayer.Default(
+      streamEncryptionUtils,
+      simulatedLink,
+      externalExchangeRateProviderMock,
+      this.spspMockClient(InterledgerAddress.of("example.receiver"))
+    ) {
+      @Override
+      protected ExchangeRateProber newExchangeRateProber() {
+        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+
+        when(exchangeRateProberMock.probePath(any()))
+          .thenReturn(
+            ExchangeRateProbeOutcome.builder()
+              .sourceDenomination(sourceAccountDetails.denomination())
+              .destinationDenomination(destinationAccountDetails.denomination())
+              .maxPacketAmount(MaxPacketAmount.builder()
+                .maxPacketState(MaxPacketState.ImpreciseMax)
+                .value(UnsignedLong.MAX_VALUE)
+                .build()
+              )
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
+              .build()
+          );
+        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+          .thenReturn(Optional.of(paymentSharedStateTrackerMock));
+        return exchangeRateProberMock;
+      }
+    };
+
+    final BigDecimal amountToSendInXrp = new BigDecimal("1");
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(sourceAccountDetails)
+      .amountToSend(amountToSendInXrp)
+      .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
+      .build();
+    Throwable error = streamPayer.getQuote(paymentOptions)
+      .handle((quote, throwable) -> {
+        assertThat(quote).isNull();
+        assertThat(throwable).isNotNull();
+        return throwable;
+      }).get();
+
+    assertThat(error).isNotNull();
+    assertThat(error.getCause().getMessage()).contains("External exchange rate was 0.");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExternalRateUnavailable);
+  }
+
+  @Test
+  public void testFailIfTrackedRateIsOneBelowOracleRate() throws ExecutionException, InterruptedException {
+    final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
+    final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
+    final LoopbackLink simulatedLink = this.getLinkForTesting();
+
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final Ratio trackedLowerBoundRate = Ratio.from(new BigDecimal("0.99"));
+    final Ratio trackedUpperBoundRate = Ratio.from(new BigDecimal("0.99"));
+
+    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
+    );
+
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
@@ -639,8 +747,8 @@ public class StreamPayerDefaultTest {
                 .value(UnsignedLong.MAX_VALUE)
                 .build()
               )
-              .lowerBoundRate(Ratio.ZERO)
-              .upperBoundRate(Ratio.ZERO)
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
         when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
@@ -654,41 +762,36 @@ public class StreamPayerDefaultTest {
       .senderAccountDetails(sourceAccountDetails)
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
+      .slippage(Slippage.NONE)
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("External exchange rate was 0.");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.ExternalRateUnavailable);
-        return null;
+        return throwable;
       }).get();
+
+    assertThat(error).isNotNull();
+    assertThat(error.getCause().getMessage()).contains(
+      "Rate-probed exchange-rate of 0.99 is less-than than the minimum exchange-rate of 1"
+    );
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
   }
 
   @Test
-  public void testFailIfProbeRateIsBelowOracleRateIs0() throws ExecutionException, InterruptedException {
+  public void testFailIfTrackedRateIsTwoBelowOracleRate() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio externalExchangeRate = Ratio.from(new BigDecimal("1.0"));
-
+    final Ratio externalExchangeRate = Ratio.ONE;
     final Ratio trackedLowerBoundRate = Ratio.from(new BigDecimal("0.98"));
     final Ratio trackedUpperBoundRate = Ratio.from(new BigDecimal("0.98"));
 
-    final ExchangeRateTracker exchangeRateTracker = mock(ExchangeRateTracker.class);
-    when(exchangeRateTracker.getLowerBoundRate()).thenReturn(trackedLowerBoundRate);
-    when(exchangeRateTracker.getUpperBoundRate()).thenReturn(trackedUpperBoundRate);
-    final AmountTracker amountTracker = new AmountTracker(exchangeRateTracker);
-    final PaymentSharedStateTracker paymentSharedStateTrackerMock = mock(PaymentSharedStateTracker.class);
-    when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(newStreamConnection(sourceAccountDetails));
-    when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTracker);
-    when(paymentSharedStateTrackerMock.getExchangeRateTracker()).thenReturn(exchangeRateTracker);
-    AssetDetailsTracker assetTrackerMock = assetDetailsTrackerMock(sourceAccountDetails, destinationAccountDetails);
-    when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetTrackerMock);
-    when(paymentSharedStateTrackerMock.getPacingTracker()).thenReturn(new PacingTracker());
+    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
+    );
 
     final ExchangeRateProvider externalExchangeRateProviderMock = this
       .newExternalExchangeRateProvider(externalExchangeRate);
@@ -728,45 +831,37 @@ public class StreamPayerDefaultTest {
       .senderAccountDetails(sourceAccountDetails)
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
-      .slippage(Slippage.ONE_PERCENT)
+      .slippage(Slippage.NONE)
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains(
-          "Rate Probed exchange rate of Ratio{numerator=98, denominator=100, toBigDecimal=0.98, isPositive=true} is "
-            + "not greater than minimum of 0.99"
-        );
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.InsufficientExchangeRate);
-        return null;
+        return throwable;
       }).get();
+
+    assertThat(error).isNotNull();
+    assertThat(error.getCause().getMessage()).contains(
+      "Rate-probed exchange-rate of 0.98 is less-than than the minimum exchange-rate of 1"
+    );
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
   }
 
   @Test
-  public void testFailIfProbedRateIs0() throws ExecutionException, InterruptedException {
+  public void testFailIfTrackedRateIs0() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio externalExchangeRate = Ratio.from(new BigDecimal("1.0"));
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final Ratio trackedLowerBoundRate = Ratio.ZERO;
+    final Ratio trackedUpperBoundRate = Ratio.ZERO;
 
-    final Ratio trackedLowerBoundRate = Ratio.from(new BigDecimal("0"));
-    final Ratio trackedUpperBoundRate = Ratio.from(new BigDecimal("0"));
-
-    final ExchangeRateTracker exchangeRateTracker = mock(ExchangeRateTracker.class);
-    when(exchangeRateTracker.getLowerBoundRate()).thenReturn(trackedLowerBoundRate);
-    when(exchangeRateTracker.getUpperBoundRate()).thenReturn(trackedUpperBoundRate);
-    final AmountTracker amountTracker = new AmountTracker(exchangeRateTracker);
-    final PaymentSharedStateTracker paymentSharedStateTrackerMock = mock(PaymentSharedStateTracker.class);
-    when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(newStreamConnection(sourceAccountDetails));
-    when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTracker);
-    when(paymentSharedStateTrackerMock.getExchangeRateTracker()).thenReturn(exchangeRateTracker);
-    AssetDetailsTracker assetTrackerMock = assetDetailsTrackerMock(sourceAccountDetails, destinationAccountDetails);
-    when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetTrackerMock);
-    when(paymentSharedStateTrackerMock.getPacingTracker()).thenReturn(new PacingTracker());
+    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
+    );
 
     final ExchangeRateProvider externalExchangeRateProviderMock = this
       .newExternalExchangeRateProvider(externalExchangeRate);
@@ -808,16 +903,17 @@ public class StreamPayerDefaultTest {
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .slippage(Slippage.ONE_PERCENT)
       .build();
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("Rate Probe discovered invalid exchange rates.");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.InsufficientExchangeRate);
-        return null;
+        return throwable;
       }).get();
+
+    assertThat(error).isNotNull();
+    assertThat(error.getCause().getMessage()).contains("Rate Probe discovered invalid exchange rates.");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
   }
 
   /**
@@ -904,143 +1000,173 @@ public class StreamPayerDefaultTest {
       .slippage(Slippage.of(Percentage.of(new BigDecimal("0.00051"))))
       .build();
 
-    streamPayer.getQuote(paymentOptions)
+    Throwable error = streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
-        assertThat(throwable.getCause().getMessage()).contains("Rate enforcement may incur rounding errors.");
-        assertThat(throwable.getCause() instanceof StreamPayerException);
-        assertThat(((StreamPayerException) throwable.getCause()).getSendState())
-          .isEqualTo(SendState.ExchangeRateRoundingError);
-        return null;
+        return throwable;
       }).get();
+
+    assertThat(error).isNotNull();
+    assertThat(error.getCause().getMessage()).contains("Rate enforcement may incur rounding errors.");
+    assertThat(error.getCause() instanceof StreamPayerException);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
   }
 
   /**
-   * Validates that the code discovers precise max packet amount from F08s without metadata
+   * Validates that the implementation discovers a Precise max-packet amount from F08s that have no metadata.
    */
-  // TODO: Will only work once payments are enabled.
-//  @Test
-//  public void testDiscoverMaxPacketAmountWithoutMetada() throws ExecutionException, InterruptedException {
-//    final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
-//    final AccountDetails destinationAccountDetails = AccountDetails.builder()
-//      .interledgerAddress(InterledgerAddress.of("example.larry.receiver"))
-//      .denomination(Denomination.builder().assetCode("USD").assetScale((short) 0).build())
-//      .build();
-//
-//    final UnsignedLong maxPacketAmount = UnsignedLong.valueOf(300324);
-//    AtomicLong largestAmountReceived = new AtomicLong(0L);
-//
-//    final LoopbackLink simulatedLink = this.getLinkForTesting();
-//    simulatedLink.registerLinkHandler(new LinkHandler() {
-//      @Override
-//      public InterledgerResponsePacket handleIncomingPacket(InterledgerPreparePacket incomingPreparePacket) {
-//        if (FluentCompareTo.is(incomingPreparePacket.getAmount()).greaterThan(maxPacketAmount)) {
-//          return InterledgerRejectPacket.builder()
-//            .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
-//            .message("")
-//            .triggeredBy(LINK_OPERATOR_ADDRESS)
-//            .build();
-//        } else {
-//          largestAmountReceived
-//            .set(Math.max(largestAmountReceived.get(), incomingPreparePacket.getAmount().longValue()));
-//          return handleIncomingPacket(incomingPreparePacket);
-//        }
-//      }
-//    });
-//
-//    final Ratio externalExchangeRate = Ratio.ONE;
-//
-//    final Ratio trackedLowerBoundRate = Ratio.ONE;
-//    final Ratio trackedUpperBoundRate = Ratio.ONE;
-//
-//    final ExchangeRateTracker exchangeRateTracker = mock(ExchangeRateTracker.class);
-//    when(exchangeRateTracker.getLowerBoundRate()).thenReturn(trackedLowerBoundRate);
-//    when(exchangeRateTracker.getUpperBoundRate()).thenReturn(trackedUpperBoundRate);
-//    final AmountTracker amountTracker = new AmountTracker(exchangeRateTracker);
-//    final PaymentSharedStateTracker paymentSharedStateTrackerMock = mock(PaymentSharedStateTracker.class);
-//    when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(newStreamConnection(sourceAccountDetails));
-//    when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTracker);
-//    when(paymentSharedStateTrackerMock.getExchangeRateTracker()).thenReturn(exchangeRateTracker);
-//    AssetDetailsTracker assetTrackerMock = assetDetailsTrackerMock(sourceAccountDetails, destinationAccountDetails);
-//    when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetTrackerMock);
-//    when(paymentSharedStateTrackerMock.getPacingTracker()).thenReturn(new PacingTracker());
-//    final ExchangeRateProvider externalExchangeRateProviderMock = this
-//      .newExternalExchangeRateProvider(externalExchangeRate);
-//
-//    // By setting a very small FX rate, we can simulate a destination amount of 0.
-//    StreamPayer streamPayer = new StreamPayer.Default(
-//      simulatedLink, externalExchangeRateProviderMock,
-//      this.spspMockClient(InterledgerAddress.of("example.receiver"))
-//    ) {
-//      @Override
-//      protected StreamConnection newStreamConnection(
-//        PaymentOptions paymentOptions, StreamConnectionDetails streamConnectionDetails
-//      ) {
-//        return new StreamConnection(
-//          paymentOptions.senderAccountDetails(),
-//          streamConnectionDetails.destinationAddress(),
-//          SharedSecret.of(new byte[32])
-//        );
-//      }
-//
-//      @Override
-//      protected ExchangeRateProber newExchangeRateProber() {
-//        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
-//
-//        when(exchangeRateProberMock.probePath(any()))
-//          .thenReturn(
-//            ExchangeRateProbeOutcome.builder()
-//              .sourceDenomination(sourceAccountDetails.denomination())
-//              .destinationDenomination(destinationAccountDetails.denomination())
-//              .maxPacketAmount(MaxPacketAmount.builder()
-//                .maxPacketState(MaxPacketState.PreciseMax)
-//                .value(UnsignedLong.valueOf(1000L)) // <-- This is required to make this test fail properly.
-//                .build()
-//              )
-//              .lowerBoundRate(trackedLowerBoundRate)
-//              .upperBoundRate(trackedUpperBoundRate)
-//              .build()
-//          );
-//        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
-//          .thenReturn(Optional.of(paymentSharedStateTrackerMock));
-//        return exchangeRateProberMock;
-//      }
-//    };
-//
-//    final BigDecimal amountToSend = new BigDecimal(40_000_000);
-//    final PaymentOptions paymentOptions = PaymentOptions.builder()
-//      .senderAccountDetails(sourceAccountDetails)
-//      .amountToSend(amountToSend)
-//      .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
-//      .slippage(Slippage.NONE)
-//      .build();
-//
-//    streamPayer.getQuote(paymentOptions)
-//      .handle((quote, throwable) -> {
-//        if (throwable != null) {
-//          throwable.printStackTrace();
-//        }
-//        assertThat(quote).isNotNull();
-//
-//        // If STREAM did discover the max packet amount, since the rate is 1:1, the largest packet the receiver got
-//        // should be exactly the max packet amount
-//        assertThat(largestAmountReceived.get()).isEqualTo(maxPacketAmount.longValue());
-//
-//        return null;
-//      }).get();
-//  }
+  @Test
+  public void testDiscoverMaxPacketAmountWithoutMetadata() throws ExecutionException, InterruptedException {
+    final AccountDetails sourceAccountDetails = AccountDetails.builder()
+      .interledgerAddress(InterledgerAddress.of("example.unit.test.sender"))
+      .denomination(Denominations.USD)
+      .build();
+    final AccountDetails destinationAccountDetails = AccountDetails.builder()
+      .interledgerAddress(InterledgerAddress.of("example.larry.receiver"))
+      .denomination(Denominations.USD)
+      .build();
 
-  // TODO: fixed source payments
-  // TODO: fixed delivery payments
-  // TODO: payment execution
-  // TODO: interledger.rs integration
-  // TODO: interledger4j integration
+    final byte[] serverSecret = new byte[32];
+
+    final UnsignedLong maxPacketAmount = UnsignedLong.valueOf(300324);
+
+    // Link with a MaxPacket Amount of 300324
+    final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
+      () -> serverSecret, // <-- Server Secret
+      new SpspStreamConnectionGenerator(),
+      new AesGcmStreamEncryptionService(),
+      StreamCodecContextFactory.oer()
+    );
+    final StatelessStreamReceiverLink simulatedLink = new StatelessStreamReceiverLink(
+      () -> LINK_OPERATOR_ADDRESS,
+      StatelessSpspReceiverLinkSettings.builder()
+        .maxPacketAmount(maxPacketAmount)
+        .assetCode("USD")
+        .assetScale(0)
+        .build(),
+      statelessStreamReceiver
+    );
+    simulatedLink.setLinkId(LinkId.of("unit-test-loopback-link"));
+
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
+
+    final SpspClient mockedSpspClient = new SpspClient() {
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+        throws InvalidReceiverClientException {
+        return statelessStreamReceiver.setupStream(destinationAccountDetails.interledgerAddress());
+      }
+
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl) throws InvalidReceiverClientException {
+        return statelessStreamReceiver.setupStream(destinationAccountDetails.interledgerAddress());
+      }
+    };
+
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    StreamPayer streamPayer = new StreamPayer.Default(
+      streamEncryptionUtils,
+      simulatedLink,
+      externalExchangeRateProviderMock,
+      mockedSpspClient
+    );
+
+    final BigDecimal amountToSend = new BigDecimal(4);
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(sourceAccountDetails)
+      .amountToSend(amountToSend)
+      .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
+      .slippage(Slippage.ONE_PERCENT)
+      .build();
+
+    final Quote quote = streamPayer.getQuote(paymentOptions).get();
+    assertThat(quote).isNotNull();
+    assertThat(quote.paymentSharedStateTracker().getMaxPacketAmountTracker().getMaxPacketAmount()).isEqualTo(
+      MaxPacketAmount.builder()
+        .maxPacketState(MaxPacketState.PreciseMax)
+        .value(maxPacketAmount)
+        .build());
+
+    Receipt receipt = streamPayer.pay(quote).get();
+    assertThat(receipt).isNotNull();
+  }
+
+  @Test
+  public void testTrackedRateIsOneWithNoSlippage() throws ExecutionException, InterruptedException {
+    final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
+    final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
+    final LoopbackLink simulatedLink = this.getLinkForTesting();
+
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final Ratio trackedLowerBoundRate = externalExchangeRate;
+    final Ratio trackedUpperBoundRate = externalExchangeRate;
+
+    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
+    );
+
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
+
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    StreamPayer streamPayer = new StreamPayer.Default(
+      streamEncryptionUtils, simulatedLink,
+      externalExchangeRateProviderMock,
+      this.spspMockClient(InterledgerAddress.of("example.receiver"))
+    ) {
+      @Override
+      protected ExchangeRateProber newExchangeRateProber() {
+        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+
+        when(exchangeRateProberMock.probePath(any()))
+          .thenReturn(
+            ExchangeRateProbeOutcome.builder()
+              .sourceDenomination(sourceAccountDetails.denomination())
+              .destinationDenomination(destinationAccountDetails.denomination())
+              .maxPacketAmount(MaxPacketAmount.builder()
+                .maxPacketState(MaxPacketState.ImpreciseMax)
+                .value(UnsignedLong.MAX_VALUE)
+                .build()
+              )
+              .lowerBoundRate(trackedLowerBoundRate)
+              .upperBoundRate(trackedUpperBoundRate)
+              .build()
+          );
+        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+          .thenReturn(Optional.of(paymentSharedStateTrackerMock));
+        return exchangeRateProberMock;
+      }
+    };
+
+    final BigDecimal amountToSendInXrp = new BigDecimal("1");
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(sourceAccountDetails)
+      .amountToSend(amountToSendInXrp)
+      .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
+      .slippage(Slippage.NONE)
+      .build();
+    final Quote quote = streamPayer.getQuote(paymentOptions)
+      .handle(($, throwable) -> {
+        assertThat($).isNotNull();
+        assertThat(throwable).isNull();
+        return $;
+      }).get();
+
+    assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
+  }
+
   // TODO: Connection-spec tests.
 
   //////////////////////////////////
   // shiftForNormalization()
   //////////////////////////////////
+
   @Test
   public void testShiftForNormalization() {
     final LoopbackLink simulatedLink = this.getLinkForTesting();
@@ -1291,15 +1417,17 @@ public class StreamPayerDefaultTest {
   private PaymentSharedStateTracker newPaymentSharedStateTrackerMock(
     final AccountDetails sourceAccountDetails,
     final AccountDetails receiverAccountDetails,
-    final Ratio exchangeRate
+    final Ratio lowerBoundExchangeRate,
+    final Ratio upperBoundExchangeRate
   ) {
     Objects.requireNonNull(sourceAccountDetails);
     Objects.requireNonNull(receiverAccountDetails);
-    Objects.requireNonNull(exchangeRate);
+    Objects.requireNonNull(lowerBoundExchangeRate);
+    Objects.requireNonNull(upperBoundExchangeRate);
 
     final ExchangeRateTracker exchangeRateTracker = mock(ExchangeRateTracker.class);
-    when(exchangeRateTracker.getLowerBoundRate()).thenReturn(exchangeRate);
-    when(exchangeRateTracker.getUpperBoundRate()).thenReturn(exchangeRate);
+    when(exchangeRateTracker.getLowerBoundRate()).thenReturn(lowerBoundExchangeRate);
+    when(exchangeRateTracker.getUpperBoundRate()).thenReturn(upperBoundExchangeRate);
     final AmountTracker amountTracker = new AmountTracker(exchangeRateTracker);
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = mock(PaymentSharedStateTracker.class);
     when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(newStreamConnection(sourceAccountDetails));
@@ -1314,5 +1442,4 @@ public class StreamPayerDefaultTest {
 
   // TODO: Implement these tests from JS
   //  it('fails on asset detail conflicts')
-
 }

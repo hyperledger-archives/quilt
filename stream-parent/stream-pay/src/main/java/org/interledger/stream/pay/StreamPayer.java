@@ -131,12 +131,14 @@ public interface StreamPayer {
         final StreamConnectionDetails streamConnectionDetails = this.fetchRecipientAccountDetails(paymentOptions);
         this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
 
-        // Construct StreamConnection.
         final StreamConnection streamConnection = this.newStreamConnection(paymentOptions, streamConnectionDetails);
-
-        // Probe the path.
         final ExchangeRateProber exchangeRateProber = newExchangeRateProber();
+
+        //////////////////
+        // Probe the path.
+        //////////////////
         final ExchangeRateProbeOutcome rateProbeOutcome = exchangeRateProber.probePath(streamConnection);
+
         final PaymentSharedStateTracker paymentSharedStateTracker = exchangeRateProber
           .getPaymentSharedStateTracker(streamConnection).orElseThrow(() -> new StreamPayerException(
             String.format("No PaymentSharedStateTracker found for streamConnection=%s", streamConnection),
@@ -151,8 +153,10 @@ public interface StreamPayer {
         );
         //TODO: Check this against JS
         final ScaledExchangeRate scaledExternalRate = this.determineScaledExternalRate(
-          paymentOptions.senderAccountDetails(), destinationAccountDetails,
-          currentExternalExchangeRate, paymentOptions.slippage()
+          paymentOptions.senderAccountDetails(),
+          destinationAccountDetails,
+          currentExternalExchangeRate,
+          paymentOptions.slippage()
         );
 
         final BigDecimal minScaledExchangeRate = scaledExternalRate.lowerBound();

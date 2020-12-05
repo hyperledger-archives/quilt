@@ -40,6 +40,11 @@
       <artifactId>ildcp-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>link-stateless-spsp-receiver</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.interledger</groupId>
       <artifactId>jackson-datatypes</artifactId>
       <scope>test</scope>
