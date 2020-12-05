@@ -25,6 +25,8 @@ import org.assertj.core.util.Maps;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
+import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
@@ -1129,7 +1131,7 @@ public class StreamPayerDefaultTest {
    * Validates that the implementation discovers a Precise max-packet amount from F08s that have no metadata.
    */
   @Test
-  public void getQuoteAndPayDiscoversMaxPacketAmountWithoutMetadata() throws ExecutionException, InterruptedException {
+  public void getQuoteDiscoversMaxPacketAmountWithoutMetadata() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = AccountDetails.builder()
       .interledgerAddress(InterledgerAddress.of("example.unit.test.sender"))
       .denomination(Denominations.USD)
@@ -1201,9 +1203,6 @@ public class StreamPayerDefaultTest {
         .maxPacketState(MaxPacketState.PreciseMax)
         .value(maxPacketAmount)
         .build());
-
-    Receipt receipt = streamPayer.pay(quote).get();
-    assertThat(receipt).isNotNull();
   }
 
   @Test
@@ -1271,6 +1270,85 @@ public class StreamPayerDefaultTest {
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.ONE);
     assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
+  }
+
+  ////////////////
+  // Payment Tests
+  ////////////////
+
+  /**
+   * Validates that the implementation discovers a Precise max-packet amount from F08s that have no metadata.
+   */
+  @Test
+  public void getPayDeliversNoValue() {
+    final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
+    final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
+
+    // Link with a MaxPacket Amount of 300324
+    final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
+      () -> new byte[32], // <-- Server Secret
+      new SpspStreamConnectionGenerator(),
+      new AesGcmStreamEncryptionService(),
+      StreamCodecContextFactory.oer()
+    ) {
+      @Override
+      protected boolean isFulfillable(
+        InterledgerPreparePacket preparePacket, InterledgerFulfillment fulfillment
+      ) {
+        return false; // <-- No packet should fulfill, but Stream responses still work on rejects.
+      }
+    };
+    final StatelessStreamReceiverLink simulatedLink = new StatelessStreamReceiverLink(
+      () -> LINK_OPERATOR_ADDRESS,
+      StatelessSpspReceiverLinkSettings.builder()
+        .maxPacketAmount(UnsignedLong.MAX_VALUE)
+        .assetCode("USD")
+        .assetScale(0)
+        .build(),
+      statelessStreamReceiver
+    );
+    simulatedLink.setLinkId(LinkId.of("unit-test-loopback-link"));
+
+    final Ratio externalExchangeRate = Ratio.ONE;
+    final ExchangeRateProvider externalExchangeRateProviderMock = this
+      .newExternalExchangeRateProvider(externalExchangeRate);
+
+    final SpspClient mockedSpspClient = new SpspClient() {
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+        throws InvalidReceiverClientException {
+        return statelessStreamReceiver.setupStream(destinationAccountDetails.interledgerAddress());
+      }
+
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl) throws InvalidReceiverClientException {
+        return statelessStreamReceiver.setupStream(destinationAccountDetails.interledgerAddress());
+      }
+    };
+
+    // By setting a very small FX rate, we can simulate a destination amount of 0.
+    StreamPayer streamPayer = new StreamPayer.Default(
+      streamEncryptionUtils,
+      simulatedLink,
+      externalExchangeRateProviderMock,
+      mockedSpspClient
+    );
+
+    final BigDecimal amountToSend = new BigDecimal(4);
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(sourceAccountDetails)
+      .amountToSend(amountToSend)
+      .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
+      .slippage(Slippage.ONE_PERCENT)
+      .build();
+
+    final Quote quote = streamPayer.getQuote(paymentOptions).join();
+    Receipt receipt = streamPayer.pay(quote).join();
+
+    // Assert that nothing was delivered.
+    assertThat(receipt).isNotNull();
+    assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
   }
 
   // TODO: Connection-spec tests.

@@ -205,6 +205,10 @@ public class AmountFilter implements StreamPacketFilter {
     UnsignedLong highEndDestinationAmount = UnsignedLong.ZERO;
     UnsignedLong deliveryDeficit = UnsignedLong.ZERO;
 
+    // Update in-flight amounts
+    amountTracker.addToSourceAmountInFlight(streamPacketRequest.sourceAmount());
+    amountTracker.addToDestinationAmountInFlight(highEndDestinationAmount);
+
     if (amountTracker.getPaymentTargetConditions().isPresent()) {
       PaymentTargetConditions target = amountTracker.getPaymentTargetConditions().get();
 
@@ -214,10 +218,6 @@ public class AmountFilter implements StreamPacketFilter {
           paymentSharedStateTracker.getExchangeRateTracker()
             .estimateDestinationAmount(streamPacketRequest.sourceAmount()).highEndEstimate()
         ).getValue();
-
-      // Update in-flight amounts
-      amountTracker.addToSourceAmountInFlight(streamPacketRequest.sourceAmount());
-      amountTracker.addToDestinationAmountInFlight(highEndDestinationAmount);
 
       // Update the delivery shortfall, if applicable
       final UnsignedLong baselineMinDestinationAmount = FluentUnsignedLong.of(streamPacketRequest.sourceAmount())
@@ -273,7 +273,7 @@ public class AmountFilter implements StreamPacketFilter {
       }
     }
 
-    amountTracker.subtractFromDestinationAmountInFlight(streamPacketRequest.sourceAmount());
+    amountTracker.subtractFromSourceAmountInFlight(streamPacketRequest.sourceAmount());
     amountTracker.subtractFromDestinationAmountInFlight(highEndDestinationAmount);
 
     // If this packet failed, "refund" the delivery deficit so it may be retried

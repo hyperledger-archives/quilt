@@ -119,6 +119,9 @@ class RunLoop {
 
         // Wait a bit before running the run-loop to give things a chance.
         try {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Waiting 200ms in response to SendState.Ready...");
+          }
           // TODO: How long?
           Thread.sleep(200);
         } catch (InterruptedException e) {
@@ -148,6 +151,9 @@ class RunLoop {
       } else if (nextSendState == SendState.Wait) {
         try {
           // TODO: How long?
+          if (logger.isDebugEnabled()) {
+            logger.debug("Waiting 50ms in response to SendState.Wait...");
+          }
           Thread.sleep(50);
         } catch (InterruptedException e) {
           logger.error(e.getMessage(), e);

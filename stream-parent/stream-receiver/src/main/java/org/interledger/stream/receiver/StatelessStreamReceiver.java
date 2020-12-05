@@ -121,7 +121,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
     // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
     final InterledgerFulfillment fulfillment = StreamUtils
       .generatedFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
-    final boolean isFulfillable = fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
+    final boolean isFulfillable = this.isFulfillable(preparePacket, fulfillment);
 
     // Return Fulfill or Reject Packet
     if (isFulfillable && is(preparePacket.getAmount()).greaterThanEqualTo(streamPacket.prepareAmount())) {
@@ -244,5 +244,22 @@ public class StatelessStreamReceiver implements StreamReceiver {
     }
 
     return responseFrames.build();
+  }
+
+  /**
+   * Checks to see if a given Prepare packet is fulfillable with the supplied fulfillment.
+   *
+   * @param preparePacket A {@link InterledgerPreparePacket} to check.
+   * @param fulfillment   A published {@link InterledgerFulfillment} to verify the packet against.
+   * @return {@code true} if the supplied fulfillment validates the supplied Prepare packet; {@code false} otherwise.
+   */
+  @VisibleForTesting
+  protected boolean isFulfillable(
+    final InterledgerPreparePacket preparePacket, final InterledgerFulfillment fulfillment
+  ) {
+    Objects.requireNonNull(fulfillment);
+    Objects.requireNonNull(preparePacket);
+
+    return fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
   }
 }
