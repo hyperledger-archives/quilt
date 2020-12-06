@@ -1,14 +1,5 @@
 package org.interledger.stream.pay.trackers;
 
-import com.google.common.base.Preconditions;
-import com.google.common.primitives.UnsignedLong;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.MathContext;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.Ratio;
@@ -17,8 +8,19 @@ import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
+
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Tracks the amounts that should be sent and delivered.
