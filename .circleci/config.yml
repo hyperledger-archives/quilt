@@ -30,11 +30,18 @@ _run:
   installjava14: &installjava14
     name: "Download and install Java 14 from source OpenJDK"
     command: |
-      JDK14_URL=$(curl -s https://jdk.java.net/14/ | egrep -o "https://download.java.net/java/GA/jdk14.*?/.*?linux-x64.*?tar.gz" | head -1)
+      JDK14_URL=https://download.java.net/java/GA/jdk14/076bab302c7b4508975440c56f6cc26a/36/GPL/openjdk-14_linux-x64_bin.tar.gz
       wget $JDK14_URL -O /tmp/openjdk14.tar.gz
       tar -xvzf /tmp/openjdk14.tar.gz
-      sudo mv jdk-14.0.2/ /usr/lib/jvm/
+      sudo mv jdk-14/ /usr/lib/jvm/
 
+  installjava15: &installjava15
+    name: "Download and install Java 15 from source OpenJDK"
+    command: |
+      JDK15_URL=$(curl -s https://jdk.java.net/15/ | egrep -o "https://download.java.net/java/GA/jdk15.*?/.*?linux-x64.*?tar.gz" | head -1)
+      wget $JDK15_URL -O /tmp/openjdk15.tar.gz
+      tar -xvzf /tmp/openjdk15.tar.gz
+      sudo mv jdk-15.0.1/ /usr/lib/jvm/
 jobs:
   build:
     docker:
@@ -273,7 +280,7 @@ jobs:
     environment:
       # Customize the JVM maximum heap limit
       MAVEN_OPTS: -Xmx3200m
-      JAVA_HOME: /usr/lib/jvm/jdk-14.0.2/
+      JAVA_HOME: /usr/lib/jvm/jdk-14/
 
     steps:
       - run:
@@ -283,6 +290,34 @@ jobs:
             sudo apt-get update
 
       - run: *installjava14
+      - run: *javaversion
+      - checkout
+
+      - restore_cache: *restorecache
+
+      - run:
+          name: Maven Install
+          command: mvn dependency:go-offline install
+
+  build_java15:
+    machine:
+      image: ubuntu-1604:201903-01
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+      JAVA_HOME: /usr/lib/jvm/jdk-15.0.1/
+
+    steps:
+      - run:
+          # Need to do this because jdk-11 isn't found without updating the package lists.
+          name: Update Package Lists from apt repositories
+          command: |
+            sudo apt-get update
+
+      - run: *installjava15
       - run: *javaversion
       - checkout
 
@@ -308,3 +343,4 @@ workflows:
       - build_java12
       - build_java13
       - build_java14
+#      - build_java15

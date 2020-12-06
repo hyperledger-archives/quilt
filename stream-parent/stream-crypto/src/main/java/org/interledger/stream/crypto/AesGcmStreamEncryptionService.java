@@ -3,6 +3,9 @@ package org.interledger.stream.crypto;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
@@ -10,6 +13,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.StringJoiner;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -17,8 +22,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An {@link StreamEncryptionService} that uses a JavaKeystore for underlying key storage.
@@ -92,8 +95,10 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * @param sharedSecret A {@link SharedSecret} used for encryption.
    * @param plainText    A byte-array to encrypt.
    * @param iv           An initialization vector used AES/GCM.
+   *
    * @return A byte-array containing encrypted cipherMessage, which consists of the iv plus ciphertext (note this is
-   * inverted from the NIST specification).
+   *   inverted from the NIST specification).
+   *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
   private byte[] standardModeEncryptWithIv(
@@ -151,11 +156,13 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * @param sharedSecret A {@link SharedSecret} used for encryption.
    * @param plainText    A byte-array to encrypt.
    * @param iv           An initialization vector used AES/GCM.
+   *
    * @return A byte-array containing encrypted cipherMessage, which consists of the iv plus ciphertext (note this is
-   * inverted from the NIST specification).
+   *   inverted from the NIST specification).
+   *
    * @see "https://github.com/hyperledger/quilt/issues/237"
    * @deprecated This method will be removed in a future version. Prefer {@link #standardModeEncryptWithIv(SharedSecret,
-   * byte[], byte[])} instead.
+   *   byte[], byte[])} instead.
    */
   @Deprecated
   private byte[] nonStandardModeEncryptWithIv(
@@ -247,7 +254,9 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    *
    * @param sharedSecret  A {@link SharedSecret} used for encryption.
    * @param cipherMessage A byte-array to decrypt.
+   *
    * @return A byte-array containing decrypted plaintext.
+   *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
   private byte[] standardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
@@ -291,11 +300,13 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    *
    * @param sharedSecret  A {@link SharedSecret} used for encryption.
    * @param cipherMessage A byte-array to decrypt.
+   *
    * @return A byte-array containing decrypted plaintext.
+   *
    * @see "https://github.com/hyperledger/quilt/issues/237"
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    * @deprecated This method will be removed in a future version. Prefer {@link #standardModeDecrypt(SharedSecret,
-   * byte[])} instead.
+   *   byte[])} instead.
    */
   @Deprecated
   private byte[] nonStandardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
@@ -359,5 +370,12 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
      * non-standard mode in the event of an {@link EncryptionException}.
      */
     ENCRYPT_STANDARD
+  }
+
+  @Override
+  public String toString() {
+    return new StringJoiner(", ", AesGcmStreamEncryptionService.class.getSimpleName() + "[", "]")
+      .add("encryptionMode=" + encryptionMode)
+      .toString();
   }
 }

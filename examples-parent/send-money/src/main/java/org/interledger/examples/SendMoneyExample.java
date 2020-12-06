@@ -45,12 +45,12 @@ public class SendMoneyExample {
   // NOTE - replace this with the username for your sender account
   private static final String SENDER_ACCOUNT_USERNAME = "demo_user";
   // NOTE - replace this with the passkey for your sender account
-  private static final String SENDER_PASS_KEY = "MjA0NGU2MDQtMDVlOC00NzFlLTgyMzYtYTEzNTkzMDQ4ODBk";
+  private static final String SENDER_PASS_KEY = "OWIyMzUwMzgtNWUzZi00MDU1LWJlMmUtZjk4NjdmMTJlOWYz";
   // NOTE - replace this with the payment pointer for your receiver account
-  private static final String RECEIVER_PAYMENT_POINTER = "$xpring.money/demo_receiver";
+  private static final String RECEIVER_PAYMENT_POINTER = "$ripplex.money/demo_receiver";
 
   private static final String TESTNET_URI =
-      "https://prod.wc.wallet.xpring.io/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
+      "https://rxprod.wc.wallet.ripplex.io/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
 
   private static final InterledgerAddress OPERATOR_ADDRESS =
       InterledgerAddress.of("private.org.interledger.examples.sendmoneyexample").with(SENDER_ACCOUNT_USERNAME);
