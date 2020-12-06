@@ -87,6 +87,8 @@ public class AmountTracker {
     Objects.requireNonNull(targetAmount);
     Preconditions.checkState(targetAmount.compareTo(BigInteger.ZERO) > 0, "targetAmount must be greater-than 0");
 
+    // TODO: Ensure in-flight amount are tracked properly
+
     // There must be a rate in the FX tracker or this call will fail with an exception.
     Ratio lowerBoundRate = this.exchangeRateTracker.getLowerBoundRate();
     Ratio upperBoundRate = this.exchangeRateTracker.getUpperBoundRate();
@@ -103,12 +105,22 @@ public class AmountTracker {
     // The rate is insufficient only if the marginOfError is negative. A zero-margin is still valid.
     final Ratio minExchangeRateRatio = Ratio.from(minExchangeRate);
     final Ratio marginOfError = lowerBoundRate.subtract(minExchangeRateRatio);
-    if (marginOfError.isNegative()) {
-      final String errorMessage = String.format(
-        "Rate-probed exchange-rate of %s is less-than than the minimum exchange-rate of %s",
-        lowerBoundRate.toBigDecimal(), minExchangeRateRatio.toBigDecimal()
-      );
-      throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
+
+    // In order to accomadate 1:1 FX rates with 0 slippage then do the following:
+    // (See https://github.com/interledgerjs/interledgerjs/issues/167 for more details)
+    // 1) If the marginOfError is 0 and the rate is a positive integer, the payment should proceed.
+    // 2) Howevever, if the marginOfError is 0 or negative, and the minExchangeRateRatio has any decimal portion then
+    // the payment should fail.
+    if (marginOfError.isNotPositive()) { // <-- 0 or a negative rate.
+      if (marginOfError.isZero() && minExchangeRateRatio.isPositiveInteger()) {
+        // Let the payment continue because a 0-margin with a whole FX can succeed.
+      } else {
+        final String errorMessage = String.format(
+          "Rate-probed exchange-rate of %s is less-than than the minimum exchange-rate of %s",
+          lowerBoundRate.toBigDecimal(), minExchangeRateRatio.toBigDecimal()
+        );
+        throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
+      }
     }
 
     // Assuming we accurately know the real exchange rate, if the actual destination amount is less than the

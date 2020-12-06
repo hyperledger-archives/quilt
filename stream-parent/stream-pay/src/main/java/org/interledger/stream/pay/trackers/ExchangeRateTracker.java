@@ -1,5 +1,6 @@
 package org.interledger.stream.pay.trackers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;
 import java.util.Map;
@@ -167,6 +168,23 @@ public class ExchangeRateTracker {
       throw new StreamPayerException("No upperBoundRate was detected from the receiver", SendState.RateProbeFailed);
     }
     return upperBoundRate.get();
+  }
+
+  /**
+   * Helper method to allow the lower and upper rate bounds to be mocked without actually discovering them.
+   *
+   * @param lowerBoundRate
+   * @param upperBoundRate
+   */
+  @VisibleForTesting
+  protected void setRateBounds(
+    final Ratio lowerBoundRate, final Ratio upperBoundRate
+  ) {
+    Objects.requireNonNull(lowerBoundRate);
+    Objects.requireNonNull(upperBoundRate);
+
+    this.lowerBoundRate.set(lowerBoundRate);
+    this.upperBoundRate.set(upperBoundRate);
   }
 
 }

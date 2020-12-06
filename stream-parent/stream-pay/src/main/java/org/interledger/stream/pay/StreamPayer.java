@@ -320,9 +320,10 @@ public interface StreamPayer {
               String.format("SourceAccount denomination is required for FX. sourceDenomination=%s",
                 rateProbeOutcome.destinationDenomination()), SendState.UnknownSourceAsset)).assetCode(),
           rateProbeOutcome.destinationDenomination()
-            .orElseThrow(() -> new StreamPayerException(
-              String.format("DestinationAccount denomination is required for FX. destinationDenomination=%s",
-                rateProbeOutcome.destinationDenomination()), SendState.UnknownDestinationAsset)).assetCode()
+            .orElseThrow(() -> new StreamPayerException(String.format(
+              "Receiver denomination is required for FX (Receiver never shared asset details). "
+                + "destinationDenomination=%s",
+              rateProbeOutcome.destinationDenomination()), SendState.UnknownDestinationAsset)).assetCode()
         );
 
         if (exchangeRate.getFactor().numberValue(BigDecimal.class).compareTo(BigDecimal.ZERO) <= 0) {
@@ -373,8 +374,8 @@ public interface StreamPayer {
      * <p/>
      * <pre>externalRate * (10 ^ (destinationAccount.assetScale - sourceAccount.assetScale))</pre>
      * <p/>
-     * Per the above, given an XRP/USD rate of 0.25, then the scaled rate would be 25 for a destination account with
-     * scale 2.
+     * Per the above, given an XRP/USD rate of 0.25, then the scaled rate would be 25 for a source account with a scale
+     * of 0 and a destination account with scale 2.
      *
      * @param sourceAccountDetails      The {@link AccountDetails} for the source account.
      * @param destinationAccountDetails The {@link AccountDetails} for the destination account.
@@ -481,8 +482,8 @@ public interface StreamPayer {
         .map(PaymentSharedStateTracker::getAssetDetailsTracker)
         .map(AssetDetailsTracker::getDestinationAccountDetails)
         .orElseThrow(() -> new StreamPayerException(String.format(
-          "Receiver never shared destination asset details. streamConnection=%s", streamConnection
-        ), SendState.UnknownDestinationAsset
+          "No PaymentSharedStateTracker found for streamConnection=%s", streamConnection
+        ), SendState.Disconnected
         ));
     }
 

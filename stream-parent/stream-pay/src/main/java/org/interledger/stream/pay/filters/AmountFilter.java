@@ -91,19 +91,31 @@ public class AmountFilter implements StreamPacketFilter {
         // performed as part of the `nextState` operations, which are always run on a single-thread in the RunLoop.
         // Thus, this calculation is always accurate (i.e., there is no other thread that could be mutating the
         // available send to be higher than it should be because multi-threaded behavior is only ever reducing the
-        // AmountSentInSourceUnits, never increasing it.
+        // AmountSentInSourceUnits, never increasing it). Note that if there is nothing availableToSend, and there is
+        // nothing in-flight, then it means we should end the payment because we won't schedule any more packets.
         final BigInteger availableToSend = target.maxSourceAmount()
-          .subtract(amountTracker.getAmountSentInSourceUnits())
-          .subtract(amountTracker.getSourceAmountInFlight());
-        if (FluentBigInteger.of(availableToSend).isNotPositive()) {
-          return SendState.Wait; // <-- Don't schedule this packet, but keep trying in the run-loop.
+          .subtract(paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits())
+          .subtract(paymentSharedStateTracker.getAmountTracker().getSourceAmountInFlight());
+        final boolean anyInFlight = FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isPositive();
+        final boolean anyAvailableToSend = FluentBigInteger.of(availableToSend).isPositive(); // <- 1 or more.
+
+        if (anyAvailableToSend) {
+          // Do nothing. There's more to send, so send it.
+        } else { // <-- anyAvailableToSend is false if we get here.
+          if (anyInFlight) {
+            // No more to send but in-flight could reject and become available; so Wait just to be sure.
+            return SendState.Wait;
+          } else {
+            // No more to send; nothing in-flight to become available; so nothing more will ever send, so End.
+            return SendState.End;
+          }
         }
 
         // Compute source amount (always positive)
         final UnsignedLong maxPacketAmount = paymentSharedStateTracker.getMaxPacketAmountTracker()
           .getNextMaxPacketAmount();
-        UnsignedLong sourceAmount = FluentUnsignedLong.of(FluentBigInteger.of(availableToSend).orMaxUnsignedLong())
-          .orLesser(maxPacketAmount).getValue();
+        UnsignedLong sourceAmount = FluentUnsignedLong
+          .of(FluentBigInteger.of(availableToSend).orMaxUnsignedLong()).orLesser(maxPacketAmount).getValue();
 
         // Check if fixed delivery payment is complete, and apply limits
         if (target.paymentType() == PaymentType.FIXED_DELIVERY) {

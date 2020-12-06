@@ -236,16 +236,31 @@ public interface Ratio extends Comparable<Ratio> {
     return FluentCompareTo.is(this.numerator()).greaterThan(BigInteger.ZERO);
   }
 
+  @Derived
+  default boolean isNotPositive() {
+    return !isPositive();
+  }
+
+  @Derived
+  default boolean isPositiveInteger() {
+    return isPositive() && isIntegerValue(this.toBigDecimal());
+  }
+
+//  @Derived
+//  default boolean isNegative() {
+//    return FluentCompareTo.is(this.numerator()).lessThan(BigInteger.ZERO);
+//  }
+
+  @Derived
+  default boolean isZero() {
+    return FluentCompareTo.is(this.numerator()).equalTo(BigInteger.ZERO);
+  }
+
   @Value.Check
   default void check() {
     // Denominator must be positive!
     Preconditions.checkState(
       FluentCompareTo.is(denominator()).greaterThan(BigInteger.ZERO), "Denominator must be greater-than 0"
     );
-  }
-
-  @Derived
-  default boolean isNegative() {
-    return FluentCompareTo.is(this.numerator()).lessThan(BigInteger.ZERO);
   }
 }
