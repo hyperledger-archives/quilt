@@ -1120,7 +1120,7 @@ public class StreamPayerDefaultTest {
     assertThat(error.getCause().getMessage()).contains(
       "Rate-probed exchange-rate of 86.806 is less-than than the minimum exchange-rate of 86.8056180495575233622");
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
-    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
   }
 
   /**
