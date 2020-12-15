@@ -9,6 +9,7 @@ import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
@@ -71,8 +72,8 @@ public class AmountTracker {
 
   private final ExchangeRateTracker exchangeRateTracker;
 
-  public AmountTracker(ExchangeRateTracker exchangeRateTracker) {
-    this.exchangeRateTracker = exchangeRateTracker;
+  public AmountTracker(final ExchangeRateTracker exchangeRateTracker) {
+    this.exchangeRateTracker = Objects.requireNonNull(exchangeRateTracker);
     this.paymentTargetConditionsAtomicReference = new AtomicReference<>();
   }
 
@@ -104,46 +105,12 @@ public class AmountTracker {
       throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
     }
 
-    // The rate is insufficient only if the marginOfError is negative. A zero-margin is still valid.
+    // Ensure the exchange-rate is valid.
     final Ratio minExchangeRateRatio = Ratio.from(minExchangeRate);
-    final Ratio marginOfError = lowerBoundRate.subtract(minExchangeRateRatio);
-
-    // In order to accomadate 1:1 FX rates with 0 slippage then do the following:
-    // (See https://github.com/interledgerjs/interledgerjs/issues/167 for more details)
-    // 1) If the marginOfError is 0 and the rate is a positive integer, the payment should proceed.
-    // 2) Howevever, if the marginOfError is 0 or negative, and the minExchangeRateRatio has any decimal portion then
-    // the payment should fail.
-    if (marginOfError.isNotPositive()) { // <-- 0 or a negative rate.
-      if (marginOfError.isZero() && minExchangeRateRatio.isPositiveInteger()) {
-        // Let the payment continue because a 0-margin with a whole FX can succeed.
-      } else {
-        final String errorMessage = String.format(
-          "Rate-probed exchange-rate of %s is less-than than the minimum exchange-rate of %s",
-          lowerBoundRate.toBigDecimal(), minExchangeRateRatio.toBigDecimal()
-        );
-        throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
-      }
-    }
-
-    // Assuming we accurately know the real exchange rate, if the actual destination amount is less than the
-    // min destination amount set by the sender, the packet fails due to a rounding error,
-    // since intermediaries round down, but senders round up:
-    // - realDestinationAmount = floor(sourceAmount * realExchangeRate) --- Determined by intermediaries
-    // - minDestinationAmount  =  ceil(sourceAmount * minExchangeRate)  --- Determined by sender
-
-    // Packets that aren't at least this minimum source amount *may* fail due to rounding.
-    // If the max packet amount is insufficient, fail fast, since the payment is unlikely to succeed.
-    final UnsignedLong minSourcePacketAmount = FluentBigInteger.of(BigInteger.ONE)
-      // per the checks above, reciprocal will be present.
-      .timesCeil(marginOfError.reciprocal().orElse(Ratio.ONE)).orMaxUnsignedLong();
-    if (FluentCompareTo.is(maxSourcePacketAmount).notGreaterThanEqualTo(minSourcePacketAmount)) {
-      final String errorMessage = String.format(
-        "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",
-        maxSourcePacketAmount, minSourcePacketAmount
-      );
-      // TODO: Should be ConnectorError once the max-packet tracker is working properly.
-      throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
-    }
+    this.validateExchangeRates(lowerBoundRate, minExchangeRateRatio);
+    this.validateMinPacketAmount(
+      lowerBoundRate, minExchangeRateRatio, maxSourcePacketAmount
+    );
 
     // To prevent the final packet from failing due to rounding, account for a small "shortfall" of 1 source unit,
     // converted to destination units, to tolerate below the enforced destination amounts from the minimum exchange
@@ -300,169 +267,79 @@ public class AmountTracker {
     this.remoteReceivedMaxRef.set(Optional.of(remoteMax));
   }
 
-//  /**
-//   * Sets aside in-flight amounts for the values found in {@code streamPacketRequest}. Note that if an exception is
-//   * thrown anywhere in the Stream Pay run-loop, the payment will fail, so no need to do anything with tracked amounts
-//   * in that case.
-//   *
-//   * @param streamPacketRequest
-//   */
-//  public ComputedStreamPacketAmounts reserveTrackedAmounts(final StreamPacketRequest streamPacketRequest) {
-//    Objects.requireNonNull(streamPacketRequest);
-//
-//    UnsignedLong highEndDestinationAmount = UnsignedLong.ZERO;
-//    UnsignedLong deliveryDeficit = UnsignedLong.ZERO;
-//
-//    if (this.getPaymentTargetConditions().isPresent()) {
-//      PaymentTargetConditions target = this.getPaymentTargetConditions().get();
-//
-//      // Estimate the most that this packet will deliver
-//      highEndDestinationAmount = FluentUnsignedLong.of(streamPacketRequest.minDestinationAmount())
-//        .orGreater(
-//          this.exchangeRateTracker.estimateDestinationAmount(streamPacketRequest.sourceAmount()).highEndEstimate()
-//        ).getValue();
-//
-//      // Update in-flight amounts
-//      this.addToSourceAmountInFlight(streamPacketRequest.sourceAmount());
-//      this.addToDestinationAmountInFlight(highEndDestinationAmount);
-//
-//      // Update the delivery shortfall, if applicable
-//      final UnsignedLong baselineMinDestinationAmount = FluentUnsignedLong
-//        .of(streamPacketRequest.sourceAmount())
-//        .timesCeil(Ratio.from(target.minExchangeRate()))
-//        .getValue();
-//      deliveryDeficit = baselineMinDestinationAmount.minus(streamPacketRequest.minDestinationAmount());
-//      if (FluentUnsignedLong.of(deliveryDeficit).isPositive()) {
-//        this.reduceDeliveryShortfall(deliveryDeficit);
-//      }
-//    }
-//
-//    return ComputedStreamPacketAmounts.builder()
-//      .highEndDestinationAmount(highEndDestinationAmount)
-//      .deliveryDeficit(deliveryDeficit)
-//      .build();
-//  }
-//
-//  /**
-//   * Executed after a stream-packet is processed. Note that if an exception is thrown anywhere in the Stream Pay
-//   * run-loop, the payment will fail, so no need to do anything with tracked amounts in that case.
-//   *
-//   * @param streamPacketRequest
-//   * @param computedStreamPacketAmounts
-//   * @param streamPacketReply
-//   */
-//  public void commitTrackedAmounts(
-//    final StreamPacketRequest streamPacketRequest,
-//    final ComputedStreamPacketAmounts computedStreamPacketAmounts,
-//    final StreamPacketReply streamPacketReply
-//  ) {
-//    Objects.requireNonNull(streamPacketRequest);
-//    Objects.requireNonNull(computedStreamPacketAmounts);
-//    Objects.requireNonNull(streamPacketReply);
-//
-//    Optional<UnsignedLong> destinationAmount = streamPacketReply.destinationAmountClaimed();
-//    if (streamPacketReply.isFulfill()) {
-//      // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
-//      // No matter what, since they fulfilled it, we must assume they got at least the minimum
-//      if (!streamPacketReply.destinationAmountClaimed().isPresent()) {
-//        // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
-//        LOGGER.warn("Ending payment: packet fulfilled with no authentic STREAM data");
-//        destinationAmount = Optional.of(streamPacketRequest.minDestinationAmount());
-//        this.setEncounteredProtocolViolation();
-//      } else if (destinationAmount.isPresent() && FluentCompareTo.is(destinationAmount.get())
-//        .lessThan(streamPacketRequest.minDestinationAmount())) {
-//        if (LOGGER.isWarnEnabled()) {
-//          LOGGER.warn(
-//            "Ending payment: receiver violated protocol. packet below minimum exchange rate was fulfilled. "
-//              + "destinationAmount={}  minDestinationAmount={}",
-//            destinationAmount,
-//            streamPacketRequest.minDestinationAmount()
-//          );
-//        }
-//        destinationAmount = Optional.of(streamPacketRequest.minDestinationAmount());
-//        this.setEncounteredProtocolViolation();
-//      } else {
-//        if (LOGGER.isTraceEnabled()) {
-//          LOGGER.trace(
-//            "Packet sent: sourceAmount={}  destinationAmount={} minDestinationAmount={}",
-//            streamPacketRequest.sourceAmount(), destinationAmount, streamPacketRequest.minDestinationAmount()
-//          );
-//        }
-//      }
-//
-//      this.addAmountSent(streamPacketRequest.sourceAmount());
-//      this.addAmountDelivered(destinationAmount);
-//    } else if (destinationAmount.isPresent() && FluentCompareTo.is(destinationAmount.get())
-//      .lessThan(streamPacketRequest.minDestinationAmount())) {
-//      if (LOGGER.isDebugEnabled()) {
-//        LOGGER.debug(
-//          "Packet rejected for insufficient rate: minDestinationAmount={} destinationAmount={}",
-//          streamPacketRequest.minDestinationAmount(), destinationAmount
-//        );
-//      }
-//    }
-//
-//    this.subtractFromSourceAmountInFlight(streamPacketRequest.sourceAmount());
-//    this.subtractFromDestinationAmountInFlight(computedStreamPacketAmounts.highEndDestinationAmount());
-//
-//    // If this packet failed, "refund" the delivery deficit so it may be retried
-//    if (FluentUnsignedLong.of(computedStreamPacketAmounts.deliveryDeficit()).isPositive() && streamPacketReply
-//      .isReject()) {
-//      this.increaseDeliveryShortfall(computedStreamPacketAmounts.deliveryDeficit());
-//    }
-//
-//    this.getPaymentTargetConditions().ifPresent(target -> {
-//      if (target.paymentType() == PaymentType.FIXED_SEND) {
-//        if (LOGGER.isTraceEnabled()) {
-//          LOGGER.trace(
-//            "Fixed Send Payment has sent {} of {}, {} in-flight",
-//            this.getAmountSentInSourceUnits(),
-//            target.maxSourceAmount(),
-//            this.getSourceAmountInFlight()
-//          );
-//        }
-//      } else if (target.paymentType() == PaymentType.FIXED_DELIVERY) {
-//        if (LOGGER.isTraceEnabled()) {
-//          LOGGER.trace(
-//            "Fixed Delivery Payment has sent {} of {}, {} in-flight",
-//            this.getAmountDeliveredInDestinationUnits(),
-//            target.minDeliveryAmount(),
-//            this.getDestinationAmountInFlight()
-//          );
-//        }
-//      }
-//    });
-//  }
-//
-//  /**
-//   * An interstitial object for holding return values for amount tracking.
-//   */
-//  @Immutable
-//  public interface ComputedStreamPacketAmounts {
-//
-//    static ImmutableComputedStreamPacketAmounts.Builder builder() {
-//      return ImmutableComputedStreamPacketAmounts.builder();
-//    }
-//
-//    /**
-//     * The computed (high-end) estimate of the amount that will be delivered by a particular stream packet.
-//     *
-//     * @return An {@link UnsignedLong}.
-//     */
-//    @Default
-//    default UnsignedLong highEndDestinationAmount() {
-//      return UnsignedLong.ZERO;
-//    }
-//
-//    /**
-//     * A delivery deficit, if any, which is the micro-amount allowed for the final packet to not send (because of
-//     * rounding errors) and have the payment still complete.
-//     *
-//     * @return An {@link UnsignedLong}.
-//     */
-//    @Default
-//    default UnsignedLong deliveryDeficit() {
-//      return UnsignedLong.ZERO;
-//    }
-//  }
+  /**
+   * <p>Validates the discovered vs minimum exchange rates.</p>
+   *
+   * <p>In order to accommodate 1:1 FX rates with 0 slippage, as well as to accurately mimic ILP payment-path rounding
+   * behavior (i.e., the minimum destination amount is rounded up and the destination amount is rounded down, and fails
+   * if the minimum is greater than the destination amount), then this method checks to see if the 'floor(probedRate)'
+   * is greater-than-or-equal-to the `ceil(minimumRate)`. If this equation returns {@code true}, then the exchange rates
+   * are valid. Otherwise, there is an insufficient exchange rate for the packet to complete properly.</p>
+   *
+   * <p>In other words, in order for the rates to be accepable, one of the following must occur:</p>
+   *
+   * <ul>
+   *   <li>Probed rate >= minimum rate and least one of the rates is an integer, OR</li>
+   *   <li>Probed rate > minimum rate and there exists an integer value between the rates.</li>
+   * </ul>
+   *
+   * <p>Some examples that should validate via this method:</p>
+   * <ul>
+   *   <li>Probed rate is 2 and minimum is 1.9 => (valid)</li>
+   *   <li>Probed rate is 2.1 and minimum is 2 => (valid)</li>
+   *   <li>Probed rate is 2.1 and minimum is 1.9 => (valid)</li>
+   *   <li>Probed rate is 1.5 and minimum is 1.1 => (rounding errors are possible)</li>
+   * </ul>
+   *
+   * @param lowerBoundRate       A {@link Ratio} holding the lower-bound rate detected on the payment path.
+   * @param minExchangeRateRatio A {@link Ratio} holding the minimally acceptable exchange rate.
+   *
+   * @see "https://github.com/interledgerjs/interledgerjs/issues/167"
+   */
+  @VisibleForTesting
+  protected void validateExchangeRates(final Ratio lowerBoundRate, final Ratio minExchangeRateRatio) {
+    Objects.requireNonNull(lowerBoundRate);
+    Objects.requireNonNull(minExchangeRateRatio);
+
+    final BigInteger floorProbedRate = lowerBoundRate.multiplyFloor(BigInteger.ONE);
+    final BigInteger ceilMinExchangeRate = minExchangeRateRatio.multiplyCeil(BigInteger.ONE);
+
+    if (FluentCompareTo.is(floorProbedRate).notGreaterThanEqualTo(ceilMinExchangeRate)) {
+      final String errorMessage = String.format(
+        "Rate-probed exchange-rate of %s is less-than than the minimum exchange-rate of %s",
+        lowerBoundRate.toBigDecimal(), minExchangeRateRatio.toBigDecimal()
+      );
+      throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
+    }
+  }
+
+  /**
+   * Packets that aren't at least this minimum source amount *may* fail due to rounding. If the max packet amount is
+   * insufficient, fail fast, since the payment is unlikely to succeed.
+   *
+   * @param lowerBoundRate        A {@link Ratio} holding the lower-bound rate detected on the payment path.
+   * @param minExchangeRateRatio  A {@link Ratio} holding the minimally acceptable exchange rate.
+   * @param maxSourcePacketAmount An {@link UnsignedLong} representing the largest amount that is valid for a single
+   *                              packet.
+   */
+  @VisibleForTesting
+  protected void validateMinPacketAmount(
+    final Ratio lowerBoundRate, final Ratio minExchangeRateRatio, final UnsignedLong maxSourcePacketAmount
+  ) {
+    Objects.requireNonNull(lowerBoundRate);
+    Objects.requireNonNull(minExchangeRateRatio);
+    Objects.requireNonNull(maxSourcePacketAmount);
+
+    final Ratio marginOfError = lowerBoundRate.subtract(minExchangeRateRatio);
+    final UnsignedLong minSourcePacketAmount = FluentBigInteger.of(BigInteger.ONE)
+      .timesCeil(marginOfError.reciprocal().orElse(Ratio.ONE)).orMaxUnsignedLong();
+
+    if (FluentCompareTo.is(maxSourcePacketAmount).notGreaterThanEqualTo(minSourcePacketAmount)) {
+      final String errorMessage = String.format(
+        "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",
+        maxSourcePacketAmount, minSourcePacketAmount
+      );
+      throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
+    }
+  }
 }

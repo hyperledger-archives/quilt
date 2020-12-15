@@ -12,20 +12,10 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    *
    * @param value value to wrap
    * @param <T>   the Java type of the wrapped value
+   *
    * @return wrapped value
    */
   public static <T extends Comparable<? super T>> FluentCompareTo<T> is(T value) {
-    return new FluentCompareTo<>(value);
-  }
-
-  /**
-   * Create a {@link FluentCompareTo} for the given value.
-   *
-   * @param value value to wrap
-   * @param <T>   the Java type of the wrapped value
-   * @return wrapped value
-   */
-  public static <T extends Comparable<? super T>> FluentCompareTo<T> isNot(T value) {
     return new FluentCompareTo<>(value);
   }
 
@@ -39,6 +29,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is equal than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is equal to given value
    */
   public boolean equalTo(T other) {
@@ -49,6 +40,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is not equal than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is not equal to given value
    */
   public boolean notEqualTo(T other) {
@@ -59,6 +51,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is less than than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is less than given value
    */
   public boolean lessThan(T other) {
@@ -69,6 +62,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is not less than than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is not less than given value
    */
   public boolean notLessThan(T other) {
@@ -79,6 +73,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is less than or equal to than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is less than or equal given value
    */
   public boolean lessThanOrEqualTo(T other) {
@@ -89,6 +84,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is not less than or equal to than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is not less than or equal given value
    */
   public boolean notLessThanOrEqualTo(T other) {
@@ -101,6 +97,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is greater than than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is greater than given value
    */
   public boolean greaterThan(T other) {
@@ -111,6 +108,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is not greater than than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is not greater than given value
    */
   public boolean notGreaterThan(T other) {
@@ -121,6 +119,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is greater than or equal to than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is greater than given value
    */
   public boolean greaterThanEqualTo(T other) {
@@ -131,6 +130,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    * Checks if wrapped value is not greater than or equal to than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is not greater than given value
    */
   public boolean notGreaterThanEqualTo(T other) {
@@ -142,6 +142,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    *
    * @param startInclusive lower bound inclusive value
    * @param endExclusive   upper bound exclusive value
+   *
    * @return true if not between
    */
   public boolean between(T startInclusive, T endExclusive) {
@@ -153,6 +154,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    *
    * @param startInclusive lower bound inclusive value
    * @param endExclusive   upper bound exclusive value
+   *
    * @return true if not between
    */
   public boolean notBetween(T startInclusive, T endExclusive) {
@@ -164,6 +166,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    *
    * @param startExclusive lower bound exclusive value
    * @param endExclusive   upper bound exclusive value
+   *
    * @return true if between
    */
   public boolean betweenExclusive(T startExclusive, T endExclusive) {
@@ -175,6 +178,7 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
    *
    * @param startExclusive lower bound exclusive value
    * @param endExclusive   upper bound exclusive value
+   *
    * @return true if not between
    */
   public boolean notBetweenExclusive(T startExclusive, T endExclusive) {
