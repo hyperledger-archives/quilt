@@ -7,7 +7,9 @@ import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 
 /**
- * A filter mechanism for filtering stream packets.
+ * A filter mechanism for filtering stream packets. Filters should be stateless so that they can be created once, and
+ * re-used across multiple run-loop invocations. If state is required in a filter, then a tracker (see {@link
+ * org.interledger.stream.pay.trackers}) should be created that can track some state throughout a payment.
  */
 public interface StreamPacketFilter {
 
@@ -21,8 +23,10 @@ public interface StreamPacketFilter {
    * </ul>
    * <p>
    *
-   * @param modifiableStreamPacketRequest A {@link ModifiableStreamPacketRequest} that will ultimately be used to
-   *                                      construct the next ILP Prepare and STREAM request.
+   * @param streamPacketRequest A {@link ModifiableStreamPacketRequest} that can be mutated by any filter, and that will
+   *                            ultimately be used to construct the next ILP Prepare and STREAM packets for each request
+   *                            that a run-loop will send to a receiver.
+   *
    * @return A {@link SendState} corresponding the the next state.
    */
   SendState nextState(final ModifiableStreamPacketRequest streamPacketRequest);
@@ -36,6 +40,7 @@ public interface StreamPacketFilter {
    * @param streamPacketRequest The {@link StreamPacketRequest} containing finalized amounts and data for the ILP
    *                            Prepare.
    * @param filterChain         The {@link StreamPacketFilterChain} that this filter is operating inside of.
+   *
    * @return An optionally-present ILP response packet.
    */
   StreamPacketReply doFilter(StreamPacketRequest streamPacketRequest, StreamPacketFilterChain filterChain);

@@ -106,7 +106,7 @@ public class StreamPayerException extends StreamException {
   @Override
   public String toString() {
     String message = getLocalizedMessage();
-    String output = getClass().getName() + ": " + message + "(sendState=" + sendState + ")";
+    String output = getClass().getName() + ": " + message + " (sendState=" + sendState + ")";
     return output;
   }
 }

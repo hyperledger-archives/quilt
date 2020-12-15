@@ -25,10 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-// Scope/Purpose: Execute a Stream payment; emit events. For quoting, use a different stack of filters.
-// For payment use another set of filters.
-// TODO: Finish Javadoc!
-
 /**
  * Executes a loop of packet-send attempts, based upon various information in any associated trackers found in {@link
  * org.interledger.stream.pay.trackers}.
@@ -44,35 +40,41 @@ class RunLoop {
 
   private final ExecutorService executorService;
 
-  // TODO: Consider replacing this with a timeout value?
-  //private final QuoteRequest sendMoneyRequest;
-//  private final Supplier<PreparePacketComponents> preparePacketComponentsSupplier;
-//  private final Consumer<PreparePacketComponents> sendNextPacketConsumer;
-
-  //private final ExecutorService perPacketExecutorService;
-  //private final List<CompletableFuture<Void>> futures;
-
-//  private Instant paymentStartTime;
-
+  /**
+   * Required-args Constructor.
+   *
+   * @param link                      A {@link Link}.
+   * @param streamPacketFilters       A {@link List} of type {@link StreamPacketFilter}.
+   * @param streamEncryptionUtils     A {@link StreamEncryptionUtils}.
+   * @param paymentSharedStateTracker A {@link PaymentSharedStateTracker}.
+   */
   public RunLoop(
     final Link<?> link,
     final List<StreamPacketFilter> streamPacketFilters,
     final StreamEncryptionUtils streamEncryptionUtils,
     final PaymentSharedStateTracker paymentSharedStateTracker
   ) {
-    this.link = link;
+    this.link = Objects.requireNonNull(link);
     this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
     this.streamEncryptionUtils = Objects.requireNonNull(streamEncryptionUtils);
     this.paymentSharedStateTracker = Objects.requireNonNull(paymentSharedStateTracker);
     this.executorService = Executors.newFixedThreadPool(5);
   }
 
-  @VisibleForTesting
+
+  /**
+   * Start the run-loop with the supplied {@code quote}.
+   *
+   * @param quote A {@link Quote} with information gleaned from the payment path, but without yet sending real value
+   *              (i.e., a quote or estimate of the payment).
+   *
+   * @return A {@link CompletableFuture} of type {@link Receipt}.
+   */
   public CompletableFuture<Receipt> start(final Quote quote) {
     Objects.requireNonNull(quote);
 
     // PacketFilters should be stateless so that they can be created once, and re-used across multiple run-loop
-    // invocations.If state is required in a filter, then a tracker should be created that can track a value
+    // invocations. If state is required in a filter, then a tracker should be created that can track a value
     // throughout a payment so that everytime the filter is executed, some state can be remembered.
 
     // NextState is called on all filters. Then doFilter is called, at which point the

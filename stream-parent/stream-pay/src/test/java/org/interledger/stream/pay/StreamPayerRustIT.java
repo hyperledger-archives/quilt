@@ -3,13 +3,6 @@ package org.interledger.stream.pay;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.google.common.primitives.UnsignedLong;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
@@ -21,12 +14,20 @@ import org.interledger.stream.pay.model.PaymentOptions;
 import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketState;
+
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Integration test for {@link StreamPayer}.
  */
-// TODO: Create an IT that hits the Java Connector via TestContainers.
 public class StreamPayerRustIT extends AbstractRustIT {
 
   private StreamPayer streamPayer;
