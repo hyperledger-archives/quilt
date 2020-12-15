@@ -7,26 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.primitives.UnsignedLong;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.MathContext;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-
-import javax.money.convert.ExchangeRate;
-import javax.money.convert.ExchangeRateProvider;
-import javax.money.convert.RateType;
-
-import okhttp3.HttpUrl;
-import org.assertj.core.util.Maps;
-
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
@@ -77,6 +57,9 @@ import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 import org.interledger.stream.receiver.SpspStreamConnectionGenerator;
 import org.interledger.stream.receiver.StatelessStreamReceiver;
 
+import com.google.common.primitives.UnsignedLong;
+import okhttp3.HttpUrl;
+import org.assertj.core.util.Maps;
 import org.javamoney.moneta.CurrencyUnitBuilder;
 import org.javamoney.moneta.convert.ExchangeRateBuilder;
 import org.javamoney.moneta.spi.DefaultNumberValue;
@@ -87,14 +70,27 @@ import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+
+import javax.money.convert.ExchangeRate;
+import javax.money.convert.ExchangeRateProvider;
+import javax.money.convert.RateType;
+
 /**
  * Unit tests for {@link StreamPayer.Default}.
  */
 public class StreamPayerDefaultTest {
 
   public static final byte[] SERVER_SECRET_BYTES = new byte[32];
-  //public static final byte[] SHARED_SECRET_BYTES = new byte[32];
-  //public static final SharedSecret SHARED_SECRET = SharedSecret.of(SHARED_SECRET_BYTES);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -420,8 +416,7 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
     final LoopbackLink simulatedLink = this.getLinkForTesting();
 
-    final Ratio externalExchangeRate =
-      Ratio.builder().numerator(BigInteger.ONE).denominator(BigInteger.valueOf(2L)).build();
+    final Ratio externalExchangeRate = Ratio.builder().numerator(BigInteger.ONE).denominator(BigInteger.ONE).build();
     final Ratio trackedLowerBoundRate = externalExchangeRate;
     final Ratio trackedUpperBoundRate = externalExchangeRate;
 
@@ -475,7 +470,7 @@ public class StreamPayerDefaultTest {
       }).get();
 
     assertThat(error.getCause().getMessage()).contains(
-      "Rate enforcement may incur rounding errors. maxPacketAmount=0 is below proposed minimum of 200"
+      "Rate enforcement may incur rounding errors. maxPacketAmount=0 is below proposed minimum of 100"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
@@ -484,21 +479,14 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsIfNoDestinationAssetDetails() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
-    final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
 
     final Ratio externalExchangeRate = Ratio.ONE;
-//    final Ratio trackedLowerBoundRate = externalExchangeRate;
-    //final Ratio trackedUpperBoundRate = externalExchangeRate;
-
-//    final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-//      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
-//    );
 
     final ExchangeRateProvider externalExchangeRateProviderMock = this
       .newExternalExchangeRateProvider(externalExchangeRate);
 
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
-      () -> SERVER_SECRET_BYTES, // <-- Server Secret
+      () -> SERVER_SECRET_BYTES,
       new SpspStreamConnectionGenerator(),
       new AesGcmStreamEncryptionService(),
       StreamCodecContextFactory.oer()
@@ -522,36 +510,10 @@ public class StreamPayerDefaultTest {
       statelessStreamReceiver
     );
     simulatedLink.setLinkId(LinkId.of("unit-test-loopback-link"));
-//    final LoopbackLink simulatedLink = this.getLinkForTesting(InterledgerErrorCode.F99_APPLICATION_ERROR);
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils, simulatedLink, externalExchangeRateProviderMock, this.spspMockClient()
     );
-//    {
-//      @Override
-//      protected ExchangeRateProber newExchangeRateProber() {
-//        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
-//
-//        when(exchangeRateProberMock.probePath(any()))
-//          .thenReturn(
-//            ExchangeRateProbeOutcome.builder()
-//              .sourceDenomination(Denominations.USD)
-//              //.destinationDenomination(Denominations.EUR) // <-- No dest denomination for this test to work.
-//              .maxPacketAmount(MaxPacketAmount.builder()
-//                .maxPacketState(MaxPacketState.ImpreciseMax)
-//                .value(UnsignedLong.MAX_VALUE)
-//                .build()
-//              )
-//              .lowerBoundRate(trackedLowerBoundRate)
-//              .upperBoundRate(trackedUpperBoundRate)
-//              .build()
-//          );
-//        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
-//          .thenReturn(Optional.of(paymentSharedStateTrackerMock));
-//        return exchangeRateProberMock;
-//      }
-//    };
-
     final BigDecimal amountToSendInXrp = new BigDecimal("0.000000001");
     final PaymentOptions paymentOptions = PaymentOptions.builder()
       .senderAccountDetails(sourceAccountDetails)
@@ -578,7 +540,7 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
 
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
-      () -> SERVER_SECRET_BYTES, // <-- Server Secret
+      () -> SERVER_SECRET_BYTES,
       new SpspStreamConnectionGenerator(),
       new AesGcmStreamEncryptionService(),
       StreamCodecContextFactory.oer()
@@ -1155,7 +1117,8 @@ public class StreamPayerDefaultTest {
       }).get();
 
     assertThat(error).isNotNull();
-    assertThat(error.getCause().getMessage()).contains("Rate enforcement may incur rounding errors.");
+    assertThat(error.getCause().getMessage()).contains(
+      "Rate-probed exchange-rate of 86.806 is less-than than the minimum exchange-rate of 86.8056180495575233622");
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
   }
@@ -1178,7 +1141,7 @@ public class StreamPayerDefaultTest {
 
     // Link with a MaxPacket Amount of 300324
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
-      () -> SERVER_SECRET_BYTES, // <-- Server Secret
+      () -> SERVER_SECRET_BYTES,
       new SpspStreamConnectionGenerator(),
       new AesGcmStreamEncryptionService(),
       StreamCodecContextFactory.oer()
@@ -1317,7 +1280,7 @@ public class StreamPayerDefaultTest {
 
     // Link with a MaxPacket Amount of 300324
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
-      () -> SERVER_SECRET_BYTES, // <-- Server Secret
+      () -> SERVER_SECRET_BYTES,
       new SpspStreamConnectionGenerator(),
       new AesGcmStreamEncryptionService(),
       StreamCodecContextFactory.oer()
@@ -1629,7 +1592,7 @@ public class StreamPayerDefaultTest {
 
   private StatelessStreamReceiverLink getFulfillableLinkForTesting(final boolean fulfillable) {
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
-      () -> SERVER_SECRET_BYTES, // <-- Server Secret
+      () -> SERVER_SECRET_BYTES,
       new SpspStreamConnectionGenerator(),
       new AesGcmStreamEncryptionService(),
       StreamCodecContextFactory.oer()

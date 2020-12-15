@@ -1,13 +1,5 @@
 package org.interledger.stream.pay;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
@@ -20,12 +12,27 @@ import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 // Scope/Purpose: Execute a Stream payment; emit events. For quoting, use a different stack of filters.
 // For payment use another set of filters.
 // TODO: Finish Javadoc!
+
+/**
+ * Executes a loop of packet-send attempts, based upon various information in any associated trackers found in {@link
+ * org.interledger.stream.pay.trackers}.
+ */
 class RunLoop {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
