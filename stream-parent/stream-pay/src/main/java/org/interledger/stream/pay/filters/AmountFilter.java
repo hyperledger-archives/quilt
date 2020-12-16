@@ -1,11 +1,5 @@
 package org.interledger.stream.pay.filters;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedLong;
-import java.math.BigInteger;
-import java.util.Objects;
-import java.util.Optional;
 import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.FluentUnsignedLong;
@@ -14,6 +8,7 @@ import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
+import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
@@ -21,9 +16,16 @@ import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.trackers.AmountTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
+
+import java.math.BigInteger;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Tracks and calculates amounts to send and deliver.
@@ -53,13 +55,10 @@ public class AmountFilter implements StreamPacketFilter {
     return amountTracker.getPaymentTargetConditions()
       .map(target -> {
         // Is the recipient's advertised `receiveMax` less than the fixed destination amount?
-        // TODO: This implies that the total payment received on a stream cannot exceed UnsignedLong.MAX_VALUE. If this
-        // is correct, then there is no need to use BigInteger. However, if no max is sent, then it's possible that
-        // a BigInteger might be preferable. Create a test to validate this with a simulated link?
         final boolean incompatibleReceiveMax = amountTracker.getRemoteReceivedMax()
-          .filter(remoteReceivedMax -> FluentCompareTo.is(target.minDeliveryAmount())
-            .greaterThan(remoteReceivedMax.bigIntegerValue()))
-          .isPresent();
+          .filter(remoteReceivedMax ->
+            FluentCompareTo.is(target.minDeliveryAmount()).greaterThan(remoteReceivedMax.bigIntegerValue())
+          ).isPresent();
 
         if (incompatibleReceiveMax) {
           LOGGER.error(String.format(

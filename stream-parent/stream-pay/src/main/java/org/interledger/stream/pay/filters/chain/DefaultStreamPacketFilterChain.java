@@ -1,20 +1,5 @@
 package org.interledger.stream.pay.filters.chain;
 
-import com.google.common.primitives.UnsignedLong;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.DateUtils;
@@ -36,11 +21,69 @@ import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
+import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
- * A default implementation of {@link StreamPacketFilterChain}.
+ * A default implementation of {@link StreamPacketFilterChain}, containing a {@link org.interledger.stream.pay.RunLoop}
+ * that utilizes the following filters:
+ *
+ * <pre>
+ *   ┌────────────────────────────────────┐
+ *   │        SequenceFilterFilter        │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │           FailureFilter            │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │         AssetDetailsFilter         │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │       BalanceIlpPacketFilter       │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │       MaxPacketAmountFilter        │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │            PacingFilter            │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │            AmountFilter            │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽───┐
+ *   │         ExchangeRateFilter         │
+ *   └────△───────────────────────────┬───┘
+ * Fulfill/Reject                 Prepare
+ *   ┌────┴───────────────────────────▽──┐
+ *   │                                   │
+ *   │            FilterChain            │
+ *   │                                   │
+ *   └───────────────────────────────────┘
+ *  </pre>
  */
 public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
 
@@ -214,77 +257,12 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
         }
       }
       return StreamPacketReply.builder().build();
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       // Handler of last resort.
       logger.error(e.getMessage(), e);
       return StreamPacketReply.builder().exception(e).build();
     }
   }
-
-  // Wait 50ms (?)
-  //Thread.sleep(50);
-
-//        final InterledgerPreparePacket preparePacket = this.constructPreparePacket(streamPacketRequest);
-//
-//        // ...and then send the new packet to its destination on the correct outbound link.
-//        // TODO: Handle.
-//        logger.debug("Sending outbound ILP Prepare with STREAM Packet: link={} packet={}", link, preparePacket);
-//        StreamReply streamReply = link.sendPacket(preparePacket).map(
-//            interledgerFulfillPacket -> {
-//
-//              // TODO: Use typed data if present.
-////              interledgerFulfillPacket.typedData()
-//              final UnsignedLong amountDelivered = UnsignedLong.ZERO;
-//
-//              return StreamFulfill.builder()
-//                  //.amountDelivered(amountDelivered)
-//                  // TODO:
-////                  .interledgerFulfillPacket(interledgerFulfillPacket)
-//                  .build();
-//            },
-//            interledgerRejectPacket -> {
-//              return StreamReject.builder()
-//                  // TODO:
-////                  .interledgerRejectPacket(interledgerRejectPacket)
-//                  .build();
-//            }
-//        );
-
-  /////////////
-  // Packet Tracking
-  // TODO:
-  //this.trackPacket(sourceAccountSettings, preparePacket, nextHopInfo, nextHopAccountSettings, response);
-
-  //return streamReply;
-//      }
-//    } catch (Exception e) {
-//      // If anything in the filterchain emits an exception, this is considered a failure case. These always translate
-//      // into a rejection.
-//      logger.error("Failure in StreamClientFilterChain: " + e.getMessage(), e);
-//
-//      final Builder builder = StreamReject.builder();
-//      if (InterledgerRuntimeException.class.isAssignableFrom(e.getClass())) {
-//        InterledgerProtocolException ipe = ((InterledgerProtocolException) e);
-//        // TODO Add the STREAM Frames into the response.
-//        //        builder.frames(
-////            ipe.getInterledgerRejectPacket().getData()
-////        )
-//        return StreamReject.builder()
-//            .interledgerResponsePacket(ipe.getInterledgerRejectPacket())
-//            .build();
-//      } else {
-//        // TODO: Finish
-//        return StreamReject.builder()
-//            .build();
-//      }
-//    }
-  //return null;
-
-//  @Override
-//  public SendState getState() {
-//    return this.sendState.get();
-//  }
 
   /**
    * Default maximum duration that a ILP Prepare can be in-flight before it should be rejected
