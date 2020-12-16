@@ -12,8 +12,6 @@ import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentT
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -28,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class AmountTracker {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(AmountTracker.class);
+  //private final static Logger LOGGER = LoggerFactory.getLogger(AmountTracker.class);
 
   /**
    * Conditions that must be met for the payment to complete, and parameters of its execution.
@@ -36,22 +34,22 @@ public class AmountTracker {
   private final AtomicReference<PaymentTargetConditions> paymentTargetConditionsAtomicReference;
 
   /**
-   * Total amount sent and fulfilled, in scaled units of the sending account
+   * Total amount sent and fulfilled, in scaled units of the sending account.
    */
   private AtomicReference<BigInteger> amountSentInSourceUnitsRef = new AtomicReference<>(BigInteger.ZERO);
 
   /**
-   * Total amount delivered and fulfilled, in scaled units of the receiving account
+   * Total amount delivered and fulfilled, in scaled units of the receiving account.
    */
   private AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef = new AtomicReference<>(BigInteger.ZERO);
 
   /**
-   * Amount sent that is yet to be fulfilled or rejected, in scaled units of the sending account
+   * Amount sent that is yet to be fulfilled or rejected, in scaled units of the sending account.
    */
   private AtomicReference<BigInteger> sourceAmountInFlightRef = new AtomicReference<>(BigInteger.ZERO);
 
   /**
-   * Estimate of the amount that may be delivered from in-flight packets, in scaled units of the receiving account
+   * Estimate of the amount that may be delivered from in-flight packets, in scaled units of the receiving account.
    */
   private AtomicReference<BigInteger> destinationAmountInFlightRef = new AtomicReference<>(BigInteger.ZERO);
 
@@ -61,12 +59,12 @@ public class AmountTracker {
   private final AtomicReference<BigInteger> availableDeliveryShortfallRef = new AtomicReference<>(BigInteger.ZERO);
 
   /**
-   * Maximum amount the recipient can receive on the default stream
+   * Maximum amount the recipient can receive on the default stream.
    */
   private final AtomicReference<Optional<UnsignedLong>> remoteReceivedMaxRef = new AtomicReference<>(Optional.empty());
 
   /**
-   * Should the connection be closed because the receiver violated the STREAM protocol?
+   * Should the connection be closed because the receiver violated the STREAM protocol.
    */
   private final AtomicBoolean encounteredProtocolViolation = new AtomicBoolean();
 
@@ -190,10 +188,20 @@ public class AmountTracker {
     return remoteReceivedMaxRef.get();
   }
 
+  /**
+   * Total amount sent and fulfilled, in scaled units of the sending account.
+   *
+   * @return A {@link BigInteger}.
+   */
   public BigInteger getAmountSentInSourceUnits() {
     return amountSentInSourceUnitsRef.get();
   }
 
+  /**
+   * Total amount delivered and fulfilled, in scaled units of the receiving account.
+   *
+   * @return A {@link BigInteger}.
+   */
   public BigInteger getAmountDeliveredInDestinationUnits() {
     return amountDeliveredInDestinationUnitsRef.get();
   }

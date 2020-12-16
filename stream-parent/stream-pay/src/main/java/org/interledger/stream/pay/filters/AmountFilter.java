@@ -73,7 +73,7 @@ public class AmountFilter implements StreamPacketFilter {
         if (target.paymentType() == PaymentType.FIXED_SEND) {
           final boolean paidFixedSend =
             FluentCompareTo.is(amountTracker.getAmountSentInSourceUnits()).equalTo(target.maxSourceAmount()) &&
-              FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isPositive();
+              FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive();
           if (paidFixedSend) {
             if (LOGGER.isDebugEnabled()) {
               LOGGER.debug(
@@ -118,12 +118,11 @@ public class AmountFilter implements StreamPacketFilter {
 
         // Check if fixed delivery payment is complete, and apply limits
         if (target.paymentType() == PaymentType.FIXED_DELIVERY) {
-          // TODO: Unit Test Fixed Delivery once supported!
           final BigInteger remainingToDeliver = target.minDeliveryAmount()
             .subtract(amountTracker.getAmountDeliveredInDestinationUnits());
           final boolean paidFixedDelivery =
             FluentCompareTo.is(remainingToDeliver).lessThanOrEqualTo(BigInteger.ZERO) &&
-              FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isPositive();
+              FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive();
           if (paidFixedDelivery) {
             if (LOGGER.isDebugEnabled()) {
               LOGGER.debug("Payment complete: paid fixed destination amount. {} of {}",
@@ -137,7 +136,7 @@ public class AmountFilter implements StreamPacketFilter {
           final BigInteger availableToDeliver = remainingToDeliver
             .subtract(amountTracker.getDestinationAmountInFlight());
           if (FluentBigInteger.of(availableToDeliver).isNotPositive()) {
-            return SendState.Ready;
+            return SendState.Wait; // TODO: Should this be ready, like JS, or wait instead?
           }
 
           final UnsignedLong availableToDeliverUL = FluentCompareTo.is(availableToDeliver)

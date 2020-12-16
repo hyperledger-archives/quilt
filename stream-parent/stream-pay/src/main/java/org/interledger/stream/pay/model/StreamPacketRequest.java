@@ -1,17 +1,20 @@
 package org.interledger.stream.pay.model;
 
-import com.google.common.primitives.UnsignedInteger;
-import com.google.common.primitives.UnsignedLong;
-import java.util.List;
-import java.util.Optional;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Derived;
-import org.immutables.value.Value.Immutable;
-import org.immutables.value.Value.Modifiable;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
+import org.interledger.stream.pay.model.ImmutableStreamPacketRequest.Builder;
+
+import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
+import org.immutables.value.Value.Derived;
+import org.immutables.value.Value.Immutable;
+import org.immutables.value.Value.Modifiable;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * A request containing everything needed to send the next STREAM packet on an ILPv4 link. This request is mutable
@@ -20,6 +23,10 @@ import org.interledger.stream.frames.StreamFrame;
 @Immutable
 @Modifiable
 public interface StreamPacketRequest {
+
+  static Builder builder() {
+    return ImmutableStreamPacketRequest.builder();
+  }
 
   /**
    * The prepare packet that prompted this stream packet reply.
