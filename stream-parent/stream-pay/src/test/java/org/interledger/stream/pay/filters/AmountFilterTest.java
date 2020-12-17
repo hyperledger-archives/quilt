@@ -2,13 +2,17 @@ package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.fluent.Ratio;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.frames.StreamMoneyFrame;
+import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.probing.model.ExchangeRateBound;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
@@ -28,15 +32,12 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Unit test for {@link AmountFilter}.
  */
 public class AmountFilterTest {
-
-  private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -60,40 +61,7 @@ public class AmountFilterTest {
     MockitoAnnotations.initMocks(this);
 
     // All Happy-path settings.
-
-    // amountTrackerMock
-    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.MAX_VALUE));
-    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
-      PaymentTargetConditions.builder()
-        .paymentType(PaymentType.FIXED_SEND)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.ONE)
-        .build()
-    ));
-    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ZERO);
-    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO);
-    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
-    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO);
-    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.ZERO);
-
-    // maxPacketAmountTrackerMock
-    when(maxPacketAmountTrackerMock.getMaxPacketAmount()).thenReturn(MaxPacketAmount.unknownMax());
-    when(maxPacketAmountTrackerMock.getNextMaxPacketAmount()).thenReturn(UnsignedLong.MAX_VALUE);
-    when(maxPacketAmountTrackerMock.verifiedPathCapacity()).thenReturn(UnsignedLong.ZERO);
-
-    // exchangeRateTrackerMock
-    when(exchangeRateTrackerMock.getLowerBoundRate()).thenReturn(Ratio.ONE);
-    when(exchangeRateTrackerMock.getUpperBoundRate()).thenReturn(Ratio.ONE);
-    when(exchangeRateTrackerMock.estimateDestinationAmount(UnsignedLong.valueOf(10L))).thenReturn(
-      ExchangeRateBound.builder()
-        .lowEndEstimate(UnsignedLong.valueOf(10L))
-        .highEndEstimate(UnsignedLong.valueOf(10L))
-        .build()
-    );
-    when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(
-      ExchangeRateBound.builder().lowEndEstimate(UnsignedLong.ONE).highEndEstimate(UnsignedLong.ONE).build()
-    );
+    this.initializeHappyPath();
 
     when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTrackerMock);
     when(paymentSharedStateTrackerMock.getMaxPacketAmountTracker()).thenReturn(maxPacketAmountTrackerMock);
@@ -122,6 +90,7 @@ public class AmountFilterTest {
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.ReceiverProtocolViolation);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.ProtocolViolation);
+    assertThat(request.requestFrames().stream()).isEmpty();
   }
 
   @Test
@@ -134,73 +103,41 @@ public class AmountFilterTest {
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
   }
 
-  /**
-   * When min-delivery amount is greater than the receive-max.
-   */
   @Test
   public void nextStateWithIncompatibleReceiveMax() {
-    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.ONE));
-    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
-      PaymentTargetConditions.builder()
-        .paymentType(PaymentType.FIXED_SEND)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.TEN) // <-- Makes the receiveMax of one invalid.
-        .maxSourceAmount(BigInteger.ONE)
-        .build()
-    ));
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean checkForIncompatibleReceiveMax(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+    };
+
+    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.IncompatibleReceiveMax);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.ApplicationError);
+    assertThat(request.requestFrames().stream()).isEmpty();
   }
-  /////////////////
-  // Fixed Send
-  /////////////////
 
   @Test
-  public void nextStateWithAmountSentEqualToTarget() {
-    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.TEN);
-    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- Nothing in-flight
-    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
-      PaymentTargetConditions.builder()
-        .paymentType(PaymentType.FIXED_SEND)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN) // <-- Must match amountTrackerMock.getAmountSentInSourceUnits()
-        .build()
-    ));
+  public void nextStateWithPaidFixedSend() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean checkIfFixedSendPaymentIsComplete(AmountTracker amountTracker, PaymentTargetConditions target) {
+        return true;
+      }
+    };
 
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
+    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.End);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-  }
-
-  @Test
-  public void nextStateWithAmountSentEqualToTargetWithInFlight() {
-    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.TEN);
-    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Something in-flight
-    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
-      PaymentTargetConditions.builder()
-        .paymentType(PaymentType.FIXED_SEND)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN) // <-- Must match amountTrackerMock.getAmountSentInSourceUnits()
-        .build()
-    ));
-
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.Wait);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
   }
 
   // anyInFlight=false; anyAvailableToSend=false
@@ -210,197 +147,488 @@ public class AmountFilterTest {
 
   @Test
   public void nextStateWithAnyInFlightFalseAndAnyToSendFalse() {
-    this.initializeMoreToSendForFixedSend(
-      BigInteger.ONE, // <-- Total to send.
-      BigInteger.ONE, // <-- AnyLeftToSend == false
-      BigInteger.ONE,
-      BigInteger.ZERO, // <-- Any in-flight == false
-      BigInteger.ZERO
-    );
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ZERO; // <-- availableToSend == false
+      }
+    };
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- anyInFlight = false
 
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.ONE
-    );
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.End);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
   }
 
   @Test
   public void nextStateWithAnyInFlightFalseAndAnyToSendTrue() {
-    this.initializeMoreToSendForFixedSend(
-      BigInteger.valueOf(10L), // <-- Total to send.
-      BigInteger.ZERO, // <-- AnyLeftToSend == true
-      BigInteger.ZERO,
-      BigInteger.ZERO, // <-- Any in-flight == false
-      BigInteger.ZERO
-    );
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ONE; // <-- availableToSend = true
+      }
+    };
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- anyInFlight = false
 
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()
+      .filter(frame -> frame instanceof StreamMoneyFrame)
+      .findAny()).isPresent();
   }
 
   @Test
   public void nextStateWithAnyInFlightTrueAndAnyToSendFalse() {
-    this.initializeMoreToSendForFixedSend(
-      BigInteger.TEN, // <-- Total to send.
-      BigInteger.TEN, // <-- AnyLeftToSend == false
-      BigInteger.TEN,
-      BigInteger.ONE, // <-- Any in-flight == true
-      BigInteger.ONE
-    );
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ZERO; // <-- availableToSend = false
+      }
+    };
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- anyInFlight = true
 
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Wait);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
   }
 
   @Test
   public void nextStateWithAnyInFlightTrueAndAnyToSendTrue() {
-    this.initializeMoreToSendForFixedSend(
-      BigInteger.TEN, // <-- Total to send.
-      BigInteger.ONE, // <-- AnyLeftToSend == true
-      BigInteger.ONE,
-      BigInteger.ONE, // <-- Any in-flight == true
-      BigInteger.ONE
-    );
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ONE; // <-- availableToSend = true
+      }
+    };
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- anyInFlight = true
 
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-  }
-
-  /////////////////
-  // Fixed Delivery
-  /////////////////
-
-  @Test
-  public void nextStateWithFixedDeliveryFullyPaid() {
-    this.initializeMoreToSendForFixedDelivery(
-      BigInteger.valueOf(2L), // <-- Total to send = 1
-      BigInteger.ONE, // <-- AmountSent = 1
-      BigInteger.valueOf(2L), // <-- AmountDelivered = 2
-      BigInteger.ZERO,// <-- Source in-flight = 0
-      BigInteger.ZERO // <-- Dest amt in-flight = 0
-    );
-
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(2L)
-    );
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.End); // <-- Stop Sending!
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()
+      .filter(frame -> frame instanceof StreamMoneyFrame)
+      .findAny()).isPresent();
   }
 
   @Test
-  public void nextStateWithFixedDeliveryNotYetFullyPaid() {
-    this.initializeMoreToSendForFixedDelivery(
-      BigInteger.valueOf(2L), // <-- Total to send = 1
-      BigInteger.ZERO, // <-- AmountSent = 1
-      BigInteger.ZERO, // <-- AmountDelivered = 2
-      BigInteger.ZERO,// <-- Source in-flight = 0
-      BigInteger.ZERO // <-- Dest amt in-flight = 0
-    );
-
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(2L)
-    );
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.Ready); // <-- Send more!
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-  }
-
-  @Test
-  public void nextStateWithFixedDeliveryNotYetFullyPaidWithEnoughInFlight() {
-    this.initializeMoreToSendForFixedDelivery(
-      BigInteger.valueOf(2L), // <-- Total to send = 1
-      BigInteger.ZERO, // <-- AmountSent = 0
-      BigInteger.ZERO, // <-- AmountDelivered = 0
-      BigInteger.ONE,// <-- Source in-flight = 0
-      BigInteger.valueOf(2L) // <-- Dest amt in-flight = 0
-    );
-
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(2L)
-    );
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.Wait); // <-- Don't send more, but wait.
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-  }
-
-  @Test
-  public void nextStateWithFixedDeliveryWithDeliveryDeficit() {
-    this.initializeMoreToSendForFixedSend(
-      BigInteger.valueOf(11L), // <-- Total to send = 1
-      BigInteger.valueOf(9L), // <-- AmountSent = 0
-      BigInteger.valueOf(18L), // <-- AmountDelivered = 0
-      BigInteger.ONE,// <-- Source in-flight = 0
-      BigInteger.valueOf(2L) // <-- Dest amt in-flight = 0
-    );
-
-    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
-      PaymentTargetConditions.builder()
-        .paymentType(PaymentType.FIXED_SEND)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.valueOf(11L))
-        .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
-        .build()
-    ));
-
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
-    );
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-  }
-
-  @Test
-  public void nextStateWithFixedDeliveryWithDeliveryDeficitThatDoesNotCompletePayment() {
-    BigInteger amountToSend = BigInteger.valueOf(13L);
-
-    this.initializeMoreToSendForFixedDelivery(
-      amountToSend,
-      BigInteger.valueOf(6L),
-      BigInteger.valueOf(11L),
-      BigInteger.ONE,
-      BigInteger.valueOf(2L)
-    );
+  public void nextStateWithFixedDeliveryAndNoMoreToBeDelivered() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+    };
 
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
         .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.valueOf(14L))
-        .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.TEN)
         .build()
     ));
 
-    when(exchangeRateTrackerMock
-      .estimateSourceAmount(any()))
-      .thenReturn(
-        ExchangeRateBound.builder()
-          .lowEndEstimate(UnsignedLong.ZERO)
-          .highEndEstimate(UnsignedLong.ZERO) // <-- Triggers bad rates.
-          .build()
-      );
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.End);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
+  }
 
-    ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(13L)
-    );
+  @Test
+  public void nextStateWithFixedDeliveryAndNoMoreAvailable() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+    };
+
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
+      PaymentTargetConditions.builder()
+        .paymentType(PaymentType.FIXED_DELIVERY)
+        .minExchangeRate(BigDecimal.ONE)
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.TEN)
+        .build()
+    ));
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.Wait);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
+  }
+
+  @Test
+  public void nextStateWithFixedDeliveryAndInvalidDeliveryLimit() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected boolean isSourceAmountDeliveryLimitInvalid(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+    };
+
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
+      PaymentTargetConditions.builder()
+        .paymentType(PaymentType.FIXED_DELIVERY)
+        .minExchangeRate(BigDecimal.ONE)
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.TEN)
+        .build()
+    ));
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
+  }
+
+  @Test
+  public void nextStateWithFixedDeliveryAndUpdatedSourceAmountWhenDeliveryLimitIsHigher() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.valueOf(10L);
+      }
+    };
+
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
+      PaymentTargetConditions.builder()
+        .paymentType(PaymentType.FIXED_DELIVERY)
+        .minExchangeRate(BigDecimal.ONE)
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.TEN)
+        .build()
+    ));
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.Ready);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.valueOf(1L));
+    assertThat(request.requestFrames().stream()
+      .filter(frame -> frame instanceof StreamMoneyFrame)
+      .findAny()).isPresent();
+  }
+
+  @Test
+  public void nextStateWithFixedDeliveryAndUpdatedSourceAmountWhenDeliveryLimitIsEqual() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.valueOf(10L);
+      }
+
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.valueOf(10L);
+      }
+    };
+
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
+      PaymentTargetConditions.builder()
+        .paymentType(PaymentType.FIXED_DELIVERY)
+        .minExchangeRate(BigDecimal.ONE)
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.TEN)
+        .build()
+    ));
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.Ready);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.valueOf(10L));
+    assertThat(request.requestFrames().stream()
+      .filter(frame -> frame instanceof StreamMoneyFrame)
+      .findAny()).isPresent();
+  }
+
+  @Test
+  public void nextStateWithFixedDeliveryAndUpdatedSourceAmountWhenDeliveryLimitIsLessThan() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.valueOf(10L);
+      }
+
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.ONE;
+      }
+    };
+
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
+      PaymentTargetConditions.builder()
+        .paymentType(PaymentType.FIXED_DELIVERY)
+        .minExchangeRate(BigDecimal.ONE)
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.TEN)
+        .build()
+    ));
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.Ready);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.valueOf(1L));
+    assertThat(request.requestFrames().stream()
+      .filter(frame -> frame instanceof StreamMoneyFrame)
+      .findAny()).isPresent();
+  }
+
+  @Test
+  public void nextStateWithDeliveryDeficitWillNotCompletePayment() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeDeliveryDeficit(UnsignedLong minDestinationAmount,
+        UnsignedLong estimatedDestinationAmount) {
+        return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
+      }
+
+      @Override
+      protected boolean willPaymentComplete(AmountTracker amountTracker, PaymentTargetConditions target,
+        BigInteger availableToSend, UnsignedLong sourceAmount, UnsignedLong estimatedDestinationAmount) {
+        return false;
+      }
+    };
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
+  }
+
+  @Test
+  public void nextStateWithDeliveryDeficitShortfallLessThanDeficit() {
+    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ZERO);
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeDeliveryDeficit(UnsignedLong minDestinationAmount,
+        UnsignedLong estimatedDestinationAmount) {
+        return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
+      }
+
+      @Override
+      protected boolean willPaymentComplete(AmountTracker amountTracker, PaymentTargetConditions target,
+        BigInteger availableToSend, UnsignedLong sourceAmount, UnsignedLong estimatedDestinationAmount) {
+        return true;
+      }
+    };
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.requestFrames().stream()).isEmpty();
+  }
+
+  @Test
+  public void testNextStateWithPositiveDeliveryDeficitButValidPayment() {
+    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ONE);
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+
+      @Override
+      protected boolean checkIfFixedDeliveryPaymentIsComplete(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return false;
+      }
+
+      @Override
+      protected boolean moreAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return true;
+      }
+
+      @Override
+      protected BigInteger computeAmountAvailableToSend(PaymentTargetConditions target) {
+        return BigInteger.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeEstimatedDestinationAmount(UnsignedLong sourceAmount) {
+        return UnsignedLong.MAX_VALUE;
+      }
+
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.ONE;
+      }
+
+      @Override
+      protected UnsignedLong computeDeliveryDeficit(UnsignedLong minDestinationAmount,
+        UnsignedLong estimatedDestinationAmount) {
+        return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
+      }
+
+      @Override
+      protected boolean willPaymentComplete(AmountTracker amountTracker, PaymentTargetConditions target,
+        BigInteger availableToSend, UnsignedLong sourceAmount, UnsignedLong estimatedDestinationAmount) {
+        return true;
+      }
+    };
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    SendState result = amountFilter.nextState(request);
+    assertThat(result).isEqualTo(SendState.Ready);
+    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
+    assertThat(request.sourceAmountIsSet()).isTrue();
+    assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.ONE);
+    assertThat(request.minDestinationAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(request.requestFrames().stream()
+      .filter(frame -> frame instanceof StreamMoneyFrame)
+      .findAny()).isPresent();
   }
 
   ////////////
@@ -409,88 +637,840 @@ public class AmountFilterTest {
 
   @Test
   public void doFilter() {
+
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+    };
+
+    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
+    final StreamPacketFilterChain streamPacketFilterChain = mock(StreamPacketFilterChain.class);
+
+    StreamPacketReply reply = amountFilter.doFilter(request, streamPacketFilterChain);
+
+    assertThat(reply.exception()).isNotPresent();
+    assertThat(reply.interledgerPreparePacket()).isNotPresent();
+    assertThat(reply.isAuthentic()).isTrue();
+    assertThat(reply.isFulfill()).isFalse();
+    assertThat(reply.isReject()).isFalse();
   }
 
   ////////////
   // updateReceiveMax
   ////////////
 
+  // TODO
   @Test
   public void updateReceiveMax() {
   }
+
+  ////////////
+  // checkForIncompatibleReceiveMax
+  ////////////
+
+  @Test
+  public void testCheckForIncompatibleReceiveMaxWhenMaxIsGreater() {
+    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.MAX_VALUE));
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkForIncompatibleReceiveMax(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void testCheckForIncompatibleReceiveMaxWhenMaxIsSmaller() {
+    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.ONE));
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.valueOf(2L))
+      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    boolean actual = amountFilter.checkForIncompatibleReceiveMax(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isTrue();
+  }
+
+  ////////////
+  //  checkIfFixedSendPaymentIsComplete
+  ////////////
+
+  @Test
+  public void checkIfFixedSendPaymentIsCompleteFalseFalse() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Not Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Not positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedSendPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void checkIfFixedSendPaymentIsCompleteFalseTrue() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Not Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- Not positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedSendPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void checkIfFixedSendPaymentIsCompleteTrueFalse() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Is positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedSendPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void checkIfFixedSendPaymentIsCompleteTrueTrue() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- Not positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedSendPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isTrue();
+  }
+
+  ////////////////
+  // checkIfFixedDeliveryPaymentIsComplete
+  ////////////////
+
+  @Test
+  public void testCheckIfFixedDeliveryPaymentIsCompleteWhenRemainingToDeliverFalseAndAnyInFlightFalse() {
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- AnyInFlight = false
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ZERO; // <-- remainingToDeliver = false
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ZERO)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedDeliveryPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isTrue();
+  }
+
+  @Test
+  public void testCheckIfFixedDeliveryPaymentIsCompleteWhenRemainingToDeliverFalseAndAnyInFlightTrue() {
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- AnyInFlight = true
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE; // <-- AnyToDeliver = false
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ZERO)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedDeliveryPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void testCheckIfFixedDeliveryPaymentIsCompleteWhenRemainingToDeliverTrueAndAnyInFlightFalse() {
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO); // <-- AnyInFlight = false
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE; // <-- AnyToDeliver = true
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ZERO)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedDeliveryPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void testCheckIfFixedDeliveryPaymentIsCompleteWhenRemainingToDeliverTrueAndAnyInFlightTrue() {
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- AnyInFlight = true
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE; // <-- AnyToDeliver = true
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ZERO)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean actual = amountFilter.checkIfFixedDeliveryPaymentIsComplete(
+      amountTrackerMock, paymentTargetConditions
+    );
+    assertThat(actual).isFalse();
+  }
+
+  ////////////
+  //  computeRemainingAmountToBeDelivered
+  ////////////
+
+  @Test
+  public void testComputeRemainingAmountToBeDeliveredIsPositive() {
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(2L));
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_DELIVERY)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(3L))
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final BigInteger actual = amountFilter
+      .computeRemainingAmountToBeDelivered(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isEqualTo(BigInteger.ONE);
+  }
+
+  @Test
+  public void testComputeRemainingAmountToBeDeliveredIsZero() {
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(3L));
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_DELIVERY)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(3L))
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final BigInteger actual = amountFilter
+      .computeRemainingAmountToBeDelivered(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isEqualTo(BigInteger.ZERO);
+  }
+
+  @Test
+  public void testComputeRemainingAmountToBeDeliveredIsNegative() {
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(4L));
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_DELIVERY)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(3L))
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final BigInteger actual = amountFilter
+      .computeRemainingAmountToBeDelivered(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isEqualTo(BigInteger.valueOf(-1));
+  }
+
+  ////////////
+  // moreAvailableToDeliver
+  ////////////
+
+  @Test
+  public void testMoreAvailableToDeliverBothZero() {
+
+    //computeRemainingAmountToBeDelivered subtract
+    // amountTracker.destInFlight ==> isPositive.
+
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ZERO;
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
+
+    final boolean actual = amountFilter.moreAvailableToDeliver(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void testMoreAvailableToDeliverBothPositive() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE;
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+
+    final boolean actual = amountFilter.moreAvailableToDeliver(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void testMoreAvailableToDeliverNegativeSum() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ZERO;
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+
+    final boolean actual = amountFilter.moreAvailableToDeliver(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isFalse();
+  }
+
+  @Test
+  public void testMoreAvailableToDeliverPositiveSum() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE;
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
+
+    final boolean actual = amountFilter.moreAvailableToDeliver(amountTrackerMock, paymentTargetConditions);
+    assertThat(actual).isTrue();
+  }
+
+  ////////////
+  // computeAmountAvailableToSend
+  ////////////
+
+  @Test
+  public void testComputeAmountAvailableToSendWhenPositive() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Not Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Not positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.valueOf(3L))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final BigInteger actual = amountFilter.computeAmountAvailableToSend(paymentTargetConditions);
+    assertThat(actual).isEqualTo(BigInteger.ONE);
+  }
+
+  @Test
+  public void testComputeAmountAvailableToSendWhenZero() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Not Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Not positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.valueOf(2L))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final BigInteger actual = amountFilter.computeAmountAvailableToSend(paymentTargetConditions);
+    assertThat(actual).isEqualTo(BigInteger.ZERO);
+  }
+
+  @Test
+  public void testComputeAmountAvailableToSendWhenNegative() {
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.valueOf(2L)); // <-- Not Equals
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Not positive
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.valueOf(2L))
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final BigInteger actual = amountFilter.computeAmountAvailableToSend(paymentTargetConditions);
+    assertThat(actual).isEqualTo(BigInteger.valueOf(-1));
+  }
+
+  ////////////
+  // computeAmountAvailableToDeliver
+  ////////////
+
+  @Test
+  public void testComputeAmountAvailableToDeliverWhenPositive() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE;
+      }
+    };
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
+
+    final BigInteger actual = amountFilter
+      .computeAmountAvailableToDeliver(amountTrackerMock, mock(PaymentTargetConditions.class));
+    assertThat(actual).isEqualTo(BigInteger.ONE);
+  }
+
+  @Test
+  public void testComputeAmountAvailableToDelliverWhenZero() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE;
+      }
+    };
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+
+    final BigInteger actual = amountFilter
+      .computeAmountAvailableToDeliver(amountTrackerMock, mock(PaymentTargetConditions.class));
+    assertThat(actual).isEqualTo(BigInteger.ZERO);
+  }
+
+  @Test
+  public void testComputeAmountAvailableToDeliverWhenNegative() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeRemainingAmountToBeDelivered(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ZERO;
+      }
+    };
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+
+    final BigInteger actual = amountFilter
+      .computeAmountAvailableToDeliver(amountTrackerMock, mock(PaymentTargetConditions.class));
+    assertThat(actual).isEqualTo(BigInteger.valueOf(-1L));
+  }
+
+  ////////////
+  //  computeSourceAmountDeliveryLimit
+  ////////////
+
+  @Test
+  public void testComputeSourceAmountDeliveryLimit() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected BigInteger computeAmountAvailableToDeliver(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return BigInteger.ONE; // <-- This minus getDestinationAmountInFlight
+      }
+    };
+
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ONE)
+      .minDeliveryAmount(BigInteger.ONE)
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    amountFilter.computeSourceAmountDeliveryLimit(amountTrackerMock, paymentTargetConditions);
+    verify(exchangeRateTrackerMock).estimateSourceAmount(any());
+  }
+
+  ////////////
+  //  isSourceDeliveryLimitInvalid
+  ////////////
+
+  @Test
+  public void testIsSourceDeliveryLimitInvalidFalse() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.ONE; // <-- This minus getDestinationAmountInFlight
+      }
+    };
+
+    assertThat(amountFilter.isSourceAmountDeliveryLimitInvalid(amountTrackerMock, mock(PaymentTargetConditions.class)))
+      .isFalse();
+  }
+
+  @Test
+  public void testIsSourceDeliveryLimitInvalidTrue() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected UnsignedLong computeSourceAmountDeliveryLimit(
+        AmountTracker amountTracker, PaymentTargetConditions target
+      ) {
+        return UnsignedLong.ZERO; // <-- This minus getDestinationAmountInFlight
+      }
+    };
+
+    assertThat(amountFilter.isSourceAmountDeliveryLimitInvalid(amountTrackerMock, mock(PaymentTargetConditions.class)))
+      .isTrue();
+  }
+
+  //////////////////
+  // computeEstimatedDestinationAmount
+  //////////////////
+
+  @Test
+  public void testComputeEstimatedDestinationAmount() {
+    UnsignedLong sourceAmount = UnsignedLong.ONE;
+    when(exchangeRateTrackerMock.estimateDestinationAmount(sourceAmount)).thenReturn(ExchangeRateBound.builder()
+      .lowEndEstimate(UnsignedLong.ONE)
+      .highEndEstimate(UnsignedLong.ZERO)
+      .build());
+    final UnsignedLong deliveryDeficit = amountFilter.computeEstimatedDestinationAmount(sourceAmount);
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ONE);
+    verify(exchangeRateTrackerMock).estimateDestinationAmount(any());
+  }
+
+  //////////////////
+  // computeMinDestinationAmount
+  //////////////////
+
+  @Test
+  public void testComputeMinDestinationAmountWhenEqual() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationAmount(
+      UnsignedLong.ONE, // <-- sourceAmount
+      BigDecimal.ONE // <-- minExchangeRate
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.valueOf(2L));
+  }
+
+  @Test
+  public void testComputeMinDestinationAmountWithHighDecimal() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationAmount(
+      UnsignedLong.ONE, // <-- sourceAmount
+      new BigDecimal("0.99") // <-- minExchangeRate
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ONE);
+  }
+
+  @Test
+  public void testComputeMinDestinationAmountWithLowDecimal() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationAmount(
+      UnsignedLong.ONE, // <-- sourceAmount
+      new BigDecimal("1.01") // <-- minExchangeRate
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.valueOf(2L));
+  }
+
+  ////////////
+  //  computeDeliveryDeficit
+  ////////////
+
+  @Test
+  public void testComputeDeliveryDeficitPositive() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+      UnsignedLong.ONE, // <-- minDestinationAmount
+      UnsignedLong.ZERO // <-- estimatedDestinationAmount
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ONE);
+  }
+
+  @Test
+  public void testComputeDeliveryDeficitZero() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+      UnsignedLong.ONE, // <-- minDestinationAmount
+      UnsignedLong.ONE // <-- estimatedDestinationAmount
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ZERO);
+  }
+
+  @Test
+  public void testComputeDeliveryDeficitZero2() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+      UnsignedLong.ZERO, // <-- minDestinationAmount
+      UnsignedLong.ZERO // <-- estimatedDestinationAmount
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ZERO);
+  }
+
+  @Test
+  public void testComputeDeliveryDeficitNegative() {
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+      UnsignedLong.ZERO, // <-- minDestinationAmount
+      UnsignedLong.ONE // <-- estimatedDestinationAmount
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ZERO);
+  }
+
+  ////////////
+  //  willPaymentComplete
+  ////////////
+
+  @Test
+  public void testWillFixedSendPaymentCompleteWhenSourceEqualsAvailable() {
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(3L))
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean willPaymentComplete = amountFilter.willPaymentComplete(
+      amountTrackerMock, paymentTargetConditions,
+      BigInteger.ONE, // <-- available to send
+      UnsignedLong.ONE, // <-- Original source amount
+      UnsignedLong.ONE // <-- Estimated delivery amount.
+    );
+
+    assertThat(willPaymentComplete).isTrue();
+  }
+
+  @Test
+  public void testWillFixedSendPaymentCompleteWhenSourceGreaterThanAvailable() {
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(3L))
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean willPaymentComplete = amountFilter.willPaymentComplete(
+      amountTrackerMock, paymentTargetConditions,
+      BigInteger.ONE, // <-- available to send
+      UnsignedLong.MAX_VALUE, // <-- Original source amount
+      UnsignedLong.ONE // <-- Estimated delivery amount.
+    );
+
+    assertThat(willPaymentComplete).isFalse();
+  }
+
+  @Test
+  public void testWillFixedSendPaymentCompleteWhenSourceLessThanAvailable() {
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(3L))
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean willPaymentComplete = amountFilter.willPaymentComplete(
+      amountTrackerMock, paymentTargetConditions,
+      BigInteger.valueOf(2L), // <-- available to send
+      UnsignedLong.ONE, // <-- Original source amount
+      UnsignedLong.ONE // <-- Estimated delivery amount.
+    );
+
+    assertThat(willPaymentComplete).isFalse();
+  }
+
+  @Test
+  public void testWillFixedDeliveryPaymentCompleteWhenMinDeliveryIsGreater() {
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_DELIVERY)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.valueOf(Long.MAX_VALUE)) // <-- Variable
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean willPaymentComplete = amountFilter.willPaymentComplete(
+      amountTrackerMock, paymentTargetConditions,
+      BigInteger.ZERO, // <-- available to send
+      UnsignedLong.ZERO, // <-- Original source amount
+      UnsignedLong.ZERO // <-- Estimated delivery amount.
+    );
+
+    assertThat(willPaymentComplete).isFalse();
+  }
+
+  @Test
+  public void testWillFixedDeliveryPaymentCompleteWhenMinDeliveryIsEqual() {
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_DELIVERY)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ONE) // <-- Variable
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean willPaymentComplete = amountFilter.willPaymentComplete(
+      amountTrackerMock, paymentTargetConditions,
+      BigInteger.ZERO, // <-- available to send
+      UnsignedLong.ZERO, // <-- Original source amount
+      UnsignedLong.ZERO // <-- Estimated delivery amount.
+    );
+
+    assertThat(willPaymentComplete).isTrue();
+  }
+
+  @Test
+  public void testWillFixedDeliveryPaymentCompleteWhenMinDeliveryIsLessThan() {
+    final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_DELIVERY)
+      .minExchangeRate(BigDecimal.ZERO)
+      .minDeliveryAmount(BigInteger.ZERO) // <-- Variable
+      .maxSourceAmount(BigInteger.ONE)
+      .build();
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
+
+    final boolean willPaymentComplete = amountFilter.willPaymentComplete(
+      amountTrackerMock, paymentTargetConditions,
+      BigInteger.ZERO, // <-- available to send
+      UnsignedLong.ZERO, // <-- Original source amount
+      UnsignedLong.ZERO // <-- Estimated delivery amount.
+    );
+
+    assertThat(willPaymentComplete).isTrue();
+  }
+
+  // TODO: Implement Kincaid's fix.
 
   //////////////////
   // Private Helpers
   //////////////////
 
-  private void initializeMoreToSendForFixedSend(
-    final BigInteger totalToSend,
-    final BigInteger amountSent, final BigInteger amountDelivered,
-    final BigInteger sourceAmountInFlight, final BigInteger destinationAmountInFlight
-  ) {
-    Objects.requireNonNull(totalToSend);
-    Objects.requireNonNull(amountSent);
-    Objects.requireNonNull(amountDelivered);
-    Objects.requireNonNull(sourceAmountInFlight);
-    Objects.requireNonNull(destinationAmountInFlight);
-
+  private void initializeHappyPath() {
+    // amountTrackerMock
     when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ZERO);
-    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(amountSent);
-    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(amountDelivered);
-    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(sourceAmountInFlight);
-    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(destinationAmountInFlight);
-
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.MAX_VALUE));
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_SEND)
         .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(totalToSend)
-        .maxSourceAmount(totalToSend)
+        .minDeliveryAmount(BigInteger.ONE)
+        .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
         .build()
     ));
 
+    // maxPacketAmountTrackerMock
+    when(maxPacketAmountTrackerMock.getMaxPacketAmount()).thenReturn(MaxPacketAmount.unknownMax());
+    when(maxPacketAmountTrackerMock.getNextMaxPacketAmount()).thenReturn(UnsignedLong.MAX_VALUE);
+    when(maxPacketAmountTrackerMock.verifiedPathCapacity()).thenReturn(UnsignedLong.ZERO);
+
+    // exchangeRateTrackerMock
+    when(exchangeRateTrackerMock.getLowerBoundRate()).thenReturn(Ratio.ONE);
+    when(exchangeRateTrackerMock.getUpperBoundRate()).thenReturn(Ratio.ONE);
     when(exchangeRateTrackerMock.estimateDestinationAmount(any())).thenReturn(
       ExchangeRateBound.builder()
-        .lowEndEstimate(UnsignedLong.valueOf(totalToSend.add(BigInteger.ONE))) // <-- Assumes 1:1 FX
-        .highEndEstimate(UnsignedLong.valueOf(totalToSend.add(BigInteger.ONE))) // <-- Assumes 1:1 FX
+        .lowEndEstimate(UnsignedLong.ONE.plus(UnsignedLong.ONE)) // <-- Assumes 1:1 FX
+        .highEndEstimate(UnsignedLong.ONE.plus(UnsignedLong.ONE)) // <-- Assumes 1:1 FX
         .build()
     );
-  }
-
-  private void initializeMoreToSendForFixedDelivery(
-    final BigInteger totalToSendInDestinationUnits,
-    final BigInteger amountSentInSendersUnits, final BigInteger amountDeliveredInDestinationUnits,
-    final BigInteger sourceAmountInFlight, final BigInteger destinationAmountInFlight
-  ) {
-    Objects.requireNonNull(totalToSendInDestinationUnits);
-    Objects.requireNonNull(amountSentInSendersUnits);
-    Objects.requireNonNull(amountDeliveredInDestinationUnits);
-    Objects.requireNonNull(sourceAmountInFlight);
-    Objects.requireNonNull(destinationAmountInFlight);
-
-    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ZERO);
-    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(amountSentInSendersUnits);
-    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(amountDeliveredInDestinationUnits);
-    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(sourceAmountInFlight);
-    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(destinationAmountInFlight);
-
-    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
-      PaymentTargetConditions.builder()
-        .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(totalToSendInDestinationUnits)
-        .maxSourceAmount(totalToSendInDestinationUnits)
-        .build()
-    ));
-
-    when(exchangeRateTrackerMock
-      .estimateDestinationAmount(any()))
-      .thenReturn(
-        ExchangeRateBound.builder()
-          .lowEndEstimate(UnsignedLong.valueOf(amountSentInSendersUnits.add(BigInteger.valueOf(2L))))
-          .highEndEstimate(UnsignedLong.valueOf(amountSentInSendersUnits.add(BigInteger.valueOf(2L))))
-          .build()
-      );
-
+    when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(
+      ExchangeRateBound.builder().lowEndEstimate(UnsignedLong.ONE).highEndEstimate(UnsignedLong.ONE).build()
+    );
   }
 }
