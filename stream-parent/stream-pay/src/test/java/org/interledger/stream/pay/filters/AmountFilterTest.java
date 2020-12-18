@@ -2,10 +2,15 @@ package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamMoneyFrame;
@@ -28,6 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
@@ -38,6 +44,8 @@ import java.util.Optional;
  * Unit test for {@link AmountFilter}.
  */
 public class AmountFilterTest {
+
+  private static final UnsignedLong UL_TEN = UnsignedLong.valueOf(10L);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -85,7 +93,7 @@ public class AmountFilterTest {
     when(amountTrackerMock.encounteredProtocolViolation()).thenReturn(true);
 
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
+      UL_TEN
     );
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.ReceiverProtocolViolation);
@@ -98,7 +106,7 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
 
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
-      UnsignedLong.valueOf(10L)
+      UL_TEN
     );
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
@@ -346,7 +354,7 @@ public class AmountFilterTest {
       protected UnsignedLong computeSourceAmountDeliveryLimit(
         AmountTracker amountTracker, PaymentTargetConditions target
       ) {
-        return UnsignedLong.valueOf(10L);
+        return UL_TEN;
       }
     };
 
@@ -396,7 +404,7 @@ public class AmountFilterTest {
       protected UnsignedLong computeSourceAmountDeliveryLimit(
         AmountTracker amountTracker, PaymentTargetConditions target
       ) {
-        return UnsignedLong.valueOf(10L);
+        return UL_TEN;
       }
     };
 
@@ -413,7 +421,7 @@ public class AmountFilterTest {
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-    assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.valueOf(10L));
+    assertThat(request.sourceAmount()).isEqualTo(UL_TEN);
     assertThat(request.requestFrames().stream()
       .filter(frame -> frame instanceof StreamMoneyFrame)
       .findAny()).isPresent();
@@ -500,7 +508,7 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficit(UnsignedLong minDestinationAmount,
+      protected UnsignedLong computeDeliveryDeficitForNextState(UnsignedLong minDestinationAmount,
         UnsignedLong estimatedDestinationAmount) {
         return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
       }
@@ -551,7 +559,7 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficit(UnsignedLong minDestinationAmount,
+      protected UnsignedLong computeDeliveryDeficitForNextState(UnsignedLong minDestinationAmount,
         UnsignedLong estimatedDestinationAmount) {
         return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
       }
@@ -607,7 +615,7 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficit(UnsignedLong minDestinationAmount,
+      protected UnsignedLong computeDeliveryDeficitForNextState(UnsignedLong minDestinationAmount,
         UnsignedLong estimatedDestinationAmount) {
         return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
       }
@@ -636,22 +644,390 @@ public class AmountFilterTest {
   ////////////
 
   @Test
-  public void doFilter() {
+  public void doFilterWithNoPaymentTargetConditionsNoReply() {
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
 
-    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
-    };
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
+    final StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.empty());
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
 
-    final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
-    final StreamPacketFilterChain streamPacketFilterChain = mock(StreamPacketFilterChain.class);
+    StreamPacketReply reply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
 
-    StreamPacketReply reply = amountFilter.doFilter(request, streamPacketFilterChain);
-
-    assertThat(reply.exception()).isNotPresent();
-    assertThat(reply.interledgerPreparePacket()).isNotPresent();
-    assertThat(reply.isAuthentic()).isTrue();
+    assertThat(reply.exception()).isEmpty();
+    assertThat(reply.interledgerPreparePacket()).isEmpty();
+    assertThat(reply.isAuthentic()).isFalse();
     assertThat(reply.isFulfill()).isFalse();
     assertThat(reply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
+    verifyNoMoreInteractions(amountTrackerMock);
   }
+
+  @Test
+  public void doFilterWithNoPaymentTargetConditionsWithFulfillWithAmtClaimedInvalid() {
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean isDestinationAmountValid(
+        UnsignedLong destinationAmount, UnsignedLong minDestinationAmount) {
+        return false;
+      }
+    };
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setMinDestinationAmount(UL_TEN)
+      .setSourceAmount(UnsignedLong.ONE);
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UnsignedLong.ONE));
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
+    verify(amountTrackerMock).addAmountDelivered(UL_TEN);
+    verify(amountTrackerMock).setEncounteredProtocolViolation();
+    verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithNoPaymentTargetConditionsWithFulfillWithNoAmtClaimed() {
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean isDestinationAmountValid(
+        UnsignedLong destinationAmount, UnsignedLong minDestinationAmount) {
+        return true;
+      }
+    };
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.empty());
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
+    verify(amountTrackerMock).addAmountDelivered(UnsignedLong.ZERO);
+    verify(amountTrackerMock).setEncounteredProtocolViolation();
+    verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithNoPaymentTargetConditionsWithFulfillWithAmtClaimedValid() {
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean isDestinationAmountValid(
+        UnsignedLong destinationAmount, UnsignedLong minDestinationAmount) {
+        return true;
+      }
+    };
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
+    verify(amountTrackerMock).addAmountDelivered(UL_TEN);
+    verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithNoPaymentTargetConditionsWithReject() {
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean isDestinationAmountValid(
+        UnsignedLong destinationAmount, UnsignedLong minDestinationAmount) {
+        return false;
+      }
+    };
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerRejectPacket rejectPacket = mock(InterledgerRejectPacket.class);
+    doCallRealMethod().when(rejectPacket).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(rejectPacket));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithNoPaymentTargetConditionsWithFailedPacket() {
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.empty());
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean isFailedPacket(UnsignedLong deliveryDeficit, StreamPacketReply streamPacketReply) {
+        return true;
+      }
+    };
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
+    verify(amountTrackerMock).addAmountDelivered(UL_TEN);
+    verify(amountTrackerMock).increaseDeliveryShortfall(any());
+    verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithPaymentTargetConditionsWithFulfillWithAmtClaimedValid() {
+    final PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditionsMock));
+
+    when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(ExchangeRateBound.builder()
+      .lowEndEstimate(UnsignedLong.valueOf(3L))
+      .highEndEstimate(UnsignedLong.valueOf(4L))
+      .build());
+
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected boolean isDestinationAmountValid(
+        UnsignedLong destinationAmount, UnsignedLong minDestinationAmount) {
+        return true;
+      }
+
+      @Override
+      protected UnsignedLong computeDeliveryDeficitForDoFilter(
+        UnsignedLong sourceAmount, BigDecimal minExchangeRate, UnsignedLong minDestinationAmount
+      ) {
+        return UnsignedLong.valueOf(5L);
+      }
+    };
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setMinDestinationAmount(UnsignedLong.valueOf(2L))
+      .setSourceAmount(UnsignedLong.ONE);
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.valueOf(2L));
+    verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
+    verify(amountTrackerMock).addAmountDelivered(UL_TEN);
+    verify(amountTrackerMock, times(3)).getPaymentTargetConditions();
+    verify(amountTrackerMock).reduceDeliveryShortfall(UnsignedLong.valueOf(5L));
+    verify(exchangeRateTrackerMock).estimateDestinationAmount(any());
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithPaymentTargetConditionsWithFixedSend() {
+    final PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
+    when(paymentTargetConditionsMock.paymentType()).thenReturn(PaymentType.FIXED_SEND);
+    when(paymentTargetConditionsMock.minExchangeRate()).thenReturn(BigDecimal.TEN);
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditionsMock));
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create();
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(any());
+    verify(amountTrackerMock).addToDestinationAmountInFlight(any());
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(any());
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(any());
+    verify(amountTrackerMock).addAmountSent(any());
+    verify(amountTrackerMock).addAmountDelivered(UL_TEN);
+    verify(amountTrackerMock, times(3)).getPaymentTargetConditions();
+    verify(amountTrackerMock).reduceDeliveryShortfall(any());
+    verify(exchangeRateTrackerMock).estimateDestinationAmount(any());
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void doFilterWithPaymentTargetConditionsWithFixedDelivery() {
+    final PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
+    when(paymentTargetConditionsMock.paymentType()).thenReturn(PaymentType.FIXED_DELIVERY);
+    when(paymentTargetConditionsMock.minExchangeRate()).thenReturn(BigDecimal.TEN);
+    when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditionsMock));
+
+    // Request
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create();
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
+    doCallRealMethod().when(streamPacketReplyMock).handle(any(), any());
+    final InterledgerFulfillPacket fulfillResponseMock = mock(InterledgerFulfillPacket.class);
+    doCallRealMethod().when(fulfillResponseMock).handle(any(), any());
+    when(streamPacketReplyMock.interledgerResponsePacket()).thenReturn(Optional.of(fulfillResponseMock));
+    // Chain
+    final StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(streamPacketRequestMock)).thenReturn(streamPacketReplyMock);
+
+    StreamPacketReply actualReply = amountFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+
+    assertThat(actualReply.exception()).isEmpty();
+    assertThat(actualReply.interledgerPreparePacket()).isEmpty();
+    assertThat(actualReply.isAuthentic()).isFalse();
+    assertThat(actualReply.isFulfill()).isFalse();
+    assertThat(actualReply.isReject()).isFalse();
+
+    verify(amountTrackerMock).addToSourceAmountInFlight(any());
+    verify(amountTrackerMock).addToDestinationAmountInFlight(any());
+    verify(amountTrackerMock).subtractFromSourceAmountInFlight(any());
+    verify(amountTrackerMock).subtractFromDestinationAmountInFlight(any());
+    verify(amountTrackerMock).addAmountSent(any());
+    verify(amountTrackerMock).addAmountDelivered(UL_TEN);
+    verify(amountTrackerMock, times(3)).getPaymentTargetConditions();
+    verify(amountTrackerMock).reduceDeliveryShortfall(any());
+    verify(exchangeRateTrackerMock).estimateDestinationAmount(any());
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  // Ignore reject (just logging)
+  //
 
   ////////////
   // updateReceiveMax
@@ -1270,7 +1646,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitPositive() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ONE, // <-- minDestinationAmount
       UnsignedLong.ZERO // <-- estimatedDestinationAmount
     );
@@ -1280,7 +1656,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitZero() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ONE, // <-- minDestinationAmount
       UnsignedLong.ONE // <-- estimatedDestinationAmount
     );
@@ -1290,7 +1666,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitZero2() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ZERO, // <-- minDestinationAmount
       UnsignedLong.ZERO // <-- estimatedDestinationAmount
     );
@@ -1300,7 +1676,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitNegative() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficit(
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ZERO, // <-- minDestinationAmount
       UnsignedLong.ONE // <-- estimatedDestinationAmount
     );

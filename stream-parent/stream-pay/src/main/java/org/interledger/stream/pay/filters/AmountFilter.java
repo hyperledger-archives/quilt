@@ -36,6 +36,7 @@ public class AmountFilter implements StreamPacketFilter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AmountFilter.class);
   private static final boolean NO_MORE_TO_DELIVER = false;
+  private static final boolean NOT_VALID = false;
 
   private final PaymentSharedStateTracker paymentSharedStateTracker;
 
@@ -143,7 +144,9 @@ public class AmountFilter implements StreamPacketFilter {
 
         // Only allow a destination shortfall within the allowed margins *on the final packet*.
         // If the packet is insufficient to complete the payment, the rate dropped and cannot be completed.
-        final UnsignedLong deliveryDeficit = computeDeliveryDeficit(minDestinationAmount, estimatedDestinationAmount);
+        final UnsignedLong deliveryDeficit = computeDeliveryDeficitForNextState(
+          minDestinationAmount, estimatedDestinationAmount
+        );
         if (FluentUnsignedLong.of(deliveryDeficit).isPositive()) {
           // Is it probable that this packet will complete the payment?
           boolean willPaymentComplete =
@@ -204,9 +207,9 @@ public class AmountFilter implements StreamPacketFilter {
         ).getValue();
 
       // Update the delivery shortfall, if applicable
-      final UnsignedLong baselineMinDestinationAmount =
-        this.computeMinDestinationAmount(streamPacketRequest.sourceAmount(), target.minExchangeRate());
-      deliveryDeficit = baselineMinDestinationAmount.minus(streamPacketRequest.minDestinationAmount());
+      deliveryDeficit = this.computeDeliveryDeficitForDoFilter(
+        streamPacketRequest.sourceAmount(), target.minExchangeRate(), streamPacketRequest.minDestinationAmount()
+      );
       if (FluentUnsignedLong.of(deliveryDeficit).isPositive()) {
         amountTracker.reduceDeliveryShortfall(deliveryDeficit);
       }
@@ -214,54 +217,63 @@ public class AmountFilter implements StreamPacketFilter {
 
     final StreamPacketReply streamPacketReply = filterChain.doFilter(streamPacketRequest);
 
-    Optional<UnsignedLong> destinationAmount = streamPacketReply.destinationAmountClaimed();
+    streamPacketReply.handle(
+      fulfilledStreamPacketReply -> {
+        final UnsignedLong destinationAmount = streamPacketReply.destinationAmountClaimed()
+          // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
+          // No matter what, since they fulfilled it, we must assume they got at least the minimum
+          .map(destinationAmountClaimed -> {
+            if (this.isDestinationAmountValid(destinationAmountClaimed, streamPacketRequest.minDestinationAmount())
+              == NOT_VALID) {
+              if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn(
+                  "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). "
+                    + "destinationAmountClaimed={}  minDestinationAmount={}",
+                  destinationAmountClaimed, streamPacketRequest.minDestinationAmount()
+                );
+              }
+              amountTracker.setEncounteredProtocolViolation();
+              return streamPacketRequest.minDestinationAmount();
+            } else {
+              if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(
+                  "Packet Sent and Fulfilled: sourceAmount={} destinationAmountClaimed={} minDestinationAmount={}",
+                  streamPacketRequest.sourceAmount(), destinationAmountClaimed,
+                  streamPacketRequest.minDestinationAmount()
+                );
+              }
+              return destinationAmountClaimed;
+            }
+          })
+          .orElseGet(() -> {
+            // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
+            LOGGER.warn("Ending payment: packet fulfilled with no authentic STREAM data");
+            amountTracker.setEncounteredProtocolViolation();
+            return streamPacketRequest.minDestinationAmount();
+          });
 
-    if (streamPacketReply.isFulfill()) {
-      // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
-      // No matter what, since they fulfilled it, we must assume they got at least the minimum
-      if (!streamPacketReply.destinationAmountClaimed().isPresent()) {
-        // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
-        LOGGER.warn("Ending payment: packet fulfilled with no authentic STREAM data");
-        destinationAmount = Optional.of(streamPacketRequest.minDestinationAmount());
-        amountTracker.setEncounteredProtocolViolation();
-      } else if (destinationAmount.isPresent() && FluentCompareTo.is(destinationAmount.get())
-        .lessThan(streamPacketRequest.minDestinationAmount())) {
-        if (LOGGER.isWarnEnabled()) {
-          LOGGER.warn(
-            "Ending payment: receiver violated protocol. packet below minimum exchange rate was fulfilled. "
-              + "destinationAmount={}  minDestinationAmount={}",
-            destinationAmount,
-            streamPacketRequest.minDestinationAmount()
-          );
-        }
-        destinationAmount = Optional.of(streamPacketRequest.minDestinationAmount());
-        amountTracker.setEncounteredProtocolViolation();
-      } else {
-        if (LOGGER.isTraceEnabled()) {
-          LOGGER.trace(
-            "Packet sent: sourceAmount={}  destinationAmount={} minDestinationAmount={}",
-            streamPacketRequest.sourceAmount(), destinationAmount, streamPacketRequest.minDestinationAmount()
-          );
-        }
-      }
-
-      amountTracker.addAmountSent(streamPacketRequest.sourceAmount());
-      amountTracker.addAmountDelivered(destinationAmount);
-    } else if (destinationAmount.isPresent() && FluentCompareTo.is(destinationAmount.get())
-      .lessThan(streamPacketRequest.minDestinationAmount())) {
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug(
-          "Packet rejected for insufficient rate: minDestinationAmount={} destinationAmount={}",
-          streamPacketRequest.minDestinationAmount(), destinationAmount
+        amountTracker.addAmountSent(streamPacketRequest.sourceAmount());
+        amountTracker.addAmountDelivered(destinationAmount);
+      },
+      rejectedStreamPacketReply -> {
+        final boolean destinationAmountValid = isDestinationAmountValid(
+          streamPacketReply.destinationAmountClaimed(), streamPacketRequest.minDestinationAmount()
         );
-      }
-    }
+        if (destinationAmountValid == NOT_VALID) {
+          if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn(
+              "Packet rejected for insufficient rate: minDestinationAmount={} claimedDestinationAmount={}",
+              streamPacketRequest.minDestinationAmount(), streamPacketReply.destinationAmountClaimed()
+            );
+          }
+        }
+      });
 
     amountTracker.subtractFromSourceAmountInFlight(streamPacketRequest.sourceAmount());
     amountTracker.subtractFromDestinationAmountInFlight(highEndDestinationAmount);
 
-    // If this packet failed, "refund" the delivery deficit so it may be retried
-    if (FluentUnsignedLong.of(deliveryDeficit).isPositive() && streamPacketReply.isReject()) {
+    // If this packet failed, "refund" the delivery deficit so it may be retried.
+    if (this.isFailedPacket(deliveryDeficit, streamPacketReply)) {
       amountTracker.increaseDeliveryShortfall(deliveryDeficit);
     }
 
@@ -292,6 +304,7 @@ public class AmountFilter implements StreamPacketFilter {
     return streamPacketReply;
   }
 
+  // TODO: Javadoc and UT.
   @VisibleForTesting
   protected void updateReceiveMax(final StreamPacketReply streamPacketReply) {
     Objects.requireNonNull(streamPacketReply);
@@ -314,6 +327,49 @@ public class AmountFilter implements StreamPacketFilter {
           .orGreater(receiveMax).getValue()
         );
       });
+  }
+
+  // TODO: Javadoc and UT.
+  @VisibleForTesting
+  protected boolean isFailedPacket(
+    final UnsignedLong deliveryDeficit, final StreamPacketReply streamPacketReply
+  ) {
+    Objects.requireNonNull(deliveryDeficit);
+    Objects.requireNonNull(streamPacketReply);
+    return streamPacketReply.isReject() && FluentUnsignedLong.of(deliveryDeficit).isPositive();
+  }
+
+  /**
+   * Determines if {@code destinationAmount} is valid, which is defined as being greater-than-or-equal-to the minimum
+   * destination amount.
+   *
+   * @param destinationAmount    An {@link Optional} of type {@link UnsignedLong}.
+   * @param minDestinationAmount An {@link UnsignedLong}.
+   *
+   * @return {@code true} if the destination amount is valid; {@code false} otherwise.
+   */
+  // TODO: Javadoc and UT.
+  @VisibleForTesting
+  protected boolean isDestinationAmountValid(
+    final Optional<UnsignedLong> destinationAmount, final UnsignedLong minDestinationAmount
+  ) {
+    Objects.requireNonNull(destinationAmount);
+    Objects.requireNonNull(minDestinationAmount);
+
+    return destinationAmount
+      .map(da -> isDestinationAmountValid(da, minDestinationAmount))
+      .orElse(false);
+  }
+
+  // TODO: Javadoc and UT.
+  @VisibleForTesting
+  protected boolean isDestinationAmountValid(
+    final UnsignedLong destinationAmount, final UnsignedLong minDestinationAmount
+  ) {
+    Objects.requireNonNull(destinationAmount);
+    Objects.requireNonNull(minDestinationAmount);
+
+    return FluentCompareTo.is(destinationAmount).greaterThanEqualTo(minDestinationAmount);
   }
 
   /**
@@ -539,13 +595,25 @@ public class AmountFilter implements StreamPacketFilter {
    *   dehydrating, so any negative number will be returned as {@link UnsignedLong#ZERO}.
    */
   @VisibleForTesting
-  protected UnsignedLong computeDeliveryDeficit(
+  protected UnsignedLong computeDeliveryDeficitForNextState(
     final UnsignedLong minDestinationAmount, final UnsignedLong estimatedDestinationAmount
   ) {
     Objects.requireNonNull(minDestinationAmount);
     Objects.requireNonNull(estimatedDestinationAmount);
 
     return FluentUnsignedLong.of(minDestinationAmount).minusOrZero(estimatedDestinationAmount).getValue();
+  }
+
+  // TODO: Javadoc and UT.
+  @VisibleForTesting
+  protected UnsignedLong computeDeliveryDeficitForDoFilter(
+    final UnsignedLong sourceAmount, final BigDecimal minExchangeRate, final UnsignedLong minDestinationAmount
+  ) {
+    Objects.requireNonNull(sourceAmount);
+    Objects.requireNonNull(minExchangeRate);
+    Objects.requireNonNull(minDestinationAmount);
+    final UnsignedLong baselineMinDestinationAmount = this.computeMinDestinationAmount(sourceAmount, minExchangeRate);
+    return baselineMinDestinationAmount.minus(minDestinationAmount);
   }
 
   /**

@@ -263,11 +263,9 @@ public class AmountTracker {
     this.amountSentInSourceUnitsRef.getAndAccumulate(sourceAmount.bigIntegerValue(), BigInteger::add);
   }
 
-  public void addAmountDelivered(final Optional<UnsignedLong> destinationAmount) {
+  public void addAmountDelivered(final UnsignedLong destinationAmount) {
     Objects.requireNonNull(destinationAmount);
-    destinationAmount.ifPresent(amount -> {
-      this.amountDeliveredInDestinationUnitsRef.getAndAccumulate(amount.bigIntegerValue(), BigInteger::add);
-    });
+    this.amountDeliveredInDestinationUnitsRef.getAndAccumulate(destinationAmount.bigIntegerValue(), BigInteger::add);
   }
 
   public void updateRemoteMax(final UnsignedLong remoteMax) {

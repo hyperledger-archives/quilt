@@ -1,6 +1,16 @@
 package org.interledger.stream.pay.model;
 
+import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.stream.StreamPacket;
+import org.interledger.stream.frames.StreamFrame;
+
 import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Derived;
+import org.immutables.value.Value.Immutable;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -8,14 +18,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.immutables.value.Value.Derived;
-import org.immutables.value.Value.Immutable;
-import org.interledger.core.InterledgerFulfillPacket;
-import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.InterledgerResponsePacket;
-import org.interledger.stream.StreamPacket;
-import org.interledger.stream.frames.StreamFrame;
 
 /**
  * Holds all information concerning a reply for a stream request.
@@ -51,24 +53,14 @@ public interface StreamPacketReply {
 
   /**
    * Amount the recipient claimed to receive. Omitted if no authentic STREAM reply.
-   *
-   * @deprecated Move to StreamPacketUtils? Upside is it's all in one place. Downside is it's potentially computed more
-   * than once per-packet. Consider maybe just moving this to the StreamPacket class? Once a StreamPacket is created,
-   * then calling any of these functions would only be done once.
    */
-  @Deprecated
   @Derived
   default Optional<UnsignedLong> destinationAmountClaimed() {
-    return this.streamPacket()
-      .map(StreamPacket::prepareAmount);
+    return this.streamPacket().map(StreamPacket::prepareAmount);
   }
 
   /**
    * Parsed frames from the STREAM response packet. Empty if no authentic STREAM reply.
-   *
-   * @deprecated Move to StreamPacketUtils? Upside is it's all in one place. Downside is it's potentially computed more
-   * than once per-packet. Consider maybe just moving this to the StreamPacket class? Once a StreamPacket is created,
-   * then calling any of these functions would only be done once.
    */
   @Deprecated
   default Collection<StreamFrame> frames() {
@@ -171,6 +163,7 @@ public interface StreamPacketReply {
    * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link
    *                       InterledgerFulfillPacket}.
    * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
+   *
    * @return This instance of {@link InterledgerResponsePacket}.
    */
   default StreamPacketReply handleAndReturn(
@@ -188,6 +181,7 @@ public interface StreamPacketReply {
    * @param fulfillMapper A {@link Function} to call if this packet is an instance of {@link StreamPacketFulfill}.
    * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link StreamPacketReject}.
    * @param <R>           The return type of this mapping function.
+   *
    * @return An instance of {@code R}.
    */
   default <R> Optional<R> map(

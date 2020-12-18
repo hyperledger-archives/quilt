@@ -1,24 +1,31 @@
 package org.interledger.stream.pay.filters;
 
-import java.util.Objects;
 import org.interledger.core.fluent.FluentUnsignedLong;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
+import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.ExchangeRateTracker;
-import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
+
+import java.util.Objects;
 
 /**
  * Compute the realized exchange rate from STREAM replies.
  */
 public class ExchangeRateFilter implements StreamPacketFilter {
 
+  // TODO: Add debug filter logging
   // Static because these filters will be constructed a lot.
 //  private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeRateFilter.class);
 
   private final ExchangeRateTracker exchangeRateTracker;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param exchangeRateTracker A {@link ExchangeRateTracker}.
+   */
   public ExchangeRateFilter(final ExchangeRateTracker exchangeRateTracker) {
     this.exchangeRateTracker = Objects.requireNonNull(exchangeRateTracker);
   }
