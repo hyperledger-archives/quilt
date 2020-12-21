@@ -304,12 +304,18 @@ public class AmountFilter implements StreamPacketFilter {
     return streamPacketReply;
   }
 
-  // TODO: Javadoc and UT.
+  /**
+   * Update the "receive max" for this payment by comparing the value returned (if any) by the remote receiver in a
+   * Stream Frame, but only if its smaller than what has already been seen on the payment path.
+   *
+   * @param streamPacketReply A {@link StreamPacketReply}.
+   */
   @VisibleForTesting
   protected void updateReceiveMax(final StreamPacketReply streamPacketReply) {
     Objects.requireNonNull(streamPacketReply);
 
-    StreamPacketUtils.findStreamMaxMoneyFrames(streamPacketReply.frames()).stream()
+    StreamPacketUtils.findStreamMaxMoneyFrames(streamPacketReply.frames())
+      .stream()
       .filter(streamMoneyMaxFrame -> streamMoneyMaxFrame.streamId().equals(StreamPacketUtils.DEFAULT_STREAM_ID))
       .forEach(streamMoneyMaxFrame -> {
         if (LOGGER.isTraceEnabled()) {
@@ -319,17 +325,26 @@ public class AmountFilter implements StreamPacketFilter {
           );
         }
 
-        // Note: totalReceived *can* be greater than receiveMax! (`ilp-protocol-stream` allows receiving 1% more than the receiveMax)
-        UnsignedLong receiveMax = streamMoneyMaxFrame.receiveMax();
+        // Note: totalReceived *can* be greater than receiveMaxFromStreamFrame! (`ilp-protocol-stream` allows receiving 1% more than the receiveMaxFromStreamFrame)
+        final UnsignedLong receiveMaxFromStreamFrame = streamMoneyMaxFrame.receiveMax();
         // Remote receive max can only increase
-        paymentSharedStateTracker.getAmountTracker().updateRemoteMax(FluentUnsignedLong
-          .of(paymentSharedStateTracker.getAmountTracker().getRemoteReceivedMax().orElse(UnsignedLong.ZERO))
-          .orGreater(receiveMax).getValue()
+        paymentSharedStateTracker.getAmountTracker().updateRemoteMax(FluentUnsignedLong.of(
+          paymentSharedStateTracker.getAmountTracker().getRemoteReceivedMax().orElse(UnsignedLong.ZERO)
+          ).orGreater(receiveMaxFromStreamFrame).getValue()
         );
       });
   }
 
-  // TODO: Javadoc and UT.
+  /**
+   * Determines if a packet failed to deliver any value to the receiver. To qualify as a failure, a packet must be a
+   * rejection, and also must include a positive {@code deliveryDeficit}.
+   *
+   * @param deliveryDeficit   An {@link UnsignedLong} representing the shortfall or deficit that is predicted to occur
+   *                          if another packet is transmitted to the receiver.
+   * @param streamPacketReply A {@link StreamPacketReply} from the payment path.
+   *
+   * @return {@code true} if the packet failed; {@code false} otherwise.
+   */
   @VisibleForTesting
   protected boolean isFailedPacket(
     final UnsignedLong deliveryDeficit, final StreamPacketReply streamPacketReply
@@ -340,15 +355,14 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   /**
-   * Determines if {@code destinationAmount} is valid, which is defined as being greater-than-or-equal-to the minimum
-   * destination amount.
+   * Determines if {@code destinationAmount} is valid, which is defined as being greater-than-or-equal-to {@code
+   * minDestinationAmount}.
    *
    * @param destinationAmount    An {@link Optional} of type {@link UnsignedLong}.
    * @param minDestinationAmount An {@link UnsignedLong}.
    *
    * @return {@code true} if the destination amount is valid; {@code false} otherwise.
    */
-  // TODO: Javadoc and UT.
   @VisibleForTesting
   protected boolean isDestinationAmountValid(
     final Optional<UnsignedLong> destinationAmount, final UnsignedLong minDestinationAmount
@@ -361,7 +375,15 @@ public class AmountFilter implements StreamPacketFilter {
       .orElse(false);
   }
 
-  // TODO: Javadoc and UT.
+  /**
+   * Determines if {@code destinationAmount} is valid, which is defined as being greater-than-or-equal-to {@code
+   * minDestinationAmount}.
+   *
+   * @param destinationAmount    An {@link Optional} of type {@link UnsignedLong}.
+   * @param minDestinationAmount An {@link UnsignedLong}.
+   *
+   * @return {@code true} if the destination amount is valid; {@code false} otherwise.
+   */
   @VisibleForTesting
   protected boolean isDestinationAmountValid(
     final UnsignedLong destinationAmount, final UnsignedLong minDestinationAmount
@@ -604,7 +626,17 @@ public class AmountFilter implements StreamPacketFilter {
     return FluentUnsignedLong.of(minDestinationAmount).minusOrZero(estimatedDestinationAmount).getValue();
   }
 
-  // TODO: Javadoc and UT.
+  /**
+   * Computes the delivery deficit for {@link #doFilter(StreamPacketRequest, StreamPacketFilterChain)}.
+   *
+   * @param sourceAmount         An {@link UnsignedLong} representing the original source amount in the prepare packet.
+   * @param minExchangeRate      A {@link BigDecimal} representing the minimum exchange rate to use for any FX
+   *                             calculations.
+   * @param minDestinationAmount An {@link UnsignedLong} representing the minimum destination amount allowed by the
+   *                             receiver.
+   *
+   * @return An {@link UnsignedLong} representing the delivery deficit (or zero if the result would be negative).
+   */
   @VisibleForTesting
   protected UnsignedLong computeDeliveryDeficitForDoFilter(
     final UnsignedLong sourceAmount, final BigDecimal minExchangeRate, final UnsignedLong minDestinationAmount
@@ -613,7 +645,7 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(minExchangeRate);
     Objects.requireNonNull(minDestinationAmount);
     final UnsignedLong baselineMinDestinationAmount = this.computeMinDestinationAmount(sourceAmount, minExchangeRate);
-    return baselineMinDestinationAmount.minus(minDestinationAmount);
+    return FluentUnsignedLong.of(baselineMinDestinationAmount).minusOrZero(minDestinationAmount).getValue();
   }
 
   /**

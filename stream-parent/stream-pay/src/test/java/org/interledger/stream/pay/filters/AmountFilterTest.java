@@ -13,7 +13,10 @@ import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.frames.StreamCloseFrame;
+import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
+import org.interledger.stream.frames.StreamMoneyMaxFrame;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -27,6 +30,7 @@ import org.interledger.stream.pay.trackers.MaxPacketAmountTracker;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketAmount;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
+import com.google.common.collect.Sets;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1026,16 +1030,183 @@ public class AmountFilterTest {
     verifyNoMoreInteractions(amountTrackerMock);
   }
 
-  // Ignore reject (just logging)
-  //
-
   ////////////
   // updateReceiveMax
   ////////////
-
-  // TODO
   @Test
-  public void updateReceiveMax() {
+  public void updateReceiveMaxWithNoFrames() {
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+
+    amountFilter.updateReceiveMax(streamPacketReplyMock);
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void updateReceiveMaxWithStreamFrameNotExpected() {
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    StreamFrame streamCloseFrame = StreamCloseFrame.builder()
+      .streamId(UnsignedLong.ONE)
+      .errorCode(ErrorCodes.NoError)
+      .errorMessage("foo")
+      .build();
+    when(streamPacketReplyMock.frames()).thenReturn(Sets.newHashSet(streamCloseFrame));
+
+    amountFilter.updateReceiveMax(streamPacketReplyMock);
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void updateReceiveMaxWithStreamIdNotOne() {
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    StreamMoneyMaxFrame streamMoneyMaxFrame = StreamMoneyMaxFrame.builder()
+      .receiveMax(UnsignedLong.ONE)
+      .streamId(UnsignedLong.MAX_VALUE)
+      .build();
+    when(streamPacketReplyMock.frames()).thenReturn(Sets.newHashSet(streamMoneyMaxFrame));
+
+    amountFilter.updateReceiveMax(streamPacketReplyMock);
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void updateReceiveMaxPacketReceiveMax() {
+    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.ONE));
+
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    StreamMoneyMaxFrame streamMoneyMaxFrame = StreamMoneyMaxFrame.builder()
+      .receiveMax(UnsignedLong.valueOf(3L))
+      .streamId(UnsignedLong.ONE)
+      .build();
+    when(streamPacketReplyMock.frames()).thenReturn(Sets.newHashSet(streamMoneyMaxFrame));
+
+    amountFilter.updateReceiveMax(streamPacketReplyMock);
+    verify(amountTrackerMock).updateRemoteMax(UnsignedLong.valueOf(3L));
+    verify(amountTrackerMock).getRemoteReceivedMax();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  @Test
+  public void updateReceiveMaxUsingRemoteReceivedMax() {
+    when(amountTrackerMock.getRemoteReceivedMax()).thenReturn(Optional.of(UnsignedLong.valueOf(2L)));
+
+    // Reply
+    final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
+    StreamMoneyMaxFrame streamMoneyMaxFrame = StreamMoneyMaxFrame.builder()
+      .receiveMax(UnsignedLong.ONE)
+      .streamId(UnsignedLong.ONE)
+      .build();
+    when(streamPacketReplyMock.frames()).thenReturn(Sets.newHashSet(streamMoneyMaxFrame));
+
+    amountFilter.updateReceiveMax(streamPacketReplyMock);
+    verify(amountTrackerMock).updateRemoteMax(UnsignedLong.valueOf(2L));
+    verify(amountTrackerMock).getRemoteReceivedMax();
+    verifyNoMoreInteractions(amountTrackerMock);
+  }
+
+  ////////////
+  // isFailedPacket
+  ////////////
+
+  @Test
+  public void testIsFailedPacketWithFulfillAndPositiveDeliveryDeficit() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isFailedPacket(UnsignedLong.ONE, streamPacketReplyMock)).isFalse();
+  }
+
+  @Test
+  public void testIsFailedPacketWithRejectAndPositiveDeliveryDeficit() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(true);
+    assertThat(amountFilter.isFailedPacket(UnsignedLong.ONE, streamPacketReplyMock)).isTrue();
+  }
+
+  @Test
+  public void testIsFailedPacketWithRejectAndNoDeliveryDeficit() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(true);
+    assertThat(amountFilter.isFailedPacket(UnsignedLong.ZERO, streamPacketReplyMock)).isFalse();
+  }
+
+  ////////////
+  // isDestinationAmountValid (Optional)
+  ////////////
+
+  @Test
+  public void testIsOptDestinationAmountInvalidWhenSmaller() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      Optional.of(UnsignedLong.ZERO), // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isFalse();
+  }
+
+  @Test
+  public void testIsOptDestinationAmountValidWhenEqual() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      Optional.of(UnsignedLong.ONE), // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isTrue();
+  }
+
+  @Test
+  public void testIsOptDestinationAmountValidWhenGreater() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      Optional.of(UnsignedLong.MAX_VALUE), // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isTrue();
+  }
+
+  @Test
+  public void testIsOptDestinationAmountValidWhenEmpty() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      Optional.empty(), // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isFalse();
+  }
+
+  ////////////
+  // isDestinationAmountValid
+  ////////////
+
+  @Test
+  public void testIsDestinationAmountInvalidWhenSmaller() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      UnsignedLong.ZERO, // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isFalse();
+  }
+
+  @Test
+  public void testIsDestinationAmountValidWhenEqual() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      UnsignedLong.ONE, // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isTrue();
+  }
+
+  @Test
+  public void testIsDestinationAmountValidWhenGreater() {
+    StreamPacketReply streamPacketReplyMock = mock(StreamPacketReply.class);
+    when(streamPacketReplyMock.isReject()).thenReturn(false);
+    assertThat(amountFilter.isDestinationAmountValid(
+      UnsignedLong.MAX_VALUE, // <-- destinationAmount
+      UnsignedLong.ONE) // <-- minDestinationAmount
+    ).isTrue();
   }
 
   ////////////
@@ -1641,11 +1812,11 @@ public class AmountFilterTest {
   }
 
   ////////////
-  //  computeDeliveryDeficit
+  //  computeDeliveryDeficitForNextState
   ////////////
 
   @Test
-  public void testComputeDeliveryDeficitPositive() {
+  public void testComputeDeliveryDeficitForNextStatePositive() {
     final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ONE, // <-- minDestinationAmount
       UnsignedLong.ZERO // <-- estimatedDestinationAmount
@@ -1655,7 +1826,7 @@ public class AmountFilterTest {
   }
 
   @Test
-  public void testComputeDeliveryDeficitZero() {
+  public void testComputeDeliveryDeficitForNextStateZero() {
     final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ONE, // <-- minDestinationAmount
       UnsignedLong.ONE // <-- estimatedDestinationAmount
@@ -1665,7 +1836,7 @@ public class AmountFilterTest {
   }
 
   @Test
-  public void testComputeDeliveryDeficitZero2() {
+  public void testComputeDeliveryDeficitForNextStateZero2() {
     final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ZERO, // <-- minDestinationAmount
       UnsignedLong.ZERO // <-- estimatedDestinationAmount
@@ -1675,10 +1846,52 @@ public class AmountFilterTest {
   }
 
   @Test
-  public void testComputeDeliveryDeficitNegative() {
+  public void testComputeDeliveryDeficitForNextStateNegative() {
     final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
       UnsignedLong.ZERO, // <-- minDestinationAmount
       UnsignedLong.ONE // <-- estimatedDestinationAmount
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ZERO);
+  }
+
+  ////////////
+  //  computeDeliveryDeficitForDoFilter
+  ////////////
+
+  @Test
+  public void testComputeDeliveryDeficitForDoFilterPositive() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected UnsignedLong computeMinDestinationAmount(
+        UnsignedLong sourceAmount, BigDecimal minExchangeRate
+      ) {
+        return UnsignedLong.ONE;
+      }
+    };
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForDoFilter(
+      UnsignedLong.ONE, // <-- sourceAmount
+      BigDecimal.ONE, // <-- minExchangeRate
+      UnsignedLong.ONE // <-- minDestinationAmount
+    );
+
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ZERO);
+  }
+
+  @Test
+  public void testComputeDeliveryDeficitForDoFilterNegative() {
+    this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
+      @Override
+      protected UnsignedLong computeMinDestinationAmount(
+        UnsignedLong sourceAmount, BigDecimal minExchangeRate
+      ) {
+        return UnsignedLong.ZERO;
+      }
+    };
+    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForDoFilter(
+      UnsignedLong.ONE, // <-- sourceAmount
+      BigDecimal.ONE, // <-- minExchangeRate
+      UnsignedLong.ONE // <-- minDestinationAmount
     );
 
     assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ZERO);
