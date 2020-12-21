@@ -26,8 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class AmountTracker {
 
-  //private final static Logger LOGGER = LoggerFactory.getLogger(AmountTracker.class);
-
   /**
    * Conditions that must be met for the payment to complete, and parameters of its execution.
    */
@@ -36,46 +34,99 @@ public class AmountTracker {
   /**
    * Total amount sent and fulfilled, in scaled units of the sending account.
    */
-  private AtomicReference<BigInteger> amountSentInSourceUnitsRef = new AtomicReference<>(BigInteger.ZERO);
+  private AtomicReference<BigInteger> amountSentInSourceUnitsRef;
 
   /**
    * Total amount delivered and fulfilled, in scaled units of the receiving account.
    */
-  private AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef = new AtomicReference<>(BigInteger.ZERO);
+  private AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef;
 
   /**
    * Amount sent that is yet to be fulfilled or rejected, in scaled units of the sending account.
    */
-  private AtomicReference<BigInteger> sourceAmountInFlightRef = new AtomicReference<>(BigInteger.ZERO);
+  private AtomicReference<BigInteger> sourceAmountInFlightRef;
 
   /**
    * Estimate of the amount that may be delivered from in-flight packets, in scaled units of the receiving account.
    */
-  private AtomicReference<BigInteger> destinationAmountInFlightRef = new AtomicReference<>(BigInteger.ZERO);
+  private AtomicReference<BigInteger> destinationAmountInFlightRef;
 
   /**
    * Amount in destination units allowed to be lost to rounding, below the enforced exchange rate.
    */
-  private final AtomicReference<BigInteger> availableDeliveryShortfallRef = new AtomicReference<>(BigInteger.ZERO);
+  private final AtomicReference<BigInteger> availableDeliveryShortfallRef;
 
   /**
    * Maximum amount the recipient can receive on the default stream.
    */
-  private final AtomicReference<Optional<UnsignedLong>> remoteReceivedMaxRef = new AtomicReference<>(Optional.empty());
+  private final AtomicReference<Optional<UnsignedLong>> remoteReceivedMaxRef;
 
   /**
    * Should the connection be closed because the receiver violated the STREAM protocol.
    */
-  private final AtomicBoolean encounteredProtocolViolation = new AtomicBoolean();
+  private final AtomicBoolean encounteredProtocolViolation;
 
   private final ExchangeRateTracker exchangeRateTracker;
 
+  /**
+   * No-args Constructor.
+   *
+   * @param exchangeRateTracker A {@link ExchangeRateTracker}.
+   */
   public AmountTracker(final ExchangeRateTracker exchangeRateTracker) {
-    this.exchangeRateTracker = Objects.requireNonNull(exchangeRateTracker);
-    this.paymentTargetConditionsAtomicReference = new AtomicReference<>();
+    this(
+      exchangeRateTracker,
+      new AtomicReference<>(),
+      new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(Optional.empty()),
+      new AtomicBoolean()
+    );
   }
 
-  // TODO: Javadoc
+  /**
+   * Constructor for test-purposes only.
+   */
+  @VisibleForTesting
+  protected AmountTracker(
+    final ExchangeRateTracker exchangeRateTracker,
+    final AtomicReference<PaymentTargetConditions> paymentTargetConditionsAtomicReference,
+    final AtomicReference<BigInteger> amountSentInSourceUnitsRef,
+    final AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef,
+    final AtomicReference<BigInteger> sourceAmountInFlightRef,
+    final AtomicReference<BigInteger> destinationAmountInFlightRef,
+    final AtomicReference<BigInteger> availableDeliveryShortfallRef,
+    final AtomicReference<Optional<UnsignedLong>> remoteReceivedMaxRef,
+    final AtomicBoolean encounteredProtocolViolation
+  ) {
+    this.exchangeRateTracker = Objects.requireNonNull(exchangeRateTracker);
+
+    this.paymentTargetConditionsAtomicReference = Objects.requireNonNull(paymentTargetConditionsAtomicReference);
+    this.amountSentInSourceUnitsRef = Objects.requireNonNull(amountSentInSourceUnitsRef);
+    this.amountDeliveredInDestinationUnitsRef = Objects.requireNonNull(amountDeliveredInDestinationUnitsRef);
+    this.sourceAmountInFlightRef = Objects.requireNonNull(sourceAmountInFlightRef);
+    this.destinationAmountInFlightRef = Objects.requireNonNull(destinationAmountInFlightRef);
+    this.availableDeliveryShortfallRef = Objects.requireNonNull(availableDeliveryShortfallRef);
+    this.remoteReceivedMaxRef = Objects.requireNonNull(remoteReceivedMaxRef);
+    this.encounteredProtocolViolation = Objects.requireNonNull(encounteredProtocolViolation);
+  }
+
+  /**
+   * Set the payment target details for this payment, and yield a {@link EstimatedPaymentOutcome}.
+   *
+   * @param paymentType           A {@link PaymentType}.
+   * @param minExchangeRate       A {@link BigDecimal} representing the minimum acceptable exchange-rate as indicated by
+   *                              the sender or the system.
+   * @param maxSourcePacketAmount An {@link UnsignedLong} representing the maximum packet amount that the payment path
+   *                              will accept.
+   * @param targetAmount          A {@link BigInteger} representing the target amount that we expect to send.
+   *
+   * @return A {@link EstimatedPaymentOutcome}.
+   */
+  // TODO: Unit Test
   public EstimatedPaymentOutcome setPaymentTarget(
     final PaymentType paymentType, // Unused but placeholder for Invoices.
     final BigDecimal minExchangeRate,
@@ -88,13 +139,10 @@ public class AmountTracker {
     Objects.requireNonNull(targetAmount);
     Preconditions.checkState(targetAmount.compareTo(BigInteger.ZERO) > 0, "targetAmount must be greater-than 0");
 
-    // TODO: Ensure in-flight amount are tracked properly
-
     // There must be a rate in the FX tracker or this call will fail with an exception.
     Ratio lowerBoundRate = this.exchangeRateTracker.getLowerBoundRate();
     Ratio upperBoundRate = this.exchangeRateTracker.getUpperBoundRate();
 
-    // TODO: ScaledRates are only allowed to be positive, so this check can go away.
     if (!lowerBoundRate.isPositive() || !upperBoundRate.isPositive()) {
       final String errorMessage = String.format(
         "Rate Probe discovered invalid exchange rates. lowerBoundRate=%s upperBoundRate=%s",
@@ -176,10 +224,21 @@ public class AmountTracker {
     }
   }
 
+  /**
+   * Indicate if a STREAM or other protocol violation has been encountered.
+   *
+   * @return {@code true} if a violation has occurred; {@code false} otherwise.
+   */
   public boolean encounteredProtocolViolation() {
     return encounteredProtocolViolation.get();
   }
 
+  /**
+   * As the attributes of a payment path are discovered, a {@link PaymentTargetConditions} will be assiged for future
+   * inspection.
+   *
+   * @return An optionally-present {@link PaymentTargetConditions}.
+   */
   public Optional<PaymentTargetConditions> getPaymentTargetConditions() {
     return Optional.ofNullable(this.paymentTargetConditionsAtomicReference.get());
   }
@@ -206,68 +265,126 @@ public class AmountTracker {
     return amountDeliveredInDestinationUnitsRef.get();
   }
 
+  /**
+   * The total source amount in-flight, in sender's units.
+   *
+   * @return A {@link BigInteger}.
+   */
   public BigInteger getSourceAmountInFlight() {
     return sourceAmountInFlightRef.get();
   }
 
+  /**
+   * The total destination amount in flight, in destination units.
+   *
+   * @return A {@link BigInteger}.
+   */
   public BigInteger getDestinationAmountInFlight() {
     return destinationAmountInFlightRef.get();
   }
 
+  /**
+   * The amount of shortfall in delivered units (i.e., the number of units more that would be required to actually
+   * deliver any value).
+   *
+   * @return A {@link BigInteger}.
+   */
   public BigInteger getAvailableDeliveryShortfall() {
     return this.availableDeliveryShortfallRef.get();
   }
 
-  // TODO: Unit-test with threads to validate this is safe.
+  /**
+   * Add {@code amountToAdd} to the overall number of source units that are currently in-flight.
+   *
+   * @param amountToAdd An {@link UnsignedLong}.
+   */
   public void addToSourceAmountInFlight(final UnsignedLong amountToAdd) {
     Objects.requireNonNull(amountToAdd);
     this.sourceAmountInFlightRef.getAndAccumulate(amountToAdd.bigIntegerValue(), BigInteger::add);
   }
 
-  // TODO: Unit-test with threads to validate this is safe.
+  /**
+   * Add {@code amountToAdd} to the overall number of destination units that are currently in-flight.
+   *
+   * @param amountToAdd An {@link UnsignedLong}.
+   */
   public void addToDestinationAmountInFlight(final UnsignedLong amountToAdd) {
     Objects.requireNonNull(amountToAdd);
     this.destinationAmountInFlightRef.getAndAccumulate(amountToAdd.bigIntegerValue(), BigInteger::add);
   }
 
-  // TODO: Unit-test with threads to validate this is safe.
+  /**
+   * Subtract {@code amountToSubtract} from the overall number of source units that are currently in-flight.
+   *
+   * @param amountToSubtract An {@link UnsignedLong}.
+   */
   public void subtractFromSourceAmountInFlight(final UnsignedLong amountToSubtract) {
     Objects.requireNonNull(amountToSubtract);
     this.sourceAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(), BigInteger::subtract);
   }
 
-  // TODO: Unit-test with threads to validate this is safe.
+  /**
+   * Subtract {@code amountToSubtract} from the overall number of destination units that are currently in-flight.
+   *
+   * @param amountToSubtract An {@link UnsignedLong}.
+   */
   public void subtractFromDestinationAmountInFlight(final UnsignedLong amountToSubtract) {
     Objects.requireNonNull(amountToSubtract);
     this.destinationAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(), BigInteger::subtract);
   }
 
-  // TODO: Unit-test with threads to validate this is safe.
+  /**
+   * Reduce the delivery shortfall.
+   *
+   * @param amountToReduce An {@link UnsignedLong}.
+   */
   public void reduceDeliveryShortfall(final UnsignedLong amountToReduce) {
     Objects.requireNonNull(amountToReduce);
     this.availableDeliveryShortfallRef.getAndAccumulate(amountToReduce.bigIntegerValue(), BigInteger::subtract);
   }
 
-  // TODO: Unit-test with threads to validate this is safe.
+  /**
+   * Increase the delivery shortfall.
+   *
+   * @param amountToIncrease An {@link UnsignedLong}.
+   */
   public void increaseDeliveryShortfall(final UnsignedLong amountToIncrease) {
     Objects.requireNonNull(amountToIncrease);
     this.availableDeliveryShortfallRef.getAndAccumulate(amountToIncrease.bigIntegerValue(), BigInteger::add);
   }
 
+  /**
+   * Indicate that a protocol violation was encountered.
+   */
   public void setEncounteredProtocolViolation() {
     this.encounteredProtocolViolation.set(true);
   }
 
+  /**
+   * Increase the amount sent by {@code sourceAmount}.
+   *
+   * @param sourceAmount An {@link UnsignedLong}.
+   */
   public void addAmountSent(final UnsignedLong sourceAmount) {
     Objects.requireNonNull(sourceAmount);
     this.amountSentInSourceUnitsRef.getAndAccumulate(sourceAmount.bigIntegerValue(), BigInteger::add);
   }
 
+  /**
+   * Add {@code destinationAmount} to the overall tracked total for the destination amount delivered.
+   *
+   * @param destinationAmount An {@link UnsignedLong}.
+   */
   public void addAmountDelivered(final UnsignedLong destinationAmount) {
     Objects.requireNonNull(destinationAmount);
     this.amountDeliveredInDestinationUnitsRef.getAndAccumulate(destinationAmount.bigIntegerValue(), BigInteger::add);
   }
 
+  /**
+   * Update the remote-max to {@code remoteMax}.
+   *
+   * @param remoteMax An {@link UnsignedLong}.
+   */
   public void updateRemoteMax(final UnsignedLong remoteMax) {
     Objects.requireNonNull(remoteMax);
     this.remoteReceivedMaxRef.set(Optional.of(remoteMax));

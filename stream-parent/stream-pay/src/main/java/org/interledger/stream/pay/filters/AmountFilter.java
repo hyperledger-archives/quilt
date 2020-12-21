@@ -1,5 +1,7 @@
 package org.interledger.stream.pay.filters;
 
+import static org.interledger.stream.StreamPacketUtils.DEFAULT_STREAM_ID;
+
 import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.FluentUnsignedLong;
@@ -123,7 +125,7 @@ public class AmountFilter implements StreamPacketFilter {
           }
 
           if (this.moreAvailableToDeliver(amountTracker, target) == NO_MORE_TO_DELIVER) {
-            return SendState.Wait; // TODO: Should this be ready, like JS, or wait instead?
+            return SendState.Ready;
           }
 
           if (this.isSourceAmountDeliveryLimitInvalid(amountTracker, target)) {
@@ -170,7 +172,7 @@ public class AmountFilter implements StreamPacketFilter {
         streamPacketRequest.setMinDestinationAmount(minDestinationAmount);
         streamPacketRequest.setRequestFrames(Lists.newArrayList(
           StreamMoneyFrame.builder()
-            .streamId(UnsignedLong.ONE) // TODO: Use default streamId.
+            .streamId(DEFAULT_STREAM_ID)
             .shares(UnsignedLong.ONE)
             .build())
         );
@@ -316,7 +318,7 @@ public class AmountFilter implements StreamPacketFilter {
 
     StreamPacketUtils.findStreamMaxMoneyFrames(streamPacketReply.frames())
       .stream()
-      .filter(streamMoneyMaxFrame -> streamMoneyMaxFrame.streamId().equals(StreamPacketUtils.DEFAULT_STREAM_ID))
+      .filter(streamMoneyMaxFrame -> streamMoneyMaxFrame.streamId().equals(DEFAULT_STREAM_ID))
       .forEach(streamMoneyMaxFrame -> {
         if (LOGGER.isTraceEnabled()) {
           LOGGER.trace(
