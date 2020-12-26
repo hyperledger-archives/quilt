@@ -1,19 +1,5 @@
 package org.interledger.stream.pay;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import javax.money.convert.ExchangeRate;
-import javax.money.convert.ExchangeRateProvider;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddress.AllocationScheme;
 import org.interledger.core.InterledgerPreparePacket;
@@ -49,8 +35,25 @@ import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.trackers.AssetDetailsTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
+import javax.money.convert.ExchangeRate;
+import javax.money.convert.ExchangeRateProvider;
 
 public interface StreamPayer {
 
@@ -65,6 +68,7 @@ public interface StreamPayer {
    * </ol>
    *
    * @param paymentOptions A {@link PaymentOptions} with all of the details necessary to make a payment.
+   *
    * @return A {@link CompletableFuture} that completes with a {@link Quote}.
    */
   CompletableFuture<Quote> getQuote(PaymentOptions paymentOptions) throws StreamException;
@@ -126,9 +130,10 @@ public interface StreamPayer {
 
       return CompletableFuture.supplyAsync(() -> {
 
-        final BigInteger amountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);
+        final BigInteger totalAmountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);
 
-        // TODO: Once we know the account details, ensure that the indicated currency in paymentOptions matches the account's currency
+        // TODO: Once we know the account details, ensure that the indicated currency in paymentOptions matches the
+        //  account's currency
         final StreamConnectionDetails streamConnectionDetails = this.fetchRecipientAccountDetails(paymentOptions);
         this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
 
@@ -179,7 +184,7 @@ public interface StreamPayer {
             PaymentType.FIXED_SEND,  // Invoices are fixed delivery, but not yet supported.
             minScaledExchangeRate,
             rateProbeOutcome.maxPacketAmount().value(),
-            amountToSendInSourceUnits
+            totalAmountToSendInSourceUnits
           );
 
         logger.debug("Quote complete. Assembling normalized version");
@@ -289,6 +294,7 @@ public interface StreamPayer {
      *
      * @param paymentOptions          A {@link PaymentOptions}.
      * @param streamConnectionDetails A {@link StreamConnectionDetails}.
+     *
      * @return
      */
     @VisibleForTesting
@@ -355,6 +361,7 @@ public interface StreamPayer {
      * @param rate
      * @param sourceAssetScale
      * @param destinationAssetScale
+     *
      * @return
      */
     @VisibleForTesting
@@ -381,8 +388,9 @@ public interface StreamPayer {
      * @param destinationAccountDetails The {@link AccountDetails} for the destination account.
      * @param externalExchangeRate      The {@link InterledgerPreparePacket} being routed.
      * @param slippage                  The {@link Slippage} allowed for this rate.
+     *
      * @return An {@link ScaledExchangeRate} representing the scaled exchange rate in the correct units for the
-     * destination account.
+     *   destination account.
      */
     @VisibleForTesting
     protected ScaledExchangeRate determineScaledExternalRate(

@@ -466,6 +466,7 @@ public class StreamPayerDefaultTest {
       .handle((quote, throwable) -> {
         assertThat(quote).isNull();
         assertThat(throwable).isNotNull();
+        throwable.printStackTrace();
         return throwable;
       }).get();
 
@@ -891,7 +892,7 @@ public class StreamPayerDefaultTest {
 
     assertThat(error).isNotNull();
     assertThat(error.getCause().getMessage()).contains(
-      "Rate-probed exchange-rate of 0.99 is less-than than the minimum exchange-rate of 1"
+      "Probed exchange-rate of 0.99 (floored to 0) is less-than than the minimum exchange-rate of 1 (ceiled to 1)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -960,7 +961,7 @@ public class StreamPayerDefaultTest {
 
     assertThat(error).isNotNull();
     assertThat(error.getCause().getMessage()).contains(
-      "Rate-probed exchange-rate of 0.98 is less-than than the minimum exchange-rate of 1"
+      "Probed exchange-rate of 0.98 (floored to 0) is less-than than the minimum exchange-rate of 1 (ceiled to 1)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -1117,10 +1118,10 @@ public class StreamPayerDefaultTest {
       }).get();
 
     assertThat(error).isNotNull();
-    assertThat(error.getCause().getMessage()).contains(
-      "Rate-probed exchange-rate of 86.806 is less-than than the minimum exchange-rate of 86.8056180495575233622");
+    assertThat(error.getCause().getMessage())
+      .contains("Rate enforcement may incur rounding errors. maxPacketAmount=1000 is below proposed minimum of 2619");
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
-    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
+    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
   }
 
   /**
@@ -1420,8 +1421,9 @@ public class StreamPayerDefaultTest {
         return throwable;
       }).get();
 
-    assertThat(error.getCause().getMessage())
-      .contains("Rate-probed exchange-rate of 1.0001 is less-than than the minimum exchange-rate of 1.0001");
+    assertThat(error.getCause().getMessage()).contains(
+      "Probed exchange-rate of 1.0001 (floored to 1) is less-than than the minimum exchange-rate of 1.0001 (ceiled to 2)"
+    );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
   }

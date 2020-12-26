@@ -285,7 +285,7 @@ public class AmountFilterTest {
 
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.Wait);
+    assertThat(result).isEqualTo(SendState.Ready);
     assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }

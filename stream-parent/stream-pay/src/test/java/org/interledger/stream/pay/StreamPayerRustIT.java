@@ -151,7 +151,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
   }
 
   /**
-   * Assert that a quote can be retrieved even if teh amount of XRP is too small to deliver anything to the receiver.
+   * Assert that a quote can be retrieved even if the amount of XRP is too small to deliver anything to the receiver.
    */
   @Test
   public void testGetQuoteSmallAmountOfXRP() throws ExecutionException, InterruptedException, TimeoutException {

@@ -12,6 +12,8 @@ import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentT
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -25,6 +27,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Tracks the amounts that should be sent and delivered.
  */
 public class AmountTracker {
+
+  private static final Logger logger = LoggerFactory.getLogger(AmountTracker.class);
 
   /**
    * Conditions that must be met for the payment to complete, and parameters of its execution.
@@ -126,7 +130,6 @@ public class AmountTracker {
    *
    * @return A {@link EstimatedPaymentOutcome}.
    */
-  // TODO: Unit Test
   public EstimatedPaymentOutcome setPaymentTarget(
     final PaymentType paymentType, // Unused but placeholder for Invoices.
     final BigDecimal minExchangeRate,
@@ -151,12 +154,10 @@ public class AmountTracker {
       throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
     }
 
-    // Ensure the exchange-rate is valid.
-    final Ratio minExchangeRateRatio = Ratio.from(minExchangeRate);
-    this.validateExchangeRates(lowerBoundRate, minExchangeRateRatio);
-    this.validateMinPacketAmount(
-      lowerBoundRate, minExchangeRateRatio, maxSourcePacketAmount
-    );
+    // This validation does not ensure that every use-case will succeed. Instead, it merely ensures that the FX rates
+    // that are expected to exist in the payment path will support _some_ value transfer. If this is not the case, then
+    // this check will ensure that we can preemptively abort the payment.
+    this.validateFxAndPacketSize(lowerBoundRate, Ratio.from(minExchangeRate), maxSourcePacketAmount);
 
     // To prevent the final packet from failing due to rounding, account for a small "shortfall" of 1 source unit,
     // converted to destination units, to tolerate below the enforced destination amounts from the minimum exchange
@@ -197,7 +198,7 @@ public class AmountTracker {
       // it would fail due to rounding. To account for this, increase max source amount by 1 unit.
       final BigInteger maxSourceAmount = FluentBigInteger.of(targetAmount)
         // reciprocal
-        .timesCeil(BigDecimal.ONE.divide(minExchangeRate, MathContext.DECIMAL64)).getValue()
+        .timesCeil(BigDecimal.ONE.divide(minExchangeRate, MathContext.DECIMAL128)).getValue()
         .add(BigInteger.ONE);
 
       final BigInteger minDeliveryAmount = targetAmount;
@@ -391,15 +392,26 @@ public class AmountTracker {
   }
 
   /**
-   * <p>Validates the discovered vs minimum exchange rates.</p>
+   * <p>Validates the discovered vs minimum exchange rates, as best as possible, taking into account the maximum
+   * allowed packet size for a given payment path.</p>
    *
-   * <p>In order to accommodate 1:1 FX rates with 0 slippage, as well as to accurately mimic ILP payment-path rounding
-   * behavior (i.e., the minimum destination amount is rounded up and the destination amount is rounded down, and fails
-   * if the minimum is greater than the destination amount), then this method checks to see if the 'floor(probedRate)'
-   * is greater-than-or-equal-to the `ceil(minimumRate)`. If this equation returns {@code true}, then the exchange rates
-   * are valid. Otherwise, there is an insufficient exchange rate for the packet to complete properly.</p>
+   * <p>In order for value to be delivered, the probed FX rates must be some amount larger than the minimum
+   * rate specified by the sender (after accounting for slippage). To validate those conditions, this function will
+   * attempt to mimic how a sender and intermediaries compute FX rates during a payment. For example, before allowing a
+   * payment to complete, senders will attempt to determine the anticipated payment destination amount by using the
+   * `ceil(minFxRate)`, so that any rounding errors accrue to the sender's benefit. Conversely, intermediaries will
+   * typically compute destination amounts using the `floor(actualFxRate)` so that any rounding errors accrue to the
+   * intermediaries' benefit.</p>
    *
-   * <p>In other words, in order for the rates to be accepable, one of the following must occur:</p>
+   * <p>In order to accommodate this FX behavior in a payment path, this method checks to see if the
+   * 'floor(probedRate)' is greater-than-or-equal-to the `ceil(minimumRate)`. If this equation returns {@code true},
+   * then the exchange rates are valid. Otherwise, there may be an insufficient exchange rate for the payment to
+   * complete properly, at least within the slippage bounds specified by the sender, so further computation is required
+   * in order to consider if there is a positive difference between the minium and probed FX rates, and also to ensure
+   * that the max-packet size allowed in the payment path will allow _any_ value (if no value can be transmitted via the
+   * path, then this function will throw an exception preemptively).</p>
+   *
+   * <p>In other words, in order for the rates to be acceptable, one of the following must occur:</p>
    *
    * <ul>
    *   <li>Probed rate >= minimum rate and least one of the rates is an integer, OR</li>
@@ -407,62 +419,83 @@ public class AmountTracker {
    * </ul>
    *
    * <p>Some examples that should validate via this method:</p>
+   *
    * <ul>
    *   <li>Probed rate is 2 and minimum is 1.9 => (valid)</li>
    *   <li>Probed rate is 2.1 and minimum is 2 => (valid)</li>
    *   <li>Probed rate is 2.1 and minimum is 1.9 => (valid)</li>
-   *   <li>Probed rate is 1.5 and minimum is 1.1 => (rounding errors are possible)</li>
+   *   <li>Probed rate is 1.5 and minimum is 1.1 => (rounding errors are possible, throw exception)</li>
    * </ul>
    *
-   * @param lowerBoundRate       A {@link Ratio} holding the lower-bound rate detected on the payment path.
-   * @param minExchangeRateRatio A {@link Ratio} holding the minimally acceptable exchange rate.
+   * <p>Note that this type of computation likely excludes certain payments where the probed and min FX rates are
+   * equal, and where the sender has specified that 0% slippage. For example, consider the case where probed
+   * FX rates are 1.9 and the min FX rate is 1.9. Here, floor(1.9), or 1 will be less than ceil(1.9), or 2, and the
+   * check will throw an exception. Likewise for values whose decimal repeats forever, like 4/3. However, we consider
+   * this behavior to be a valid blocking condition because senders that are attempting a cross-currency payment
+   * _should_ accept some amount of slippage, in order to give a payment the best chance of success.</p>
    *
+   * @param realProbedLowerBoundRate A {@link Ratio} holding the real (via probing) lower-bound rate detected on the
+   *                                 payment path.
+   * @param minExchangeRateRatio     A {@link Ratio} holding the minimally acceptable exchange rate, as set by the
+   *                                 sender of this payment (slippage included).
+   *
+   * @throws StreamPayerException with {@link StreamPayerException#getSendState()} equal to {@link
+   *                              SendState#ExchangeRateRoundingError} if the probed rate is not larger than the minimum
+   *                              rate, and the margin-of-error is not positive.
+   * @throws StreamPayerException with {@link StreamPayerException#getSendState()} equal to {@link
+   *                              SendState#InsufficientExchangeRate} if the maximum packet amount is not large enough
+   *                              to send _any_ value.
    * @see "https://github.com/interledgerjs/interledgerjs/issues/167"
    */
   @VisibleForTesting
-  protected void validateExchangeRates(final Ratio lowerBoundRate, final Ratio minExchangeRateRatio) {
-    Objects.requireNonNull(lowerBoundRate);
-    Objects.requireNonNull(minExchangeRateRatio);
-
-    final BigInteger floorProbedRate = lowerBoundRate.multiplyFloor(BigInteger.ONE);
-    final BigInteger ceilMinExchangeRate = minExchangeRateRatio.multiplyCeil(BigInteger.ONE);
-
-    if (FluentCompareTo.is(floorProbedRate).notGreaterThanEqualTo(ceilMinExchangeRate)) {
-      final String errorMessage = String.format(
-        "Rate-probed exchange-rate of %s is less-than than the minimum exchange-rate of %s",
-        lowerBoundRate.toBigDecimal(), minExchangeRateRatio.toBigDecimal()
-      );
-      throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
-    }
-  }
-
-  /**
-   * Packets that aren't at least this minimum source amount *may* fail due to rounding. If the max packet amount is
-   * insufficient, fail fast, since the payment is unlikely to succeed.
-   *
-   * @param lowerBoundRate        A {@link Ratio} holding the lower-bound rate detected on the payment path.
-   * @param minExchangeRateRatio  A {@link Ratio} holding the minimally acceptable exchange rate.
-   * @param maxSourcePacketAmount An {@link UnsignedLong} representing the largest amount that is valid for a single
-   *                              packet.
-   */
-  @VisibleForTesting
-  protected void validateMinPacketAmount(
-    final Ratio lowerBoundRate, final Ratio minExchangeRateRatio, final UnsignedLong maxSourcePacketAmount
+  protected void validateFxAndPacketSize(
+    final Ratio realProbedLowerBoundRate, final Ratio minExchangeRateRatio, final UnsignedLong maxSourcePacketAmount
   ) {
-    Objects.requireNonNull(lowerBoundRate);
+    Objects.requireNonNull(realProbedLowerBoundRate);
     Objects.requireNonNull(minExchangeRateRatio);
     Objects.requireNonNull(maxSourcePacketAmount);
 
-    final Ratio marginOfError = lowerBoundRate.subtract(minExchangeRateRatio);
-    final UnsignedLong minSourcePacketAmount = FluentBigInteger.of(BigInteger.ONE)
-      .timesCeil(marginOfError.reciprocal().orElse(Ratio.ONE)).orMaxUnsignedLong();
+    // try {
+    final BigInteger floorProbedRate = realProbedLowerBoundRate.multiplyFloor(BigInteger.ONE);
+    final BigInteger ceilMinExchangeRate = minExchangeRateRatio.multiplyCeil(BigInteger.ONE);
 
-    if (FluentCompareTo.is(maxSourcePacketAmount).notGreaterThanEqualTo(minSourcePacketAmount)) {
-      final String errorMessage = String.format(
-        "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",
-        maxSourcePacketAmount, minSourcePacketAmount
-      );
-      throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
+    if (FluentCompareTo.is(floorProbedRate).greaterThanEqualTo(ceilMinExchangeRate)) {
+      // Skip remaining checks/return success.
+    } else {
+      // If marginOfError < 0, return InsufficientExchangeRate
+      final Ratio marginOfError = realProbedLowerBoundRate.subtract(minExchangeRateRatio);
+      if (marginOfError.isNotPositive()) { // <-- trigger if moe is less-than-or-equal to 0 (i.e., not positive)
+        final String errorMessage = String.format(
+          "Probed exchange-rate of %s (floored to %s) is less-than than the minimum exchange-rate of %s (ceiled to %s)",
+          realProbedLowerBoundRate, floorProbedRate, minExchangeRateRatio, ceilMinExchangeRate
+        );
+        throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
+      } else { // marginOfError is 0 or positive.
+        final UnsignedLong minSourcePacketAmount = FluentBigInteger
+          .of(BigInteger.ONE)
+          .timesCeil(marginOfError.reciprocal().orElse(Ratio.ONE)) // If marginOfError is 0, reciprocal will be 1.
+          .orMaxUnsignedLong(); // Account for overflow.
+
+        // Check the min against the max...
+        if (FluentCompareTo.is(maxSourcePacketAmount).lessThan(minSourcePacketAmount)) {
+          final String errorMessage = String.format(
+            "Rate enforcement may incur rounding errors. maxPacketAmount=%s is below proposed minimum of %s",
+            maxSourcePacketAmount, minSourcePacketAmount
+          );
+          throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
+        }
+
+      }
     }
+//    } catch (IllegalStateException e) { // <-- Thrown if multiplication overflows UnsignedLong
+//      logger.error(e.getMessage(), e);
+//      final String errorMessage = String.format(
+//        "Rate enforcement may incur rounding errors. Computed value is too large for an UnsignedLong. "
+//          + "realProbedLowerBoundRate=%s minExchangeRateRatio=%s maxSourcePacketAmount=%s "
+//          + "adjustedMaxSourcePacketAmount=%s",
+//        realProbedLowerBoundRate, minExchangeRateRatio, maxSourcePacketAmount, maxSourcePacketAmount
+//      );
+//      throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
+//    }
   }
 }

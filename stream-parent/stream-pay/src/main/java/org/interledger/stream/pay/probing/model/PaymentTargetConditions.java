@@ -1,11 +1,13 @@
 package org.interledger.stream.pay.probing.model;
 
+import org.interledger.core.fluent.FluentCompareTo;
+
 import com.google.common.base.Preconditions;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
-import org.interledger.core.fluent.FluentCompareTo;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * Amount and exchange rate conditions that must be met for the payment to complete.
@@ -33,6 +35,11 @@ public interface PaymentTargetConditions {
    */
   BigInteger minDeliveryAmount();
 
+  /**
+   * The minimum acceptable exchange rate for this payment.
+   *
+   * @return A {@link BigDecimal}.
+   */
   BigDecimal minExchangeRate();
 
   @Value.Check
