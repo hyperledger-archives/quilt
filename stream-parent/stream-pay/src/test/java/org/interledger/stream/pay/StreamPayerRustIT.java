@@ -91,7 +91,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
   }
 
   /**
-   * Tests a non-uniform amount of XRP (i.e., 123) which should translate into about 29.5 USD.
+   * Tests a non-uniform amount of XRP (i.e., 123) which should translate into about 29.5 USD, where slippage relatively
+   * high at 2%.
    */
   @Test
   public void testGetQuoteFor123XRP() throws ExecutionException, InterruptedException, TimeoutException {
@@ -130,6 +131,68 @@ public class StreamPayerRustIT extends AbstractRustIT {
     // Min ExchangeRate
     assertThat(quote.minExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(238095508L),
       BigInteger.valueOf(1000000000L)));
+
+    ///////////////////
+    // EstimatedExchangeRate Assertions
+    ///////////////////
+    assertThat(quote.estimatedExchangeRate().lowerBoundRate())
+      .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
+    assertThat(quote.estimatedExchangeRate().upperBoundRate())
+      .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+    assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
+    assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
+    assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
+    assertThat(quote.estimatedExchangeRate().destinationDenomination()).isPresent();
+    assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetCode()).isEqualTo("USD");
+    assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetScale()).isEqualTo((short) 6);
+    assertThat(quote.estimatedExchangeRate().maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.UnknownMax);
+    assertThat(quote.estimatedExchangeRate().maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(quote.estimatedExchangeRate().verifiedPathCapacity().longValue()).isEqualTo(1000000000000L);
+    assertThat(quote.paymentOptions()).isEqualTo(paymentOptions);
+  }
+
+  /**
+   * Tests a non-uniform amount of XRP (i.e., 123) which should translate into about 29.5 USD, where slippage is very
+   * low (tight).
+   */
+  @Test
+  public void testGetQuoteFor123XRPWithVeryLowSlippage()
+    throws ExecutionException, InterruptedException, TimeoutException {
+    final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
+    final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
+
+    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+
+    final BigDecimal amountToSendInXrp = new BigDecimal("123");
+
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(senderAccountDetails)
+      .amountToSend(amountToSendInXrp)
+      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD))
+      .slippage(Slippage.of(Percentage.of(new BigDecimal("0.0000001")))) // <-- Don't allow much slippage.
+      .build();
+
+    final Quote quote = streamPayer.getQuote(paymentOptions).get(15, TimeUnit.SECONDS);
+
+    ///////////////////
+    // Quote Assertions
+    ///////////////////
+    // The current price of XRP is pegged at $0.2429546 USD on the test Rust Connector (see initAccounts).
+    assertThat(quote).isNotNull();
+    assertThat(quote.estimatedDuration()).isBetween(Duration.ofMillis(5), Duration.ofMillis(100));
+    assertThat(quote.sourceAccount()).isEqualTo(paymentOptions.senderAccountDetails());
+    assertThat(quote.destinationAccount().interledgerAddress().getValue()).startsWith(HOST_ADDRESS.getValue());
+    assertThat(quote.destinationAccount().denomination()).isPresent();
+    assertThat(quote.destinationAccount().denomination().get())
+      .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
+    // In Source Units.
+    assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.valueOf(123L));
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+    assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
+      .isBetween(BigInteger.valueOf(10L), BigInteger.valueOf(100L));
+    // Min ExchangeRate
+    assertThat(quote.minExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(24295457570454L),
+      BigInteger.valueOf(100000000000000L)));
 
     ///////////////////
     // EstimatedExchangeRate Assertions

@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
+/**
+ * Unit tests for {@link FluentCompareTo}.
+ */
 public class FluentCompareToTest {
 
   @Test
@@ -55,10 +58,13 @@ public class FluentCompareToTest {
   @Test
   public void isBetweenExclusive() {
     assertThat(FluentCompareTo.is(UnsignedLong.ZERO).betweenExclusive(UnsignedLong.ZERO, UnsignedLong.ONE)).isFalse();
-    assertThat(FluentCompareTo.is(UnsignedLong.ONE).betweenExclusive(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE)).isTrue();
+    assertThat(FluentCompareTo.is(UnsignedLong.ONE).betweenExclusive(UnsignedLong.ZERO, UnsignedLong.MAX_VALUE))
+      .isTrue();
     assertThat(FluentCompareTo.is(UnsignedLong.ONE).betweenExclusive(UnsignedLong.ZERO, UnsignedLong.ONE)).isFalse();
-    assertThat(FluentCompareTo.is(UnsignedLong.ZERO).betweenExclusive(UnsignedLong.ONE, UnsignedLong.MAX_VALUE)).isFalse();
-    assertThat(FluentCompareTo.is(UnsignedLong.MAX_VALUE).betweenExclusive(UnsignedLong.ZERO, UnsignedLong.ONE)).isFalse();
+    assertThat(FluentCompareTo.is(UnsignedLong.ZERO).betweenExclusive(UnsignedLong.ONE, UnsignedLong.MAX_VALUE))
+      .isFalse();
+    assertThat(FluentCompareTo.is(UnsignedLong.MAX_VALUE).betweenExclusive(UnsignedLong.ZERO, UnsignedLong.ONE))
+      .isFalse();
   }
 
 }

@@ -1,12 +1,12 @@
-package org.interledger.fx;
+package org.interledger.core.fluent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-import org.interledger.core.fluent.Percentage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import java.math.BigDecimal;
 
 /**
  * Unit tests for {@link Percentage}.

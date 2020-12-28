@@ -17,6 +17,7 @@ import java.util.Optional;
 public class InterledgerPacketUtils {
 
   // TODO: Unit test.
+  // TODO: Is this module used?
 
   private static final Logger logger = LoggerFactory.getLogger(InterledgerPacketUtils.class);
 

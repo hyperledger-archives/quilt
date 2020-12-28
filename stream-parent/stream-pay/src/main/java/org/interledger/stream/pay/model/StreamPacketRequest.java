@@ -44,7 +44,8 @@ public interface StreamPacketRequest {
   }
 
   /**
-   * Amount to send in the ILP Prepare
+   * Amount to send in the ILP Prepare. Capped at {@link UnsignedLong#MAX_VALUE} because this value corresponds to the
+   * amount field of an a Prepare packet, which per `IL-RFC-27` cannot exceed `MaxUInt64`.
    */
   @Default
   default UnsignedLong sourceAmount() {
@@ -52,7 +53,10 @@ public interface StreamPacketRequest {
   }
 
   /**
-   * Minimum destination amount to tell the recipient ("prepare amount")
+   * Specified in the STREAM packet, this is the minimum destination amount to tell the recipient to accept in the
+   * "prepare amount" in the ILP packet. For purposes of this class, this value always corresponds to the minimum
+   * acceptable amount found in a Prepare packet, which per `IL-RFC-27` cannot exceed `MaxUInt64`. Thus, this value is
+   * typed as an {@link UnsignedLong}.</p>
    */
   @Default
   default UnsignedLong minDestinationAmount() {

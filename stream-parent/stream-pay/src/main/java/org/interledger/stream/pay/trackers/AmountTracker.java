@@ -56,9 +56,11 @@ public class AmountTracker {
   private AtomicReference<BigInteger> destinationAmountInFlightRef;
 
   /**
-   * Amount in destination units allowed to be lost to rounding, below the enforced exchange rate.
+   * Amount in destination units allowed to be lost to rounding, below the enforced exchange rate. To prevent the final
+   * packet from failing due to rounding, this value allows for a small "shortfall" of 1 source unit (converted to
+   * destination units) to be acceptable without violating minimum exchange rate enforcement.
    */
-  private final AtomicReference<BigInteger> availableDeliveryShortfallRef;
+  private final AtomicReference<UnsignedLong> availableDeliveryShortfallRef;
 
   /**
    * Maximum amount the recipient can receive on the default stream.
@@ -85,7 +87,7 @@ public class AmountTracker {
       new AtomicReference<>(BigInteger.ZERO),
       new AtomicReference<>(BigInteger.ZERO),
       new AtomicReference<>(BigInteger.ZERO),
-      new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(UnsignedLong.ZERO),
       new AtomicReference<>(Optional.empty()),
       new AtomicBoolean()
     );
@@ -102,7 +104,7 @@ public class AmountTracker {
     final AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef,
     final AtomicReference<BigInteger> sourceAmountInFlightRef,
     final AtomicReference<BigInteger> destinationAmountInFlightRef,
-    final AtomicReference<BigInteger> availableDeliveryShortfallRef,
+    final AtomicReference<UnsignedLong> availableDeliveryShortfallRef,
     final AtomicReference<Optional<UnsignedLong>> remoteReceivedMaxRef,
     final AtomicBoolean encounteredProtocolViolation
   ) {
@@ -123,7 +125,8 @@ public class AmountTracker {
    *
    * @param paymentType           A {@link PaymentType}.
    * @param minExchangeRate       A {@link BigDecimal} representing the minimum acceptable exchange-rate as indicated by
-   *                              the sender or the system.
+   *                              the sender or the system from the source currency units to destination currency
+   *                              units.
    * @param maxSourcePacketAmount An {@link UnsignedLong} representing the maximum packet amount that the payment path
    *                              will accept.
    * @param targetAmount          A {@link BigInteger} representing the target amount that we expect to send.
@@ -132,6 +135,7 @@ public class AmountTracker {
    */
   public EstimatedPaymentOutcome setPaymentTarget(
     final PaymentType paymentType, // Unused but placeholder for Invoices.
+    // TODO: Use Ratio.
     final BigDecimal minExchangeRate,
     final UnsignedLong maxSourcePacketAmount,
     // TODO: Consider ScaledAmount?
@@ -163,7 +167,7 @@ public class AmountTracker {
     // converted to destination units, to tolerate below the enforced destination amounts from the minimum exchange
     // rate.
     this.availableDeliveryShortfallRef.set(
-      FluentBigInteger.of(BigInteger.ONE).timesCeil(minExchangeRate).getValue()
+      Ratio.from(minExchangeRate).multiplyCeilOrZero(UnsignedLong.ONE)
     );
 
     if (paymentType == PaymentType.FIXED_SEND) {
@@ -176,9 +180,9 @@ public class AmountTracker {
 
       this.paymentTargetConditionsAtomicReference.set(PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_SEND)
-        .minDeliveryAmount(minDeliveryAmount)
-        .maxSourceAmount(maxSourceAmount)
-        .minExchangeRate(minExchangeRate)
+        .minPaymentAmountInDestinationUnits(minDeliveryAmount)
+        .maxPaymentAmountInSenderUnits(maxSourceAmount)
+        .minExchangeRate(Ratio.from(minExchangeRate)) // TODO: Use Ratio
         .build());
 
       return EstimatedPaymentOutcome.builder()
@@ -207,9 +211,9 @@ public class AmountTracker {
 
       this.paymentTargetConditionsAtomicReference.set(PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minDeliveryAmount(minDeliveryAmount)
-        .maxSourceAmount(maxSourceAmount)
-        .minExchangeRate(minExchangeRate)
+        .minPaymentAmountInDestinationUnits(minDeliveryAmount)
+        .maxPaymentAmountInSenderUnits(maxSourceAmount)
+        .minExchangeRate(Ratio.from(minExchangeRate)) // TODO: Use Ratio
         .build());
 
       return EstimatedPaymentOutcome.builder()
@@ -288,9 +292,9 @@ public class AmountTracker {
    * The amount of shortfall in delivered units (i.e., the number of units more that would be required to actually
    * deliver any value).
    *
-   * @return A {@link BigInteger}.
+   * @return A {@link UnsignedLong}.
    */
-  public BigInteger getAvailableDeliveryShortfall() {
+  public UnsignedLong getAvailableDeliveryShortfall() {
     return this.availableDeliveryShortfallRef.get();
   }
 
@@ -327,21 +331,36 @@ public class AmountTracker {
   /**
    * Subtract {@code amountToSubtract} from the overall number of destination units that are currently in-flight.
    *
-   * @param amountToSubtract An {@link UnsignedLong}.
+   * @param amountToSubtract An {@link UnsignedLong} to subtract from the overall amount of in-flight destination
+   *                         units.
    */
   public void subtractFromDestinationAmountInFlight(final UnsignedLong amountToSubtract) {
     Objects.requireNonNull(amountToSubtract);
-    this.destinationAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(), BigInteger::subtract);
+    this.destinationAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(),
+      (previous, valToSubtract) -> {
+        if (FluentCompareTo.is(previous).lessThan(valToSubtract)) {
+          return BigInteger.ZERO;
+        } else {
+          return previous.subtract(valToSubtract);
+        }
+      });
   }
 
   /**
-   * Reduce the delivery shortfall.
+   * Reduce the delivery shortfall, but not below zero.
    *
    * @param amountToReduce An {@link UnsignedLong}.
    */
   public void reduceDeliveryShortfall(final UnsignedLong amountToReduce) {
     Objects.requireNonNull(amountToReduce);
-    this.availableDeliveryShortfallRef.getAndAccumulate(amountToReduce.bigIntegerValue(), BigInteger::subtract);
+    this.availableDeliveryShortfallRef.getAndAccumulate(amountToReduce,
+      (previous, $) -> {
+        if (FluentCompareTo.is(previous).lessThan($)) {
+          return UnsignedLong.ZERO;
+        } else {
+          return previous.minus($);
+        }
+      });
   }
 
   /**
@@ -351,7 +370,7 @@ public class AmountTracker {
    */
   public void increaseDeliveryShortfall(final UnsignedLong amountToIncrease) {
     Objects.requireNonNull(amountToIncrease);
-    this.availableDeliveryShortfallRef.getAndAccumulate(amountToIncrease.bigIntegerValue(), BigInteger::add);
+    this.availableDeliveryShortfallRef.getAndAccumulate(amountToIncrease, UnsignedLong::plus);
   }
 
   /**

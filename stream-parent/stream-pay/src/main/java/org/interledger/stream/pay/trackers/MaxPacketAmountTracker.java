@@ -4,24 +4,26 @@ import static org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPack
 import static org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketState.PreciseMax;
 import static org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketState.UnknownMax;
 
+import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.core.fluent.FluentUnsignedLong;
+import org.interledger.core.fluent.InterledgerPacketUtils;
+import org.interledger.core.fluent.Ratio;
+
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value;
+import org.immutables.value.Value.Default;
+import org.immutables.value.Value.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.immutables.value.Value;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Immutable;
-import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.core.fluent.FluentUnsignedLong;
-import org.interledger.core.fluent.InterledgerPacketUtils;
-import org.interledger.core.fluent.Ratio;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tracks the Max Packet Amount for a given payment path.
@@ -84,7 +86,8 @@ public class MaxPacketAmountTracker {
         // Convert remote max packet amount into source units
         final Ratio exchangeRate = Ratio.from(sourceAmount, totalReceivedByRemote);
         // newMaxAmount <= sourceAmount because remoteMaximum / totalReceivedByRemote is < 1
-        final UnsignedLong newMaxAmount = FluentUnsignedLong.of(remoteMaximum).timesFloor(exchangeRate).getValue();
+        final UnsignedLong newMaxAmount = FluentUnsignedLong.of(remoteMaximum).timesFloorOrZero(exchangeRate)
+          .getValue();
         return Optional.<MaxPacketAmount>of(
           MaxPacketAmount.builder().maxPacketState(PreciseMax).value(newMaxAmount).build()
         );
@@ -229,7 +232,7 @@ public class MaxPacketAmountTracker {
         return Optional.of(this.getMaxPacketAmount().value())
           .map(FluentUnsignedLong::of)
           .map(ful -> ful.minusOrZero(verifiedPathCapacitySnapshot))
-          .map(ful -> ful.divideCeil(UnsignedLong.valueOf(2)))
+          .map(FluentUnsignedLong::halfCeil)
           .map(FluentUnsignedLong::getValue)
           .map(ul -> ul.plus(verifiedPathCapacitySnapshot))
           .get(); // <-- Will always be present due to the usage of `Optional.of()` above.

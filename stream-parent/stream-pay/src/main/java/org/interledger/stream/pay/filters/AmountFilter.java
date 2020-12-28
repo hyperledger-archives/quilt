@@ -65,7 +65,7 @@ public class AmountFilter implements StreamPacketFilter {
         if (this.checkForIncompatibleReceiveMax(amountTracker, target)) {
           LOGGER.error(String.format(
             "Ending payment: minimum delivery amount is too much for recipient. minDeliveryAmount={} remoteReceiveMax={}",
-            target.minDeliveryAmount(), amountTracker.getRemoteReceivedMax()
+            target.minPaymentAmountInDestinationUnits(), amountTracker.getRemoteReceivedMax()
           ));
           streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.ApplicationError);
           return SendState.IncompatibleReceiveMax;
@@ -108,7 +108,7 @@ public class AmountFilter implements StreamPacketFilter {
         // Compute source amount (always positive)
         final UnsignedLong maxPacketAmount = paymentSharedStateTracker.getMaxPacketAmountTracker()
           .getNextMaxPacketAmount();
-        UnsignedLong sourceAmount = FluentUnsignedLong
+        UnsignedLong sourcePacketAmount = FluentUnsignedLong
           .of(FluentBigInteger.of(availableToSend).orMaxUnsignedLong()).orLesser(maxPacketAmount).getValue();
 
         // Check if fixed delivery payment is complete, and apply limits
@@ -117,7 +117,7 @@ public class AmountFilter implements StreamPacketFilter {
           if (paidFixedDelivery) {
             if (LOGGER.isDebugEnabled()) {
               LOGGER.debug("Payment complete: paid fixed destination amount. {} of {}",
-                amountTracker.getAmountDeliveredInDestinationUnits(), target.minDeliveryAmount()
+                amountTracker.getAmountDeliveredInDestinationUnits(), target.minPaymentAmountInDestinationUnits()
               );
             }
             streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
@@ -134,29 +134,31 @@ public class AmountFilter implements StreamPacketFilter {
             return SendState.InsufficientExchangeRate;
           }
 
-          final UnsignedLong sourceAmountDeliveryLimit = this.computeSourceAmountDeliveryLimit(amountTracker, target);
-          sourceAmount = FluentUnsignedLong.of(sourceAmount).orLesser(sourceAmountDeliveryLimit).getValue();
+          final UnsignedLong sourcePacketAmountDeliveryLimit = this
+            .computeSourceAmountDeliveryLimit(amountTracker, target);
+          sourcePacketAmount = FluentUnsignedLong.of(sourcePacketAmount).orLesser(sourcePacketAmountDeliveryLimit)
+            .getValue();
         }
 
-        // Enforce the minimum exchange rate, and estimate how much will be received
-        UnsignedLong minDestinationAmount = this.computeMinDestinationAmount(
+        // Enforce the minimum exchange rate, and estimate how much will be received.
+        UnsignedLong minDestinationPacketAmount = this.computeMinDestinationPacketAmount(
           streamPacketRequest.sourceAmount(), target.minExchangeRate()
         );
-        final UnsignedLong estimatedDestinationAmount = computeEstimatedDestinationAmount(sourceAmount);
+        final UnsignedLong estimatedDestinationPacketAmount = computeEstimatedDestinationAmount(sourcePacketAmount);
 
         // Only allow a destination shortfall within the allowed margins *on the final packet*.
         // If the packet is insufficient to complete the payment, the rate dropped and cannot be completed.
-        final UnsignedLong deliveryDeficit = computeDeliveryDeficitForNextState(
-          minDestinationAmount, estimatedDestinationAmount
+        final UnsignedLong packetDeliveryDeficit = computePacketDeliveryDeficitForNextState(
+          minDestinationPacketAmount, estimatedDestinationPacketAmount
         );
-        if (FluentUnsignedLong.of(deliveryDeficit).isPositive()) {
+        if (FluentUnsignedLong.of(packetDeliveryDeficit).isPositive()) {
           // Is it probable that this packet will complete the payment?
-          boolean willPaymentComplete =
-            this.willPaymentComplete(amountTracker, target, availableToSend, sourceAmount, estimatedDestinationAmount);
+          boolean willPaymentComplete = this.willPaymentComplete(
+            amountTracker, target, availableToSend, sourcePacketAmount, estimatedDestinationPacketAmount
+          );
 
           if (!willPaymentComplete ||
-            FluentCompareTo.is(amountTracker.getAvailableDeliveryShortfall())
-              .lessThan(deliveryDeficit.bigIntegerValue())
+            FluentCompareTo.is(amountTracker.getAvailableDeliveryShortfall()).lessThan(packetDeliveryDeficit)
           ) {
             if (LOGGER.isWarnEnabled()) {
               LOGGER.warn("Payment cannot complete: exchange rate dropped below minimum");
@@ -165,11 +167,11 @@ public class AmountFilter implements StreamPacketFilter {
             return SendState.InsufficientExchangeRate;
           }
 
-          minDestinationAmount = estimatedDestinationAmount;
+          minDestinationPacketAmount = estimatedDestinationPacketAmount;
         }
 
-        streamPacketRequest.setSourceAmount(sourceAmount);
-        streamPacketRequest.setMinDestinationAmount(minDestinationAmount);
+        streamPacketRequest.setSourceAmount(sourcePacketAmount);
+        streamPacketRequest.setMinDestinationAmount(minDestinationPacketAmount);
         streamPacketRequest.setRequestFrames(Lists.newArrayList(
           StreamMoneyFrame.builder()
             .streamId(DEFAULT_STREAM_ID)
@@ -192,7 +194,7 @@ public class AmountFilter implements StreamPacketFilter {
 
     final AmountTracker amountTracker = paymentSharedStateTracker.getAmountTracker();
     UnsignedLong highEndDestinationAmount = UnsignedLong.ZERO;
-    UnsignedLong deliveryDeficit = UnsignedLong.ZERO;
+    UnsignedLong packetDeliveryDeficit = UnsignedLong.ZERO;
 
     // Update in-flight amounts
     amountTracker.addToSourceAmountInFlight(streamPacketRequest.sourceAmount());
@@ -209,11 +211,11 @@ public class AmountFilter implements StreamPacketFilter {
         ).getValue();
 
       // Update the delivery shortfall, if applicable
-      deliveryDeficit = this.computeDeliveryDeficitForDoFilter(
+      packetDeliveryDeficit = this.computePacketDeliveryDeficitForDoFilter(
         streamPacketRequest.sourceAmount(), target.minExchangeRate(), streamPacketRequest.minDestinationAmount()
       );
-      if (FluentUnsignedLong.of(deliveryDeficit).isPositive()) {
-        amountTracker.reduceDeliveryShortfall(deliveryDeficit);
+      if (FluentUnsignedLong.of(packetDeliveryDeficit).isPositive()) {
+        amountTracker.reduceDeliveryShortfall(packetDeliveryDeficit);
       }
     }
 
@@ -275,8 +277,8 @@ public class AmountFilter implements StreamPacketFilter {
     amountTracker.subtractFromDestinationAmountInFlight(highEndDestinationAmount);
 
     // If this packet failed, "refund" the delivery deficit so it may be retried.
-    if (this.isFailedPacket(deliveryDeficit, streamPacketReply)) {
-      amountTracker.increaseDeliveryShortfall(deliveryDeficit);
+    if (this.isFailedPacket(packetDeliveryDeficit, streamPacketReply)) {
+      amountTracker.increaseDeliveryShortfall(packetDeliveryDeficit);
     }
 
     amountTracker.getPaymentTargetConditions().ifPresent(target -> {
@@ -285,7 +287,7 @@ public class AmountFilter implements StreamPacketFilter {
           LOGGER.trace(
             "Fixed Send Payment has sent {} of {}, {} in-flight",
             amountTracker.getAmountSentInSourceUnits(),
-            target.maxSourceAmount(),
+            target.maxPaymentAmountInSenderUnits(),
             amountTracker.getSourceAmountInFlight()
           );
         }
@@ -294,7 +296,7 @@ public class AmountFilter implements StreamPacketFilter {
           LOGGER.trace(
             "Fixed Delivery Payment has sent {} of {}, {} in-flight",
             amountTracker.getAmountDeliveredInDestinationUnits(),
-            target.minDeliveryAmount(),
+            target.minPaymentAmountInDestinationUnits(),
             amountTracker.getDestinationAmountInFlight()
           );
         }
@@ -413,10 +415,15 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(amountTracker);
     Objects.requireNonNull(target);
 
+    // NOTE: If a remote supports a receiveMax greater-than MaxUInt64, the current Java STREAM implementation will,
+    // per IL-RFC-29, decode receiveMax to MaxUInt64. Thus, if the minDeliveryAmount exceeds MaxUInt64, then it will be
+    // considered to be an invalid. This is so that receiveMax never exceeds the implementation. In these cases, the
+    // implementation should use a smaller source packet value.
+
     // Is the recipient's advertised `receiveMax` less than the fixed destination amount?
     final boolean incompatibleReceiveMax = amountTracker.getRemoteReceivedMax()
       .filter(remoteReceivedMax ->
-        FluentCompareTo.is(target.minDeliveryAmount()).greaterThan(remoteReceivedMax.bigIntegerValue())
+        FluentCompareTo.is(target.minPaymentAmountInDestinationUnits()).greaterThan(remoteReceivedMax.bigIntegerValue())
       ).isPresent();
 
     return incompatibleReceiveMax;
@@ -440,7 +447,8 @@ public class AmountFilter implements StreamPacketFilter {
 
     if (target.paymentType() == PaymentType.FIXED_SEND) {
       final boolean paidFixedSend =
-        FluentCompareTo.is(amountTracker.getAmountSentInSourceUnits()).equalTo(target.maxSourceAmount()) &&
+        FluentCompareTo.is(amountTracker.getAmountSentInSourceUnits()).equalTo(target.maxPaymentAmountInSenderUnits())
+          &&
           FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive();
       return paidFixedSend;
     } else {
@@ -487,7 +495,7 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(amountTracker);
     Objects.requireNonNull(target);
 
-    return target.minDeliveryAmount().subtract(amountTracker.getAmountDeliveredInDestinationUnits());
+    return target.minPaymentAmountInDestinationUnits().subtract(amountTracker.getAmountDeliveredInDestinationUnits());
   }
 
   /**
@@ -521,7 +529,7 @@ public class AmountFilter implements StreamPacketFilter {
   protected BigInteger computeAmountAvailableToSend(final PaymentTargetConditions target) {
     Objects.requireNonNull(target);
 
-    return target.maxSourceAmount()
+    return target.maxPaymentAmountInSenderUnits()
       .subtract(paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits())
       .subtract(paymentSharedStateTracker.getAmountTracker().getSourceAmountInFlight());
   }
@@ -544,6 +552,7 @@ public class AmountFilter implements StreamPacketFilter {
       .subtract(amountTracker.getDestinationAmountInFlight());
   }
 
+  // TODO: Is this a payment computation or a packet computation?
   @VisibleForTesting
   protected UnsignedLong computeSourceAmountDeliveryLimit(
     final AmountTracker amountTracker, final PaymentTargetConditions target
@@ -552,6 +561,8 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(target);
 
     final BigInteger availableToDeliver = this.computeAmountAvailableToDeliver(amountTracker, target);
+    // TODO: For a large payment, the amount available to deliver might exceed an UL. Thus, we probably need to be able
+    // to get an estimate from paymentSharedStateTracker.getExchangeRateTracker() that might exceed this value.
     final UnsignedLong availableToDeliverUL = FluentBigInteger.of(availableToDeliver).orMaxUnsignedLong();
 
     return this.paymentSharedStateTracker.getExchangeRateTracker()
@@ -582,26 +593,37 @@ public class AmountFilter implements StreamPacketFilter {
   @VisibleForTesting
   protected UnsignedLong computeEstimatedDestinationAmount(final UnsignedLong sourceAmount) {
     Objects.requireNonNull(sourceAmount);
+    // Using UnsignedLong is appropriate here because the ExchangeRateTracker only tracks delivered packet amounts using
+    // UnsignedLongs because nothing larger can fit in an ILPv4 packet.
     return paymentSharedStateTracker.getExchangeRateTracker().estimateDestinationAmount(sourceAmount).lowEndEstimate();
   }
 
+  // TODO: Create a Rust IT that simulates overflow conditions to verify how the code performs. E.g., when maxPacketAmt
+  // is UInt64Max, and FX is 2.0, then the min amount should be too high, and the payment should not even be attempted.
+  // We need to use this type of scenario to see when it's appropriate to default to UnsignedLong.MAX, and when it's
+  // appropriate to throw an exception.
+
   /**
-   * Compute the minimum destination amount based upon the supplied {@code sourceAmount} and {@code minExchangeRate}.
+   * Compute the minimum destination amount for a packet based upon the supplied {@code sourcePacketAmount} and {@code
+   * minExchangeRate}. The returned value is the smallest packet value that we expect the destination to accept. Note
+   * that if an overflow condition occurs, this method will return {@link UnsignedLong#ZERO}, which should have the
+   * effect of aborting a particular runloop iteration with the specified packet amounts (in-favor of smaller amounts if
+   * possible).
    *
-   * @param sourceAmount    An {@link UnsignedLong} representing the original source amount of a payment, in sender's
-   *                        units.
-   * @param minExchangeRate An {@link UnsignedLong} representing the minimum acceptable exchange rate, as discovered by
-   *                        the path and overall payment input parameters.
+   * @param sourcePacketAmount An {@link UnsignedLong} representing the original source amount of a payment, in sender's
+   *                           units.
+   * @param minExchangeRate    An {@link BigDecimal} representing the minimum acceptable exchange rate, as discovered by
+   *                           the path and overall payment input parameters.
    *
    * @return An {@link UnsignedLong} representing the minimum destination amount.
    */
   @VisibleForTesting
-  protected UnsignedLong computeMinDestinationAmount(
-    final UnsignedLong sourceAmount, final BigDecimal minExchangeRate
+  protected UnsignedLong computeMinDestinationPacketAmount(
+    final UnsignedLong sourcePacketAmount, final Ratio minExchangeRate
   ) {
-    Objects.requireNonNull(sourceAmount);
+    Objects.requireNonNull(sourcePacketAmount);
     Objects.requireNonNull(minExchangeRate);
-    return FluentUnsignedLong.of(sourceAmount).timesCeil(Ratio.from(minExchangeRate)).getValue();
+    return FluentUnsignedLong.of(sourcePacketAmount).timesCeilOrZero(minExchangeRate).getValue();
   }
 
   /**
@@ -610,74 +632,76 @@ public class AmountFilter implements StreamPacketFilter {
    * to deliver the full amount of a payment, because we need the estimate, but it's less than the minimum acceptable
    * amount, which means nothing will get delivered.
    *
-   * @param minDestinationAmount       An {@link UnsignedLong} representing the minimum acceptable destination amount,
-   *                                   in destination units.
-   * @param estimatedDestinationAmount An {@link UnsignedLong} representing the estimated amount that will be delivered,
-   *                                   in destination units.
+   * @param minDestinationPacketAmount       An {@link UnsignedLong} representing the minimum acceptable destination
+   *                                         amount, in destination units.
+   * @param estimatedDestinationPacketAmount An {@link UnsignedLong} representing the estimated amount that will be
+   *                                         delivered, in destination units.
    *
    * @return An {@link UnsignedLong} representing the anticipated delivery deficit, if any. Note that this operation is
    *   dehydrating, so any negative number will be returned as {@link UnsignedLong#ZERO}.
    */
   @VisibleForTesting
-  protected UnsignedLong computeDeliveryDeficitForNextState(
-    final UnsignedLong minDestinationAmount, final UnsignedLong estimatedDestinationAmount
+  protected UnsignedLong computePacketDeliveryDeficitForNextState(
+    final UnsignedLong minDestinationPacketAmount, final UnsignedLong estimatedDestinationPacketAmount
   ) {
-    Objects.requireNonNull(minDestinationAmount);
-    Objects.requireNonNull(estimatedDestinationAmount);
+    Objects.requireNonNull(minDestinationPacketAmount);
+    Objects.requireNonNull(estimatedDestinationPacketAmount);
 
-    return FluentUnsignedLong.of(minDestinationAmount).minusOrZero(estimatedDestinationAmount).getValue();
+    return FluentUnsignedLong.of(minDestinationPacketAmount).minusOrZero(estimatedDestinationPacketAmount).getValue();
   }
 
   /**
    * Computes the delivery deficit for {@link #doFilter(StreamPacketRequest, StreamPacketFilterChain)}.
    *
    * @param sourceAmount         An {@link UnsignedLong} representing the original source amount in the prepare packet.
-   * @param minExchangeRate      A {@link BigDecimal} representing the minimum exchange rate to use for any FX
-   *                             calculations.
+   * @param minExchangeRate      A {@link Ratio} representing the minimum exchange rate to use for any FX calculations.
    * @param minDestinationAmount An {@link UnsignedLong} representing the minimum destination amount allowed by the
    *                             receiver.
    *
    * @return An {@link UnsignedLong} representing the delivery deficit (or zero if the result would be negative).
    */
   @VisibleForTesting
-  protected UnsignedLong computeDeliveryDeficitForDoFilter(
-    final UnsignedLong sourceAmount, final BigDecimal minExchangeRate, final UnsignedLong minDestinationAmount
+  protected UnsignedLong computePacketDeliveryDeficitForDoFilter(
+    final UnsignedLong sourceAmount, final Ratio minExchangeRate, final UnsignedLong minDestinationAmount
   ) {
     Objects.requireNonNull(sourceAmount);
     Objects.requireNonNull(minExchangeRate);
     Objects.requireNonNull(minDestinationAmount);
-    final UnsignedLong baselineMinDestinationAmount = this.computeMinDestinationAmount(sourceAmount, minExchangeRate);
+    final UnsignedLong baselineMinDestinationAmount = this
+      .computeMinDestinationPacketAmount(sourceAmount, minExchangeRate);
     return FluentUnsignedLong.of(baselineMinDestinationAmount).minusOrZero(minDestinationAmount).getValue();
   }
 
   /**
-   * Determines if the payment will complete.
+   * Determines if the payment will complete by summing the amount delivered, amount in flight, and
    *
-   * @param amountTracker              A {@link AmountTracker}.
-   * @param target                     A {@link PaymentTargetConditions}.
-   * @param availableToSend            A {@link BigInteger} representing the amount available to be sent (in sender
-   *                                   units).
-   * @param sourceAmount               A {@link BigInteger} representing the overall source amount to be sent (in sender
-   *                                   units).
-   * @param estimatedDestinationAmount A {@link UnsignedLong} representing the estimated amount for the receiver, in
-   *                                   destination units.
+   * @param amountTracker                    A {@link AmountTracker}.
+   * @param target                           A {@link PaymentTargetConditions}.
+   * @param availableToSend                  A {@link BigInteger} representing the amount remaining or available to be
+   *                                         sent (in sender units) in one or more packets (i.e., the overall amount
+   *                                         left to be send).
+   * @param sourcePacketAmount               A {@link UnsignedLong} representing the overall source amount to be sent
+   *                                         (in sender units) in the next packet.
+   * @param estimatedDestinationPacketAmount A {@link UnsignedLong} representing the estimated amount that will be
+   *                                         delivered to the receiver, in destination units, for the next packet.
    *
    * @return {@code true} if the payment will complete; {@code false} if it will not.
    */
   @VisibleForTesting
   protected boolean willPaymentComplete(
-    final AmountTracker amountTracker, final PaymentTargetConditions target,
+    final AmountTracker amountTracker,
+    final PaymentTargetConditions target,
     final BigInteger availableToSend,
-    final UnsignedLong sourceAmount,
-    final UnsignedLong estimatedDestinationAmount
+    final UnsignedLong sourcePacketAmount,
+    final UnsignedLong estimatedDestinationPacketAmount
   ) {
     return target.paymentType() == PaymentType.FIXED_SEND
-      ? sourceAmount.bigIntegerValue().equals(availableToSend)
+      ? sourcePacketAmount.bigIntegerValue().equals(availableToSend)
       : FluentCompareTo.is(
         amountTracker.getAmountDeliveredInDestinationUnits()
           .add(amountTracker.getDestinationAmountInFlight())
-          .add(estimatedDestinationAmount.bigIntegerValue())
-      ).greaterThanEqualTo(target.minDeliveryAmount());
+          .add(estimatedDestinationPacketAmount.bigIntegerValue())
+      ).greaterThanEqualTo(target.minPaymentAmountInDestinationUnits());
   }
 
 }

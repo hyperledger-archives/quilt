@@ -42,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A default implementation of {@link StreamPacketFilterChain}, containing a {@link org.interledger.stream.pay.RunLoop}
- * that utilizes the following filters:
+ * A default implementation of {@link StreamPacketFilterChain}, containing a RunLoop that utilizes the following
+ * filters:
  *
  * <pre>
  *   ┌────────────────────────────────────┐
@@ -276,8 +276,8 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
 
     final StreamPacket streamPacket = StreamPacket.builder()
       .interledgerPacketType(InterledgerPacketType.PREPARE)
-      // TODO: Consider UnsignedInt for StreamPacket.
-      .prepareAmount(streamPacketRequest.minDestinationAmount()) // <-- The min amount the receiver should accept
+      // Per IL-RFC-29, this is the min amount the receiver should accept
+      .prepareAmount(streamPacketRequest.minDestinationAmount())
       .sequence(UnsignedLong.valueOf(streamPacketRequest.sequence().longValue()))
       .frames(streamPacketRequest.requestFrames())
       .build();

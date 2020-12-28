@@ -21,7 +21,7 @@ import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
-import org.interledger.stream.pay.probing.model.ExchangeRateBound;
+import org.interledger.stream.pay.probing.model.DeliveredExchangeRateBound;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.trackers.AmountTracker;
@@ -50,6 +50,7 @@ import java.util.Optional;
 public class AmountFilterTest {
 
   private static final UnsignedLong UL_TEN = UnsignedLong.valueOf(10L);
+  private static final Ratio RATIO_TEN = Ratio.builder().numerator(BigInteger.TEN).denominator(BigInteger.ONE).build();
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -122,9 +123,7 @@ public class AmountFilterTest {
   public void nextStateWithIncompatibleReceiveMax() {
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
       @Override
-      protected boolean checkForIncompatibleReceiveMax(
-        AmountTracker amountTracker, PaymentTargetConditions target
-      ) {
+      protected boolean checkForIncompatibleReceiveMax(AmountTracker amountTracker, PaymentTargetConditions target) {
         return true;
       }
     };
@@ -243,9 +242,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN)
+        .minExchangeRate(Ratio.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.TEN)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
         .build()
     ));
 
@@ -277,9 +276,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN)
+        .minExchangeRate(Ratio.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.TEN)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
         .build()
     ));
 
@@ -301,9 +300,7 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected boolean moreAvailableToDeliver(
-        AmountTracker amountTracker, PaymentTargetConditions target
-      ) {
+      protected boolean moreAvailableToDeliver(AmountTracker amountTracker, PaymentTargetConditions target) {
         return true;
       }
 
@@ -318,9 +315,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN)
+        .minExchangeRate(Ratio.ONE)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.TEN)
         .build()
     ));
 
@@ -343,9 +340,7 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected boolean moreAvailableToDeliver(
-        AmountTracker amountTracker, PaymentTargetConditions target
-      ) {
+      protected boolean moreAvailableToDeliver(AmountTracker amountTracker, PaymentTargetConditions target) {
         return true;
       }
 
@@ -365,9 +360,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN)
+        .minExchangeRate(Ratio.ONE)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.TEN)
         .build()
     ));
 
@@ -415,9 +410,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN)
+        .minExchangeRate(Ratio.ONE)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.TEN)
         .build()
     ));
 
@@ -443,9 +438,7 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected boolean moreAvailableToDeliver(
-        AmountTracker amountTracker, PaymentTargetConditions target
-      ) {
+      protected boolean moreAvailableToDeliver(AmountTracker amountTracker, PaymentTargetConditions target) {
         return true;
       }
 
@@ -465,9 +458,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.TEN)
+        .minExchangeRate(Ratio.ONE)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.TEN)
         .build()
     ));
 
@@ -512,14 +505,14 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficitForNextState(UnsignedLong minDestinationAmount,
-        UnsignedLong estimatedDestinationAmount) {
+      protected UnsignedLong computePacketDeliveryDeficitForNextState(UnsignedLong minDestinationPacketAmount,
+        UnsignedLong estimatedDestinationPacketAmount) {
         return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
       }
 
       @Override
       protected boolean willPaymentComplete(AmountTracker amountTracker, PaymentTargetConditions target,
-        BigInteger availableToSend, UnsignedLong sourceAmount, UnsignedLong estimatedDestinationAmount) {
+        BigInteger availableToSend, UnsignedLong sourcePacketAmount, UnsignedLong estimatedDestinationPacketAmount) {
         return false;
       }
     };
@@ -533,7 +526,7 @@ public class AmountFilterTest {
 
   @Test
   public void nextStateWithDeliveryDeficitShortfallLessThanDeficit() {
-    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(UnsignedLong.ZERO);
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
 
       @Override
@@ -563,14 +556,14 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficitForNextState(UnsignedLong minDestinationAmount,
-        UnsignedLong estimatedDestinationAmount) {
+      protected UnsignedLong computePacketDeliveryDeficitForNextState(UnsignedLong minDestinationPacketAmount,
+        UnsignedLong estimatedDestinationPacketAmount) {
         return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
       }
 
       @Override
       protected boolean willPaymentComplete(AmountTracker amountTracker, PaymentTargetConditions target,
-        BigInteger availableToSend, UnsignedLong sourceAmount, UnsignedLong estimatedDestinationAmount) {
+        BigInteger availableToSend, UnsignedLong sourcePacketAmount, UnsignedLong estimatedDestinationPacketAmount) {
         return true;
       }
     };
@@ -584,7 +577,7 @@ public class AmountFilterTest {
 
   @Test
   public void testNextStateWithPositiveDeliveryDeficitButValidPayment() {
-    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(UnsignedLong.ONE);
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
 
       @Override
@@ -619,14 +612,14 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficitForNextState(UnsignedLong minDestinationAmount,
-        UnsignedLong estimatedDestinationAmount) {
+      protected UnsignedLong computePacketDeliveryDeficitForNextState(UnsignedLong minDestinationPacketAmount,
+        UnsignedLong estimatedDestinationPacketAmount) {
         return UnsignedLong.ONE; // <-- So that paymentComplete inspection is triggered.
       }
 
       @Override
       protected boolean willPaymentComplete(AmountTracker amountTracker, PaymentTargetConditions target,
-        BigInteger availableToSend, UnsignedLong sourceAmount, UnsignedLong estimatedDestinationAmount) {
+        BigInteger availableToSend, UnsignedLong sourcePacketAmount, UnsignedLong estimatedDestinationPacketAmount) {
         return true;
       }
     };
@@ -895,7 +888,7 @@ public class AmountFilterTest {
     final PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditionsMock));
 
-    when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(ExchangeRateBound.builder()
+    when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(DeliveredExchangeRateBound.builder()
       .lowEndEstimate(UnsignedLong.valueOf(3L))
       .highEndEstimate(UnsignedLong.valueOf(4L))
       .build());
@@ -908,8 +901,8 @@ public class AmountFilterTest {
       }
 
       @Override
-      protected UnsignedLong computeDeliveryDeficitForDoFilter(
-        UnsignedLong sourceAmount, BigDecimal minExchangeRate, UnsignedLong minDestinationAmount
+      protected UnsignedLong computePacketDeliveryDeficitForDoFilter(
+        UnsignedLong sourceAmount, Ratio minExchangeRate, UnsignedLong minDestinationAmount
       ) {
         return UnsignedLong.valueOf(5L);
       }
@@ -954,11 +947,12 @@ public class AmountFilterTest {
   public void doFilterWithPaymentTargetConditionsWithFixedSend() {
     final PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
     when(paymentTargetConditionsMock.paymentType()).thenReturn(PaymentType.FIXED_SEND);
-    when(paymentTargetConditionsMock.minExchangeRate()).thenReturn(BigDecimal.TEN);
+    when(paymentTargetConditionsMock.minExchangeRate()).thenReturn(RATIO_TEN);
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditionsMock));
 
     // Request
-    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create();
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
     // Reply
     final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
     when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
@@ -994,11 +988,12 @@ public class AmountFilterTest {
   public void doFilterWithPaymentTargetConditionsWithFixedDelivery() {
     final PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
     when(paymentTargetConditionsMock.paymentType()).thenReturn(PaymentType.FIXED_DELIVERY);
-    when(paymentTargetConditionsMock.minExchangeRate()).thenReturn(BigDecimal.TEN);
+    when(paymentTargetConditionsMock.minExchangeRate()).thenReturn(RATIO_TEN);
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditionsMock));
 
     // Request
-    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create();
+    final ModifiableStreamPacketRequest streamPacketRequestMock = ModifiableStreamPacketRequest.create()
+      .setSourceAmount(UnsignedLong.ONE);
     // Reply
     final StreamPacketReply streamPacketReplyMock = Mockito.mock(StreamPacketReply.class);
     when(streamPacketReplyMock.destinationAmountClaimed()).thenReturn(Optional.of(UL_TEN));
@@ -1219,9 +1214,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(Long.MAX_VALUE))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1237,9 +1232,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.valueOf(2L))
-      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(2L))
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(Long.MAX_VALUE))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1260,9 +1255,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(Long.MAX_VALUE))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1279,9 +1274,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(Long.MAX_VALUE))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1298,9 +1293,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1317,9 +1312,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1347,9 +1342,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ZERO)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ZERO)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1373,9 +1368,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ZERO)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ZERO)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1399,9 +1394,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ZERO)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ZERO)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1425,9 +1420,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ZERO)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ZERO)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1446,9 +1441,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(2L));
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_DELIVERY)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(3L))
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(3L))
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1462,9 +1457,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(3L));
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_DELIVERY)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(3L))
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(3L))
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1478,9 +1473,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(4L));
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_DELIVERY)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(3L))
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(3L))
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1510,9 +1505,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
 
@@ -1533,9 +1528,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
 
@@ -1556,9 +1551,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
 
@@ -1579,9 +1574,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
 
@@ -1600,9 +1595,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.valueOf(3L))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(3L))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1617,9 +1612,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.valueOf(2L))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(2L))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1634,9 +1629,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.valueOf(2L))
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(2L))
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1716,9 +1711,9 @@ public class AmountFilterTest {
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ONE)
-      .minDeliveryAmount(BigInteger.ONE)
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ONE)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1767,10 +1762,11 @@ public class AmountFilterTest {
   @Test
   public void testComputeEstimatedDestinationAmount() {
     UnsignedLong sourceAmount = UnsignedLong.ONE;
-    when(exchangeRateTrackerMock.estimateDestinationAmount(sourceAmount)).thenReturn(ExchangeRateBound.builder()
-      .lowEndEstimate(UnsignedLong.ONE)
-      .highEndEstimate(UnsignedLong.ZERO)
-      .build());
+    when(exchangeRateTrackerMock.estimateDestinationAmount(sourceAmount))
+      .thenReturn(DeliveredExchangeRateBound.builder()
+        .lowEndEstimate(UnsignedLong.ONE)
+        .highEndEstimate(UnsignedLong.ZERO)
+        .build());
     final UnsignedLong deliveryDeficit = amountFilter.computeEstimatedDestinationAmount(sourceAmount);
 
     assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ONE);
@@ -1783,19 +1779,19 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeMinDestinationAmountWhenEqual() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationAmount(
+    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationPacketAmount(
       UnsignedLong.ONE, // <-- sourceAmount
-      BigDecimal.ONE // <-- minExchangeRate
+      Ratio.ONE // <-- minExchangeRate
     );
 
-    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.valueOf(2L));
+    assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ONE);
   }
 
   @Test
   public void testComputeMinDestinationAmountWithHighDecimal() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationAmount(
+    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationPacketAmount(
       UnsignedLong.ONE, // <-- sourceAmount
-      new BigDecimal("0.99") // <-- minExchangeRate
+      Ratio.from(new BigDecimal("0.99")) // <-- minExchangeRate
     );
 
     assertThat(deliveryDeficit).isEqualTo(UnsignedLong.ONE);
@@ -1803,9 +1799,9 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeMinDestinationAmountWithLowDecimal() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationAmount(
+    final UnsignedLong deliveryDeficit = amountFilter.computeMinDestinationPacketAmount(
       UnsignedLong.ONE, // <-- sourceAmount
-      new BigDecimal("1.01") // <-- minExchangeRate
+      Ratio.from(new BigDecimal("1.01"))// <-- minExchangeRate
     );
 
     assertThat(deliveryDeficit).isEqualTo(UnsignedLong.valueOf(2L));
@@ -1817,7 +1813,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitForNextStatePositive() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
+    final UnsignedLong deliveryDeficit = amountFilter.computePacketDeliveryDeficitForNextState(
       UnsignedLong.ONE, // <-- minDestinationAmount
       UnsignedLong.ZERO // <-- estimatedDestinationAmount
     );
@@ -1827,7 +1823,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitForNextStateZero() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
+    final UnsignedLong deliveryDeficit = amountFilter.computePacketDeliveryDeficitForNextState(
       UnsignedLong.ONE, // <-- minDestinationAmount
       UnsignedLong.ONE // <-- estimatedDestinationAmount
     );
@@ -1837,7 +1833,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitForNextStateZero2() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
+    final UnsignedLong deliveryDeficit = amountFilter.computePacketDeliveryDeficitForNextState(
       UnsignedLong.ZERO, // <-- minDestinationAmount
       UnsignedLong.ZERO // <-- estimatedDestinationAmount
     );
@@ -1847,7 +1843,7 @@ public class AmountFilterTest {
 
   @Test
   public void testComputeDeliveryDeficitForNextStateNegative() {
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForNextState(
+    final UnsignedLong deliveryDeficit = amountFilter.computePacketDeliveryDeficitForNextState(
       UnsignedLong.ZERO, // <-- minDestinationAmount
       UnsignedLong.ONE // <-- estimatedDestinationAmount
     );
@@ -1863,15 +1859,13 @@ public class AmountFilterTest {
   public void testComputeDeliveryDeficitForDoFilterPositive() {
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
       @Override
-      protected UnsignedLong computeMinDestinationAmount(
-        UnsignedLong sourceAmount, BigDecimal minExchangeRate
-      ) {
+      protected UnsignedLong computeMinDestinationPacketAmount(UnsignedLong sourcePacketAmount, Ratio minExchangeRate) {
         return UnsignedLong.ONE;
       }
     };
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForDoFilter(
+    final UnsignedLong deliveryDeficit = amountFilter.computePacketDeliveryDeficitForDoFilter(
       UnsignedLong.ONE, // <-- sourceAmount
-      BigDecimal.ONE, // <-- minExchangeRate
+      Ratio.ONE, // <-- minExchangeRate
       UnsignedLong.ONE // <-- minDestinationAmount
     );
 
@@ -1882,15 +1876,13 @@ public class AmountFilterTest {
   public void testComputeDeliveryDeficitForDoFilterNegative() {
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
       @Override
-      protected UnsignedLong computeMinDestinationAmount(
-        UnsignedLong sourceAmount, BigDecimal minExchangeRate
-      ) {
+      protected UnsignedLong computeMinDestinationPacketAmount(UnsignedLong sourcePacketAmount, Ratio minExchangeRate) {
         return UnsignedLong.ZERO;
       }
     };
-    final UnsignedLong deliveryDeficit = amountFilter.computeDeliveryDeficitForDoFilter(
+    final UnsignedLong deliveryDeficit = amountFilter.computePacketDeliveryDeficitForDoFilter(
       UnsignedLong.ONE, // <-- sourceAmount
-      BigDecimal.ONE, // <-- minExchangeRate
+      Ratio.ONE, // <-- minExchangeRate
       UnsignedLong.ONE // <-- minDestinationAmount
     );
 
@@ -1905,9 +1897,9 @@ public class AmountFilterTest {
   public void testWillFixedSendPaymentCompleteWhenSourceEqualsAvailable() {
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(3L))
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(3L))
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1925,9 +1917,9 @@ public class AmountFilterTest {
   public void testWillFixedSendPaymentCompleteWhenSourceGreaterThanAvailable() {
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(3L))
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(3L))
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1945,9 +1937,9 @@ public class AmountFilterTest {
   public void testWillFixedSendPaymentCompleteWhenSourceLessThanAvailable() {
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(3L))
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(3L))
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1965,9 +1957,9 @@ public class AmountFilterTest {
   public void testWillFixedDeliveryPaymentCompleteWhenMinDeliveryIsGreater() {
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_DELIVERY)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.valueOf(Long.MAX_VALUE)) // <-- Variable
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(Long.MAX_VALUE)) // <-- Variable
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -1985,9 +1977,9 @@ public class AmountFilterTest {
   public void testWillFixedDeliveryPaymentCompleteWhenMinDeliveryIsEqual() {
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_DELIVERY)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ONE) // <-- Variable
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ONE) // <-- Variable
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -2005,9 +1997,9 @@ public class AmountFilterTest {
   public void testWillFixedDeliveryPaymentCompleteWhenMinDeliveryIsLessThan() {
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_DELIVERY)
-      .minExchangeRate(BigDecimal.ZERO)
-      .minDeliveryAmount(BigInteger.ZERO) // <-- Variable
-      .maxSourceAmount(BigInteger.ONE)
+      .minExchangeRate(Ratio.ZERO)
+      .minPaymentAmountInDestinationUnits(BigInteger.ZERO) // <-- Variable
+      .maxPaymentAmountInSenderUnits(BigInteger.ONE)
       .build();
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
@@ -2029,7 +2021,7 @@ public class AmountFilterTest {
 
   private void initializeHappyPath() {
     // amountTrackerMock
-    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(UnsignedLong.ZERO);
     when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE);
     when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.ONE);
     when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO);
@@ -2038,9 +2030,9 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(
       PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_SEND)
-        .minExchangeRate(BigDecimal.ONE)
-        .minDeliveryAmount(BigInteger.ONE)
-        .maxSourceAmount(BigInteger.valueOf(Long.MAX_VALUE))
+        .minExchangeRate(Ratio.ONE)
+        .minPaymentAmountInDestinationUnits(BigInteger.ONE)
+        .maxPaymentAmountInSenderUnits(BigInteger.valueOf(Long.MAX_VALUE))
         .build()
     ));
 
@@ -2053,13 +2045,13 @@ public class AmountFilterTest {
     when(exchangeRateTrackerMock.getLowerBoundRate()).thenReturn(Ratio.ONE);
     when(exchangeRateTrackerMock.getUpperBoundRate()).thenReturn(Ratio.ONE);
     when(exchangeRateTrackerMock.estimateDestinationAmount(any())).thenReturn(
-      ExchangeRateBound.builder()
+      DeliveredExchangeRateBound.builder()
         .lowEndEstimate(UnsignedLong.ONE.plus(UnsignedLong.ONE)) // <-- Assumes 1:1 FX
         .highEndEstimate(UnsignedLong.ONE.plus(UnsignedLong.ONE)) // <-- Assumes 1:1 FX
         .build()
     );
     when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(
-      ExchangeRateBound.builder().lowEndEstimate(UnsignedLong.ONE).highEndEstimate(UnsignedLong.ONE).build()
+      DeliveredExchangeRateBound.builder().lowEndEstimate(UnsignedLong.ONE).highEndEstimate(UnsignedLong.ONE).build()
     );
   }
 }

@@ -1,7 +1,7 @@
 package org.interledger.core.fluent;
 
-import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -18,6 +18,7 @@ public class FluentBigInteger {
    * Create a {@link FluentCompareTo} for the given value.
    *
    * @param value An {@linkn BigInteger} value to wrap
+   *
    * @return wrapped value
    */
   public static FluentBigInteger of(final BigInteger value) {
@@ -35,6 +36,7 @@ public class FluentBigInteger {
    * so there is no remainder.
    *
    * @param ratio A {@link Ratio} to multiply by.
+   *
    * @return A {@link FluentBigInteger} for further processing.
    */
   public FluentBigInteger timesFloor(final Ratio ratio) {
@@ -53,6 +55,7 @@ public class FluentBigInteger {
    * so there is no remainder.
    *
    * @param ratio A {@link Ratio} to multiply by.
+   *
    * @return A {@link FluentBigInteger} for further processing.
    */
   public FluentBigInteger timesCeil(final Ratio ratio) {
@@ -69,7 +72,10 @@ public class FluentBigInteger {
   // TODO: Unit test to validate this is correct.
   public FluentBigInteger divideCeil(final BigInteger divisor) {
     Objects.requireNonNull(divisor);
-    Preconditions.checkState(FluentBigInteger.of(divisor).isPositive(), "divisor must be positive");
+
+    if (BigInteger.ZERO.equals(divisor)) {
+      return FluentBigInteger.of(BigInteger.ZERO);
+    }
 
     BigInteger newValue = FluentBigInteger.of(this.getValue().mod(divisor)).isPositive()
       ? this.value.divide(divisor).add(BigInteger.ONE)
@@ -82,6 +88,7 @@ public class FluentBigInteger {
    * Checks if wrapped value is equal than the given one.
    *
    * @param other given value
+   *
    * @return true if wrapped value is equal to given value
    */
   public FluentBigInteger orGreater(final BigInteger other) {
@@ -120,6 +127,7 @@ public class FluentBigInteger {
    * so there is no remainder.
    *
    * @param ratio A {@link Ratio} to multiply by.
+   *
    * @return A {@link FluentBigInteger} for further processing.
    */
   public FluentBigInteger timesFloor(final Percentage percentage) {
@@ -142,6 +150,7 @@ public class FluentBigInteger {
    * so there is no remainder.
    *
    * @param ratio A {@link Ratio} to multiply by.
+   *
    * @return A {@link FluentBigInteger} for further processing.
    */
   public FluentBigInteger timesCeil(final Percentage percentage) {
@@ -155,6 +164,7 @@ public class FluentBigInteger {
    * so there is no remainder.
    *
    * @param ratio A {@link Ratio} to multiply by.
+   *
    * @return A {@link FluentBigInteger} for further processing.
    */
   public FluentBigInteger timesCeil(final BigDecimal percentage) {
@@ -172,6 +182,24 @@ public class FluentBigInteger {
       return UnsignedLong.MAX_VALUE;
     } else {
       return UnsignedLong.valueOf(this.getValue());
+    }
+  }
+
+  /**
+   * Subtract {@code amount} from this {@link BigInteger} and return the result if it's non-negative; otherwise, return
+   * {@link BigInteger#ZERO}.
+   *
+   * @param amount A {@link BigInteger} to subract.
+   *
+   * @return The difference between this value and {@code amount} if non-negative; otherwise return {@link
+   *   BigInteger#ZERO}.
+   */
+  public FluentBigInteger minusOrZero(final BigInteger amount) {
+    Objects.requireNonNull(amount);
+    if (FluentCompareTo.is(this.getValue()).greaterThanEqualTo(amount)) {
+      return FluentBigInteger.of(this.getValue().subtract(amount));
+    } else {
+      return FluentBigInteger.of(BigInteger.ZERO);
     }
   }
 

@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class AmountTrackerTest {
 
+  private static final Ratio RATIO_TEN = Ratio.builder().numerator(BigInteger.TEN).denominator(BigInteger.ONE).build();
+
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
@@ -64,7 +66,7 @@ public class AmountTrackerTest {
     AtomicReference amountDeliveredInDestinationUnitsRef = new AtomicReference(BigInteger.valueOf(3L));
     AtomicReference sourceAmountInFlightRef = new AtomicReference(BigInteger.valueOf(4L));
     AtomicReference destinationAmountInFlightRef = new AtomicReference(BigInteger.valueOf(5L));
-    AtomicReference availableDeliveryShortfallRef = new AtomicReference(BigInteger.valueOf(6L));
+    AtomicReference availableDeliveryShortfallRef = new AtomicReference(UnsignedLong.valueOf(6L));
     AtomicReference remoteReceivedMaxRef = new AtomicReference(Optional.of(UnsignedLong.valueOf(7L)));
     AtomicBoolean encounteredProtocolViolation = new AtomicBoolean(true);
 
@@ -79,7 +81,7 @@ public class AmountTrackerTest {
     assertThat(amountTracker.getAmountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(3L));
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.valueOf(4L));
     assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.valueOf(5L));
-    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(BigInteger.valueOf(6L));
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.valueOf(6L));
     assertThat(amountTracker.getRemoteReceivedMax().get()).isEqualTo(UnsignedLong.valueOf(7L));
     assertThat(amountTracker.encounteredProtocolViolation()).isTrue();
   }
@@ -127,7 +129,7 @@ public class AmountTrackerTest {
     executor.submit(protocolViolation).get();
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
-    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(BigInteger.ZERO);
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amountTracker.getAmountSentInSourceUnits()).isEqualTo(BigInteger.ONE);
     assertThat(amountTracker.getAmountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(amountTracker.getRemoteReceivedMax().get()).isEqualTo(UnsignedLong.ONE);
@@ -149,7 +151,7 @@ public class AmountTrackerTest {
 
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
-    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(BigInteger.ZERO);
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amountTracker.getAmountSentInSourceUnits()).isEqualTo(BigInteger.valueOf(numLoops).add(BigInteger.ONE));
     assertThat(amountTracker.getAmountDeliveredInDestinationUnits())
       .isEqualTo(BigInteger.valueOf(numLoops).add(BigInteger.ONE));
@@ -216,16 +218,19 @@ public class AmountTrackerTest {
     final EstimatedPaymentOutcome actual = amountTracker
       .setPaymentTarget(PaymentType.FIXED_SEND, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
 
-    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(BigInteger.ONE);
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ONE);
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getAmountSentInSourceUnits()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getAmountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getRemoteReceivedMax()).isEmpty();
     assertThat(amountTracker.getPaymentTargetConditions().get().paymentType()).isEqualTo(PaymentType.FIXED_SEND);
-    assertThat(amountTracker.getPaymentTargetConditions().get().maxSourceAmount()).isEqualTo(BigInteger.ONE);
-    assertThat(amountTracker.getPaymentTargetConditions().get().minDeliveryAmount()).isEqualTo(BigInteger.ZERO);
-    assertThat(amountTracker.getPaymentTargetConditions().get().minExchangeRate()).isEqualTo(BigDecimal.ONE);
+    assertThat(amountTracker.getPaymentTargetConditions().get().maxPaymentAmountInSenderUnits())
+      .isEqualTo(BigInteger.ONE);
+    assertThat(amountTracker.getPaymentTargetConditions().get().minPaymentAmountInDestinationUnits())
+      .isEqualTo(BigInteger.ZERO);
+    assertThat(amountTracker.getPaymentTargetConditions().get().minExchangeRate().toBigDecimal())
+      .isEqualTo(BigDecimal.ONE);
 
     assertThat(actual.estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
     assertThat(actual.maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.ONE);
@@ -240,16 +245,19 @@ public class AmountTrackerTest {
     final EstimatedPaymentOutcome actual = amountTracker
       .setPaymentTarget(PaymentType.FIXED_DELIVERY, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
 
-    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(BigInteger.ONE);
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ONE);
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getAmountSentInSourceUnits()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getAmountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getRemoteReceivedMax()).isEmpty();
     assertThat(amountTracker.getPaymentTargetConditions().get().paymentType()).isEqualTo(PaymentType.FIXED_DELIVERY);
-    assertThat(amountTracker.getPaymentTargetConditions().get().maxSourceAmount()).isEqualTo(BigInteger.valueOf(2L));
-    assertThat(amountTracker.getPaymentTargetConditions().get().minDeliveryAmount()).isEqualTo(BigInteger.ONE);
-    assertThat(amountTracker.getPaymentTargetConditions().get().minExchangeRate()).isEqualTo(BigDecimal.ONE);
+    assertThat(amountTracker.getPaymentTargetConditions().get().maxPaymentAmountInSenderUnits())
+      .isEqualTo(BigInteger.valueOf(2L));
+    assertThat(amountTracker.getPaymentTargetConditions().get().minPaymentAmountInDestinationUnits())
+      .isEqualTo(BigInteger.ONE);
+    assertThat(amountTracker.getPaymentTargetConditions().get().minExchangeRate().toBigDecimal())
+      .isEqualTo(BigDecimal.ONE);
 
     assertThat(actual.estimatedNumberOfPackets()).isEqualTo(BigInteger.valueOf(2L));
     assertThat(actual.maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.valueOf(2L));

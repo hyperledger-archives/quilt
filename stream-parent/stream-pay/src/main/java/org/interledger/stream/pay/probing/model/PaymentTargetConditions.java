@@ -1,6 +1,7 @@
 package org.interledger.stream.pay.probing.model;
 
 import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.core.fluent.Ratio;
 
 import com.google.common.base.Preconditions;
 import org.immutables.value.Value;
@@ -26,30 +27,30 @@ public interface PaymentTargetConditions {
    *
    * @return A {@link BigInteger}.
    */
-  BigInteger maxSourceAmount();
+  BigInteger maxPaymentAmountInSenderUnits();
 
   /**
    * The minimum total amount that must be sent for this entire payment, in scaled destination account units.
    *
    * @return A {@link BigInteger}.
    */
-  BigInteger minDeliveryAmount();
+  BigInteger minPaymentAmountInDestinationUnits();
 
   /**
    * The minimum acceptable exchange rate for this payment.
    *
    * @return A {@link BigDecimal}.
    */
-  BigDecimal minExchangeRate();
+  Ratio minExchangeRate();
 
   @Value.Check
   default void check() {
     Preconditions.checkState(
-      FluentCompareTo.is(this.maxSourceAmount()).greaterThan(BigInteger.ZERO),
+      FluentCompareTo.is(this.maxPaymentAmountInSenderUnits()).greaterThan(BigInteger.ZERO),
       "maxSourceAmount must be greater-than 0"
     );
     Preconditions.checkState(
-      FluentCompareTo.is(this.minDeliveryAmount()).greaterThanEqualTo(BigInteger.ZERO),
+      FluentCompareTo.is(this.minPaymentAmountInDestinationUnits()).greaterThanEqualTo(BigInteger.ZERO),
       "minDeliveryAmount must be greater-than or equal-to 0"
     );
   }

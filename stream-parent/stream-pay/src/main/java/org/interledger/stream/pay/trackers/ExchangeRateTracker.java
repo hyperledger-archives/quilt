@@ -1,19 +1,22 @@
 package org.interledger.stream.pay.trackers;
 
+import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.core.fluent.FluentUnsignedLong;
+import org.interledger.core.fluent.Ratio;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
+import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.probing.model.DeliveredExchangeRateBound;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.core.fluent.Ratio;
-import org.interledger.stream.pay.exceptions.StreamPayerException;
-import org.interledger.stream.pay.model.SendState;
-import org.interledger.stream.pay.probing.model.ExchangeRateBound;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tracks the current exchange-rate for a given STREAM payment.
@@ -41,12 +44,14 @@ public class ExchangeRateTracker {
   }
 
   /**
-   * Mapping of packet received amounts to its most recent sent amount.
+   * Mapping of packet received amounts to its most recent sent amount. These values are typed as {@link UnsignedLong}
+   * because ILP Prepare packets may never exceed `MaxUInt64`, which is equal to {@link UnsignedLong#MAX_VALUE}.
    */
   private Map<UnsignedLong, UnsignedLong> sentAmounts = Maps.newConcurrentMap();
 
   /**
-   * Mapping of packet sent amounts to its most recent received amount.
+   * Mapping of packet sent amounts to its most recent received amount. These values are typed as {@link UnsignedLong} *
+   * because ILP Prepare packets may never exceed `MaxUInt64`, which is equal to {@link UnsignedLong#MAX_VALUE}.
    */
   private Map<UnsignedLong, UnsignedLong> receivedAmounts = Maps.newConcurrentMap();
 
@@ -116,23 +121,32 @@ public class ExchangeRateTracker {
    * </ol>
    */
   // TODO: No need to synchronize if only called from nextState
-  public synchronized ExchangeRateBound estimateDestinationAmount(final UnsignedLong sourceAmount) {
+  public synchronized DeliveredExchangeRateBound estimateDestinationAmount(final UnsignedLong sourceAmount) {
     // If we already sent a packet for this amount, return how much the recipient got
     return Optional.ofNullable(this.receivedAmounts.get(sourceAmount))
       .map(amountReceived ->
-        ExchangeRateBound.builder().lowEndEstimate(amountReceived).highEndEstimate(amountReceived).build()
+        DeliveredExchangeRateBound.builder().lowEndEstimate(amountReceived).highEndEstimate(amountReceived).build()
       )
       .orElseGet(() -> {
 
         // TODO: What happens if the lowerBound and upperBounds aren't set yet? It's likely that if receivedAmounts
         // is not empty, then these will be populated, but worth a unit test.
-        final UnsignedLong lowEndDestination = getLowerBoundRate().multiplyFloor(sourceAmount);
+
+        // Because ILPv4 only accepts UInt64, anything larger than MaxUInt64 will deliver no value, likely because the
+        // receiver will overflow and reject the packet. Thus, if we compute that the calculating lowEndDestination
+        // will overflow, we merely set it to 0 so that no send get attempted. Same for highEndDestination.
+        final UnsignedLong lowEndDestination = getLowerBoundRate().multiplyFloorOrZero(sourceAmount);
 
         // Because the upperBound exchange rate is exclusive:
         // If source amount converts exactly to an integer, destination amount MUST be 1 unit less
         // If source amount doesn't convert precisely, we can't narrow it any better than that amount, floored ¯\_(ツ)_/¯
-        final UnsignedLong highEndDestination = getUpperBoundRate().multiplyCeil(sourceAmount).minus(UnsignedLong.ONE);
-        return ExchangeRateBound.builder()
+        final UnsignedLong highEndDestination = FluentUnsignedLong
+          .of(
+            getUpperBoundRate().multiplyCeilOrZero(sourceAmount)
+          )
+          .minusOrZero(UnsignedLong.ONE) // <-- Don't let this value go negative.
+          .getValue();
+        return DeliveredExchangeRateBound.builder()
           .lowEndEstimate(lowEndDestination)
           .highEndEstimate(highEndDestination)
           .build();
@@ -151,7 +165,7 @@ public class ExchangeRateTracker {
    *     delivers at least the given destination amount, if the rate hasn't fluctuated.</li>
    * </ol>
    */
-  public ExchangeRateBound estimateSourceAmount(final UnsignedLong destinationAmount) {
+  public DeliveredExchangeRateBound estimateSourceAmount(final UnsignedLong destinationAmount) {
     Objects.requireNonNull(destinationAmount);
     throw new RuntimeException("Not yet implemented");
   }
