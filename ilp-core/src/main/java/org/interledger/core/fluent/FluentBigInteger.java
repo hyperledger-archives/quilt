@@ -27,6 +27,11 @@ public class FluentBigInteger {
 
   private final BigInteger value;
 
+  /**
+   * Required-args Constructo.
+   *
+   * @param value An instance of {@link BigInteger}.
+   */
   private FluentBigInteger(final BigInteger value) {
     this.value = Objects.requireNonNull(value);
   }
@@ -41,9 +46,6 @@ public class FluentBigInteger {
    */
   public FluentBigInteger timesFloor(final Ratio ratio) {
     Objects.requireNonNull(ratio);
-
-    // TODO: Unit test: numbers bigger than unsigned-long.
-
     return FluentBigInteger.of(
       new BigDecimal(this.value).multiply(new BigDecimal(ratio.numerator()))
         .divide(new BigDecimal(ratio.denominator()), RoundingMode.FLOOR).toBigIntegerExact()
@@ -60,16 +62,34 @@ public class FluentBigInteger {
    */
   public FluentBigInteger timesCeil(final Ratio ratio) {
     Objects.requireNonNull(ratio);
-
-    // TODO: Unit test: numbers bigger than unsigned-long.
-
     return FluentBigInteger.of(
       new BigDecimal(this.value).multiply(new BigDecimal(ratio.numerator()))
         .divide(new BigDecimal(ratio.denominator()), RoundingMode.CEILING).toBigIntegerExact()
     );
   }
 
-  // TODO: Unit test to validate this is correct.
+  /**
+   * Multiply the {@link BigInteger} value by the supplied {@link Ratio}, and then pull the final value to the "floor"
+   * so there is no remainder.
+   *
+   * @param amount A {@link BigDecimal} to multiply by.
+   *
+   * @return A {@link FluentBigInteger} for further processing.
+   */
+  public FluentBigInteger timesCeil(final BigDecimal amount) {
+    Objects.requireNonNull(amount);
+    return FluentBigInteger.of(
+      new BigDecimal(getValue()).multiply(amount).setScale(0, RoundingMode.CEILING).toBigIntegerExact()
+    );
+  }
+
+  /**
+   * Divide {@link #getValue()} by {@code divisor} and then return the ceiling.
+   *
+   * @param divisor A {@link BigDecimal} to divide by.
+   *
+   * @return A {@link FluentBigInteger} for further processing.
+   */
   public FluentBigInteger divideCeil(final BigInteger divisor) {
     Objects.requireNonNull(divisor);
 
@@ -85,98 +105,37 @@ public class FluentBigInteger {
   }
 
   /**
-   * Checks if wrapped value is equal than the given one.
+   * Compute whether {@link #getValue()} is greater-than 0 (i.e., positive).
    *
-   * @param other given value
-   *
-   * @return true if wrapped value is equal to given value
+   * @return {@code true} if {@link #getValue()} is greater-than 0.
    */
-  public FluentBigInteger orGreater(final BigInteger other) {
-    Objects.requireNonNull(other);
-    if (FluentCompareTo.is(this.value).greaterThanEqualTo(other)) {
-      return new FluentBigInteger(this.value);
-    } else {
-      return new FluentBigInteger(other);
-    }
-  }
-
-  // TODO: Javadoc + Unit tests.
-  public FluentBigInteger orLesser(final BigInteger other) {
-    Objects.requireNonNull(other);
-    if (FluentCompareTo.is(this.value).lessThanOrEqualTo(other)) {
-      return new FluentBigInteger(this.value);
-    } else {
-      return new FluentBigInteger(other);
-    }
-  }
-
   public boolean isPositive() {
     return FluentCompareTo.is(this.getValue()).greaterThan(BigInteger.ZERO);
   }
 
+  /**
+   * Compute whether {@link #getValue()} is not greater-than 0 (i.e., not positive).
+   *
+   * @return {@code true} if {@link #getValue()} is less-than or equal-to 0.
+   */
   public boolean isNotPositive() {
     return !isPositive();
   }
 
+  /**
+   * Return the value of this fluent wrapper.
+   *
+   * @return A {@link BigInteger}.
+   */
   public BigInteger getValue() {
     return value;
   }
 
   /**
-   * Multiply the {@link BigInteger} value by the supplied {@link Ratio}, and then pull the final value to the "floor"
-   * so there is no remainder.
+   * Choose between {@link #getValue()} and {@link UnsignedLong#MAX_VALUE} and return the smaller value.
    *
-   * @param ratio A {@link Ratio} to multiply by.
-   *
-   * @return A {@link FluentBigInteger} for further processing.
+   * @return An {@link UnsignedLong} representing the smaller of {@link #getValue()} and {@link UnsignedLong#MAX_VALUE}.
    */
-  public FluentBigInteger timesFloor(final Percentage percentage) {
-    Objects.requireNonNull(percentage);
-
-    // TODO: Unit test: numbers bigger than unsigned-long.
-
-    return FluentBigInteger.of(
-      new BigDecimal(getValue()).multiply(percentage.value()).setScale(0, RoundingMode.FLOOR).toBigIntegerExact()
-    );
-
-//    return FluentBigInteger.of(
-//      BigInteger.valueOf(this.value.multiply(ratio.numerator().bigIntegerValue())
-//        .divide(ratio.denominator().bigIntegerValue()))
-//    );
-  }
-
-  /**
-   * Multiply the {@link BigInteger} value by the supplied {@link Ratio}, and then pull the final value to the "floor"
-   * so there is no remainder.
-   *
-   * @param ratio A {@link Ratio} to multiply by.
-   *
-   * @return A {@link FluentBigInteger} for further processing.
-   */
-  public FluentBigInteger timesCeil(final Percentage percentage) {
-    Objects.requireNonNull(percentage);
-
-    return timesCeil(percentage.value());
-  }
-
-  /**
-   * Multiply the {@link BigInteger} value by the supplied {@link Ratio}, and then pull the final value to the "floor"
-   * so there is no remainder.
-   *
-   * @param ratio A {@link Ratio} to multiply by.
-   *
-   * @return A {@link FluentBigInteger} for further processing.
-   */
-  public FluentBigInteger timesCeil(final BigDecimal percentage) {
-    Objects.requireNonNull(percentage);
-
-    // TODO: Unit test: numbers bigger than unsigned-long.
-
-    return FluentBigInteger.of(
-      new BigDecimal(getValue()).multiply(percentage).setScale(0, RoundingMode.CEILING).toBigIntegerExact()
-    );
-  }
-
   public UnsignedLong orMaxUnsignedLong() {
     if (FluentCompareTo.is(this.getValue()).greaterThan(UNSIGNED_LONG_MAX)) {
       return UnsignedLong.MAX_VALUE;
@@ -202,23 +161,4 @@ public class FluentBigInteger {
       return FluentBigInteger.of(BigInteger.ZERO);
     }
   }
-
-//  /**
-//   * Multiply the {@link BigInteger} value by the supplied {@link Ratio}, and then pull the final value to the "floor"
-//   * so there is no remainder.
-//   *
-//   * @param ratio A {@link Ratio} to multiply by.
-//   * @return A {@link FluentBigInteger} for further processing.
-//   */
-//  public FluentBigInteger timesCeil(final ScaledExchangeRate scaledExchangeRate) {
-//    Objects.requireNonNull(scaledExchangeRate);
-//
-//    // TODO: Unit test: numbers bigger than unsigned-long.
-//
-//    return FluentBigInteger.of(
-//      new BigDecimal(getValue()).multiply(scaledExchangeRate.value())
-//        .setScale(0, RoundingMode.CEILING)
-//        .toBigIntegerExact()
-//    );
-//  }
 }

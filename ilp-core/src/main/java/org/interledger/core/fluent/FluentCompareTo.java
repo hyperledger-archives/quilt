@@ -1,5 +1,7 @@
 package org.interledger.core.fluent;
 
+import java.util.Objects;
+
 /**
  * Provides a fluent, readable alternative to {@link Comparable#compareTo(Object)}. Instead of code like {@code
  * someValue.compareTo(someOtherValue) <= 0} you can write {@code is(someValue).lessThanOrEqualTo(someOtherValue) }.
@@ -21,8 +23,13 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
 
   private final T value;
 
-  private FluentCompareTo(T value) {
-    this.value = value;
+  /**
+   * Required-args Constructor.
+   *
+   * @param value An instance of {@link T}.
+   */
+  private FluentCompareTo(final T value) {
+    this.value = Objects.requireNonNull(value);
   }
 
   /**
@@ -90,8 +97,6 @@ public class FluentCompareTo<T extends Comparable<? super T>> {
   public boolean notLessThanOrEqualTo(T other) {
     return !lessThanOrEqualTo(other);
   }
-
-// TODO: Check with coverage and add more unit tests.
 
   /**
    * Checks if wrapped value is greater than than the given one.
