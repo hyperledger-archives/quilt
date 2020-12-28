@@ -248,12 +248,15 @@
       <dependency>
         <groupId>com.auth0</groupId>
         <artifactId>java-jwt</artifactId>
-        <version>3.8.2</version>
+        <!-- TODO FIXME-->
+        <version>3.12.0</version>
       </dependency>
       <dependency>
         <groupId>com.auth0</groupId>
         <artifactId>jwks-rsa</artifactId>
-        <version>0.8.3</version>
+        <!-- TODO FIXME-->
+<!--        <version>0.8.3</version>-->
+        <version>0.15.0</version>
       </dependency>
       <dependency>
         <groupId>com.github.ben-manes.caffeine</groupId>
