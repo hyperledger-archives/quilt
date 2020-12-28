@@ -47,6 +47,9 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
+        environment:
+          # Customize the JVM maximum heap limit
+          MAVEN_OPTS: -Xmx4096m
 
     working_directory: ~/repo
 
@@ -100,6 +103,9 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
+        environment:
+          # Customize the JVM maximum heap limit
+          MAVEN_OPTS: -Xmx4096m
 
     working_directory: ~/repo
 
