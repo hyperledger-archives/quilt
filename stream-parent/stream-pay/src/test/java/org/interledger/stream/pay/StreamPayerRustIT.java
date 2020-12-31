@@ -36,7 +36,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
    * Tests a divisible number of XRP (i.e., 1000, which should translate into about $40).
    */
   @Test
-  public void testGetQuoteFor1000XRP() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testGetQuoteFor1000Xrp() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
@@ -70,14 +70,15 @@ public class StreamPayerRustIT extends AbstractRustIT {
       .isEqualTo(BigInteger.valueOf(236)); // <- Due to up-to 3% slippage.
 
     // Min ExchangeRate
-    assertThat(quote.minAllowedExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(235665962L),
-      BigInteger.valueOf(1000000000L)));
+    assertThat(quote.minAllowedExchangeRate()).isEqualTo(
+      Ratio.from(BigInteger.valueOf(235665962000L), BigInteger.valueOf(1000000000000L))
+    );
 
     // estimated ExchangeRate
-    assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
-    assertThat(quote.estimatedExchangeRate().upperBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+    assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.2429546"));
+    assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.242954601"));
 
     assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
@@ -95,7 +96,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
    * high at 2%.
    */
   @Test
-  public void testGetQuoteFor123XRP() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testGetQuoteFor123Xrp() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
@@ -129,16 +130,16 @@ public class StreamPayerRustIT extends AbstractRustIT {
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
       .isBetween(BigInteger.valueOf(10L), BigInteger.valueOf(100L));
     // Min ExchangeRate
-    assertThat(quote.minAllowedExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(238095508L),
-      BigInteger.valueOf(1000000000L)));
+    assertThat(quote.minAllowedExchangeRate())
+      .isEqualTo(Ratio.from(BigInteger.valueOf(238095508000L), BigInteger.valueOf(1000000000000L)));
 
     ///////////////////
     // EstimatedExchangeRate Assertions
     ///////////////////
-    assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
-    assertThat(quote.estimatedExchangeRate().upperBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+    assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.2429546"));
+    assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.242954601"));
     assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
@@ -156,7 +157,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
    * low (tight).
    */
   @Test
-  public void testGetQuoteFor123XRPWithVeryLowSlippage()
+  public void testGetQuoteFor123XrpWithVeryLowSlippage()
     throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
@@ -191,16 +192,15 @@ public class StreamPayerRustIT extends AbstractRustIT {
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
       .isBetween(BigInteger.valueOf(10L), BigInteger.valueOf(100L));
     // Min ExchangeRate
-    assertThat(quote.minAllowedExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(24295457570454L),
-      BigInteger.valueOf(100000000000000L)));
+    assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.24295457570454"));
 
     ///////////////////
     // EstimatedExchangeRate Assertions
     ///////////////////
     assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
+      .isEqualTo(Ratio.from(BigInteger.valueOf(242954600000L), BigInteger.valueOf(1000000000000L)));
     assertThat(quote.estimatedExchangeRate().upperBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+      .isEqualTo(Ratio.from(BigInteger.valueOf(242954601000L), BigInteger.valueOf(1000000000000L)));
     assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
@@ -217,7 +217,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
    * Assert that a quote can be retrieved even if the amount of XRP is too small to deliver anything to the receiver.
    */
   @Test
-  public void testGetQuoteSmallAmountOfXRP() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testGetQuoteSmallAmountOfXrp() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
@@ -250,16 +250,14 @@ public class StreamPayerRustIT extends AbstractRustIT {
     assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits()).isEqualTo(BigInteger.ZERO);
     // Min ExchangeRate
-    assertThat(quote.minAllowedExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(240525054L),
-      BigInteger.valueOf(1000000000L)));
+    assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.240525054"));
 
     ///////////////////
     // EstimatedExchangeRate Assertions
     ///////////////////
-    assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
-    assertThat(quote.estimatedExchangeRate().upperBoundRate())
-      .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+    assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal()).isEqualTo(new BigDecimal("0.2429546"));
+    assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal()).isEqualTo(new BigDecimal("0.242954601"));
+
     assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
     assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
@@ -273,7 +271,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
   }
 
   @Test
-  public void testPay1XRPtoUSDAccount() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testPay1XrptoUsdAccount() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
@@ -313,16 +311,16 @@ public class StreamPayerRustIT extends AbstractRustIT {
           assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
             .isEqualTo(BigInteger.ONE);
           // Min ExchangeRate, due to slippage
-          assertThat(quote.minAllowedExchangeRate()).isEqualTo(Ratio.from(BigInteger.valueOf(240525054),
-            BigInteger.valueOf(1000000000L)));
+          assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.240525054"));
 
           ///////////////////
           // EstimatedExchangeRate Assertions
           ///////////////////
-          assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-            .isEqualTo(Ratio.from(BigInteger.valueOf(2429546), BigInteger.valueOf(10000000L)));
-          assertThat(quote.estimatedExchangeRate().upperBoundRate())
-            .isEqualTo(Ratio.from(BigInteger.valueOf(242954601), BigInteger.valueOf(1000000000L)));
+          assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal())
+            .isEqualTo(new BigDecimal("0.2429546"));
+          assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal())
+            .isEqualTo(new BigDecimal("0.242954601"));
+
           assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
           assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
           assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
@@ -354,7 +352,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
   }
 
   @Test
-  public void testPay4XRPtoXrpAccount() throws ExecutionException, InterruptedException, TimeoutException {
+  public void testPay4XrptoXrpAccount() throws ExecutionException, InterruptedException, TimeoutException {
     final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
@@ -401,8 +399,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
           ///////////////////
           // EstimatedExchangeRate Assertions
           ///////////////////
-          assertThat(quote.estimatedExchangeRate().lowerBoundRate())
-            .isEqualTo(Ratio.from(BigInteger.TEN, BigInteger.TEN));
+          assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal()).isEqualTo(BigDecimal.ONE);
           assertThat(quote.estimatedExchangeRate().upperBoundRate())
             .isEqualTo(Ratio.from(BigInteger.valueOf(1000000000001L), BigInteger.valueOf(1000000000000L)));
           assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
