@@ -1,15 +1,18 @@
 package org.interledger.fx;
 
+import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.core.fluent.Ratio;
+import org.interledger.fx.ImmutableScaledExchangeRate.Builder;
+
 import com.google.common.base.Preconditions;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import javax.money.convert.ExchangeRate;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
-import org.immutables.value.Value.Lazy;
-import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.fx.ImmutableScaledExchangeRate.Builder;
+
+import java.math.BigDecimal;
+import java.util.Objects;
+
+import javax.money.convert.ExchangeRate;
 
 /**
  * A wrapper for a scaled exchange rate that accounts for slippage.
@@ -28,7 +31,7 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
    *
    * @return
    */
-  BigDecimal value();
+  Ratio value();
 
   /**
    * The scale used to compute this scaled exchange rate. For example, if a scaled exchange rate has a value of 100.0,
@@ -36,17 +39,17 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
    *
    * @return
    */
-  short inputScale();
+  short originalInputScale();
 
   /**
    * The amount of slippage that this scaled exchange rate will tolerate. Used to compute the upper and lower-bound
-   * rates (default is 0).
+   * rates (default is 1% or 0.01).
    *
    * @return A {@link Slippage}.
    */
   @Default
   default Slippage slippage() {
-    return Slippage.NONE;
+    return Slippage.ONE_PERCENT;
   }
 
   /**
@@ -54,10 +57,9 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
    *
    * @return
    */
-  default BigDecimal lowerBound() {
-    // TODO: Unit tests.
+  default Ratio lowerBound() {
     // value * (100% - slippage%) --> 50 * (1.0 - .01)
-    return this.value().multiply(BigDecimal.ONE.subtract(slippage().value().value()));
+    return Ratio.from(this.value().toBigDecimal().multiply(BigDecimal.ONE.subtract(slippage().value().value())));
   }
 
   /**
@@ -65,62 +67,21 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
    *
    * @return
    */
-  default BigDecimal upperBound() {
-    // TODO: Unit tests.
+  default Ratio upperBound() {
     // value * (100% + slippage%) --> 50 * (1.0 + .01)
-    return this.value().multiply(BigDecimal.ONE.add(slippage().value().value()));
+    return Ratio.from(this.value().toBigDecimal().multiply(BigDecimal.ONE.add(slippage().value().value())));
   }
 
   @Override
-  default int compareTo(ScaledExchangeRate o) {
-    return this.value().compareTo(o.value());
-  }
-
-//  /**
-//   * Multiply a number by a ratio and return the "floor" value.
-//   *
-//   * @param amount
-//   * @return
-//   */
-//  // TODO: Unit test to validate floor.
-//  @Derived
-//  default ScaledExchangeRate timesFloor(final UnsignedLong amount) {
-//    Objects.requireNonNull(amount);
-//    return amount.times(this.numerator()).dividedBy(this.denominator());
-//  }
-//
-//  // TODO: Unit test
-//  @Derived
-//  default UnsignedLong timesCeil(UnsignedLong amount) {
-//    boolean isPositive = FluentCompareTo.is(modulo(amount, this)).greaterThan(UnsignedLong.ZERO);
-//    if (isPositive) {
-//      return (amount.times(this.numerator()).dividedBy(this.denominator())).plus(UnsignedLong.ONE);
-//    } else {
-//      return amount.times(this.numerator()).dividedBy(this.denominator());
-//    }
-//  }
-
-  /**
-   * Returns the reciprocal of this scaled exchange rate.
-   *
-   * @return A {@link ScaledExchangeRate}.
-   */
-  @Lazy
-  default BigDecimal reciprocal() {
-    // If this rate is zero, then the reciprocal should also be zero in order to avoid
-    // a "divide by zero" ArithmeticException
-    if (this.value().equals(BigDecimal.ZERO)) {
-      return BigDecimal.ZERO;
-    } else {
-      // TODO: Unit tests.
-      return BigDecimal.ONE.divide(this.value(), MathContext.DECIMAL64);
-    }
+  default int compareTo(final ScaledExchangeRate othere) {
+    Objects.requireNonNull(othere);
+    return this.value().compareTo(othere.value());
   }
 
   @Value.Check
   default void check() {
     Preconditions.checkState(
-      FluentCompareTo.is(value()).greaterThanEqualTo(BigDecimal.ZERO),
+      FluentCompareTo.is(value()).greaterThanEqualTo(Ratio.ZERO),
       "ScaledExchangeRate must be greater-than or equal-to 0."
     );
   }

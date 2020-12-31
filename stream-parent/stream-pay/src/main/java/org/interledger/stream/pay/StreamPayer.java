@@ -1,6 +1,5 @@
 package org.interledger.stream.pay;
 
-import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddress.AllocationScheme;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.fluent.FluentCompareTo;
@@ -37,6 +36,7 @@ import org.interledger.stream.pay.trackers.AssetDetailsTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +55,11 @@ import java.util.function.Function;
 import javax.money.convert.ExchangeRate;
 import javax.money.convert.ExchangeRateProvider;
 
+/**
+ * An interface for making payments using the Interledger STREAM protocol.
+ *
+ * @see "https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md"
+ */
 public interface StreamPayer {
 
   /**
@@ -73,6 +78,14 @@ public interface StreamPayer {
    */
   CompletableFuture<Quote> getQuote(PaymentOptions paymentOptions) throws StreamException;
 
+  /**
+   * Make an actual payment using the probed (or otherwise statically configured) information in {@code quote}.
+   *
+   * @param quote A soft {@link Quote} with details about a payment path.
+   *
+   * @return A {@link CompletableFuture} that completes with a payment {@link Receipt} (which has an optionally-present
+   *   {@link StreamPayerException} if anything went wrong with the payment).
+   */
   CompletableFuture<Receipt> pay(Quote quote);
 
   /**
@@ -82,34 +95,25 @@ public interface StreamPayer {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    //private final List<StreamPacketFilter> streamPacketFilters;
     private final Link<? extends LinkSettings> link;
     private final SpspClient spspClient;
     private final StreamEncryptionUtils streamEncryptionUtils;
     private final ExchangeRateProvider oracleExchangeRateProvider;
 
+    /**
+     * Required-args Constructor.
+     *
+     * @param streamEncryptionUtils      A {@link StreamEncryptionUtils}.
+     * @param link                       A {@link Link}.
+     * @param oracleExchangeRateProvider An {@link ExchangeRateProvider}.
+     */
     public Default(
       final StreamEncryptionUtils streamEncryptionUtils,
       final Link<? extends LinkSettings> link,
-      final ExchangeRateProvider oracleExchangeRateProvider) {
+      final ExchangeRateProvider oracleExchangeRateProvider
+    ) {
       this(streamEncryptionUtils, link, oracleExchangeRateProvider, new SimpleSpspClient());
     }
-
-//    public Default(
-//      final Link<? extends LinkSettings> link,
-//      final ExchangeRateProvider oracleExchangeRateProvider,
-//      final SpspClient spspClient
-//    ) {
-//      this(
-////        Lists.newArrayList(
-////          // First so all other controllers log the sequence number
-////          new SequenceFilter()
-////          //new AssetDetailsFilter()
-////          //new MaxPacketAmountFilter(maxPacketAmountService)
-////        ),
-//        link, oracleExchangeRateProvider, spspClient
-//      );
-//    }
 
     // TODO: Re-work Constructors.
     @VisibleForTesting
@@ -176,7 +180,7 @@ public interface StreamPayer {
           paymentOptions.slippage()
         );
 
-        final BigDecimal minScaledExchangeRate = scaledExternalRate.lowerBound();
+        final Ratio minScaledExchangeRate = scaledExternalRate.lowerBound();
         logger.debug("Calculated min exchange rate of {}", minScaledExchangeRate);
 
         final EstimatedPaymentOutcome estimatedPaymentOutcome = paymentSharedStateTracker
@@ -194,14 +198,14 @@ public interface StreamPayer {
         final Denomination destinationDenomination = this
           .checkForReceiverDenomination(streamConnection, exchangeRateProber);
 
-        final Function<BigDecimal, BigDecimal> shiftRate = (rate) -> this
+        final Function<Ratio, Ratio> shiftRate = (rate) -> this
           .shiftRateForNormalization(rate, sourceDenomination.assetScale(), destinationDenomination.assetScale());
 
-        final BigDecimal lowerBoundRate = shiftRate
-          .apply(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate().toBigDecimal());
-        final BigDecimal upperBoundRate = shiftRate
-          .apply(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate().toBigDecimal());
-        final BigDecimal minExchangeRate = shiftRate.apply(minScaledExchangeRate);
+        final Ratio lowerBoundRate = shiftRate
+          .apply(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate());
+        final Ratio upperBoundRate = shiftRate
+          .apply(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate());
+        final Ratio minExchangeRate = shiftRate.apply(minScaledExchangeRate);
         final BigInteger maxSourceAmount = new BigDecimal(estimatedPaymentOutcome.maxSendAmountInWholeSourceUnits())
           .movePointLeft(sourceDenomination.assetScale())
           .setScale(0, RoundingMode.HALF_EVEN)
@@ -234,10 +238,10 @@ public interface StreamPayer {
               .estimatedNumberOfPackets(estimatedPaymentOutcome.estimatedNumberOfPackets())
               .build()
           )
-          .minExchangeRate(Ratio.from(minExchangeRate))
+          .minExchangeRate(minExchangeRate)
           .estimatedExchangeRate(ExchangeRateProbeOutcome.builder().from(rateProbeOutcome)
-            .lowerBoundRate(Ratio.from(lowerBoundRate))
-            .upperBoundRate(Ratio.from(upperBoundRate))
+            .lowerBoundRate(lowerBoundRate)
+            .upperBoundRate(upperBoundRate)
             .build())
           .build();
 
@@ -352,11 +356,19 @@ public interface StreamPayer {
     }
 
     /**
-     * <p>Convert a number into a normalized value that takes into account both the source and destination asset
-     * scales.</p>
+     * <p>Given an exchange-rate (representing the number of source units in a single destination unit), this methods
+     * constructs a new exchange-rate that accounts for the scale of both the source and destination accounts (see more
+     * about "scale" directly below). For example, given an FX rate of 1, a source scale of 3 and a destination scale of
+     * 0, this method will return the number 300, which represents the rate to multiple one source unit by in order to
+     * arrive at the proper number of destination units.</p>
      *
-     * <p>For example, imagine a source account in dollars with a scale of 0, and a destination account with a scale
-     * of 2 (also in dollars). 1 unit in the source's scale would be equal to 100 units in the destination's scale.</p>
+     * <p>Scale is defined as the difference in orders of magnitude between a `standard unit` and a corresponding
+     * `fractional unit`. More formally, the asset scale is a non-negative integer (0, 1, 2, …) such that one `standard
+     * unit` equals `10^(-scale)` of a corresponding `fractional unit`. If the fractional unit equals the standard unit,
+     * then the asset scale is 0.</p>
+     *
+     * <p>For example, if an asset is denominated in U.S. Dollars, then the standard unit will be a "dollar." To
+     * represent a fractional unit such as "cents", a scale of 2 must be used, where 100 cents equals 1.00 dollars.</p>
      *
      * @param rate
      * @param sourceAssetScale
@@ -365,12 +377,26 @@ public interface StreamPayer {
      * @return
      */
     @VisibleForTesting
-    protected BigDecimal shiftRateForNormalization(
-      final BigDecimal rate, final short sourceAssetScale, final short destinationAssetScale
+    protected Ratio shiftRateForNormalization(
+      final Ratio rate, final short sourceAssetScale, final short destinationAssetScale
     ) {
-      return Objects.requireNonNull(rate)
-        .movePointLeft(destinationAssetScale)
-        .movePointRight(sourceAssetScale);
+      Preconditions.checkArgument(sourceAssetScale >= 0);
+      Preconditions.checkArgument(destinationAssetScale >= 0);
+
+      if (destinationAssetScale > sourceAssetScale) // <-- Move decimal left
+      {
+        // To move the decimal left, multiply the denominator by the 10 raised to the delta power.
+        final int delta = destinationAssetScale - sourceAssetScale;
+        return Ratio.builder().from(rate)
+          .denominator(rate.denominator().multiply(BigInteger.TEN.pow(delta)))
+          .build();
+      } else { // <-- Move decimal left (even if 0 spaces)
+        // To move the decimal right, multiply the numerator by the 10 raised to the delta power.
+        final int delta = sourceAssetScale - destinationAssetScale;
+        return Ratio.builder().from(rate)
+          .numerator(rate.numerator().multiply(BigInteger.TEN.pow(delta)))
+          .build();
+      }
     }
 
     /**
@@ -417,14 +443,16 @@ public interface StreamPayer {
 
       // The external rate is considered to be in scale == 0. Therefore, to arrive at a scaled rate for the destination,
       // we can simply use the destination scale, and scale the rate that way.
-      final BigDecimal scaledExternalRate = externalExchangeRate.getFactor()
-        .numberValueExact(BigDecimal.class)
-        .movePointLeft(sourceAccountAssetScale)
-        .movePointRight(destinationAccountAssetScale);
+      final Ratio scaledExternalRate = Ratio.from(
+        externalExchangeRate.getFactor()
+          .numberValueExact(BigDecimal.class)
+          .movePointLeft(sourceAccountAssetScale)
+          .movePointRight(destinationAccountAssetScale)
+      );
 
       return ScaledExchangeRate.builder()
         .value(scaledExternalRate)
-        .inputScale(destinationAccountAssetScale)
+        .originalInputScale(destinationAccountAssetScale)
         .slippage(slippage)
         .build();
     }
@@ -494,19 +522,6 @@ public interface StreamPayer {
         ), SendState.Disconnected
         ));
     }
-
-//    private void validateExchangeRates(final AccountDetails sourceAccountDetails,
-//      final AccountDetails destinationAccountDetails) {
-//      Objects.requireNonNull(sourceAccountDetails);
-//      Objects.requireNonNull(destinationAccountDetails);
-//
-//      if (sourceAccountDetails.denomination().isPresent() && destinationAccountDetails.denomination().isPresent() &&
-//        !sourceAccountDetails.denomination().equals(destinationAccountDetails.denomination())) {
-//
-//      }
-//
-//
-//    }
 
     /**
      * Sanity check to ensure sender and receiver use the same network/prefix
@@ -582,26 +597,6 @@ public interface StreamPayer {
           "Unable to obtain STREAM connection details via SPSP.", e, SendState.QueryFailed
         );
       }
-    }
-
-    private AccountDetails fetchSourceAccountDetails(final PaymentOptions paymentOptions) {
-      Objects.requireNonNull(paymentOptions);
-      // TODO: Where should IL-DCP happen? Maybe before calling getQuote?
-      return paymentOptions.senderAccountDetails();
-    }
-
-    /**
-     * Helper method to centralize the computation of this sener's {@link InterledgerAddress}. First attempts to get the
-     * address using IL-DCP. Failing that, the link's value is used.
-     * <p>
-     * TODO: Should the link have an ILP address? Perhaps that should not exist there, and we should just use IL-DCP or
-     * set it manually.
-     *
-     * @return The {@link InterledgerAddress} of this sender, for usage by the creator of this stream sender.
-     */
-    private InterledgerAddress determineSenderIlpAddress() {
-      //return this.senderAddress.orElseGet((link.getOperatorAddressSupplier()));
-      return link.getOperatorAddressSupplier().get();
     }
   }
 }

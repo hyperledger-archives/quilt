@@ -1,11 +1,17 @@
 package org.interledger.stream.pay.model;
 
-import java.math.BigInteger;
-import java.util.Optional;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Immutable;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 
+import org.immutables.value.Value.Default;
+import org.immutables.value.Value.Immutable;
+
+import java.math.BigInteger;
+import java.util.Optional;
+
+/**
+ * The result of a payment. If the payment failed or did not complete successfully, an instance of {@link
+ * StreamPayerException} will be present.
+ */
 @Immutable
 public interface Receipt {
 

@@ -36,8 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class AmountTrackerTest {
 
-  private static final Ratio RATIO_TEN = Ratio.builder().numerator(BigInteger.TEN).denominator(BigInteger.ONE).build();
-
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
@@ -166,7 +164,7 @@ public class AmountTrackerTest {
   @Test
   public void setPaymentTargetWhenNull1() {
     expectedException.expect(NullPointerException.class);
-    amountTracker.setPaymentTarget(null, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
+    amountTracker.setPaymentTarget(null, Ratio.ONE, UnsignedLong.ONE, BigInteger.ONE);
   }
 
   @Test
@@ -178,13 +176,13 @@ public class AmountTrackerTest {
   @Test
   public void setPaymentTargetWhenNull3() {
     expectedException.expect(NullPointerException.class);
-    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, BigDecimal.ONE, null, BigInteger.ONE);
+    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, Ratio.ONE, null, BigInteger.ONE);
   }
 
   @Test
   public void setPaymentTargetWhenNull4() {
     expectedException.expect(NullPointerException.class);
-    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, BigDecimal.ONE, null, BigInteger.ONE);
+    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, Ratio.ONE, null, BigInteger.ONE);
   }
 
   @Test
@@ -195,7 +193,7 @@ public class AmountTrackerTest {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
     expectedException.expectMessage(containsString("Rate Probe discovered invalid exchange rates."));
-    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
+    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, Ratio.ONE, UnsignedLong.ONE, BigInteger.ONE);
   }
 
   @Test
@@ -207,7 +205,7 @@ public class AmountTrackerTest {
     when(exchangeRateTrackerMock.getLowerBoundRate()).thenReturn(Ratio.ONE);
     when(exchangeRateTrackerMock.getUpperBoundRate()).thenReturn(Ratio.ZERO);
 
-    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
+    amountTracker.setPaymentTarget(PaymentType.FIXED_SEND, Ratio.ONE, UnsignedLong.ONE, BigInteger.ONE);
   }
 
   @Test
@@ -216,7 +214,7 @@ public class AmountTrackerTest {
     when(exchangeRateTrackerMock.getUpperBoundRate()).thenReturn(Ratio.ONE);
 
     final EstimatedPaymentOutcome actual = amountTracker
-      .setPaymentTarget(PaymentType.FIXED_SEND, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
+      .setPaymentTarget(PaymentType.FIXED_SEND, Ratio.ONE, UnsignedLong.ONE, BigInteger.ONE);
 
     assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ONE);
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
@@ -243,7 +241,7 @@ public class AmountTrackerTest {
     when(exchangeRateTrackerMock.getUpperBoundRate()).thenReturn(Ratio.ONE);
 
     final EstimatedPaymentOutcome actual = amountTracker
-      .setPaymentTarget(PaymentType.FIXED_DELIVERY, BigDecimal.ONE, UnsignedLong.ONE, BigInteger.ONE);
+      .setPaymentTarget(PaymentType.FIXED_DELIVERY, Ratio.ONE, UnsignedLong.ONE, BigInteger.ONE);
 
     assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ONE);
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);

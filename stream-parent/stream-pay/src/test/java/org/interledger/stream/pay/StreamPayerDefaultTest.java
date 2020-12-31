@@ -462,19 +462,16 @@ public class StreamPayerDefaultTest {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
-    Throwable error = streamPayer.getQuote(paymentOptions)
-      .handle((quote, throwable) -> {
-        assertThat(quote).isNull();
-        assertThat(throwable).isNotNull();
-        throwable.printStackTrace();
-        return throwable;
+    final Quote quote = streamPayer.getQuote(paymentOptions)
+      .handle(($, throwable) -> {
+        assertThat($).isNotNull();
+        assertThat(throwable).isNull();
+        return $;
       }).get();
 
-    assertThat(error.getCause().getMessage()).contains(
-      "Rate enforcement may incur rounding errors. maxPacketAmount=0 is below proposed minimum of 100"
-    );
-    assertThat(error.getCause() instanceof StreamPayerException).isTrue();
-    assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.ExchangeRateRoundingError);
+    assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ZERO);
   }
 
   @Test
@@ -892,7 +889,8 @@ public class StreamPayerDefaultTest {
 
     assertThat(error).isNotNull();
     assertThat(error.getCause().getMessage()).contains(
-      "Probed exchange-rate of 0.99 (floored to 0) is less-than than the minimum exchange-rate of 1 (ceiled to 1)"
+      "Probed exchange-rate of 99/100[0.99] (floored to 0) is less-than than the minimum exchange-rate of "
+        + "10/10[1] (ceiled to 1)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -961,7 +959,8 @@ public class StreamPayerDefaultTest {
 
     assertThat(error).isNotNull();
     assertThat(error.getCause().getMessage()).contains(
-      "Probed exchange-rate of 0.98 (floored to 0) is less-than than the minimum exchange-rate of 1 (ceiled to 1)"
+      "Probed exchange-rate of 98/100[0.98] (floored to 0) is less-than than the minimum exchange-rate of "
+        + "10/10[1] (ceiled to 1)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -1422,7 +1421,8 @@ public class StreamPayerDefaultTest {
       }).get();
 
     assertThat(error.getCause().getMessage()).contains(
-      "Probed exchange-rate of 1.0001 (floored to 1) is less-than than the minimum exchange-rate of 1.0001 (ceiled to 2)"
+      "Probed exchange-rate of 10001/10000[1.0001] (floored to 1) is less-than than the minimum exchange-rate "
+        + "of 10001/10000[1.0001] (ceiled to 2)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -1446,37 +1446,56 @@ public class StreamPayerDefaultTest {
     );
 
     // 1/1 == 1 (USD/USD)
-    BigDecimal rate = Ratio.from(BigInteger.valueOf(1), BigInteger.valueOf(1L)).toBigDecimal();
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 0)).isEqualTo(new BigDecimal("1"));
+    Ratio rate = Ratio.from(BigInteger.valueOf(1), BigInteger.valueOf(1L));
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 0).toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
 
-    rate = Ratio.from(BigInteger.ONE, BigInteger.ONE).toBigDecimal(); // rate=1.0
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 2)).isEqualTo(new BigDecimal("0.01"));
+    rate = Ratio.from(BigInteger.ONE, BigInteger.ONE); // rate=1.0
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 2).toBigDecimal())
+      .isEqualTo(new BigDecimal("0.01"));
 
-    rate = Ratio.from(BigInteger.ONE, BigInteger.valueOf(100L)).toBigDecimal(); // rate=0.01
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 2)).isEqualTo(new BigDecimal("0.0001"));
+    rate = Ratio.from(BigInteger.ONE, BigInteger.valueOf(100L)); // rate=0.01
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 2).toBigDecimal())
+      .isEqualTo(new BigDecimal("0.0001"));
 
     // 1/4 == 0.25 (XRP/USD)
-    rate = Ratio.from(BigInteger.valueOf(1), BigInteger.valueOf(4L)).toBigDecimal();
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 0)).isEqualTo(new BigDecimal("0.25"));
+    rate = Ratio.from(BigInteger.valueOf(1), BigInteger.valueOf(4L));
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 0).toBigDecimal())
+      .isEqualTo(new BigDecimal("0.25"));
 
     // 1B/4B == 0.25 (XRP/USD)
-    rate = Ratio.from(BigInteger.valueOf(1_000_000_000), BigInteger.valueOf(4_000_000_000L)).toBigDecimal();
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 0)).isEqualTo(new BigDecimal("0.25"));
+    rate = Ratio.from(BigInteger.valueOf(1_000_000_000), BigInteger.valueOf(4_000_000_000L));
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 0, (short) 0).toBigDecimal())
+      .isEqualTo(new BigDecimal("0.25"));
 
     // 1(9)/4000(6) == .25 (XRP/USD)
-    rate = Ratio.from(BigInteger.valueOf(1), BigInteger.valueOf(4_000L)).toBigDecimal();
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 9, (short) 6)).isEqualTo(new BigDecimal("0.25"));
+    rate = Ratio.from(BigInteger.valueOf(1), BigInteger.valueOf(4_000L));
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 9, (short) 6).toBigDecimal())
+      .isEqualTo(new BigDecimal("0.25"));
 
     // 1 XRP(1B MilliDrops, scale=9)) : 4M (milli-dollars, scale=6)) ==> 250,000
-    rate = Ratio.from(BigInteger.valueOf(1_000_000_000), BigInteger.valueOf(4_000_000)).toBigDecimal();
-    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 9, (short) 6)).isEqualTo(new BigDecimal("250000"));
+    rate = Ratio.from(BigInteger.valueOf(1_000_000_000), BigInteger.valueOf(4_000_000));
+    assertThat(streamPayer.shiftRateForNormalization(rate, (short) 9, (short) 6).toBigDecimal())
+      .isEqualTo(new BigDecimal("250000"));
 
-    assertThat(streamPayer.shiftRateForNormalization(BigDecimal.valueOf(1L), (short) 6, (short) 0))
-      .isEqualTo(BigDecimal.valueOf(1_000_000));
-    assertThat(streamPayer.shiftRateForNormalization(BigDecimal.valueOf(250), (short) 9, (short) 6))
-      .isEqualTo(BigDecimal.valueOf(250_000L));
-    assertThat(streamPayer.shiftRateForNormalization(BigDecimal.valueOf(250_000_000), (short) 9, (short) 6))
-      .isEqualTo(BigDecimal.valueOf(250_000_000_000L));
+    assertThat(streamPayer.shiftRateForNormalization(Ratio.ONE, (short) 6, (short) 0))
+      .isEqualTo(Ratio.builder().numerator(BigInteger.valueOf(1_000_000L)).denominator(BigInteger.ONE).build());
+
+    assertThat(streamPayer.shiftRateForNormalization(Ratio.from(BigDecimal.valueOf(250)), (short) 9, (short) 6))
+      .isEqualTo(Ratio.builder().numerator(BigInteger.valueOf(2_500_000L)).denominator(BigInteger.TEN).build());
+
+    assertThat(
+      streamPayer.shiftRateForNormalization(Ratio.from(BigDecimal.valueOf(250_000_000L)), (short) 9, (short) 6))
+      .isEqualTo(Ratio.builder().numerator(BigInteger.valueOf(2_500_000_000_000L)).denominator(BigInteger.TEN).build());
+
+    assertThat(streamPayer.shiftRateForNormalization(Ratio.from(BigDecimal.valueOf(250)), (short) 6, (short) 9))
+      .isEqualTo(
+        Ratio.builder().numerator(BigInteger.valueOf(2_500L)).denominator(BigInteger.valueOf(10_000L)).build());
+
+    assertThat(
+      streamPayer.shiftRateForNormalization(Ratio.from(BigDecimal.valueOf(250_000_000L)), (short) 6, (short) 9))
+      .isEqualTo(
+        Ratio.builder().numerator(BigInteger.valueOf(2_500_000_000L)).denominator(BigInteger.valueOf(10_000L)).build());
   }
 
   //////////////////////////////////
@@ -1547,12 +1566,13 @@ public class StreamPayerDefaultTest {
       sourceAccountDetailsMock, destinationAccountDetailsMock, externalExchangeRateMock, slippageMock
     );
 
-    assertThat(actual.inputScale()).isEqualTo((short) 4);
+    assertThat(actual.originalInputScale()).isEqualTo((short) 4);
     assertThat(actual.slippage()).isEqualTo(Slippage.ONE_PERCENT);
-    assertThat(actual.value()).isEqualTo(new BigDecimal("8.928571428571429"));
-    assertThat(actual.lowerBound()).isEqualTo(new BigDecimal("8.83928571428571471"));
-    assertThat(actual.upperBound()).isEqualTo(new BigDecimal("9.01785714285714329"));
-    assertThat(actual.reciprocal()).isEqualTo(new BigDecimal("0.1120000000000000"));
+    assertThat(actual.value().toBigDecimal()).isEqualTo(new BigDecimal("8.928571428571429"));
+    assertThat(actual.lowerBound().toBigDecimal()).isEqualTo(new BigDecimal("8.83928571428571471"));
+    assertThat(actual.upperBound().toBigDecimal()).isEqualTo(new BigDecimal("9.01785714285714329"));
+    assertThat(actual.value().reciprocal().get().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.1119999999999999946240000000000003"));
   }
 
   //////////////////

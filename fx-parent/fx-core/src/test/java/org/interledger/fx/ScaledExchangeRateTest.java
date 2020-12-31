@@ -2,13 +2,15 @@ package org.interledger.fx;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * Unit tests for {@link ScaledExchangeRate}.
@@ -21,21 +23,21 @@ public class ScaledExchangeRateTest {
   @Test
   public void testHappyPath() {
     ScaledExchangeRate scaledExchangeRate = ScaledExchangeRate.builder()
-      .value(BigDecimal.TEN)
+      .value(Ratio.from(BigDecimal.TEN))
       .slippage(Slippage.ONE_PERCENT)
-      .inputScale((short) 9)
+      .originalInputScale((short) 9)
       .build();
 
     assertThat(scaledExchangeRate.value()).isEqualTo(BigDecimal.TEN);
     assertThat(scaledExchangeRate.slippage()).isEqualTo(Slippage.ONE_PERCENT);
-    assertThat(scaledExchangeRate.inputScale()).isEqualTo((short) 9);
+    assertThat(scaledExchangeRate.originalInputScale()).isEqualTo((short) 9);
   }
 
   @Test
   public void testBuildWithZero() {
     ScaledExchangeRate scaledExchangeRate = ScaledExchangeRate.builder()
-      .value(BigDecimal.ZERO)
-      .inputScale((short) 2)
+      .value(Ratio.from(BigDecimal.ZERO))
+      .originalInputScale((short) 2)
       .build();
   }
 
@@ -43,7 +45,7 @@ public class ScaledExchangeRateTest {
   public void testEmptyBuild() {
     expectedException.expect(IllegalStateException.class);
     expectedException.expectMessage(
-      "Cannot build ScaledExchangeRate, some of required attributes are not set [value, inputScale]");
+      "Cannot build ScaledExchangeRate, some of required attributes are not set [value, originalInputScale]");
 
     ScaledExchangeRate.builder().build();
   }
@@ -51,23 +53,23 @@ public class ScaledExchangeRateTest {
   @Test
   public void testToString() {
     ScaledExchangeRate scaledExchangeRate = ScaledExchangeRate.builder()
-      .value(BigDecimal.ONE)
-      .inputScale((short) 2)
+      .value(Ratio.from(BigDecimal.ONE))
+      .originalInputScale((short) 2)
       .build();
 
     assertThat(scaledExchangeRate.toString())
-      .isEqualTo("ScaledExchangeRate{value=1, inputScale=2, slippage=Slippage{value=0%}}");
+      .isEqualTo("ScaledExchangeRate{value=1, originalInputScale=2, slippage=Slippage{value=0%}}");
   }
 
   @Test
   public void testCompareTo() {
     ScaledExchangeRate scaledExchangeRate0 = ScaledExchangeRate.builder()
-      .value(BigDecimal.ZERO)
-      .inputScale((short) 2)
+      .value(Ratio.from(BigDecimal.ZERO))
+      .originalInputScale((short) 2)
       .build();
     ScaledExchangeRate scaledExchangeRate1 = ScaledExchangeRate.builder()
-      .value(BigDecimal.ONE)
-      .inputScale((short) 2)
+      .value(Ratio.from(BigDecimal.ONE))
+      .originalInputScale((short) 2)
       .build();
 
     assertThat(scaledExchangeRate0.compareTo(scaledExchangeRate0)).isEqualTo(0);
@@ -78,12 +80,12 @@ public class ScaledExchangeRateTest {
   @Test
   public void testEquals() {
     ScaledExchangeRate scaledExchangeRate0 = ScaledExchangeRate.builder()
-      .value(BigDecimal.ZERO)
-      .inputScale((short) 2)
+      .value(Ratio.from(BigDecimal.ZERO))
+      .originalInputScale((short) 2)
       .build();
     ScaledExchangeRate scaledExchangeRate1 = ScaledExchangeRate.builder()
-      .value(BigDecimal.ONE)
-      .inputScale((short) 2)
+      .value(Ratio.from(BigDecimal.ONE))
+      .originalInputScale((short) 2)
       .build();
 
     assertThat(scaledExchangeRate0.equals(scaledExchangeRate0)).isTrue();
@@ -94,8 +96,8 @@ public class ScaledExchangeRateTest {
   @Test
   public void testBounds() {
     ScaledExchangeRate scaledExchangeRate = ScaledExchangeRate.builder()
-      .value(new BigDecimal("86.84991150442478"))
-      .inputScale((short) 0)
+      .value(Ratio.from(new BigDecimal("86.84991150442478")))
+      .originalInputScale((short) 0)
       .slippage(Slippage.of(Percentage.of(new BigDecimal("0.00051"))))
       .build();
 
@@ -103,7 +105,7 @@ public class ScaledExchangeRateTest {
 
     // Lower Bound / MinRate from JS
     BigDecimal minimumRate = BigDecimal.ONE.subtract(scaledExchangeRate.slippage().value().value())
-      .multiply(scaledExchangeRate.value());
+      .multiply(scaledExchangeRate.value().toBigDecimal());
     assertThat(minimumRate).isEqualTo(new BigDecimal("86.8056180495575233622"));
 
     // LowerBound

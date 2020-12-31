@@ -1,9 +1,11 @@
 package org.interledger.stream.model;
 
-import java.util.Optional;
-import org.immutables.value.Value.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denomination;
+
+import org.immutables.value.Value.Immutable;
+
+import java.util.Optional;
 
 /**
  * The details about an Interledger Account, which is one side of a trustline between two parties.
@@ -16,9 +18,12 @@ public interface AccountDetails {
   }
 
   /**
-   * The optionally-supplied address of this account. Senders are not required to have an ILP address, especially to
-   * support scenarios where the sender is not routable (e.g., client making sendMoney requests using an ILP-over-HTTP
-   * link that has no incoming URL, such as from an Android device). Thus, this value is optional.
+   * <p>The ILP address of this account, either statically configured or obtained via IL-DCP.</p>
+   *
+   * <p>Note that senders are not required to have an ILP address (e.g., to support scenarios where the sender is not
+   * routable such as a client making sendMoney requests using an ILP-over-HTTP link that has no incoming URL, perhaps
+   * on a non-routable mobile device). In these scenarios, a `private` or otherwise unrouteable scheme should be
+   * chosen.</p>
    *
    * @return The optionally-present {@link InterledgerAddress} of this account.
    */

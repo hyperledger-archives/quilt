@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -135,8 +134,7 @@ public class AmountTracker {
    */
   public EstimatedPaymentOutcome setPaymentTarget(
     final PaymentType paymentType, // Unused but placeholder for Invoices.
-    // TODO: Use Ratio.
-    final BigDecimal minExchangeRate,
+    final Ratio minExchangeRate,
     final UnsignedLong maxSourcePacketAmount,
     // TODO: Consider ScaledAmount?
     final BigInteger targetAmount // Scaled correctly for the source account.
@@ -161,28 +159,25 @@ public class AmountTracker {
     // This validation does not ensure that every use-case will succeed. Instead, it merely ensures that the FX rates
     // that are expected to exist in the payment path will support _some_ value transfer. If this is not the case, then
     // this check will ensure that we can preemptively abort the payment.
-    this.validateFxAndPacketSize(lowerBoundRate, Ratio.from(minExchangeRate), maxSourcePacketAmount);
+    this.validateFxAndPacketSize(lowerBoundRate, minExchangeRate, maxSourcePacketAmount);
 
     // To prevent the final packet from failing due to rounding, account for a small "shortfall" of 1 source unit,
     // converted to destination units, to tolerate below the enforced destination amounts from the minimum exchange
     // rate.
-    this.availableDeliveryShortfallRef.set(
-      Ratio.from(minExchangeRate).multiplyCeilOrZero(UnsignedLong.ONE)
-    );
+    this.availableDeliveryShortfallRef.set(minExchangeRate.multiplyCeilOrZero(UnsignedLong.ONE));
 
     if (paymentType == PaymentType.FIXED_SEND) {
       final BigInteger estimatedNumberOfPackets = FluentBigInteger.of(targetAmount)
         .divideCeil(maxSourcePacketAmount.bigIntegerValue()).getValue();
-      final BigInteger maxSourceAmount = targetAmount; // TODO: Is this correct? Seems too high.
+      final BigInteger maxSourceAmount = targetAmount;
       final BigInteger minDeliveryAmount =
-        // TODO: is Ceil correct here?
         FluentBigInteger.of(targetAmount.subtract(BigInteger.ONE)).timesCeil(minExchangeRate).getValue();
 
       this.paymentTargetConditionsAtomicReference.set(PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_SEND)
         .minPaymentAmountInDestinationUnits(minDeliveryAmount)
         .maxPaymentAmountInSenderUnits(maxSourceAmount)
-        .minExchangeRate(Ratio.from(minExchangeRate)) // TODO: Use Ratio
+        .minExchangeRate(minExchangeRate)
         .build());
 
       return EstimatedPaymentOutcome.builder()
@@ -192,18 +187,16 @@ public class AmountTracker {
         .build();
 
     } else if (paymentType == PaymentType.FIXED_DELIVERY) {
-//      if (!minExchangeRate.isPositive()) {
-//        throw new StreamPayerException(
-//          "quote failed: unenforceable payment delivery. min exchange rate is 0", SendState.UnenforceableDelivery
-//        );
-//      }
+      if (minExchangeRate.isNotPositive()) {
+        throw new StreamPayerException(
+          "Quote failed: Unenforceable payment delivery. min exchange rate is 0", SendState.UnenforceableDelivery
+        );
+      }
 
       // The final packet may be less than the minimum source packet amount, but if the minimum rate is enforced,
       // it would fail due to rounding. To account for this, increase max source amount by 1 unit.
       final BigInteger maxSourceAmount = FluentBigInteger.of(targetAmount)
-        // reciprocal
-        .timesCeil(BigDecimal.ONE.divide(minExchangeRate, MathContext.DECIMAL128)).getValue()
-        .add(BigInteger.ONE);
+        .timesCeil(minExchangeRate.reciprocal().orElse(Ratio.ZERO)).getValue().add(BigInteger.ONE);
 
       final BigInteger minDeliveryAmount = targetAmount;
       final BigInteger estimatedNumberOfPackets = FluentBigInteger.of(maxSourceAmount)
@@ -213,7 +206,7 @@ public class AmountTracker {
         .paymentType(PaymentType.FIXED_DELIVERY)
         .minPaymentAmountInDestinationUnits(minDeliveryAmount)
         .maxPaymentAmountInSenderUnits(maxSourceAmount)
-        .minExchangeRate(Ratio.from(minExchangeRate)) // TODO: Use Ratio
+        .minExchangeRate(minExchangeRate)
         .build());
 
       return EstimatedPaymentOutcome.builder()
