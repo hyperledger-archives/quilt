@@ -283,6 +283,34 @@ public class StreamPacketUtilsTest {
     assertThat(StreamPacketUtils.findConnectionAssetDetailsFrame(NO_FRAMES.frames())).isEmpty();
   }
 
+  @Test
+  public void countConnectionAssetDetailsFrameFromCollection() {
+    StreamPacket streamPacket = newPacketBuilder()
+      .frames(JUST_STREAM_CLOSE_FRAME.frames())
+      .build();
+    assertThat(StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket)).isEqualTo(0);
+
+    streamPacket = newPacketBuilder()
+      .frames(JUST_CONNECTION_CLOSE_FRAME.frames())
+      .build();
+    assertThat(StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket)).isEqualTo(0);
+
+    streamPacket = newPacketBuilder()
+      .frames(JUST_MONEY_FRAME.frames())
+      .build();
+    assertThat(StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket)).isEqualTo(0);
+
+    streamPacket = newPacketBuilder()
+      .frames(ALL_THE_FRAMES.frames())
+      .build();
+    assertThat(StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket)).isEqualTo(1);
+
+    streamPacket = newPacketBuilder()
+      .frames(NO_FRAMES.frames())
+      .build();
+    assertThat(StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket)).isEqualTo(0);
+  }
+
   //////////////////////////
   // findStreamMaxMoneyFrames
   //////////////////////////

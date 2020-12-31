@@ -2013,8 +2013,6 @@ public class AmountFilterTest {
     assertThat(willPaymentComplete).isTrue();
   }
 
-  // TODO: Implement Kincaid's fix.
-
   //////////////////
   // Private Helpers
   //////////////////

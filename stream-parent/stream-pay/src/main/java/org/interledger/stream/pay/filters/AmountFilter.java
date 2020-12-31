@@ -64,7 +64,8 @@ public class AmountFilter implements StreamPacketFilter {
         // Check ReceiveMax vs SendMin.
         if (this.checkForIncompatibleReceiveMax(amountTracker, target)) {
           LOGGER.error(String.format(
-            "Ending payment: minimum delivery amount is too much for recipient. minDeliveryAmount={} remoteReceiveMax={}",
+            "Ending payment: minimum delivery amount is too much for recipient. " +
+              "minDeliveryAmount=%s remoteReceiveMax=%s",
             target.minPaymentAmountInDestinationUnits(), amountTracker.getRemoteReceivedMax()
           ));
           streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.ApplicationError);
@@ -93,9 +94,7 @@ public class AmountFilter implements StreamPacketFilter {
         final boolean anyInFlight = FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isPositive();
         final boolean anyAvailableToSend = FluentBigInteger.of(availableToSend).isPositive(); // <- 1 or more.
 
-        if (anyAvailableToSend) {
-          // Do nothing. There's more to send, so send it.
-        } else { // <-- anyAvailableToSend is false if we get here.
+        if (!anyAvailableToSend) { // <-- anyAvailableToSend is false if we get here.
           if (anyInFlight) {
             // No more to send but in-flight could reject and become available; so Wait just to be sure.
             return SendState.Wait;
@@ -227,12 +226,14 @@ public class AmountFilter implements StreamPacketFilter {
           // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
           // No matter what, since they fulfilled it, we must assume they got at least the minimum
           .map(destinationAmountClaimed -> {
-            if (this.isDestinationAmountValid(destinationAmountClaimed, streamPacketRequest.minDestinationAmount())
-              == NOT_VALID) {
+            if (
+              this.isDestinationAmountValid(destinationAmountClaimed,
+                streamPacketRequest.minDestinationAmount()) == NOT_VALID
+            ) {
               if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(
-                  "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). "
-                    + "destinationAmountClaimed={}  minDestinationAmount={}",
+                  "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). " +
+                    "destinationAmountClaimed={}  minDestinationAmount={}",
                   destinationAmountClaimed, streamPacketRequest.minDestinationAmount()
                 );
               }
@@ -329,7 +330,8 @@ public class AmountFilter implements StreamPacketFilter {
           );
         }
 
-        // Note: totalReceived *can* be greater than receiveMaxFromStreamFrame! (`ilp-protocol-stream` allows receiving 1% more than the receiveMaxFromStreamFrame)
+        // Note: totalReceived *can* be greater than receiveMaxFromStreamFrame! (`ilp-protocol-stream` allows receiving
+        // 1% more than the receiveMaxFromStreamFrame)
         final UnsignedLong receiveMaxFromStreamFrame = streamMoneyMaxFrame.receiveMax();
         // Remote receive max can only increase
         paymentSharedStateTracker.getAmountTracker().updateRemoteMax(FluentUnsignedLong.of(
@@ -368,6 +370,7 @@ public class AmountFilter implements StreamPacketFilter {
    * @return {@code true} if the destination amount is valid; {@code false} otherwise.
    */
   @VisibleForTesting
+  @SuppressWarnings( {"OptionalUsedAsFieldOrParameterType"})
   protected boolean isDestinationAmountValid(
     final Optional<UnsignedLong> destinationAmount, final UnsignedLong minDestinationAmount
   ) {
@@ -399,7 +402,7 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   /**
-   * Checks the {@code streamPacketRequest} to determine if the receiver's "receiveMax" is large enough to accomadate
+   * Checks the {@code streamPacketRequest} to determine if the receiver's "receiveMax" is large enough to accommodate
    * the minimum delivery amount required by the sender.
    *
    * @param amountTracker An {@link AmountTracker}.
@@ -421,12 +424,10 @@ public class AmountFilter implements StreamPacketFilter {
     // implementation should use a smaller source packet value.
 
     // Is the recipient's advertised `receiveMax` less than the fixed destination amount?
-    final boolean incompatibleReceiveMax = amountTracker.getRemoteReceivedMax()
+    return amountTracker.getRemoteReceivedMax()
       .filter(remoteReceivedMax ->
         FluentCompareTo.is(target.minPaymentAmountInDestinationUnits()).greaterThan(remoteReceivedMax.bigIntegerValue())
       ).isPresent();
-
-    return incompatibleReceiveMax;
   }
 
   /**
@@ -446,11 +447,9 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(target);
 
     if (target.paymentType() == PaymentType.FIXED_SEND) {
-      final boolean paidFixedSend =
-        FluentCompareTo.is(amountTracker.getAmountSentInSourceUnits()).equalTo(target.maxPaymentAmountInSenderUnits())
-          &&
-          FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive();
-      return paidFixedSend;
+      return FluentCompareTo.is(amountTracker.getAmountSentInSourceUnits())
+        .equalTo(target.maxPaymentAmountInSenderUnits()) &&
+        FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive();
     } else {
       return false;
     }
@@ -473,10 +472,8 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(target);
 
     final BigInteger remainingToDeliver = this.computeRemainingAmountToBeDelivered(amountTracker, target);
-    final boolean paidFixedDelivery =
-      FluentCompareTo.is(remainingToDeliver).lessThanOrEqualTo(BigInteger.ZERO) && // <-- Everything delivered
-        FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive(); // <-- No more can be in-flight
-    return paidFixedDelivery;
+    return FluentCompareTo.is(remainingToDeliver).lessThanOrEqualTo(BigInteger.ZERO) && // <-- Everything delivered
+      FluentBigInteger.of(amountTracker.getSourceAmountInFlight()).isNotPositive();
   }
 
   /**
@@ -502,10 +499,10 @@ public class AmountFilter implements StreamPacketFilter {
    * Determine if more packets can be delivered. Note that this calculation does include "in-flight" amounts because
    * those may complete, and if they do, we don't want to duplicate them.
    *
-   * @param amountTracker
-   * @param target
+   * @param amountTracker An {@link AmountTracker}.
+   * @param target        A {@link PaymentTargetConditions}.
    *
-   * @return
+   * @return {@code true} if there is more available to deliver; {@code false} otherwise.
    */
   @VisibleForTesting
   protected boolean moreAvailableToDeliver(
@@ -523,7 +520,7 @@ public class AmountFilter implements StreamPacketFilter {
    *
    * @param target A {@link PaymentTargetConditions}.
    *
-   * @return A {@link BigInteger} representing the total amout to send.
+   * @return A {@link BigInteger} representing the total amount to send.
    */
   @VisibleForTesting
   protected BigInteger computeAmountAvailableToSend(final PaymentTargetConditions target) {
@@ -539,7 +536,7 @@ public class AmountFilter implements StreamPacketFilter {
    *
    * @param target A {@link PaymentTargetConditions}.
    *
-   * @return A {@link BigInteger} representing the total amout to send.
+   * @return A {@link BigInteger} representing the total amount to send.
    */
   @VisibleForTesting
   protected BigInteger computeAmountAvailableToDeliver(
@@ -607,8 +604,8 @@ public class AmountFilter implements StreamPacketFilter {
    * Compute the minimum destination amount for a packet based upon the supplied {@code sourcePacketAmount} and {@code
    * minExchangeRate}. The returned value is the smallest packet value that we expect the destination to accept. Note
    * that if an overflow condition occurs, this method will return {@link UnsignedLong#ZERO}, which should have the
-   * effect of aborting a particular runloop iteration with the specified packet amounts (in-favor of smaller amounts if
-   * possible).
+   * effect of aborting a particular run-loop iteration with the specified packet amounts (in-favor of smaller amounts
+   * if possible).
    *
    * @param sourcePacketAmount An {@link UnsignedLong} representing the original source amount of a payment, in sender's
    *                           units.
@@ -673,7 +670,8 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   /**
-   * Determines if the payment will complete by summing the amount delivered, amount in flight, and
+   * Determines if the payment will complete by summing the amount delivered amount in flight to see if there's more to
+   * deliver.
    *
    * @param amountTracker                    A {@link AmountTracker}.
    * @param target                           A {@link PaymentTargetConditions}.
@@ -695,8 +693,8 @@ public class AmountFilter implements StreamPacketFilter {
     final UnsignedLong sourcePacketAmount,
     final UnsignedLong estimatedDestinationPacketAmount
   ) {
-    return target.paymentType() == PaymentType.FIXED_SEND
-      ? sourcePacketAmount.bigIntegerValue().equals(availableToSend)
+    return target.paymentType() == PaymentType.FIXED_SEND ?
+      sourcePacketAmount.bigIntegerValue().equals(availableToSend)
       : FluentCompareTo.is(
         amountTracker.getAmountDeliveredInDestinationUnits()
           .add(amountTracker.getDestinationAmountInFlight())

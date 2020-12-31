@@ -521,7 +521,6 @@ public abstract class AbstractRustIT {
     // Fetch shared secret and destination address using SPSP client
     StreamConnectionDetails streamConnectionDetails = this.spspClient.getStreamConnectionDetails(paymentPointer);
 
-    // TODO: Consider getting client details via IL-DCP.
     return new StreamConnection(
       sourceAccountDetails,
       streamConnectionDetails.destinationAddress(),

@@ -265,6 +265,22 @@ public class StreamPacketUtils {
   }
 
   /**
+   * Count the number of {@link ConnectionAssetDetailsFrame} in a {@link StreamPacket}.
+   *
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return The number of {@link ConnectionAssetDetailsFrame} in the packet.
+   */
+  public static long countConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return streamPacket.frames().stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
+      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionAssetDetailsFrame) $)
+      .count();
+  }
+
+  /**
    * Find a {@link ConnectionAssetDetailsFrame} in a {@link Collection} of stream frames.
    *
    * @param streamFrames A {@link Collection} of type {@link StreamFrame}.

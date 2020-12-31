@@ -18,6 +18,7 @@ import org.interledger.fx.Denomination;
 import org.interledger.fx.Denominations;
 import org.interledger.fx.ScaledExchangeRate;
 import org.interledger.fx.Slippage;
+import org.interledger.link.Link;
 import org.interledger.link.LinkId;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
@@ -32,7 +33,6 @@ import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.StreamFrame;
@@ -41,8 +41,8 @@ import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamPayer.Default;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.PaymentOptions;
-import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.PaymentReceipt;
+import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
@@ -115,7 +115,7 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsIfPaymentPointerCannotResolve() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new Default(
       streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -141,7 +141,7 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsIfSpspResponseIsInvalid() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils,
@@ -174,7 +174,7 @@ public class StreamPayerDefaultTest {
     expectedException.expectMessage("Slippage must be a percentage between 0% and 100% (inclusive)");
 
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -193,7 +193,7 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsIfLinkBusy() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting(Optional.of(InterledgerErrorCode.T02_PEER_BUSY));
+    final Link simulatedLink = this.getFulfillableLinkForTesting(Optional.of(InterledgerErrorCode.T02_PEER_BUSY));
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
@@ -221,7 +221,7 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsIfLinkCannotConnect() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting(Optional.of(InterledgerErrorCode.F00_BAD_REQUEST));
+    final Link simulatedLink = this.getFulfillableLinkForTesting(Optional.of(InterledgerErrorCode.F00_BAD_REQUEST));
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
@@ -249,7 +249,7 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsOnIncompatibleAddressSchemes() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils,
@@ -287,7 +287,7 @@ public class StreamPayerDefaultTest {
   @Test
   public void getQuoteFailsOnNegativeSendAmount() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = getSourceAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils,
@@ -322,7 +322,7 @@ public class StreamPayerDefaultTest {
         .assetScale((short) 3) // Asset scale only allows 3 units of precision
         .build())
       .build();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
       streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
@@ -350,7 +350,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteFailsIfAmountToDeliverIsZero() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     final Ratio externalExchangeRate = Ratio.ONE;
     final Ratio trackedLowerBoundRate = externalExchangeRate;
@@ -414,7 +414,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteFailsIfMaxPacketAmountIsZero() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     final Ratio externalExchangeRate = Ratio.builder().numerator(BigInteger.ONE).denominator(BigInteger.ONE).build();
     final Ratio trackedLowerBoundRate = externalExchangeRate;
@@ -624,7 +624,7 @@ public class StreamPayerDefaultTest {
       .interledgerAddress(InterledgerAddress.of("example.unit.test.receiver"))
       .denomination(receiverDenomination)
       .build();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     final Ratio externalExchangeRate = Ratio.ONE;
@@ -699,7 +699,7 @@ public class StreamPayerDefaultTest {
       .interledgerAddress(InterledgerAddress.of("example.unit.test.receiver"))
       .denomination(receiverDenomination)
       .build();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     final Ratio externalExchangeRate = Ratio.ONE;
@@ -764,7 +764,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteFailsIfExternalExchangeRateIs0() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     final Ratio externalExchangeRate = Ratio.ZERO;
     final Ratio trackedLowerBoundRate = externalExchangeRate;
@@ -829,7 +829,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteFailsIfTrackedRateIsOneBelowOracleRate() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     final Ratio externalExchangeRate = Ratio.ONE;
     final Ratio trackedLowerBoundRate = Ratio.from(new BigDecimal("0.99"));
@@ -900,7 +900,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteFailsIfTrackedRateIsTwoBelowOracleRate() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     final Ratio externalExchangeRate = Ratio.ONE;
     final Ratio trackedLowerBoundRate = Ratio.from(new BigDecimal("0.98"));
@@ -970,7 +970,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteFailsIfTrackedRateIs0() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     final Ratio externalExchangeRate = Ratio.ONE;
@@ -1047,7 +1047,7 @@ public class StreamPayerDefaultTest {
       .interledgerAddress(InterledgerAddress.of("example.larry.receiver"))
       .denomination(Denomination.builder().assetCode("EUR").assetScale((short) 6).build())
       .build();
-    final LoopbackLink simulatedLink = this.getLinkForTesting(InterledgerErrorCode.F99_APPLICATION_ERROR);
+    final Link simulatedLink = this.getFulfillableLinkForTesting(InterledgerErrorCode.F99_APPLICATION_ERROR);
 
     final Ratio externalExchangeRate = Ratio.from(
       new BigDecimal("9814.04").divide(new BigDecimal("1.13"), MathContext.DECIMAL64)
@@ -1203,7 +1203,7 @@ public class StreamPayerDefaultTest {
   public void getQuoteIfTrackedRateIsOneWithNoSlippage() throws ExecutionException, InterruptedException {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     final Ratio externalExchangeRate = Ratio.ONE;
@@ -1428,15 +1428,13 @@ public class StreamPayerDefaultTest {
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
   }
 
-  // TODO: Connection-spec tests.
-
   //////////////////////////////////
   // shiftForNormalization()
   //////////////////////////////////
 
   @Test
   public void testShiftForNormalization() {
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer.Default streamPayer = new StreamPayer.Default(
       streamEncryptionUtils,
@@ -1550,7 +1548,7 @@ public class StreamPayerDefaultTest {
     final AccountDetails destinationAccountDetailsMock = mock(AccountDetails.class);
     when(destinationAccountDetailsMock.denomination())
       .thenReturn(Optional.of(Denomination.builder().assetCode("USD").assetScale((short) 4).build()));
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer.Default streamPayer = new Default(
       streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1606,12 +1604,7 @@ public class StreamPayerDefaultTest {
       .denomination(Denominations.XRP_MILLI_DROPS)
       .build();
   }
-
-  // TODO Replace this with getFulfillableLinkForTesting and rename to getLinkForTesting
-  private LoopbackLink getLinkForTesting() {
-    return getLinkForTesting(Optional.empty());
-  }
-
+  
   private StatelessStreamReceiverLink getFulfillableLinkForTesting(final boolean fulfillable) {
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
       () -> SERVER_SECRET_BYTES,
@@ -1640,12 +1633,12 @@ public class StreamPayerDefaultTest {
     return simulatedLink;
   }
 
-  private LoopbackLink getLinkForTesting(final InterledgerErrorCode simulatedRejectCode) {
-    return getLinkForTesting(Optional.of(simulatedRejectCode));
+  private Link getFulfillableLinkForTesting(final InterledgerErrorCode simulatedRejectCode) {
+    return getFulfillableLinkForTesting(Optional.of(simulatedRejectCode));
   }
 
-  private LoopbackLink getLinkForTesting(final Optional<InterledgerErrorCode> simulatedRejectCode) {
-    LoopbackLink link = new LoopbackLink(
+  private Link getFulfillableLinkForTesting(final Optional<InterledgerErrorCode> simulatedRejectCode) {
+    Link link = new LoopbackLink(
       () -> LINK_OPERATOR_ADDRESS,
       new LinkSettings() {
         @Override
@@ -1720,7 +1713,7 @@ public class StreamPayerDefaultTest {
   }
 
   private StreamPayer.Default getStreamPayerDefault() {
-    final LoopbackLink simulatedLink = this.getLinkForTesting();
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
     return new StreamPayer.Default(
       streamEncryptionUtils,
       simulatedLink,
@@ -1784,11 +1777,11 @@ public class StreamPayerDefaultTest {
     return paymentSharedStateTrackerMock;
   }
 
-  private SharedSecret obtainSharedSecretFromServer(final InterledgerAddress receiverAddress) {
-    return new SpspStreamConnectionGenerator().generateConnectionDetails(
-      () -> SERVER_SECRET_BYTES, receiverAddress
-    ).sharedSecret();
-  }
+//  private SharedSecret obtainSharedSecretFromServer(final InterledgerAddress receiverAddress) {
+//    return new SpspStreamConnectionGenerator().generateConnectionDetails(
+//      () -> SERVER_SECRET_BYTES, receiverAddress
+//    ).sharedSecret();
+//  }
 
   private static class TestableExchangeRateTracker extends ExchangeRateTracker {
 

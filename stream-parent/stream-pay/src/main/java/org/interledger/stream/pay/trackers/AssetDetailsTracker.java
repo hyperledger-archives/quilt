@@ -1,9 +1,5 @@
 package org.interledger.stream.pay.trackers;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamPacketUtils;
@@ -11,15 +7,21 @@ import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A service that tracks asset details as part of a STREAM payment.
  */
 public class AssetDetailsTracker {
 
-  private final static Logger logger = LoggerFactory.getLogger(AssetDetailsTracker.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AssetDetailsTracker.class);
 
   private final AtomicBoolean remoteKnowsOurAccount;
 
@@ -28,6 +30,12 @@ public class AssetDetailsTracker {
 
   private final AtomicBoolean remoteAssetChanged;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param sourceAccountDetails An {@link AccountDetails}.
+   * @param destinationAddress   An {@link InterledgerAddress}.
+   */
   public AssetDetailsTracker(final AccountDetails sourceAccountDetails, final InterledgerAddress destinationAddress) {
     this.sourceAccountDetails = Objects.requireNonNull(sourceAccountDetails);
     this.destinationAccountDetailsRef = new AtomicReference(
@@ -49,6 +57,11 @@ public class AssetDetailsTracker {
     return destinationAccountDetailsRef.get();
   }
 
+  /**
+   * Handle the destination details for the supplied {@code streamPacketReply}.
+   *
+   * @param streamPacketReply A {@link StreamPacketReply}.
+   */
   public void handleDestinationDetails(final StreamPacketReply streamPacketReply) {
     Objects.requireNonNull(streamPacketReply);
 
@@ -94,9 +107,9 @@ public class AssetDetailsTracker {
             );
           } else {
             // The Denominations haven't changed, but this is a duplicate frame, so warn.
-            logger.warn(
-              "Stream receiver sent a duplicate Connection Asset Details, but this will be ignored. "
-                + "connectionAssetDetailsFrame={}", connectionAssetDetailsFrame
+            LOGGER.warn(
+              "Stream receiver sent a duplicate Connection Asset Details, but this will be ignored. " +
+                "connectionAssetDetailsFrame={}", connectionAssetDetailsFrame
             );
           }
         }
