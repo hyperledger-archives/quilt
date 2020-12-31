@@ -230,12 +230,12 @@ public interface StreamPayer {
           .paymentSharedStateTracker(paymentSharedStateTracker)
           .sourceAccount(paymentOptions.senderAccountDetails())
           .destinationAccount(destinationAccountDetails)
+          .estimatedDuration(estimatedDuration)
           .estimatedPaymentOutcome(
             EstimatedPaymentOutcome.builder()
               .maxSendAmountInWholeSourceUnits(maxSourceAmount)
               .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
               .estimatedNumberOfPackets(estimatedPaymentOutcome.estimatedNumberOfPackets())
-              .estimatedDuration(estimatedDuration)
               .build()
           )
           .minAllowedExchangeRate(minExchangeRate)

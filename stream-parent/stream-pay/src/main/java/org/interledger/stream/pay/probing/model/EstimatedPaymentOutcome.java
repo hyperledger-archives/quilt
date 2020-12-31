@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value.Immutable;
 
 import java.math.BigInteger;
-import java.time.Duration;
 
 /**
  * An estimate of the outcome of a stream payment.
@@ -41,10 +40,5 @@ public interface EstimatedPaymentOutcome {
    * @return A {@link BigInteger}.
    */
   BigInteger minDeliveryAmountInWholeDestinationUnits();
-
-  /**
-   * Estimated payment duration in milliseconds, based on max packet amount, RTT, and rate of packet throttling
-   */
-  Duration estimatedDuration();
 
 }

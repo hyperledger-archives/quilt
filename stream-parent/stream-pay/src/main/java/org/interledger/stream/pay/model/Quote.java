@@ -10,6 +10,8 @@ import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import org.immutables.value.Value.Immutable;
 
+import java.time.Duration;
+
 /**
  * A quote for a payment (where the payment parameters are defined by a supplied {@link PaymentOptions}).
  */
@@ -61,6 +63,11 @@ public interface Quote {
    * ExchangeRateProbeOutcome#upperBoundRate}.
    */
   ExchangeRateProbeOutcome estimatedExchangeRate();
+
+  /**
+   * Estimated payment duration in milliseconds, based on max packet amount, RTT, and rate of packet throttling
+   */
+  Duration estimatedDuration();
 
   /**
    * Estimated information about the ultimate payment outcome, as computed from the details discovered in {@link
