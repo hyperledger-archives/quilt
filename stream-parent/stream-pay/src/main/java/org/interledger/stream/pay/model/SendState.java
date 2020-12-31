@@ -127,7 +127,11 @@ public enum SendState {
    */
   ExchangeRateRoundingError;
 
-  // TODO: Unit test.
+  /**
+   * Inidicates if this SendState is a payment error or not.
+   *
+   * @return {@code true} if the SendState is {@link #Ready}, {@link #Wait}, or {@link #End}; Otherwise {@code false}.
+   */
   public boolean isPaymentError() {
     return !(this == SendState.Ready || this == SendState.Wait || this == SendState.End);
   }
