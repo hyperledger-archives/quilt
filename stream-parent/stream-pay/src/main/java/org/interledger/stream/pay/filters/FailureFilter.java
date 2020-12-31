@@ -164,7 +164,7 @@ public class FailureFilter implements StreamPacketFilter {
   protected void handleRemoteClose(Collection<StreamFrame> frames) {
     Objects.requireNonNull(frames);
 
-    final boolean hasCloseFrame = StreamPacketUtils.hasCloseFrame(frames);
+    final boolean hasCloseFrame = StreamPacketUtils.hasStreamCloseFrames(frames);
     if (hasCloseFrame) {
       StreamPacketUtils.findStreamCloseFrame(frames).ifPresent(
         streamCloseFrame -> LOGGER.error("Ending payment: receiver closed the Stream. frame={}", streamCloseFrame));

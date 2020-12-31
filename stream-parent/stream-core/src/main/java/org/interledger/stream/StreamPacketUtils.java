@@ -1,21 +1,8 @@
 package org.interledger.stream;
 
-import com.google.common.collect.Sets;
-import com.google.common.hash.Hashing;
-import com.google.common.primitives.UnsignedLong;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
-import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerFulfillment;
-import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.crypto.Random;
@@ -28,16 +15,37 @@ import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
+
+import com.google.common.collect.Sets;
+import com.google.common.hash.Hashing;
+import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Utilities for helping interact with Stream packets.
  */
-// TODO: Unit test
 public class StreamPacketUtils {
 
   private static Logger LOGGER = LoggerFactory.getLogger(StreamPacketUtils.class);
+
+  /**
+   * A {@link Set} of all frames that can be used to indicate that a STREAM should be closed.
+   */
+  public static final Set<StreamFrameType> CLOSING_FRAMES = Sets.newHashSet(
+    StreamFrameType.ConnectionClose,
+    StreamFrameType.StreamClose
+  );
 
   /**
    * The string "ilp_stream_fulfillment" is encoded as UTF-8 or ASCII (the byte representation is the same with both
@@ -45,8 +53,14 @@ public class StreamPacketUtils {
    */
   private static final byte[] ILP_STREAM_FULFILLMENT = "ilp_stream_fulfillment".getBytes(StandardCharsets.UTF_8);
 
+  /**
+   * The algorithm name for STREAM HMAC operations.
+   */
   private static final String HMAC_SHA256_ALG_NAME = "HmacSHA256";
 
+  /**
+   * The default STREAM id.
+   */
   public static final UnsignedLong DEFAULT_STREAM_ID = UnsignedLong.ONE;
 
   /**
@@ -67,9 +81,10 @@ public class StreamPacketUtils {
    *
    * @param sharedSecret The cryptographic seed exchanged during STREAM Setup.
    * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
+   *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
    */
-  public static InterledgerFulfillment generatedFulfillableFulfillment(
+  public static InterledgerFulfillment generateFulfillableFulfillment(
     final SharedSecret sharedSecret, final byte[] data
   ) {
     Objects.requireNonNull(sharedSecret);
@@ -86,11 +101,22 @@ public class StreamPacketUtils {
     return InterledgerFulfillment.of(fulfillmentBytes);
   }
 
+  /**
+   * A helper function to map from a byte-array of ILP packet binary data to an instance of {@link StreamPacket}.
+   *
+   * @param ilpPacketData         A byte-array of binary data representing an encrypted {@link StreamPacket}.
+   * @param sharedSecret          A {@link SharedSecret} to decrypt the binary data.
+   * @param streamEncryptionUtils An instance of {@link StreamEncryptionUtils} to decrypt with.
+   *
+   * @return An optionally-present instance of {@link StreamPacket}.
+   */
   public static Optional<StreamPacket> mapToStreamPacket(
-    final byte[] ilpPacketData,
-    final SharedSecret sharedSecret,
-    final StreamEncryptionUtils streamEncryptionUtils
+    final byte[] ilpPacketData, final SharedSecret sharedSecret, final StreamEncryptionUtils streamEncryptionUtils
   ) {
+    Objects.requireNonNull(ilpPacketData);
+    Objects.requireNonNull(sharedSecret);
+    Objects.requireNonNull(streamEncryptionUtils);
+
     try {
       return Optional.ofNullable(ilpPacketData)
         .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
@@ -103,75 +129,14 @@ public class StreamPacketUtils {
     }
   }
 
-  // TODO: Javadoc
-  public static Optional<StreamPacket> getStreamPacket(final InterledgerResponsePacket responsePacket) {
-    Objects.requireNonNull(responsePacket);
-    return responsePacket.typedData()
-      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
-      .map($ -> (StreamPacket) $);
-  }
-
-//  // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
-//  // TODO: See StreamUtils in Connector too.
-//  public static Optional<StreamPacket> mapToStreamPacket(
-//    final byte[] packetData,
-//    final SharedSecret sharedSecret,
-//    final StreamEncryptionUtils streamEncryptionUtils
-//  ) {
-//    return packet.typedData()
-//      .filter($ -> $.getClass().isAssignableFrom(StreamPacket.class))
-//      .map($ -> (StreamPacket) $)
-//      .map(Optional::of)
-//      .orElseGet(() -> {
-//        try {
-//          return Optional.ofNullable(packet.getData())
-//            .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
-//            .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
-//        } catch (Exception e) {
-//          LOGGER.error(
-//            "Unable to decrypt ILP response packet's data. packet={}", packet, e
-//          );
-//          return Optional.empty();
-//        }
-//      });
-//  }
-
-//  public static Optional<StreamPacket> constructStreamPacket(
-//    final InterledgerPreparePacket packet,
-//    final SharedSecret sharedSecret,
-//    final StreamEncryptionUtils streamEncryptionUtils
-//  ) {
-//
-//  }
-
-//  // TODO: Used? Maybe use this everywhere and try typedData, and if that doesn't work, then try decrypting?
-//  // TODO: See StreamUtils in Connector too.
-//  public static InterledgerResponsePacket withStreamPacket(
-//    final InterledgerResponsePacket responsePacket,
-//    final SharedSecret sharedSecret,
-//    final StreamEncryptionUtils streamEncryptionUtils
-//  ) {
-//    return responsePacket.map(
-//      interledgerFulfillPacket -> mapToStreamPacket(interledgerFulfillPacket, sharedSecret, streamEncryptionUtils)
-//        .map(streamPacket -> InterledgerFulfillPacket.builder()
-//          .from(interledgerFulfillPacket)
-//          .typedData(streamPacket)
-//          .build())
-//        .orElse((AbstractInterledgerFulfillPacket) interledgerFulfillPacket),
-//      interledgerRejectPacket -> mapToStreamPacket(interledgerRejectPacket, sharedSecret, streamEncryptionUtils)
-//        .map(streamPacket -> InterledgerRejectPacket.builder()
-//          .from(interledgerRejectPacket)
-//          .typedData(streamPacket)
-//          .build())
-//        .orElse((AbstractInterledgerRejectPacket) interledgerRejectPacket));
-//  }
-
-  public static final Set<StreamFrameType> CLOSING_FRAMES = Sets.newHashSet(
-    StreamFrameType.ConnectionClose,
-    StreamFrameType.StreamClose
-  );
-
-  public static Optional<Denomination> getDenomination(StreamPacket streamPacket) {
+  /**
+   * Search for the denomination from a {@link ConnectionAssetDetailsFrame}, if that frame is found in the packet.
+   *
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return An optionally-present {@link Denomination} if it can be found from a {@link ConnectionAssetDetailsFrame}.
+   */
+  public static Optional<Denomination> findDenominationFromFrames(final StreamPacket streamPacket) {
     Objects.requireNonNull(streamPacket);
 
     return streamPacket.frames().stream()
@@ -181,95 +146,17 @@ public class StreamPacketUtils {
       .findFirst();
   }
 
-  public static boolean hasCloseFrame(StreamPacket streamPacket) {
+  /**
+   * Search for a new connection address from a {@link ConnectionNewAddressFrame}, if that frame is found in the
+   * packet.
+   *
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return An optionally-present {@link InterledgerAddress} if it can be found from a {@link
+   *   ConnectionNewAddressFrame}.
+   */
+  public static Optional<InterledgerAddress> findNewConnectionAddressFromFrames(final StreamPacket streamPacket) {
     Objects.requireNonNull(streamPacket);
-    return hasCloseFrame(streamPacket.frames());
-  }
-
-  public static boolean hasCloseFrame(final Collection<StreamFrame> streamFrames) {
-    Objects.requireNonNull(streamFrames);
-    return streamFrames.stream()
-      .map(StreamFrame::streamFrameType)
-      .anyMatch(CLOSING_FRAMES::contains);
-  }
-
-  // TODO: Unit tests
-  public static Optional<ConnectionCloseFrame> findConnectionCloseFrame(final StreamPacket streamPacket) {
-    Objects.requireNonNull(streamPacket);
-    return findConnectionCloseFrame(streamPacket.frames());
-  }
-
-  // TODO: Unit tests
-  public static Optional<ConnectionCloseFrame> findConnectionCloseFrame(final Collection<StreamFrame> streamFrames) {
-    Objects.requireNonNull(streamFrames);
-    return streamFrames.stream()
-      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
-      .filter(streamFrame -> ConnectionCloseFrame.class.isAssignableFrom(streamFrame.getClass()))
-      .map($ -> (ConnectionCloseFrame) $)
-      .findFirst();
-  }
-
-  // TODO: Unit tests
-  public static Optional<StreamCloseFrame> findStreamCloseFrame(final StreamPacket streamPacket) {
-    Objects.requireNonNull(streamPacket);
-    return findStreamCloseFrame(streamPacket.frames());
-  }
-
-  // TODO: Unit tests
-  public static Optional<StreamCloseFrame> findStreamCloseFrame(final Collection<StreamFrame> streamFrames) {
-    Objects.requireNonNull(streamFrames);
-    return streamFrames.stream()
-      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
-      .filter(streamFrame -> StreamCloseFrame.class.isAssignableFrom(streamFrame.getClass()))
-      .map($ -> (StreamCloseFrame) $)
-      .findFirst();
-  }
-
-  // TODO: Unit tests
-  public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
-    Objects.requireNonNull(streamPacket);
-    return findConnectionAssetDetailsFrame(streamPacket.frames());
-  }
-
-  public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(
-    final Collection<StreamFrame> streamPacketFrames
-  ) {
-    Objects.requireNonNull(streamPacketFrames);
-    return streamPacketFrames.stream()
-      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
-      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
-      .map($ -> (ConnectionAssetDetailsFrame) $)
-      .findFirst();
-  }
-
-  // TODO: Unit tests
-  public static long countConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
-    Objects.requireNonNull(streamPacket);
-    return streamPacket.frames().stream()
-      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
-      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
-      .map($ -> (ConnectionAssetDetailsFrame) $)
-      .count();
-  }
-
-  // TODO: Unit tests
-  public static Collection<StreamMoneyMaxFrame> findStreamMaxMoneyFrames(final StreamPacket streamPacket) {
-    Objects.requireNonNull(streamPacket);
-    return findStreamMaxMoneyFrames(streamPacket.frames());
-  }
-
-  // TODO: Unit tests
-  public static Collection<StreamMoneyMaxFrame> findStreamMaxMoneyFrames(final Collection<StreamFrame> streamFrames) {
-    Objects.requireNonNull(streamFrames);
-    return streamFrames.stream()
-      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.StreamMoneyMax)
-      .filter(streamFrame -> StreamMoneyMaxFrame.class.isAssignableFrom(streamFrame.getClass()))
-      .map($ -> (StreamMoneyMaxFrame) $)
-      .collect(Collectors.toList());
-  }
-
-  // TODO: Unit tests
-  public static Optional<InterledgerAddress> findSourceAddress(StreamPacket streamPacket) {
     return streamPacket.frames().stream()
       .filter(frame -> frame.streamFrameType().equals(StreamFrameType.ConnectionNewAddress))
       .map(frame -> ((ConnectionNewAddressFrame) frame).sourceAddress())
@@ -279,35 +166,176 @@ public class StreamPacketUtils {
   }
 
   /**
-   * An {@link InterledgerFulfillPacket} is considered authentic because we assume that a receiver would not have
-   * fulfilled if they were unable to decrypt packets.
+   * Determine if a {@link StreamPacket} has any frames that would make the Stream eligible to be closed.
    *
-   * @param interledgerFulfillPacket
-   * @return
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return {@code true} if the stream packet has frames that indicate the stream should be closed; {@code false}
+   *   otherwise.
    */
-  @Deprecated
-  // TODO: Used?
-  public static boolean isAuthentic(final InterledgerFulfillPacket interledgerFulfillPacket) {
-    Objects.requireNonNull(interledgerFulfillPacket);
-    return true;
+  public static boolean hasStreamCloseFrames(StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return hasStreamCloseFrames(streamPacket.frames());
   }
 
   /**
-   * An {@link InterledgerRejectPacket} is considered to be authentic if a stream packet can be decrypted from the ILP
-   * packet.
+   * Determine if any {@link StreamPacket} in a {@link Collection} has a frame that would make the Stream eligible to be
+   * closed.
    *
-   * @param interledgerRejectPacket
-   * @return
+   * @param streamFrames A {@link Collection} of type {@link StreamPacket}.
+   *
+   * @return {@code true} if the stream packet has frames that indicate the stream should be closed; {@code false}
+   *   otherwise.
    */
-  // TODO: Used? See StreamPacketReply instead.
-  @Deprecated
-  public static boolean isAuthentic(final InterledgerRejectPacket interledgerRejectPacket) {
-    Objects.requireNonNull(interledgerRejectPacket);
+  public static boolean hasStreamCloseFrames(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .map(StreamFrame::streamFrameType)
+      .anyMatch(CLOSING_FRAMES::contains);
+  }
 
-    return interledgerRejectPacket.typedData()
-      .filter($ -> StreamPacket.class.isAssignableFrom($.getClass()))
-      .map($ -> (StreamPacket) $)
-      .map(Optional::of)
+  /**
+   * Determine if any {@link StreamFrame} in a {@link StreamPacket} would make the Stream eligible to be closed.
+   *
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return {@code true} if the stream packet has frames that indicate the stream should be closed; {@code false}
+   *   otherwise.
+   */
+  public static Optional<ConnectionCloseFrame> findConnectionCloseFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findConnectionCloseFrame(streamPacket.frames());
+  }
+
+  /**
+   * Find a {@link ConnectionCloseFrame} in a {@link Collection} of frames.
+   *
+   * @param streamFrames A {@link Collection} of type {@link StreamPacket}.
+   *
+   * @return {@code true} if the stream packet has frames that indicate the stream should be closed; {@code false}
+   *   otherwise.
+   */
+  public static Optional<ConnectionCloseFrame> findConnectionCloseFrame(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionClose)
+      .filter(streamFrame -> ConnectionCloseFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionCloseFrame) $)
+      .findFirst();
+  }
+
+  /**
+   * Find a {@link StreamCloseFrame} in a {@link StreamPacket}.
+   *
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return An optionally-present {@link StreamCloseFrame}.
+   */
+  public static Optional<StreamCloseFrame> findStreamCloseFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findStreamCloseFrame(streamPacket.frames());
+  }
+
+  /**
+   * Find a {@link StreamCloseFrame} in a {@link Collection} of frames.
+   *
+   * @param streamFrames A {@link Collection} of type {@link StreamFrame}.
+   *
+   * @return {@code true} if any stream frame has a {@link StreamCloseFrame}; {@code false} otherwise.
+   */
+  public static Optional<StreamCloseFrame> findStreamCloseFrame(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.StreamClose)
+      .filter(streamFrame -> StreamCloseFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (StreamCloseFrame) $)
+      .findFirst();
+  }
+
+  /**
+   * Find a {@link ConnectionAssetDetailsFrame} in a {@link StreamPacket}.
+   *
+   * @param streamPacket A {@link StreamFrame} to inspect.
+   *
+   * @return {@code true} if the stream packet has a {@link ConnectionAssetDetailsFrame}; {@code false} otherwise.
+   */
+  public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findConnectionAssetDetailsFrame(streamPacket.frames());
+  }
+
+  /**
+   * Find a {@link ConnectionAssetDetailsFrame} in a {@link Collection} of stream frames.
+   *
+   * @param streamFrames A {@link Collection} of type {@link StreamFrame}.
+   *
+   * @return {@code true} if any stream frame has a {@link ConnectionAssetDetailsFrame}; {@code false} otherwise.
+   */
+  public static Optional<ConnectionAssetDetailsFrame> findConnectionAssetDetailsFrame(
+    final Collection<StreamFrame> streamFrames
+  ) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
+      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionAssetDetailsFrame) $)
+      .findFirst();
+  }
+
+  /**
+   * Find a {@link StreamMoneyMaxFrame} in a {@link StreamPacket}.
+   *
+   * @param streamPacket A {@link StreamFrame} to inspect.
+   *
+   * @return {@code true} if the stream packet has a {@link StreamMoneyMaxFrame}; {@code false} otherwise.
+   */
+  public static Collection<StreamMoneyMaxFrame> findStreamMaxMoneyFrames(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return findStreamMaxMoneyFrames(streamPacket.frames());
+  }
+
+  /**
+   * Find a {@link StreamMoneyMaxFrame} in a {@link Collection} of stream frames.
+   *
+   * @param streamFrames A {@link Collection} of type {@link StreamFrame}.
+   *
+   * @return {@code true} if any stream frame has a {@link StreamMoneyMaxFrame}; {@code false} otherwise.
+   */
+  public static Collection<StreamMoneyMaxFrame> findStreamMaxMoneyFrames(final Collection<StreamFrame> streamFrames) {
+    Objects.requireNonNull(streamFrames);
+    return streamFrames.stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.StreamMoneyMax)
+      .filter(streamFrame -> StreamMoneyMaxFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (StreamMoneyMaxFrame) $)
+      .collect(Collectors.toList());
+  }
+
+  /**
+   * Map an {@link InterledgerResponsePacket} to an optionally-present {@link StreamPacket}.
+   *
+   * @param responsePacket An {@link InterledgerResponsePacket}.
+   *
+   * @return An optionally-present {@link StreamPacket}.
+   */
+  public static Optional<StreamPacket> mapToStreamPacket(final InterledgerResponsePacket responsePacket) {
+    Objects.requireNonNull(responsePacket);
+    return responsePacket.typedData()
+      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
+      .map($ -> (StreamPacket) $);
+  }
+
+  /**
+   * Determine if an {@link InterledgerResponsePacket} authentic (i.e., if it has a {@link StreamPacket} that could be
+   * decrypted out of the ILP packet's data payload.
+   *
+   * @param interledgerResponsePacket A {@link InterledgerResponsePacket} to inspect.
+   *
+   * @return {@code true} if the response is authentic; {@code false} otherwise.
+   */
+  public static boolean hasAuthenticStreamPacket(final InterledgerResponsePacket interledgerResponsePacket) {
+    Objects.requireNonNull(interledgerResponsePacket);
+
+    return StreamPacketUtils.mapToStreamPacket(interledgerResponsePacket)
       .map(streamPacket -> true)
       .orElse(false);
   }

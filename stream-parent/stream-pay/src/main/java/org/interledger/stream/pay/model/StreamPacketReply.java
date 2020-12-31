@@ -5,6 +5,7 @@ import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.stream.StreamPacket;
+import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.frames.StreamFrame;
 
 import com.google.common.primitives.UnsignedLong;
@@ -20,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Holds all information concerning a reply for a stream request.
+ * Holds all information concerning an individual reply for a stream packet request.
  */
 @Immutable
 public interface StreamPacketReply {
@@ -30,9 +31,11 @@ public interface StreamPacketReply {
   }
 
   /**
-   * An optionally-present exception that was thrown while tryin to assemble
+   * An optionally-present exception that was thrown while trying to process a corresponding {@link
+   * StreamPacketRequest}.
    *
-   * @return
+   * @return An optionally-present {@link Throwable}, only if there was an error with a corresponding {@link
+   *   StreamPacketRequest}.
    */
   Optional<Throwable> exception();
 
@@ -44,11 +47,9 @@ public interface StreamPacketReply {
   @Derived
   default Optional<StreamPacket> streamPacket() {
     return interledgerResponsePacket()
-      .map(InterledgerResponsePacket::typedData)
+      .map(StreamPacketUtils::mapToStreamPacket)
       .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
-      .map($ -> (StreamPacket) $);
+      .map(Optional::get);
   }
 
   /**
@@ -72,7 +73,7 @@ public interface StreamPacketReply {
   /**
    * The prepare packet the prompted this stream packet reply.
    *
-   * @return
+   * @return An optionally present {@link InterledgerPreparePacket}.
    */
   Optional<InterledgerPreparePacket> interledgerPreparePacket();
 
@@ -80,7 +81,7 @@ public interface StreamPacketReply {
    * The actual response from the Stream packet send operation; empty if there was no response or if this reply should
    * be ignored.
    *
-   * @return A {@link InterledgerResponsePacket}.
+   * @return An optionally present {@link InterledgerResponsePacket}.
    */
   Optional<InterledgerResponsePacket> interledgerResponsePacket();
 
@@ -92,26 +93,27 @@ public interface StreamPacketReply {
   Set<StreamFrame> streamFramesForConnectionClose();
 
   /**
-   * Did the recipient authenticate that they received the STREAM request packet? If they responded with a Fulfill or a
-   * valid STREAM reply, they necessarily decoded the request.
+   * Determine if an {@link #interledgerResponsePacket()} is authentic (i.e., if it has a {@link StreamPacket} that
+   * could be decrypted out of the ILP packet's data payload), which indicates that the receiver actually received the
+   * packet as opposed to an intermediary injecting a fake packet into a payment path. Note that either an authentic
+   * STREAM packet or a simple fulfill both indicate an authentic packet because
+   *
+   * @return {@code true} if the response is authentic; {@code false} otherwise.
    */
-  // TODO: Compare this with StreamPacketUtils.isAuthentic(interledgerRejectPacket) and maybe just implement here?
-  //  Check usages.
   @Derived
   default boolean isAuthentic() {
-    // Or was there a STREAM reply.
-    boolean hasStreamPacket = interledgerResponsePacket()
-      .map(InterledgerResponsePacket::typedData)
-      .filter(Optional::isPresent)
-      .map(Optional::get)
-      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
-      // TODO: Should there be frames here to be authentic?
-      .map($ -> true)
+    boolean hasAuthenticStreamPacket = this.interledgerResponsePacket()
+      .map(StreamPacketUtils::hasAuthenticStreamPacket)
       .orElse(false);
 
-    return isFulfill() || hasStreamPacket;
+    return isFulfill() || hasAuthenticStreamPacket;
   }
 
+  /**
+   * Determine if {@link #interledgerResponsePacket()} contains an ILPv4 reject response.
+   *
+   * @return {@code true} if the packet is an ILPv4 reject, {@code false} otherwise.
+   */
   @Derived
   default boolean isReject() {
     return this.interledgerResponsePacket()
@@ -119,6 +121,11 @@ public interface StreamPacketReply {
       .isPresent();
   }
 
+  /**
+   * Determine if {@link #interledgerResponsePacket()} contains an ILPv4 fulfill response.
+   *
+   * @return {@code true} if the packet is an ILPv4 fulfill, {@code false} otherwise.
+   */
   @Derived
   default boolean isFulfill() {
     return this.interledgerResponsePacket()
@@ -143,12 +150,8 @@ public interface StreamPacketReply {
 
     this.interledgerResponsePacket()
       .ifPresent(interledgerResponsePacket -> interledgerResponsePacket.handle(
-        (fulfillPacket) -> {
-          fulfillHandler.accept(this);
-        },
-        (rejectPacket) -> {
-          rejectHandler.accept(this);
-        }
+        (fulfillPacket) -> fulfillHandler.accept(this),
+        (rejectPacket) -> rejectHandler.accept(this)
       ));
   }
 
@@ -178,8 +181,8 @@ public interface StreamPacketReply {
    * response packet. If this packet is a fulfill packet, then {@code fulfillMapper} will be called. If this packet is a
    * reject packet, then  {@code rejectMapper} will be called instead.
    *
-   * @param fulfillMapper A {@link Function} to call if this packet is an instance of {@link StreamPacketFulfill}.
-   * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link StreamPacketReject}.
+   * @param fulfillMapper A {@link Function} to call if this packet is an instance of {@link InterledgerFulfillPacket}.
+   * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link InterledgerRejectPacket}.
    * @param <R>           The return type of this mapping function.
    *
    * @return An instance of {@code R}.

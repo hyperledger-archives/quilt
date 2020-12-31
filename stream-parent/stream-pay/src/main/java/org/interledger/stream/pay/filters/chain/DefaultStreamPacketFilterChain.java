@@ -288,7 +288,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
     final InterledgerCondition executionCondition;
     if (streamPacketRequest.isFulfillable()) {
       // Create the ILP Prepare packet
-      executionCondition = StreamPacketUtils.generatedFulfillableFulfillment(
+      executionCondition = StreamPacketUtils.generateFulfillableFulfillment(
         streamConnection.getSharedSecret(), streamPacketData
       ).getCondition();
     } else {
