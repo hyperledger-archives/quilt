@@ -6,9 +6,9 @@ import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.DefaultStreamPacketFilterChain;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
+import org.interledger.stream.pay.model.PaymentReceipt;
 import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.QuoteRequest;
-import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
@@ -61,16 +61,15 @@ class RunLoop {
     this.executorService = Executors.newFixedThreadPool(5);
   }
 
-
   /**
    * Start the run-loop with the supplied {@code quote}.
    *
    * @param quote A {@link Quote} with information gleaned from the payment path, but without yet sending real value
    *              (i.e., a quote or estimate of the payment).
    *
-   * @return A {@link CompletableFuture} of type {@link Receipt}.
+   * @return A {@link CompletableFuture} of type {@link PaymentReceipt}.
    */
-  public CompletableFuture<Receipt> start(final Quote quote) {
+  public CompletableFuture<PaymentReceipt> start(final Quote quote) {
     Objects.requireNonNull(quote);
 
     // PacketFilters should be stateless so that they can be created once, and re-used across multiple run-loop
@@ -173,7 +172,7 @@ class RunLoop {
       }
     }
 
-    return CompletableFuture.supplyAsync(() -> Receipt.builder()
+    return CompletableFuture.supplyAsync(() -> PaymentReceipt.builder()
       .amountDeliveredInDestinationUnits(
         this.paymentSharedStateTracker.getAmountTracker().getAmountDeliveredInDestinationUnits()
       )

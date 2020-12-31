@@ -42,7 +42,7 @@ import org.interledger.stream.pay.StreamPayer.Default;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.PaymentOptions;
 import org.interledger.stream.pay.model.Quote;
-import org.interledger.stream.pay.model.Receipt;
+import org.interledger.stream.pay.model.PaymentReceipt;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
@@ -1337,12 +1337,12 @@ public class StreamPayerDefaultTest {
       .build();
 
     final Quote quote = streamPayer.getQuote(paymentOptions).join();
-    Receipt receipt = streamPayer.pay(quote).join();
+    PaymentReceipt paymentReceipt = streamPayer.pay(quote).join();
 
     // Assert that nothing was delivered.
-    assertThat(receipt).isNotNull();
-    assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
-    assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt).isNotNull();
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
   }
 
   /**

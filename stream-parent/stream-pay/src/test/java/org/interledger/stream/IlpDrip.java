@@ -38,7 +38,8 @@ import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamPayer;
 import org.interledger.stream.pay.model.PaymentOptions;
-import org.interledger.stream.pay.model.Receipt;
+import org.interledger.stream.pay.model.PaymentReceipt;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.problem.ProblemModule;
@@ -145,8 +146,8 @@ public class IlpDrip {
       while (true) {
         LOGGER.info("PAYMENT LINK\n{}\n\n", link);
 
-        CompletableFuture<Receipt> firstPayment = quoteAndPay(receiver1);
-        CompletableFuture<Receipt> secondPayment = receiver2
+        CompletableFuture<PaymentReceipt> firstPayment = quoteAndPay(receiver1);
+        CompletableFuture<PaymentReceipt> secondPayment = receiver2
           .map(destPaymentPointer -> quoteAndPay(destPaymentPointer))
           .orElseGet(() -> CompletableFuture.completedFuture(null));
 
@@ -175,7 +176,7 @@ public class IlpDrip {
     );
   }
 
-  private static CompletableFuture<Receipt> quoteAndPay(final PaymentPointer receiverPaymentPointer) {
+  private static CompletableFuture<PaymentReceipt> quoteAndPay(final PaymentPointer receiverPaymentPointer) {
 
     final PaymentOptions paymentOptions = PaymentOptions.builder()
       .senderAccountDetails(AccountDetails.builder()
@@ -197,9 +198,9 @@ public class IlpDrip {
           return null;
         } else if (quote != null) {
           LOGGER.info("RECEIPT={}", quote);
-          final Receipt receipt = streamPayer.pay(quote).join();
-          LOGGER.info("STREAM PAY RECEIPT: \n{}\n\n", receipt);
-          return receipt;
+          final PaymentReceipt paymentReceipt = streamPayer.pay(quote).join();
+          LOGGER.info("STREAM PAY RECEIPT: \n{}\n\n", paymentReceipt);
+          return paymentReceipt;
         } else {
           fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
           return null;

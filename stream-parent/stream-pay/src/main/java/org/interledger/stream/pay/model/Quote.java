@@ -1,14 +1,14 @@
 package org.interledger.stream.pay.model;
 
-import java.time.Duration;
-import org.immutables.value.Value.Immutable;
 import org.interledger.core.fluent.Ratio;
-import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamConnection;
 import org.interledger.stream.pay.model.ImmutableQuote.Builder;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
+import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
+import org.immutables.value.Value.Immutable;
 
 /**
  * A quote for a payment (where the payment parameters are defined by a supplied {@link PaymentOptions}).
@@ -37,34 +37,10 @@ public interface Quote {
    */
   AccountDetails destinationAccount();
 
-  // TODO: Enable this and validate in ITs
-//  /**
-//   * The maximum amount that will be sent for this payment, in source units.
-//   */
-//  BigInteger maxSourceAmountInSourceUnits();
-//
-//  /**
-//   * Minimum amount that will be delivered if the payment completes, in destination units.
-//   */
-//  BigInteger minDeliveryAmountInDestinationUnits();
-
-  EstimatedPaymentOutcome estimatedPaymentOutcome();
-
   /**
-   * Probed exchange rate over the path, as a range between {@link ExchangeRateProbeOutcome#lowerBoundRate} and {@link
-   * ExchangeRateProbeOutcome#upperBoundRate}.
+   * Minimum exchange rate allowed for a payment; used to enforce rates.
    */
-  ExchangeRateProbeOutcome estimatedExchangeRate();
-
-  /**
-   * Minimum exchange rate used to enforce rates.
-   */
-  Ratio minExchangeRate();
-
-  /**
-   * Estimated payment duration in milliseconds, based on max packet amount, RTT, and rate of packet throttling
-   */
-  Duration estimatedDuration();
+  Ratio minAllowedExchangeRate();
 
   /**
    * The STREAM connection constructed as part of the quoting process.
@@ -79,4 +55,18 @@ public interface Quote {
    * @return A {@link PaymentSharedStateTracker}.
    */
   PaymentSharedStateTracker paymentSharedStateTracker();
+
+  /**
+   * Probed exchange rate over the path, as a range between {@link ExchangeRateProbeOutcome#lowerBoundRate} and {@link
+   * ExchangeRateProbeOutcome#upperBoundRate}.
+   */
+  ExchangeRateProbeOutcome estimatedExchangeRate();
+
+  /**
+   * Estimated information about the ultimate payment outcome, as computed from the details discovered in {@link
+   * ExchangeRateProbeOutcome}.
+   *
+   * @return
+   */
+  EstimatedPaymentOutcome estimatedPaymentOutcome();
 }

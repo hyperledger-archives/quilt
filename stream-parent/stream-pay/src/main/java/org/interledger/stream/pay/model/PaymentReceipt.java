@@ -13,10 +13,10 @@ import java.util.Optional;
  * StreamPayerException} will be present.
  */
 @Immutable
-public interface Receipt {
+public interface PaymentReceipt {
 
-  static ImmutableReceipt.Builder builder() {
-    return ImmutableReceipt.builder();
+  static ImmutablePaymentReceipt.Builder builder() {
+    return ImmutablePaymentReceipt.builder();
   }
 
   /**

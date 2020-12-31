@@ -25,8 +25,8 @@ import org.interledger.stream.pay.filters.PacingFilter;
 import org.interledger.stream.pay.filters.SequenceFilter;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.model.PaymentOptions;
+import org.interledger.stream.pay.model.PaymentReceipt;
 import org.interledger.stream.pay.model.Quote;
-import org.interledger.stream.pay.model.Receipt;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
@@ -83,10 +83,10 @@ public interface StreamPayer {
    *
    * @param quote A soft {@link Quote} with details about a payment path.
    *
-   * @return A {@link CompletableFuture} that completes with a payment {@link Receipt} (which has an optionally-present
-   *   {@link StreamPayerException} if anything went wrong with the payment).
+   * @return A {@link CompletableFuture} that completes with a payment {@link PaymentReceipt} (which has an
+   *   optionally-present {@link StreamPayerException} if anything went wrong with the payment).
    */
-  CompletableFuture<Receipt> pay(Quote quote);
+  CompletableFuture<PaymentReceipt> pay(Quote quote);
 
   /**
    * The default implementation of {@link StreamPayer}.
@@ -230,15 +230,16 @@ public interface StreamPayer {
           .paymentSharedStateTracker(paymentSharedStateTracker)
           .sourceAccount(paymentOptions.senderAccountDetails())
           .destinationAccount(destinationAccountDetails)
-          .estimatedDuration(estimatedDuration)
           .estimatedPaymentOutcome(
             EstimatedPaymentOutcome.builder()
               .maxSendAmountInWholeSourceUnits(maxSourceAmount)
               .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
               .estimatedNumberOfPackets(estimatedPaymentOutcome.estimatedNumberOfPackets())
+              .estimatedDuration(estimatedDuration)
               .build()
           )
-          .minExchangeRate(minExchangeRate)
+          .minAllowedExchangeRate(minExchangeRate)
+          // Translate the upper and lower bound rates into a rate scaled for sender and receiver account scales.
           .estimatedExchangeRate(ExchangeRateProbeOutcome.builder().from(rateProbeOutcome)
             .lowerBoundRate(lowerBoundRate)
             .upperBoundRate(upperBoundRate)
@@ -254,7 +255,7 @@ public interface StreamPayer {
     }
 
     @Override
-    public CompletableFuture<Receipt> pay(final Quote quote) {
+    public CompletableFuture<PaymentReceipt> pay(final Quote quote) {
       Objects.requireNonNull(quote);
 
       final List<StreamPacketFilter> streamPacketFilters = Lists.newArrayList(

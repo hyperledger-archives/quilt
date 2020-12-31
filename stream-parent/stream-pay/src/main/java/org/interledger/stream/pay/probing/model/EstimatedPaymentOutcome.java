@@ -2,9 +2,10 @@ package org.interledger.stream.pay.probing.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.math.BigInteger;
-import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
+
+import java.math.BigInteger;
+import java.time.Duration;
 
 /**
  * An estimate of the outcome of a stream payment.
@@ -41,17 +42,9 @@ public interface EstimatedPaymentOutcome {
    */
   BigInteger minDeliveryAmountInWholeDestinationUnits();
 
-  @Value.Check
-  default void check() {
-//    Preconditions.checkState(
-//      FluentCompareTo.is(estimatedNumberOfPackets()).greaterThan(BigInteger.ZERO),
-//      "estimatedNumberOfPackets must be positive."
-//    );
-
-//    Preconditions.checkState(
-//      FluentCompareTo.is(maxSourceAmountInSourceUnits()).greaterThan(BigInteger.ZERO),
-//      "maxSourceAmount must be positive."
-//    );
-  }
+  /**
+   * Estimated payment duration in milliseconds, based on max packet amount, RTT, and rate of packet throttling
+   */
+  Duration estimatedDuration();
 
 }
