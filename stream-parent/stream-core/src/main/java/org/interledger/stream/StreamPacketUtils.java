@@ -122,9 +122,7 @@ public class StreamPacketUtils {
         .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
         .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
     } catch (Exception e) {
-      LOGGER.error(
-        "Unable to decrypt ILP response packet's data. packetData={}", ilpPacketData, e
-      );
+      LOGGER.error("Unable to decrypt ILP response packet's data. packetData={}", ilpPacketData, e);
       return Optional.empty();
     }
   }

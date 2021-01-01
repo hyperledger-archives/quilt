@@ -15,6 +15,7 @@ import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -42,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A default implementation of {@link StreamPacketFilterChain}, containing a RunLoop that utilizes the following
- * filters:
+ * A default implementation of {@link StreamPacketFilterChain}. This implementation uses a RunLoop that utilizes the
+ * following filters.
  *
  * <pre>
  *   ┌────────────────────────────────────┐
@@ -103,7 +104,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
   private static final Executor EXECUTOR = Executors.newCachedThreadPool();
 
   // The index of the filter to call next...
-  private int _filterIndex;
+  private int internalFilterIndex;
 
   // TODO: Create a StreamEventPublisher. See code in connector and port from there?
   //private PacketEventPublisher packetEventPublisher;
@@ -113,40 +114,44 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
    * Link} to forward the packet onto.
    *
    * @param streamPacketFilters       A {@link List} of type {@link StreamPacketFilter}.
-   * @param link
-   * @param streamEncryptionUtils
-   * @param paymentSharedStateTracker
+   * @param link                      A {@link Link}.
+   * @param streamEncryptionUtils     A {@link StreamEncryptionUtils}.
+   * @param paymentSharedStateTracker A {@link PaymentSharedStateTracker}.
    */
   public DefaultStreamPacketFilterChain(
     final List<StreamPacketFilter> streamPacketFilters,
     final Link<? extends LinkSettings> link,
     final StreamEncryptionUtils streamEncryptionUtils,
     final PaymentSharedStateTracker paymentSharedStateTracker
-//    final PacketEventPublisher packetEventPublisher
   ) {
     this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
     this.link = Objects.requireNonNull(link);
     this.streamEncryptionUtils = Objects.requireNonNull(streamEncryptionUtils);
     this.paymentSharedStateTracker = Objects.requireNonNull(paymentSharedStateTracker);
-    this._filterIndex = 0;
+    this.internalFilterIndex = 0;
   }
 
   @Override
   public SendState nextState(final ModifiableStreamPacketRequest streamPacketRequest) {
     Objects.requireNonNull(streamPacketRequest);
+    try {
+      for (StreamPacketFilter streamPacketFilter : streamPacketFilters) {
+        final SendState nextState = streamPacketFilter.nextState(streamPacketRequest);
 
-    for (int i = 0; i < streamPacketFilters.size(); i++) {
-      final SendState nextState = streamPacketFilters.get(i).nextState(streamPacketRequest);
+        // Immediately end the payment and wait for all requests to complete
+        if (nextState != SendState.Ready) { // <-- Wait should abort the nextState checks.
+          return nextState;
+        }
 
-      // Immediately end the payment and wait for all requests to complete
-      if (nextState != SendState.Ready) { // <-- Wait should abort the nextState checks.
-        return nextState;
-      } else {
-        continue; // <-- Check the next state.
+        // <-- Just check the next state via the for-loop.
       }
-    }
 
-    return SendState.Ready;
+      return SendState.Ready;
+    } catch (StreamPayerException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new StreamPayerException(e, SendState.End);
+    }
   }
 
   @Override
@@ -159,54 +164,73 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
     // See https://github.com/interledger4j/ilpv4-connector/issues/588
 
     try {
+      if (this.internalFilterIndex < this.streamPacketFilters.size()) {
+        // Apply all streamClientFilters, but only if the state is not END...
+        return streamPacketFilters
+          .get(internalFilterIndex++)
+          .doFilter(streamPacketRequest, this);
+      } else {
+        ///////////////////////
+        // Check the SendState before sending.
+        ///////////////////////
+        if (streamPacketRequest.sendState() == SendState.End ||
+          streamPacketRequest.sendState() == SendState.Wait ||
+          streamPacketRequest.sendState().isPaymentError()) {
+          return StreamPacketReply.builder()
+            .interledgerPreparePacket(streamPacketRequest.interledgerPreparePacket())
+            .build();
+        } else { // Ready
+          final InterledgerPreparePacket preparePacket = constructPreparePacket(streamPacketRequest);
 
-      for (int i = 0; i < streamPacketFilters.size(); i++) {
-        if (this._filterIndex < this.streamPacketFilters.size()) {
-          // Apply all streamClientFilters, but only if the state is not END...
-          return streamPacketFilters
-            .get(_filterIndex++)
-            .doFilter(streamPacketRequest, this);
-        } else {
-
-          ///////////////////////
-          // Check the SendState before sending.
-          ///////////////////////
-
-          if (streamPacketRequest.sendState() == SendState.End ||
-            streamPacketRequest.sendState() == SendState.Wait ||
-            streamPacketRequest.sendState().isPaymentError()) {
-            // TODO: We can extract PaymentErrors out of StreamPacketReply on ground that we should throw an exception
-            // instead. That means isPaymentError will go away and not need to be handled.
+          // Expiry timeout is handled here (not in a filter) on the premise that a filter can fail or allow a
+          // developer to abort the filter pipeline, but we never want to allow a developer to accidentally do this so
+          // that expiry handling of an outgoing request is always enforced.
+          final Duration timeoutDuration = Duration.between(Instant.now(), preparePacket.getExpiresAt());
+          if (timeoutDuration.isNegative() || timeoutDuration.isZero()) {
+            // `timeoutDuration` can be negative, so need to perform this check here to make sure we don't send a
+            // negative or 0 timeout into the completable future.
+            logger.error("Invalid timeout. timeoutDuration={}", timeoutDuration);
             return StreamPacketReply.builder()
-              .interledgerPreparePacket(streamPacketRequest.interledgerPreparePacket())
+              .interledgerPreparePacket(preparePacket)
               .build();
-          } else { // Ready
+          }
 
-            final InterledgerPreparePacket preparePacket = constructPreparePacket(streamPacketRequest);
+          try {
+            // Send the preparePacket (fully assembled by all filters)
+            final InterledgerResponsePacket interledgerResponsePacket = CompletableFuture
+              .supplyAsync(() -> link.sendPacket(preparePacket), EXECUTOR)
+              .get(timeoutDuration.getSeconds(), TimeUnit.SECONDS);
 
-            // Expiry timeout is handled here (not in a filter) on the premise that a filter can fail or allow a
-            // developer to abort the filter pipeline, but we never want to allow a developer to accidentally do this so
-            // that expiry handling of an outgoing request is always enforced.
-            final Duration timeoutDuration = Duration.between(Instant.now(), preparePacket.getExpiresAt());
-            if (timeoutDuration.isNegative() || timeoutDuration.isZero()) {
-              // `timeoutDuration` can be negative, so need to perform this check here to make sure we don't send a
-              // negative or 0 timeout into the completable future.
-              logger.error("Invalid timeout. timeoutDuration={}", timeoutDuration);
-              return StreamPacketReply.builder()
-                .interledgerPreparePacket(preparePacket)
-                .build();
-            }
-
-            try {
-              // Send the preparePacket (fully assembled by all filters)
-              final InterledgerResponsePacket interledgerResponsePacket = CompletableFuture
-                .supplyAsync(() -> link.sendPacket(preparePacket), EXECUTOR)
-                .get(timeoutDuration.getSeconds(), TimeUnit.SECONDS);
-
-              // Map to a StreamPacketReply or an F08 payload.
-
-              return interledgerResponsePacket.map(
-                interledgerFulfillPacket -> {
+            // Map to a StreamPacketReply or an F08 payload.
+            return interledgerResponsePacket.map(
+              interledgerFulfillPacket -> {
+                final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
+                  interledgerResponsePacket.getData(),
+                  this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
+                  streamEncryptionUtils
+                );
+                return StreamPacketReply.builder()
+                  .interledgerPreparePacket(preparePacket)
+                  .interledgerResponsePacket(interledgerFulfillPacket.withTypedDataOrThis(typedStreamPacket))
+                  .build();
+              },
+              interledgerRejectPacket -> {
+                if (interledgerRejectPacket.getCode() == InterledgerErrorCode.F08_AMOUNT_TOO_LARGE) {
+                  Optional<?> typedData = Optional.empty();
+                  // Decode the F08
+                  try {
+                    typedData = Optional.ofNullable(
+                      streamCodecContext.read(AmountTooLargeErrorData.class,
+                        new ByteArrayInputStream(interledgerRejectPacket.getData()))
+                    );
+                  } catch (IOException e) {
+                    logger.warn("Unable to decode AmountTooLargeErrorData", e);
+                  }
+                  return StreamPacketReply.builder()
+                    .interledgerPreparePacket(preparePacket)
+                    .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedData))
+                    .build();
+                } else {
                   final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
                     interledgerResponsePacket.getData(),
                     this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
@@ -214,49 +238,20 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                   );
                   return StreamPacketReply.builder()
                     .interledgerPreparePacket(preparePacket)
-                    .interledgerResponsePacket(interledgerFulfillPacket.withTypedDataOrThis(typedStreamPacket))
+                    .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedStreamPacket))
                     .build();
-                },
-                interledgerRejectPacket -> {
-                  if (interledgerRejectPacket.getCode() == InterledgerErrorCode.F08_AMOUNT_TOO_LARGE) {
-                    Optional<?> typedData = Optional.empty();
-                    // Decode the F08
-                    try {
-                      typedData = Optional.ofNullable(
-                        streamCodecContext.read(AmountTooLargeErrorData.class,
-                          new ByteArrayInputStream(interledgerRejectPacket.getData()))
-                      );
-                    } catch (IOException e) {
-                      logger.warn("Unable to decode AmountTooLargeErrorData", e);
-                    }
-                    return StreamPacketReply.builder()
-                      .interledgerPreparePacket(preparePacket)
-                      .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedData))
-                      .build();
-                  } else {
-                    final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
-                      interledgerResponsePacket.getData(),
-                      this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
-                      streamEncryptionUtils
-                    );
-                    return StreamPacketReply.builder()
-                      .interledgerPreparePacket(preparePacket)
-                      .interledgerResponsePacket(interledgerRejectPacket.withTypedDataOrThis(typedStreamPacket))
-                      .build();
-                  }
                 }
-              );
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-              logger.error(e.getMessage(), e);
-              return StreamPacketReply.builder()
-                .exception(e)
-                .interledgerPreparePacket(preparePacket)
-                .build();
-            }
+              }
+            );
+          } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            logger.error(e.getMessage(), e);
+            return StreamPacketReply.builder()
+              .exception(e)
+              .interledgerPreparePacket(preparePacket)
+              .build();
           }
         }
       }
-      return StreamPacketReply.builder().build();
     } catch (Exception e) {
       // Handler of last resort.
       logger.error(e.getMessage(), e);
@@ -265,12 +260,18 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
   }
 
   /**
-   * Default maximum duration that a ILP Prepare can be in-flight before it should be rejected
+   * Default maximum duration that a ILP Prepare can be in-flight before it should be rejected.
    */
   private static final Duration DEFAULT_PACKET_TIMEOUT = Duration.of(30, ChronoUnit.SECONDS);
 
-  // TODO: This should be constructed after all nextStates have been evaluated, and put onto the StreamPacketRequest
-  // before filtering...?
+  /**
+   * Helper method to construct an {@link InterledgerPreparePacket} using all data supplied in {@code
+   * streamPacketRequest}.
+   *
+   * @param streamPacketRequest A {@link StreamPacketRequest}.
+   *
+   * @return An {@link InterledgerPreparePacket}.
+   */
   private InterledgerPreparePacket constructPreparePacket(final StreamPacketRequest streamPacketRequest) {
     Objects.requireNonNull(streamPacketRequest);
 
@@ -283,8 +284,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       .build();
 
     final StreamConnection streamConnection = this.paymentSharedStateTracker.getStreamConnection();
-    final byte[] streamPacketData = streamEncryptionUtils
-      .toEncrypted(streamConnection.getSharedSecret(), streamPacket);
+    final byte[] streamPacketData = streamEncryptionUtils.toEncrypted(streamConnection.getSharedSecret(), streamPacket);
     final InterledgerCondition executionCondition;
     if (streamPacketRequest.isFulfillable()) {
       // Create the ILP Prepare packet
@@ -295,7 +295,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       executionCondition = StreamPacketUtils.unfulfillableCondition();
     }
 
-    final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
+    return InterledgerPreparePacket.builder()
       .destination(streamConnection.getDestinationAddress())
       .amount(streamPacketRequest.sourceAmount())
       .executionCondition(executionCondition)
@@ -303,8 +303,6 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       .data(streamPacketData)
       .typedData(streamPacket)
       .build();
-
-    return preparePacket;
   }
 
 //  /**
