@@ -132,7 +132,7 @@ public abstract class AbstractRustIT {
 
   // TODO: What about Java Connector? Try to use TestContainers.
 
-//
+  //
 //  protected OkHttpClient constructOkHttpClient() {
 //    ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
 //    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
@@ -291,7 +291,7 @@ public abstract class AbstractRustIT {
       .httpOutgoingToken(AUTH_TOKEN)
       .assetCode("XRP")
       .assetScale(9)
-      .minBalance(new BigInteger("-100000000000000"))
+      .minBalance(BigInteger.valueOf(Long.MAX_VALUE).subtract(BigInteger.ONE).multiply(BigInteger.valueOf(-1L)))
       .roundTripTime(new BigInteger("500"))
       .maxPacketAmount(BigInteger.valueOf(50000))
       .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
@@ -310,7 +310,7 @@ public abstract class AbstractRustIT {
       .httpOutgoingToken(AUTH_TOKEN)
       .assetCode("XRP")
       .assetScale(9)
-      .minBalance(new BigInteger("-100000000000000"))
+      .minBalance(BigInteger.valueOf(Long.MAX_VALUE).subtract(BigInteger.ONE).multiply(BigInteger.valueOf(-1L)))
       .roundTripTime(new BigInteger("500"))
       .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
       .build();
@@ -326,7 +326,7 @@ public abstract class AbstractRustIT {
       .httpOutgoingToken(AUTH_TOKEN)
       .assetCode("USD")
       .assetScale(6)
-      .minBalance(new BigInteger("-10000000000"))
+      .minBalance(BigInteger.valueOf(Long.MAX_VALUE).subtract(BigInteger.ONE).multiply(BigInteger.valueOf(-1L)))
       .roundTripTime(new BigInteger("500"))
       .maxPacketAmount(BigInteger.valueOf(50000))
       .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
@@ -345,7 +345,8 @@ public abstract class AbstractRustIT {
       .httpOutgoingToken(AUTH_TOKEN)
       .assetCode("USD")
       .assetScale(6)
-      .minBalance(new BigInteger("-10000000000"))
+      .maxPacketAmount(BigInteger.valueOf(Long.MAX_VALUE)) // <-- Max supported by Rust Connector.
+      .minBalance(BigInteger.valueOf(Long.MAX_VALUE).subtract(BigInteger.ONE).multiply(BigInteger.valueOf(-1L)))
       .roundTripTime(new BigInteger("500"))
       .routingRelation(RustNodeAccount.RoutingRelation.CHILD)
       .build();
@@ -401,8 +402,9 @@ public abstract class AbstractRustIT {
    * <pre>https://{server}/accounts/{accountName}/ilp</pre>.
    *
    * @param accountName The ILP account identifier.
+   *
    * @return An {@link HttpUrl} that can be used to commuicate with the ILP Connector for the supplied {@code
-   * accountName}.
+   *   accountName}.
    */
   protected HttpUrl constructIlpOverHttpUrl(final String accountName) {
     return getInterledgerBaseUri().newBuilder()
@@ -418,6 +420,7 @@ public abstract class AbstractRustIT {
    * <pre>{HOST_ADDRESS}.{accountName}</pre>.
    *
    * @param accountName The ILP account identifier.
+   *
    * @return An {@link InterledgerAddress}.
    */
   protected InterledgerAddress constructIlpAddressOnConnector(final String accountName) {
@@ -429,6 +432,7 @@ public abstract class AbstractRustIT {
    *
    * @param ildcpLink A {@link Link} that can be used for IL-DCP. This Link will not have a sender address because
    *                  that's what IL-DCP is for.
+   *
    * @return
    */
   protected AccountDetails newSenderAccountDetailsViaILDCP(final Link ildcpLink) {
@@ -495,6 +499,7 @@ public abstract class AbstractRustIT {
    * Strings) per RFC-7807, this ObjectMapper should not be used for payloads that involve Problems.
    *
    * @return An {@link ObjectMapper}.
+   *
    * @see "https://tools.ietf.org/html/rfc7807"
    */
   protected static ObjectMapper newObjectMapperForProblemsJson() {

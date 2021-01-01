@@ -305,41 +305,41 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       .build();
   }
 
-//  /**
-//   * Track this packet by emitting proper events depending on the response.
-//   */
-//  private void trackPacket(
-//      final AccountSettings sourceAccountSettings,
-//      final InterledgerPreparePacket preparePacket,
-//      final NextHopInfo nextHopInfo,
-//      final AccountSettings nextHopAccountSettings,
-//      final InterledgerResponsePacket response
-//  ) {
-//    try {
-//      BigDecimal fxRate = nextHopPacketMapper.determineExchangeRate(
-//          sourceAccountSettings, nextHopAccountSettings, preparePacket
-//      );
-//      response.handle(interledgerFulfillPacket ->
-//          packetEventPublisher.publishFulfillment(
-//              sourceAccountSettings,
-//              nextHopAccountSettings,
-//              preparePacket,
-//              nextHopInfo.nextHopPacket(),
-//              fxRate,
-//              interledgerFulfillPacket.getFulfillment()
-//          ), (rejectPacket) ->
-//          packetEventPublisher.publishRejectionByNextHop(
-//              sourceAccountSettings,
-//              nextHopAccountSettings,
-//              preparePacket,
-//              nextHopInfo.nextHopPacket(),
-//              fxRate,
-//              rejectPacket
-//          )
-//      );
-//    } catch (Exception e) {
-//      logger.warn("Could not publish event", e);
-//    }
-//  }
+  //  /**
+  //   * Track this packet by emitting proper events depending on the response.
+  //   */
+  //  private void trackPacket(
+  //      final AccountSettings sourceAccountSettings,
+  //      final InterledgerPreparePacket preparePacket,
+  //      final NextHopInfo nextHopInfo,
+  //      final AccountSettings nextHopAccountSettings,
+  //      final InterledgerResponsePacket response
+  //  ) {
+  //    try {
+  //      BigDecimal fxRate = nextHopPacketMapper.determineExchangeRate(
+  //          sourceAccountSettings, nextHopAccountSettings, preparePacket
+  //      );
+  //      response.handle(interledgerFulfillPacket ->
+  //          packetEventPublisher.publishFulfillment(
+  //              sourceAccountSettings,
+  //              nextHopAccountSettings,
+  //              preparePacket,
+  //              nextHopInfo.nextHopPacket(),
+  //              fxRate,
+  //              interledgerFulfillPacket.getFulfillment()
+  //          ), (rejectPacket) ->
+  //          packetEventPublisher.publishRejectionByNextHop(
+  //              sourceAccountSettings,
+  //              nextHopAccountSettings,
+  //              preparePacket,
+  //              nextHopInfo.nextHopPacket(),
+  //              fxRate,
+  //              rejectPacket
+  //          )
+  //      );
+  //    } catch (Exception e) {
+  //      logger.warn("Could not publish event", e);
+  //    }
+  //  }
 
 }

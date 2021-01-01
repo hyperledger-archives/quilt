@@ -2,6 +2,7 @@ package org.interledger.stream.pay.trackers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
+import static org.interledger.stream.pay.SendStateMatcher.hasSendState;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -13,7 +14,6 @@ import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 
 import com.google.common.primitives.UnsignedLong;
-import org.hamcrest.CustomTypeSafeMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1235,22 +1235,5 @@ public class AmountTrackerTest {
       Ratio.from(new BigDecimal("1.9")),
       UnsignedLong.ONE
     );
-  }
-
-  /**
-   * A {@link CustomTypeSafeMatcher} for ensuring that an instance of {@link StreamPayerException} has the indicated
-   * {@link SendState}.
-   *
-   * @param sendState The {@link SendState} to require.
-   *
-   * @return An instance of {@link CustomTypeSafeMatcher}.
-   */
-  private static CustomTypeSafeMatcher<StreamPayerException> hasSendState(final SendState sendState) {
-    return new CustomTypeSafeMatcher<StreamPayerException>("Has SendState") {
-      @Override
-      protected boolean matchesSafely(final StreamPayerException item) {
-        return item.getSendState().equals(sendState);
-      }
-    };
   }
 }

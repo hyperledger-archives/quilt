@@ -1,7 +1,9 @@
 package org.interledger.stream.pay;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.interledger.stream.pay.SendStateMatcher.hasSendState;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -1574,6 +1576,97 @@ public class StreamPayerDefaultTest {
   }
 
   //////////////////
+  // obtainValidatedAmountToSend
+  //////////////////
+
+  @Test
+  public void obtainValidatedAmountToSendWhenNull() {
+    expectedException.expect(NullPointerException.class);
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.obtainValidatedAmountToSend(null);
+  }
+
+  @Test
+  public void obtainValidatedAmountToSendWhenSendAmountIs0() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.InvalidSourceAmount));
+
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
+    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE.subtract(BigDecimal.valueOf(2L)));
+    streamPayer.obtainValidatedAmountToSend(paymentOptionsMock);
+  }
+
+  @Test
+  public void obtainValidatedAmountToSendWhenNoSendDenomination() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.UnknownSourceAsset));
+
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
+    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+
+    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
+    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.empty());
+    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    streamPayer.obtainValidatedAmountToSend(paymentOptionsMock);
+  }
+
+  @Test
+  public void obtainValidatedAmountToSendWithRoundingException() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.InvalidSourceAmount));
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
+    BigDecimal bdMock = mock(BigDecimal.class);
+    when(bdMock.compareTo(any())).thenReturn(1);
+    when(bdMock.toBigIntegerExact()).thenReturn(BigInteger.ONE);
+    doThrow(new ArithmeticException()).when(bdMock).movePointRight(anyInt());
+    when(paymentOptionsMock.amountToSend()).thenReturn(bdMock);
+
+    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
+    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+
+    assertThat(streamPayer.obtainValidatedAmountToSend(paymentOptionsMock)).isEqualTo(BigInteger.valueOf(1000000L));
+  }
+
+  @Test
+  public void obtainValidatedAmountToSend() {
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
+    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+
+    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
+    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    assertThat(streamPayer.obtainValidatedAmountToSend(paymentOptionsMock)).isEqualTo(BigInteger.valueOf(1000000L));
+  }
+  //////////////////
   // Private Helpers
   //////////////////
 
@@ -1604,7 +1697,7 @@ public class StreamPayerDefaultTest {
       .denomination(Denominations.XRP_MILLI_DROPS)
       .build();
   }
-  
+
   private StatelessStreamReceiverLink getFulfillableLinkForTesting(final boolean fulfillable) {
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
       () -> SERVER_SECRET_BYTES,

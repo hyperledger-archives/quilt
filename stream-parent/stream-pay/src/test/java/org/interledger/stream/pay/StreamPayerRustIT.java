@@ -427,4 +427,106 @@ public class StreamPayerRustIT extends AbstractRustIT {
         }
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }
+
+  // TODO: Create a Rust IT that simulates overflow conditions to verify how the code performs. E.g., when maxPacketAmt
+  // is UInt64Max, and FX is 2.0, then the min amount should be too high, and the payment should not even be attempted.
+  // We need to use this type of scenario to see when it's appropriate to default to UnsignedLong.MAX, and when it's
+  // appropriate to throw an exception.
+
+  /**
+   * <p>This test attempts to simulate an overflow conditions to verify that the payment still succeeds despite
+   * encountering amounts that would exceed {@link UnsignedLong#MAX_VALUE} from the sender's perspective. E.g., when
+   * maxPacketAmt is UInt64Max, and FX is 2.0, then the min amount should be too high.</p>
+   *
+   * <p>However, the Rust Connector does not accept packet amounts greater than {@link Long#MAX_VALUE}, so the only way
+   * to get close to an overflow is to have a very high FX rate so that the max-long will produce a number greater than
+   * {@link UnsignedLong#MAX_VALUE}. Thus, this test sends {@link Long#MAX_VALUE} with a 4x exchange rate.</p>
+   */
+  //@Test
+  // TODO: Uncomment once CongestionController is enabled. For now, there is no congestion controller, so nothing is
+  // responding to T04 errors (which are really happening because the packet amount is too high).
+//  public void testPayXrptoUsdAccountWithOverflow() throws ExecutionException, InterruptedException, TimeoutException {
+//    final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
+//    final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
+//
+//    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+//
+//    // XRP is scale 9, whereas USD is scale 6. Thus, we can send Long.MAX XRP, and this should produce 250x the amount
+//    // of USD due to scaling (Rust Connector caps at Long.MAX due to Redis)
+//    final BigDecimal amountToSendInXrp = new BigDecimal(Long.MAX_VALUE);
+//    final PaymentOptions paymentOptions = PaymentOptions.builder()
+//      .senderAccountDetails(senderAccountDetails)
+//      .amountToSend(amountToSendInXrp)
+//      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD)) // <-- No MaxPacketAmount
+//      .slippage(Slippage.of(Percentage.of(new BigDecimal("0.0000001")))) // <-- Allow up to 1% slippage.
+//      .build();
+//
+//    streamPayer.getQuote(paymentOptions)
+//      .handle((quote, throwable) -> {
+//        if (throwable != null) {
+//          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
+//          return null;
+//        } else if (quote != null) {
+//          logger.info("Quote={}", quote);
+//
+//          ///////////////////
+//          // Quote Assertions
+//          ///////////////////
+//          // The current price of XRP is pegged at $0.2429546 USD on the test Rust Connector (see initAccounts).
+//          assertThat(quote).isNotNull();
+//          //     assertThat(quote.estimatedDuration()).isBetween(Duration.ofMillis(5), Duration.ofMillis(100));
+//          assertThat(quote.sourceAccount()).isEqualTo(paymentOptions.senderAccountDetails());
+//          assertThat(quote.destinationAccount().interledgerAddress().getValue()).startsWith(HOST_ADDRESS.getValue());
+//          assertThat(quote.destinationAccount().denomination()).isPresent();
+//          assertThat(quote.destinationAccount().denomination().get())
+//            .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
+//          // Estimated Payment Outcome.
+//          assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits())
+//            .isEqualTo(BigInteger.valueOf(9223372036854775807L));
+//          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(500000000L);
+//          assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
+//            .isEqualTo(new BigInteger("2240860439779170928"));
+//          // Min ExchangeRate, due to slippage
+//          assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.24295457570454"));
+//
+//          ///////////////////
+//          // EstimatedExchangeRate Assertions
+//          ///////////////////
+//          assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal())
+//            .isEqualTo(new BigDecimal("0.2429546"));
+//          assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal())
+//            .isEqualTo(new BigDecimal("0.242954601"));
+//
+//          assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
+//          assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
+//          assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
+//          assertThat(quote.estimatedExchangeRate().destinationDenomination()).isPresent();
+//          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetCode()).isEqualTo("USD");
+//          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetScale()).isEqualTo((short) 6);
+//          assertThat(quote.estimatedExchangeRate().maxPacketAmount().maxPacketState())
+//            .isEqualTo(MaxPacketState.UnknownMax);
+//          assertThat(quote.estimatedExchangeRate().maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
+//          assertThat(quote.estimatedExchangeRate().verifiedPathCapacity().longValue()).isEqualTo(1000000000000L);
+//          assertThat(quote.paymentOptions()).isEqualTo(paymentOptions);
+//
+//          final PaymentReceipt paymentReceipt = streamPayer.pay(quote).join();
+//          logger.info("Receipt={}", paymentReceipt);
+//          assertThat(paymentReceipt.paymentError()).isEmpty();
+//          assertThat(paymentReceipt.originalQuote()).isEqualTo(quote);
+//          assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(
+//            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+//          );
+//          assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isLessThan(
+//            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+//          );
+//          return quote;
+//        } else {
+//          fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
+//          return null;
+//        }
+//      }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
+//  }
+
+  // TODO testPayUsdtoXrpAccountWithOverflow
+
 }

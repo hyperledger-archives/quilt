@@ -532,7 +532,8 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   /**
-   * Compute the total number of units left to send (in sender's units).
+   * Compute the total number of units available to be sent in a new prepare packet (in sender's units). This value
+   * accounts for all three tracking values (total to deliver, amount already delivered, and amount in-flight).
    *
    * @param target A {@link PaymentTargetConditions}.
    *
@@ -549,7 +550,12 @@ public class AmountFilter implements StreamPacketFilter {
       .subtract(amountTracker.getDestinationAmountInFlight());
   }
 
-  // TODO: Is this a payment computation or a packet computation?
+  /**
+   * @param amountTracker
+   * @param target
+   *
+   * @return
+   */
   @VisibleForTesting
   protected UnsignedLong computeSourceAmountDeliveryLimit(
     final AmountTracker amountTracker, final PaymentTargetConditions target
@@ -557,9 +563,12 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(amountTracker);
     Objects.requireNonNull(target);
 
+    // Total - amtDelivered - amtInFlight
     final BigInteger availableToDeliver = this.computeAmountAvailableToDeliver(amountTracker, target);
-    // TODO: For a large payment, the amount available to deliver might exceed an UL. Thus, we probably need to be able
-    // to get an estimate from paymentSharedStateTracker.getExchangeRateTracker() that might exceed this value.
+
+    // If this value exceeds UnsignedLong#Max_Value, then cap it at the Max. A sender using this implementation will
+    // not be able to send any more money than MAX, and if more value is left to be sent, then that value will merely
+    // be sent in another RunLoop execution.
     final UnsignedLong availableToDeliverUL = FluentBigInteger.of(availableToDeliver).orMaxUnsignedLong();
 
     return this.paymentSharedStateTracker.getExchangeRateTracker()
@@ -594,11 +603,6 @@ public class AmountFilter implements StreamPacketFilter {
     // UnsignedLongs because nothing larger can fit in an ILPv4 packet.
     return paymentSharedStateTracker.getExchangeRateTracker().estimateDestinationAmount(sourceAmount).lowEndEstimate();
   }
-
-  // TODO: Create a Rust IT that simulates overflow conditions to verify how the code performs. E.g., when maxPacketAmt
-  // is UInt64Max, and FX is 2.0, then the min amount should be too high, and the payment should not even be attempted.
-  // We need to use this type of scenario to see when it's appropriate to default to UnsignedLong.MAX, and when it's
-  // appropriate to throw an exception.
 
   /**
    * Compute the minimum destination amount for a packet based upon the supplied {@code sourcePacketAmount} and {@code

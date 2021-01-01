@@ -115,7 +115,15 @@ public interface StreamPayer {
       this(streamEncryptionUtils, link, oracleExchangeRateProvider, new SimpleSpspClient());
     }
 
-    // TODO: Re-work Constructors.
+
+    /**
+     * Required-args Constructor for testing.
+     *
+     * @param streamEncryptionUtils      A {@link StreamEncryptionUtils}.
+     * @param link                       A {@link Link}.
+     * @param oracleExchangeRateProvider An {@link ExchangeRateProvider}.
+     * @param spspClient                 A {@link SpspClient}.
+     */
     @VisibleForTesting
     Default(
       final StreamEncryptionUtils streamEncryptionUtils,
@@ -172,7 +180,6 @@ public interface StreamPayer {
         final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails(
           streamConnection, exchangeRateProber
         );
-        //TODO: Check this against JS
         final ScaledExchangeRate scaledExternalRate = this.determineScaledExternalRate(
           paymentOptions.senderAccountDetails(),
           destinationAccountDetails,
@@ -217,7 +224,6 @@ public interface StreamPayer {
           .toBigIntegerExact();
 
         // Estimate how long the payment may take based on max packet amount, RTT, and rate of packet sending
-        // TODO: Unit test!
         final int packetFrequency = paymentSharedStateTracker.getPacingTracker().getPacketFrequency();
         final Duration estimatedDuration = Duration.of(
           estimatedPaymentOutcome.estimatedNumberOfPackets().multiply(BigInteger.valueOf(packetFrequency)).longValue(),
@@ -530,6 +536,7 @@ public interface StreamPayer {
      * @param sourceAccountDetails    A {@link AccountDetails} for the source of this stream payment.
      * @param streamConnectionDetails A {@link StreamConnectionDetails} for this stream payment.
      */
+    // TODO: Unit test
     private void validateAllocationSchemes(
       final AccountDetails sourceAccountDetails, final StreamConnectionDetails streamConnectionDetails
     ) {
@@ -554,16 +561,13 @@ public interface StreamPayer {
       }
     }
 
+    // TODO: Unit test
     /**
      * Validate that the target amount is non-zero and compatible with the precision of the accounts
      */
-    private BigInteger obtainValidatedAmountToSend(
-      final PaymentOptions paymentOptions
-    ) {
-
+    @VisibleForTesting
+    protected BigInteger obtainValidatedAmountToSend(final PaymentOptions paymentOptions) {
       Objects.requireNonNull(paymentOptions);
-
-      final AccountDetails sourceAccountDetails = paymentOptions.senderAccountDetails();
 
       if (FluentCompareTo.is(paymentOptions.amountToSend()).lessThan(BigDecimal.ZERO)) {
         throw new StreamPayerException(
@@ -571,6 +575,7 @@ public interface StreamPayer {
         );
       }
 
+      final AccountDetails sourceAccountDetails = paymentOptions.senderAccountDetails();
       final Denomination sourceDenomination = sourceAccountDetails.denomination().orElseThrow(
         () -> new StreamPayerException(
           "Source account denomination is required to make a payment.", SendState.UnknownSourceAsset)
@@ -586,6 +591,7 @@ public interface StreamPayer {
       }
     }
 
+    // TODO: Unit test
     private StreamConnectionDetails fetchRecipientAccountDetails(final PaymentOptions paymentOptions) {
       Objects.requireNonNull(paymentOptions);
 
