@@ -323,7 +323,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       byte[] cipherText = new byte[byteBuffer.remaining()];
       byteBuffer.get(cipherText);
 
-      // TODO: See https://github.com/hyperledger/quilt/issues/237
+      // See https://github.com/hyperledger/quilt/issues/237
       // Rearrange the bytes so that the `tag` goes last, after tha Additionally Authenticated Data (AAD). Prior to this
       // reversal, the data is inverted because that's what the RFC specifies, and that's what JS and Rust do.
       byte[] rearrangedCipherText = new byte[cipherText.length];

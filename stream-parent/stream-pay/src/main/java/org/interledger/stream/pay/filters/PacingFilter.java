@@ -1,18 +1,21 @@
 package org.interledger.stream.pay.filters;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Objects;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
+import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PacingTracker;
-import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 /**
  * Handles any failures on the stream, and cancels a payment if no more money is fulfilled.
@@ -59,27 +62,21 @@ public class PacingFilter implements StreamPacketFilter {
 
     this.pacingTracker.decrementNumPacketsInFlight();
 
+    // Only update the RTT if we know the request got to the recipient
     if (streamPacketReply.isAuthentic()) {
       final long roundTripTime = Math.max(
-        Instant.now().minus(sentTime.toEpochMilli(), ChronoUnit.MILLIS).toEpochMilli(),
-        0
+        Instant.now().minus(sentTime.toEpochMilli(), ChronoUnit.MILLIS).toEpochMilli(), 0
       );
-      // TODO: Is int OK here?
       this.pacingTracker.updateAverageRoundTripTime((int) roundTripTime);
     }
 
-    // If we encounter a temporary error that's not related to liquidity,
-    // exponentially backoff the rate of packet sending
-    boolean hasT04RejectCode = streamPacketReply.interledgerResponsePacket()
-      .filter(packet -> InterledgerRejectPacket.class.isAssignableFrom(packet.getClass()))
-      .map(packet -> (InterledgerRejectPacket) packet)
-      .filter(packet -> packet.getCode() == InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY).isPresent();
-
-    if (hasT04RejectCode) {
+    // If we encounter a temporary error that's not related to liquidity, exponentially backoff the rate of
+    // packet sending
+    if (this.hasT04RejectCode(streamPacketReply)) {
       // Fractional rates are fine
       int reducedRate = Math.max(
         pacingTracker.MIN_PACKETS_PER_SECOND,
-        pacingTracker.DEFAULT_PACKETS_PER_SECOND / 2 // Fractional rates are fine
+        this.pacingTracker.getPacketsPerSecond() / 2 // Fractional rates are fine
       );
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug(
@@ -96,6 +93,23 @@ public class PacingFilter implements StreamPacketFilter {
     }
 
     return streamPacketReply;
+  }
+
+  /**
+   * Helper method (for mocking) to determine if a Stream Packet has a T04 error code.
+   *
+   * @param streamPacketReply A {@link StreamPacketReply}.
+   *
+   * @return {@code true} if the reply has a T04 reject code; {@code false} otherwise.
+   */
+  @VisibleForTesting
+  boolean hasT04RejectCode(final StreamPacketReply streamPacketReply) {
+    Objects.requireNonNull(streamPacketReply);
+
+    return streamPacketReply.interledgerResponsePacket()
+      .filter(packet -> InterledgerRejectPacket.class.isAssignableFrom(packet.getClass()))
+      .map(packet -> (InterledgerRejectPacket) packet)
+      .filter(packet -> packet.getCode() == InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY).isPresent();
   }
 
 }

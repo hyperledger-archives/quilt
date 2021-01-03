@@ -1,12 +1,14 @@
 package org.interledger.stream.pay.model;
 
-import java.math.BigDecimal;
-import java.time.Duration;
-import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Immutable;
 import org.interledger.fx.Slippage;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.stream.model.AccountDetails;
+
+import org.immutables.value.Value.Default;
+import org.immutables.value.Value.Immutable;
+
+import java.math.BigDecimal;
+import java.time.Duration;
 
 @Immutable
 public interface PaymentOptions {
@@ -30,8 +32,9 @@ public interface PaymentOptions {
    *
    * @return
    */
-  // TODO: Use a Money here so that the currency is reflected in the amount? If the desired currency doesn't match the
-  //  account, then we can throw an exception because the sender should know how the source currency code ahead of time.
+  // TODO [NewFeature]: Use a Money here so that the currency is reflected in the amount? If the desired currency
+  //  doesn't match the account, then we can throw an exception because the sender should know how the source currency
+  //  code ahead of time.
   BigDecimal amountToSend();
 
   PaymentPointer destinationPaymentPointer();
