@@ -1,17 +1,5 @@
 package org.interledger.stream.pay.filters;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerErrorCode.ErrorFamily;
 import org.interledger.core.fluent.Percentage;
@@ -23,8 +11,22 @@ import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
+
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles any failures on the stream, and cancels a payment if no more money is fulfilled.
@@ -66,9 +68,10 @@ public class FailureFilter implements StreamPacketFilter {
    */
   private final AtomicInteger numFulfills;
 
-
-  public FailureFilter(
-  ) {
+  /**
+   * Required-args Constructor.
+   */
+  public FailureFilter() {
     this.lastFulfillTimeRef = new AtomicReference<>(Optional.empty());
     this.terminalRejectRef = new AtomicBoolean();
     this.remoteClosedRef = new AtomicBoolean();
@@ -81,27 +84,28 @@ public class FailureFilter implements StreamPacketFilter {
   public SendState nextState(final ModifiableStreamPacketRequest streamPacketRequest) {
     Objects.requireNonNull(streamPacketRequest);
 
-    if (this.terminalRejectRef.get()) {
+    if (this.terminalRejectEncountered()) {
       streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
       return SendState.ConnectorError; // <-- Signal to close the connection.
     }
 
-    if (this.remoteClosedRef.get()) {
+    if (this.remoteClosed()) {
       return SendState.ClosedByRecipient; // <-- Connection already closed, so no need to signal to close the connection
     }
 
-    if (new Double(numFulfills.get()) / new Double(numRejects.get()) < 0.05) { // <-- Allow for rate-probe rejections.
+    // Allow for rate-probe rejections.
+    if (Double.valueOf(getNumFulfills()) / Double.valueOf(getNumRejects()) < 0.05) {
       LOGGER.error(
         "Too many overall rejections. Fulfill:Reject Ratio={}:{} ({})",
-        numFulfills.get(), numRejects.get(),
+        getNumFulfills(), getNumRejects(),
         Percentage.of(
-          new BigDecimal(numFulfills.get()).divide(new BigDecimal(numRejects.get()), 3, RoundingMode.HALF_EVEN)
+          new BigDecimal(getNumFulfills()).divide(new BigDecimal(getNumRejects()), 3, RoundingMode.HALF_EVEN)
         )
       );
       return SendState.End; // <-- Too many rejects in proportion to the number of fulfills.
     }
 
-    return this.lastFulfillTimeRef.get()
+    return getLastFulfillmentTime()
       .map(lastFulfillTime -> {
         final Instant deadline = lastFulfillTime.plus(MAX_DURATION_SINCE_LAST_FULFILL);
         if (Instant.now().isAfter(deadline)) {
@@ -121,7 +125,7 @@ public class FailureFilter implements StreamPacketFilter {
     Objects.requireNonNull(streamRequest);
     Objects.requireNonNull(filterChain);
 
-    if (!lastFulfillTimeRef.get().isPresent()) {
+    if (getLastFulfillmentTime().isPresent() == false) {
       this.lastFulfillTimeRef.set(Optional.of(Instant.now()));
     }
 
@@ -136,6 +140,7 @@ public class FailureFilter implements StreamPacketFilter {
         this.lastFulfillTimeRef.set(Optional.of(Instant.now()));
         this.numFulfills.getAndIncrement(); // <-- Count the fulfills
       },
+//       TODO: Compare with JS (and pull!)
       rejectPacket -> {
         this.numRejects.getAndIncrement(); // <-- Count the rejections.
         // Ignore all temporary errors, F08, F99, & R01
@@ -146,10 +151,6 @@ public class FailureFilter implements StreamPacketFilter {
         ) {
           return;
         }
-
-        // TODO F02, R00 (and maybe even F00) tend to be routing errors.
-        //      Should it tolerate a few of these before ending the payment?
-        //      Timeout error could be a routing loop though?
 
         // On any other error, end the payment immediately
         this.terminalRejectRef.set(true);
@@ -174,5 +175,50 @@ public class FailureFilter implements StreamPacketFilter {
 
       this.remoteClosedRef.set(true);
     }
+  }
+
+  @VisibleForTesting
+  boolean terminalRejectEncountered() {
+    return this.terminalRejectRef.get();
+  }
+
+  /**
+   * Indicates if the remote has closed the Stream or Stream Connection being used.
+   *
+   * @return {@code true} if a stream or stream connection has been closed by the remote; {@code false} otherwise.
+   */
+  @VisibleForTesting
+  boolean remoteClosed() {
+    return this.remoteClosedRef.get();
+  }
+
+  /**
+   * Getter for the number of Fulfill packets that have been encountered in this payment.
+   *
+   * @return An int.
+   */
+  @VisibleForTesting
+  int getNumFulfills() {
+    return this.numFulfills.get();
+  }
+
+  /**
+   * Getter for the number of Reject packets that have been encountered in this payment.
+   *
+   * @return An int.
+   */
+  @VisibleForTesting
+  int getNumRejects() {
+    return this.numRejects.get();
+  }
+
+  /**
+   * Getter for the last time a Fulfill packet was encountered.
+   *
+   * @return An optionally-present {@link Instant}.
+   */
+  @VisibleForTesting
+  Optional<Instant> getLastFulfillmentTime() {
+    return this.lastFulfillTimeRef.get();
   }
 }

@@ -46,7 +46,7 @@ public class ExchangeRateFilter implements StreamPacketFilter {
     Objects.requireNonNull(filterChain);
 
     if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Entering doFilter: streamRequest={} filterChain={}");
+      LOGGER.trace("Entering doFilter: streamRequest={} filterChain={}", streamRequest, filterChain);
     }
 
     final StreamPacketReply streamPacketReply = filterChain.doFilter(streamRequest);
