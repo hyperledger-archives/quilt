@@ -8,6 +8,9 @@ import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.ExchangeRateTracker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 
 /**
@@ -15,9 +18,8 @@ import java.util.Objects;
  */
 public class ExchangeRateFilter implements StreamPacketFilter {
 
-  // TODO: Add debug filter logging
   // Static because these filters will be constructed a lot.
-//  private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeRateFilter.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeRateFilter.class);
 
   private final ExchangeRateTracker exchangeRateTracker;
 
@@ -43,22 +45,31 @@ public class ExchangeRateFilter implements StreamPacketFilter {
     Objects.requireNonNull(streamRequest);
     Objects.requireNonNull(filterChain);
 
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Entering doFilter: streamRequest={} filterChain={}");
+    }
+
     final StreamPacketReply streamPacketReply = filterChain.doFilter(streamRequest);
 
     // Discard 0 amount packets
     if (FluentUnsignedLong.of(streamRequest.sourceAmount()).isNotPositive()) {
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Exiting doFilter: {}", streamPacketReply);
+      }
       return streamPacketReply;
     }
 
     // Only track the rate for authentic STREAM replies
     if (streamPacketReply.isAuthentic()) {
       // Only if there's a dest amount claimed.
-      streamPacketReply.destinationAmountClaimed()
-        .ifPresent(claimedReceivedAmount -> this.exchangeRateTracker
-          .updateRate(streamRequest.sourceAmount(), claimedReceivedAmount)
-        );
+      streamPacketReply.destinationAmountClaimed().ifPresent(claimedReceivedAmount ->
+        this.exchangeRateTracker.updateRate(streamRequest.sourceAmount(), claimedReceivedAmount)
+      );
     }
 
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Exiting doFilter: {}", streamPacketReply);
+    }
     return streamPacketReply;
   }
 
