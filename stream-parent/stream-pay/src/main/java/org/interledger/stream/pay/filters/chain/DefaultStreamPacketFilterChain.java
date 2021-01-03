@@ -106,7 +106,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
   // The index of the filter to call next...
   private int internalFilterIndex;
 
-  // TODO: Create a StreamEventPublisher. See code in connector and port from there?
+  // TODO [NewFeature]: Create a StreamEventPublisher. See code in connector and port from there?
   //private PacketEventPublisher packetEventPublisher;
 
   /**

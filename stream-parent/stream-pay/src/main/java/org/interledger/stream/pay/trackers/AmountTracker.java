@@ -136,7 +136,7 @@ public class AmountTracker {
     final PaymentType paymentType, // Unused but placeholder for Invoices.
     final Ratio minExchangeRate,
     final UnsignedLong maxSourcePacketAmount,
-    // TODO: Consider ScaledAmount?
+    // TODO [NewFeature] Consider ScaledAmount?
     final BigInteger targetAmount // Scaled correctly for the source account.
   ) {
     Objects.requireNonNull(minExchangeRate);

@@ -130,8 +130,6 @@ public abstract class AbstractRustIT {
   // Protected Helpers
   ////////////////////
 
-  // TODO: What about Java Connector? Try to use TestContainers.
-
   //
 //  protected OkHttpClient constructOkHttpClient() {
 //    ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);

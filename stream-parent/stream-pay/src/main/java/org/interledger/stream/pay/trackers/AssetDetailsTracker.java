@@ -52,7 +52,6 @@ public class AssetDetailsTracker {
     return this.sourceAccountDetails;
   }
 
-  // TODO: Consider just storing an AccountDetails instead?
   public AccountDetails getDestinationAccountDetails() {
     return destinationAccountDetailsRef.get();
   }
@@ -67,7 +66,7 @@ public class AssetDetailsTracker {
 
     this.remoteKnowsOurAccount.set(this.remoteKnowsOurAccount.get() || streamPacketReply.isAuthentic());
 
-    // TODO: Create a new Tracker that can handle a CNA frame (ConnectionAddressTracker). Should work like this one,
+    // TODO [NewFeature]: Create a new Tracker that can handle a CNA frame (ConnectionAddressTracker). Should work like this one,
     // but allow a receiver to migrate their address during a STREAM. Note, check RFC first to ensure this is still
     // legal.
 

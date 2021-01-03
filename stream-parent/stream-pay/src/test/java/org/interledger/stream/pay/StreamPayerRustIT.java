@@ -428,6 +428,11 @@ public class StreamPayerRustIT extends AbstractRustIT {
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }
 
+  // TODO [NewFeature]: What about Java Connector? Try to use TestContainers.
+
+  // TODO: Test what happens when the payer indicates one currency, but the receiver sends a CAD with a different
+  //  currency
+
   // TODO: Create a Rust IT that simulates overflow conditions to verify how the code performs. E.g., when maxPacketAmt
   // is UInt64Max, and FX is 2.0, then the min amount should be too high, and the payment should not even be attempted.
   // We need to use this type of scenario to see when it's appropriate to default to UnsignedLong.MAX, and when it's

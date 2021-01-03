@@ -1,8 +1,11 @@
 package org.interledger.stream;
 
+import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.InterledgerPacketType;
+import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.crypto.Random;
@@ -11,10 +14,12 @@ import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
+import org.interledger.stream.pay.StreamConnection;
 
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
@@ -23,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -352,5 +358,39 @@ public class StreamPacketUtils {
     return StreamPacketUtils.mapToStreamPacket(interledgerResponsePacket)
       .map(streamPacket -> true)
       .orElse(false);
+  }
+
+  public static InterledgerPreparePacket constructPacketToCloseStream(
+    StreamConnection streamConnection, StreamEncryptionUtils streamEncryptionUtils
+  ) {
+    Objects.requireNonNull(streamConnection);
+
+    final StreamPacket streamPacket = StreamPacket.builder()
+      .interledgerPacketType(InterledgerPacketType.PREPARE)
+      // Per IL-RFC-29, this is the min amount the receiver should accept. We expect this packet to reject, so setting
+      // it to 0 is fine.
+      .prepareAmount(UnsignedLong.ZERO)
+      .sequence(UnsignedLong.valueOf(streamConnection.nextSequence().longValue()))
+      .addFrames(
+        StreamCloseFrame.builder()
+          .streamId(DEFAULT_STREAM_ID)
+          .errorCode(ErrorCodes.NoError)
+          .build(),
+        ConnectionCloseFrame.builder()
+          .errorCode(ErrorCodes.NoError)
+          .build()
+      )
+      .build();
+
+    final byte[] streamPacketData = streamEncryptionUtils.toEncrypted(streamConnection.getSharedSecret(), streamPacket);
+
+    return InterledgerPreparePacket.builder()
+      .destination(streamConnection.getDestinationAddress())
+      .amount(UnsignedLong.ZERO)
+      .executionCondition(StreamPacketUtils.unfulfillableCondition())
+      .expiresAt(DateUtils.now().plus(Duration.ofSeconds(60)))
+      .data(streamPacketData)
+      .typedData(streamPacket)
+      .build();
   }
 }

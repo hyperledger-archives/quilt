@@ -143,9 +143,6 @@ public interface StreamPayer {
       return CompletableFuture.supplyAsync(() -> {
 
         final BigInteger totalAmountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);
-
-        // TODO: Once we know the account details, ensure that the indicated currency in paymentOptions matches the
-        //  account's currency
         final StreamConnectionDetails streamConnectionDetails = this.fetchRecipientAccountDetails(paymentOptions);
         this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
 
@@ -531,13 +528,13 @@ public interface StreamPayer {
     }
 
     /**
-     * Sanity check to ensure sender and receiver use the same network/prefix
+     * Sanity check to ensure sender and receiver use the same network/prefix.
      *
      * @param sourceAccountDetails    A {@link AccountDetails} for the source of this stream payment.
      * @param streamConnectionDetails A {@link StreamConnectionDetails} for this stream payment.
      */
-    // TODO: Unit test
-    private void validateAllocationSchemes(
+    @VisibleForTesting
+    protected void validateAllocationSchemes(
       final AccountDetails sourceAccountDetails, final StreamConnectionDetails streamConnectionDetails
     ) {
       Objects.requireNonNull(sourceAccountDetails);
@@ -561,7 +558,6 @@ public interface StreamPayer {
       }
     }
 
-    // TODO: Unit test
     /**
      * Validate that the target amount is non-zero and compatible with the precision of the accounts
      */
@@ -586,13 +582,12 @@ public interface StreamPayer {
           .movePointRight(sourceDenomination.assetScale()).toBigIntegerExact();
         return scaledSendAmount;
       } catch (Exception e) {
-        // TODO: Unit test this.
         throw new StreamPayerException("Invalid source scale", e, SendState.InvalidSourceAmount);
       }
     }
 
-    // TODO: Unit test
-    private StreamConnectionDetails fetchRecipientAccountDetails(final PaymentOptions paymentOptions) {
+    @VisibleForTesting
+    protected StreamConnectionDetails fetchRecipientAccountDetails(final PaymentOptions paymentOptions) {
       Objects.requireNonNull(paymentOptions);
 
       // Note: Some SPSP endpoints return the asset details as part of their response. This implementation ignores those

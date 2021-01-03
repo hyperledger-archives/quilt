@@ -69,6 +69,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
@@ -1666,6 +1667,142 @@ public class StreamPayerDefaultTest {
     when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
     assertThat(streamPayer.obtainValidatedAmountToSend(paymentOptionsMock)).isEqualTo(BigInteger.valueOf(1000000L));
   }
+
+  //////////////////
+  // fetchRecipientAccountDetails
+  //////////////////
+
+  @Test
+  public void fetchRecipientAccountDetailsWithNullPaymentOptions() {
+    expectedException.expect(NullPointerException.class);
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.fetchRecipientAccountDetails(null);
+  }
+
+  @Test
+  public void fetchRecipientAccountDetailsWithSpspException() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.QueryFailed));
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+
+    SpspClient mockSpspClient = mock(SpspClient.class);
+    doThrow(new IllegalArgumentException()).when(mockSpspClient)
+      .getStreamConnectionDetails(Mockito.<PaymentPointer>any());
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), mockSpspClient
+    );
+
+    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
+    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+
+    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
+    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+
+    streamPayer.fetchRecipientAccountDetails(paymentOptionsMock);
+  }
+
+  @Test
+  public void fetchRecipientAccountDetails() {
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+
+    StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
+    SpspClient spspClientMock = mock(SpspClient.class);
+    when(spspClientMock.getStreamConnectionDetails(Mockito.<PaymentPointer>any()))
+      .thenReturn(streamConnectionDetailsMock);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), spspClientMock
+    );
+
+    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
+    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+
+    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
+    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+
+    assertThat(streamPayer.fetchRecipientAccountDetails(paymentOptionsMock)).isEqualTo(streamConnectionDetailsMock);
+  }
+
+  //////////////////
+  // validateAllocationSchemes
+  //////////////////
+
+  @Test
+  public void validateAllocationSchemesWhenNullAccountDetails() {
+    expectedException.expect(NullPointerException.class);
+
+    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.validateAllocationSchemes(null, streamConnectionDetailsMock);
+  }
+
+  @Test
+  public void validateAllocationSchemesWhenNullConnection() {
+    expectedException.expect(NullPointerException.class);
+
+    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, null);
+  }
+
+  @Test
+  public void validateAllocationSchemesWhenSourceIsPrivate() {
+    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
+    when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("private.foo"));
+    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
+    when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, streamConnectionDetailsMock);
+  }
+
+  @Test
+  public void validateAllocationSchemesWhenSame() {
+    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
+    when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
+    when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, streamConnectionDetailsMock);
+  }
+
+  @Test
+  public void validateAllocationSchemesWhenDifferent() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.IncompatibleInterledgerNetworks));
+
+    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
+    when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
+    when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("private.foo"));
+    final Link simulatedLink = getFulfillableLinkForTesting(false);
+    Default streamPayer = new Default(
+      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+    );
+
+    streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, streamConnectionDetailsMock);
+  }
+
   //////////////////
   // Private Helpers
   //////////////////
