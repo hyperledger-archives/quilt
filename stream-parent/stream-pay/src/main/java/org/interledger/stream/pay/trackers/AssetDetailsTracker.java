@@ -23,11 +23,10 @@ public class AssetDetailsTracker {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AssetDetailsTracker.class);
 
-  private final AtomicBoolean remoteKnowsOurAccount;
-
   private final AccountDetails sourceAccountDetails;
   private final AtomicReference<AccountDetails> destinationAccountDetailsRef;
 
+  private final AtomicBoolean remoteKnowsOurAccount;
   private final AtomicBoolean remoteAssetChanged;
 
   /**
@@ -38,7 +37,7 @@ public class AssetDetailsTracker {
    */
   public AssetDetailsTracker(final AccountDetails sourceAccountDetails, final InterledgerAddress destinationAddress) {
     this.sourceAccountDetails = Objects.requireNonNull(sourceAccountDetails);
-    this.destinationAccountDetailsRef = new AtomicReference(
+    this.destinationAccountDetailsRef = new AtomicReference<>(
       AccountDetails.builder()
         .interledgerAddress(destinationAddress)
         .build()
@@ -46,14 +45,6 @@ public class AssetDetailsTracker {
 
     this.remoteKnowsOurAccount = new AtomicBoolean();
     this.remoteAssetChanged = new AtomicBoolean();
-  }
-
-  public AccountDetails getSourceAccountDetails() {
-    return this.sourceAccountDetails;
-  }
-
-  public AccountDetails getDestinationAccountDetails() {
-    return destinationAccountDetailsRef.get();
   }
 
   /**
@@ -66,9 +57,9 @@ public class AssetDetailsTracker {
 
     this.remoteKnowsOurAccount.set(this.remoteKnowsOurAccount.get() || streamPacketReply.isAuthentic());
 
-    // TODO [NewFeature]: Create a new Tracker that can handle a CNA frame (ConnectionAddressTracker). Should work like this one,
-    // but allow a receiver to migrate their address during a STREAM. Note, check RFC first to ensure this is still
-    // legal.
+    // TODO [NewFeature]: Create a new Tracker that can handle a CNA frame (ConnectionAddressTracker). Should work
+    // like this one, but allow a receiver to migrate their address during a STREAM. Note, check RFC first to ensure
+    // this is still legal.
 
     streamPacketReply.streamPacket()
       .filter(streamPacket -> StreamPacketUtils.countConnectionAssetDetailsFrame(streamPacket) > 1)
@@ -85,7 +76,7 @@ public class AssetDetailsTracker {
       .map(Optional::get)
       .ifPresent(connectionAssetDetailsFrame -> {
         final AccountDetails destinationAccountDetailsSnapshot = destinationAccountDetailsRef.get();
-        if (destinationAccountDetailsSnapshot.denomination().isPresent() == false) {
+        if (!destinationAccountDetailsSnapshot.denomination().isPresent()) {
           // First time. Ignore a failure on the compare and set because it's possible another thread beat us here.
           // We assume it set things properly and made it first, and ignore this
           destinationAccountDetailsRef.compareAndSet(
@@ -97,7 +88,7 @@ public class AssetDetailsTracker {
         } else {
           // Here, the denomination has already been set. So check the snapshot against the CAD frame.
           final Denomination denominationSnapshot = destinationAccountDetailsSnapshot.denomination().get();
-          if (denominationSnapshot.equals(connectionAssetDetailsFrame.sourceDenomination()) == false) {
+          if (!denominationSnapshot.equals(connectionAssetDetailsFrame.sourceDenomination())) {
             throw new StreamPayerException(
               String.format(
                 "Ending payment: remote unexpectedly changed destination asset from %s to %s",
@@ -115,10 +106,38 @@ public class AssetDetailsTracker {
       });
   }
 
+  /**
+   * Accessor for the source account details.
+   *
+   * @return An {@link AccountDetails}.
+   */
+  public AccountDetails getSourceAccountDetails() {
+    return this.sourceAccountDetails;
+  }
+
+  /**
+   * Accessor for the destination account details.
+   *
+   * @return An {@link AccountDetails}.
+   */
+  public AccountDetails getDestinationAccountDetails() {
+    return destinationAccountDetailsRef.get();
+  }
+
+  /**
+   * Accessor for indicating if the remote knows our account.
+   *
+   * @return {@code true} if the remote knows our account; {@code false} otherwise.
+   */
   public boolean getRemoteKnowsOurAccount() {
     return remoteKnowsOurAccount.get();
   }
 
+  /**
+   * Accessor for indicating if the remote asset details changed during a payment.
+   *
+   * @return {@code true} if the remote asset details changed; {@code false} otherwise.
+   */
   public boolean getRemoteAssetChanged() {
     return remoteAssetChanged.get();
   }

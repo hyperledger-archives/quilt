@@ -12,8 +12,6 @@ import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentT
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,8 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class AmountTracker {
 
-  private static final Logger logger = LoggerFactory.getLogger(AmountTracker.class);
-
   /**
    * Conditions that must be met for the payment to complete, and parameters of its execution.
    */
@@ -37,22 +33,22 @@ public class AmountTracker {
   /**
    * Total amount sent and fulfilled, in scaled units of the sending account.
    */
-  private AtomicReference<BigInteger> amountSentInSourceUnitsRef;
+  private final AtomicReference<BigInteger> amountSentInSourceUnitsRef;
 
   /**
    * Total amount delivered and fulfilled, in scaled units of the receiving account.
    */
-  private AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef;
+  private final AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef;
 
   /**
    * Amount sent that is yet to be fulfilled or rejected, in scaled units of the sending account.
    */
-  private AtomicReference<BigInteger> sourceAmountInFlightRef;
+  private final AtomicReference<BigInteger> sourceAmountInFlightRef;
 
   /**
    * Estimate of the amount that may be delivered from in-flight packets, in scaled units of the receiving account.
    */
-  private AtomicReference<BigInteger> destinationAmountInFlightRef;
+  private final AtomicReference<BigInteger> destinationAmountInFlightRef;
 
   /**
    * Amount in destination units allowed to be lost to rounding, below the enforced exchange rate. To prevent the final
@@ -169,19 +165,18 @@ public class AmountTracker {
     if (paymentType == PaymentType.FIXED_SEND) {
       final BigInteger estimatedNumberOfPackets = FluentBigInteger.of(targetAmount)
         .divideCeil(maxSourcePacketAmount.bigIntegerValue()).getValue();
-      final BigInteger maxSourceAmount = targetAmount;
       final BigInteger minDeliveryAmount =
         FluentBigInteger.of(targetAmount.subtract(BigInteger.ONE)).timesCeil(minExchangeRate).getValue();
 
       this.paymentTargetConditionsAtomicReference.set(PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_SEND)
         .minPaymentAmountInDestinationUnits(minDeliveryAmount)
-        .maxPaymentAmountInSenderUnits(maxSourceAmount)
+        .maxPaymentAmountInSenderUnits(targetAmount)
         .minExchangeRate(minExchangeRate)
         .build());
 
       return EstimatedPaymentOutcome.builder()
-        .maxSendAmountInWholeSourceUnits(maxSourceAmount)
+        .maxSendAmountInWholeSourceUnits(targetAmount)
         .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
         .estimatedNumberOfPackets(estimatedNumberOfPackets)
         .build();
@@ -467,7 +462,6 @@ public class AmountTracker {
     Objects.requireNonNull(minExchangeRateRatio);
     Objects.requireNonNull(maxSourcePacketAmount);
 
-    // try {
     final BigInteger floorProbedRate = realProbedLowerBoundRate.multiplyFloor(BigInteger.ONE);
     final BigInteger ceilMinExchangeRate = minExchangeRateRatio.multiplyCeil(BigInteger.ONE);
 
@@ -499,15 +493,5 @@ public class AmountTracker {
 
       }
     }
-//    } catch (IllegalStateException e) { // <-- Thrown if multiplication overflows UnsignedLong
-//      logger.error(e.getMessage(), e);
-//      final String errorMessage = String.format(
-//        "Rate enforcement may incur rounding errors. Computed value is too large for an UnsignedLong. "
-//          + "realProbedLowerBoundRate=%s minExchangeRateRatio=%s maxSourcePacketAmount=%s "
-//          + "adjustedMaxSourcePacketAmount=%s",
-//        realProbedLowerBoundRate, minExchangeRateRatio, maxSourcePacketAmount, maxSourcePacketAmount
-//      );
-//      throw new StreamPayerException(errorMessage, SendState.ExchangeRateRoundingError);
-//    }
   }
 }
