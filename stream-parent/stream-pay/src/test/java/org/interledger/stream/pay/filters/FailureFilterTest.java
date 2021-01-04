@@ -5,12 +5,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerErrorCode;
+import org.interledger.core.InterledgerFulfillPacket;
+import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.stream.frames.ConnectionCloseFrame;
+import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.frames.StreamMoneyMaxFrame;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 
+import com.google.common.primitives.UnsignedLong;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Rule;
@@ -138,17 +148,127 @@ public class FailureFilterTest {
   }
 
   @Test
-  public void doFilterIsNotAuthenticNoT04() {
+  public void doFilterWithFulfill() {
     StreamPacketRequest streamPacketRequestMock = mock(StreamPacketRequest.class);
     StreamPacketReply streamPacketReply = mock(StreamPacketReply.class);
     when(streamPacketReply.isAuthentic()).thenReturn(false);
+    when(streamPacketReply.isReject()).thenReturn(true);
+    InterledgerResponsePacket interledgerResponsePacket = InterledgerFulfillPacket.builder()
+      .fulfillment(InterledgerFulfillment.of(new byte[32]))
+      .build();
+    when(streamPacketReply.interledgerResponsePacket()).thenReturn(Optional.of(interledgerResponsePacket));
 
     StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
     when(streamPacketFilterChainMock.doFilter(any())).thenReturn(streamPacketReply);
 
     StreamPacketReply actual = this.failureFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
-
     assertThat(actual).isEqualTo(streamPacketReply);
+
+    assertThat(failureFilter.getLastFulfillmentTime()).isPresent();
+    assertThat(failureFilter.remoteClosed()).isFalse();
+    assertThat(failureFilter.terminalRejectEncountered()).isFalse();
+    assertThat(failureFilter.getNumFulfills()).isEqualTo(1);
+    assertThat(failureFilter.getNumRejects()).isEqualTo(0);
+  }
+
+  @Test
+  public void doFilterWithRejectT00() {
+    StreamPacketRequest streamPacketRequestMock = mock(StreamPacketRequest.class);
+    StreamPacketReply streamPacketReply = mock(StreamPacketReply.class);
+    when(streamPacketReply.isAuthentic()).thenReturn(false);
+    when(streamPacketReply.isReject()).thenReturn(true);
+    InterledgerResponsePacket interledgerResponsePacket = InterledgerRejectPacket.builder()
+      .triggeredBy(InterledgerAddress.of("example.foo"))
+      .code(InterledgerErrorCode.T00_INTERNAL_ERROR)
+      .build();
+    when(streamPacketReply.interledgerResponsePacket()).thenReturn(Optional.of(interledgerResponsePacket));
+
+    StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(any())).thenReturn(streamPacketReply);
+
+    StreamPacketReply actual = this.failureFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+    assertThat(actual).isEqualTo(streamPacketReply);
+
+    assertThat(failureFilter.getLastFulfillmentTime()).isPresent();
+    assertThat(failureFilter.remoteClosed()).isFalse();
+    assertThat(failureFilter.terminalRejectEncountered()).isFalse();
+    assertThat(failureFilter.getNumFulfills()).isEqualTo(0);
+    assertThat(failureFilter.getNumRejects()).isEqualTo(1);
+  }
+
+  @Test
+  public void doFilterWithRejectF08() {
+    StreamPacketRequest streamPacketRequestMock = mock(StreamPacketRequest.class);
+    StreamPacketReply streamPacketReply = mock(StreamPacketReply.class);
+    when(streamPacketReply.isAuthentic()).thenReturn(false);
+    when(streamPacketReply.isReject()).thenReturn(true);
+    InterledgerResponsePacket interledgerResponsePacket = InterledgerRejectPacket.builder()
+      .triggeredBy(InterledgerAddress.of("example.foo"))
+      .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
+      .build();
+    when(streamPacketReply.interledgerResponsePacket()).thenReturn(Optional.of(interledgerResponsePacket));
+
+    StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(any())).thenReturn(streamPacketReply);
+
+    StreamPacketReply actual = this.failureFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+    assertThat(actual).isEqualTo(streamPacketReply);
+
+    assertThat(failureFilter.getLastFulfillmentTime()).isPresent();
+    assertThat(failureFilter.remoteClosed()).isFalse();
+    assertThat(failureFilter.terminalRejectEncountered()).isFalse();
+    assertThat(failureFilter.getNumFulfills()).isEqualTo(0);
+    assertThat(failureFilter.getNumRejects()).isEqualTo(1);
+  }
+
+  @Test
+  public void doFilterWithRejectF99() {
+    StreamPacketRequest streamPacketRequestMock = mock(StreamPacketRequest.class);
+    StreamPacketReply streamPacketReply = mock(StreamPacketReply.class);
+    when(streamPacketReply.isAuthentic()).thenReturn(false);
+    when(streamPacketReply.isReject()).thenReturn(true);
+    InterledgerResponsePacket interledgerResponsePacket = InterledgerRejectPacket.builder()
+      .triggeredBy(InterledgerAddress.of("example.foo"))
+      .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
+      .build();
+    when(streamPacketReply.interledgerResponsePacket()).thenReturn(Optional.of(interledgerResponsePacket));
+
+    StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(any())).thenReturn(streamPacketReply);
+
+    StreamPacketReply actual = this.failureFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+    assertThat(actual).isEqualTo(streamPacketReply);
+
+    assertThat(failureFilter.getLastFulfillmentTime()).isPresent();
+    assertThat(failureFilter.remoteClosed()).isFalse();
+    assertThat(failureFilter.terminalRejectEncountered()).isFalse();
+    assertThat(failureFilter.getNumFulfills()).isEqualTo(0);
+    assertThat(failureFilter.getNumRejects()).isEqualTo(1);
+  }
+
+  @Test
+  public void doFilterWithRejectF04() {
+    StreamPacketRequest streamPacketRequestMock = mock(StreamPacketRequest.class);
+    StreamPacketReply streamPacketReply = mock(StreamPacketReply.class);
+    when(streamPacketReply.isAuthentic()).thenReturn(false);
+    when(streamPacketReply.isReject()).thenReturn(true);
+    InterledgerResponsePacket interledgerResponsePacket = InterledgerRejectPacket.builder()
+      .triggeredBy(InterledgerAddress.of("example.foo"))
+      .code(InterledgerErrorCode.F04_INSUFFICIENT_DST_AMOUNT)
+      .build();
+    when(streamPacketReply.interledgerResponsePacket()).thenReturn(Optional.of(interledgerResponsePacket));
+
+    StreamPacketFilterChain streamPacketFilterChainMock = mock(StreamPacketFilterChain.class);
+    when(streamPacketFilterChainMock.doFilter(any())).thenReturn(streamPacketReply);
+
+    StreamPacketReply actual = this.failureFilter.doFilter(streamPacketRequestMock, streamPacketFilterChainMock);
+    assertThat(actual).isEqualTo(streamPacketReply);
+
+    assertThat(failureFilter.getLastFulfillmentTime()).isPresent();
+    assertThat(failureFilter.remoteClosed()).isFalse();
+    assertThat(failureFilter.terminalRejectEncountered()).isTrue();
+    assertThat(failureFilter.getNumFulfills()).isEqualTo(0);
+    assertThat(failureFilter.getNumRejects()).isEqualTo(1);
   }
 
   ///////////////////
@@ -164,22 +284,26 @@ public class FailureFilterTest {
   @Test
   public void handleRemoteCloseWithEmptyFrames() {
     this.failureFilter.handleRemoteClose(Lists.newArrayList());
-//    assertThat(failureFilter.isRemoteClosed()).isFalse();
-    // TODO
+    assertThat(failureFilter.remoteClosed()).isFalse();
   }
 
   @Test
   public void handleRemoteCloseWithRequiredFrame() {
-    this.failureFilter.handleRemoteClose(Lists.newArrayList());
-//    assertThat(failureFilter.isRemoteClosed()).isFalse();
-    // TODO
+    this.failureFilter.handleRemoteClose(Lists.newArrayList(
+      ConnectionCloseFrame.builder().errorCode(ErrorCodes.NoError).build()
+    ));
+    assertThat(failureFilter.remoteClosed()).isTrue();
   }
 
   @Test
   public void handleRemoteCloseWithoutRequiredFrame() {
-    this.failureFilter.handleRemoteClose(Lists.newArrayList());
-//    assertThat(failureFilter.isRemoteClosed()).isFalse();
-    // TODO
+    this.failureFilter.handleRemoteClose(Lists.newArrayList(StreamMoneyMaxFrame.builder()
+      .streamId(UnsignedLong.ONE)
+      .receiveMax(UnsignedLong.ONE)
+      .totalReceived(UnsignedLong.ONE)
+      .build()
+    ));
+    assertThat(failureFilter.remoteClosed()).isFalse();
   }
 
 }

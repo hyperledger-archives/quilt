@@ -9,6 +9,7 @@ import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.frames.StreamFrame;
 
 import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
 import org.immutables.value.Value.Immutable;
 
@@ -63,7 +64,7 @@ public interface StreamPacketReply {
   /**
    * Parsed frames from the STREAM response packet. Empty if no authentic STREAM reply.
    */
-  @Deprecated
+  @Default
   default Collection<StreamFrame> frames() {
     return this.streamPacket()
       .map(StreamPacket::frames)

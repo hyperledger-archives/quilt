@@ -37,22 +37,22 @@ public class FailureFilter implements StreamPacketFilter {
   private static final Logger LOGGER = LoggerFactory.getLogger(FailureFilter.class);
 
   /**
-   * Number of milliseconds since the last Fulfill was received before the payment should fail
+   * Number of milliseconds since the last Fulfill was received before the payment should fail.
    */
-  private static Duration MAX_DURATION_SINCE_LAST_FULFILL = Duration.of(10, ChronoUnit.SECONDS);
+  private static final Duration MAX_DURATION_SINCE_LAST_FULFILL = Duration.of(10, ChronoUnit.SECONDS);
 
   /**
-   * UNIX timestamp when the last Fulfill was received. Begins when the first fulfillable Prepare is sent
+   * UNIX timestamp when the last Fulfill was received. Begins when the first fulfillable Prepare is sent.
    */
   private final AtomicReference<Optional<Instant>> lastFulfillTimeRef;
 
   /**
-   * Should the payment end immediately due to a terminal error?
+   * Should the payment end immediately due to a terminal error.
    */
   private final AtomicBoolean terminalRejectRef;
 
   /**
-   * Was the connection or stream closed by the recipient?
+   * Was the connection or stream closed by the recipient.
    */
   private final AtomicBoolean remoteClosedRef;
 
@@ -76,8 +76,8 @@ public class FailureFilter implements StreamPacketFilter {
     this.terminalRejectRef = new AtomicBoolean();
     this.remoteClosedRef = new AtomicBoolean();
 
-    this.numRejects = new AtomicInteger(1);
-    this.numFulfills = new AtomicInteger(1);
+    this.numRejects = new AtomicInteger(0);
+    this.numFulfills = new AtomicInteger(0);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class FailureFilter implements StreamPacketFilter {
     }
 
     // Allow for rate-probe rejections.
-    if (Double.valueOf(getNumFulfills()) / Double.valueOf(getNumRejects()) < 0.05) {
+    if ((double) getNumFulfills() / (double) getNumRejects() < 0.05) {
       LOGGER.error(
         "Too many overall rejections. Fulfill:Reject Ratio={}:{} ({})",
         getNumFulfills(), getNumRejects(),
@@ -109,8 +109,10 @@ public class FailureFilter implements StreamPacketFilter {
       .map(lastFulfillTime -> {
         final Instant deadline = lastFulfillTime.plus(MAX_DURATION_SINCE_LAST_FULFILL);
         if (Instant.now().isAfter(deadline)) {
-          LOGGER.error("Ending payment because no Fulfill was received before idle deadline. "
-            + "lastFulfill={} deadline={}", lastFulfillTime, deadline);
+          LOGGER.error(
+            "Ending payment because no Fulfill was received before idle deadline. lastFulfill={} deadline={}",
+            lastFulfillTime, deadline
+          );
           return SendState.IdleTimeout;
         } else {
           return SendState.Ready;
@@ -125,7 +127,7 @@ public class FailureFilter implements StreamPacketFilter {
     Objects.requireNonNull(streamRequest);
     Objects.requireNonNull(filterChain);
 
-    if (getLastFulfillmentTime().isPresent() == false) {
+    if (!getLastFulfillmentTime().isPresent()) {
       this.lastFulfillTimeRef.set(Optional.of(Instant.now()));
     }
 
@@ -140,7 +142,6 @@ public class FailureFilter implements StreamPacketFilter {
         this.lastFulfillTimeRef.set(Optional.of(Instant.now()));
         this.numFulfills.getAndIncrement(); // <-- Count the fulfills
       },
-//       TODO: Compare with JS (and pull!)
       rejectPacket -> {
         this.numRejects.getAndIncrement(); // <-- Count the rejections.
         // Ignore all temporary errors, F08, F99, & R01
