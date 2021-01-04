@@ -1,8 +1,5 @@
 package org.interledger.stream.pay.filters;
 
-import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedLong;
-import java.util.Objects;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.frames.ConnectionCloseFrame;
@@ -17,6 +14,12 @@ import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedLong;
+
+import java.util.Objects;
 
 /**
  * Determines how the maximum packet amount is known or discovered.
@@ -36,7 +39,7 @@ public class AssetDetailsFilter implements StreamPacketFilter {
   public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
     Objects.requireNonNull(streamPacketRequest);
 
-    if (this.paymentSharedStateTracker.getAssetDetailsTracker().getRemoteAssetChanged()) {
+    if (this.remoteAssetChanged()) {
       streamPacketRequest.requestFrames().add(
         ConnectionCloseFrame.builder()
           .errorCode(ErrorCodes.ProtocolViolation)
@@ -48,8 +51,7 @@ public class AssetDetailsFilter implements StreamPacketFilter {
 
     // This implementation doesn't receive packets, so only send a `ConnectionNewAddress` for backwards
     // compatibility to fetch asset details. If we already know asset details, skip this!
-    if (!this.paymentSharedStateTracker.getAssetDetailsTracker().getDestinationAccountDetails()
-      .denomination().isPresent()) {
+    if (!this.remoteDenominationPresent()) {
 
       final InterledgerAddress destinationAddress = this.paymentSharedStateTracker
         .getAssetDetailsTracker().getDestinationAccountDetails().interledgerAddress();
@@ -84,7 +86,7 @@ public class AssetDetailsFilter implements StreamPacketFilter {
     }
 
     // Notify the recipient of our limits
-    if (!this.paymentSharedStateTracker.getAssetDetailsTracker().getRemoteKnowsOurAccount()) {
+    if (!remoteKnowsOurAccount()) {
       streamPacketRequest.requestFrames().addAll(Lists.newArrayList(
         // Disallow incoming money (JS auto opens a new stream for this)
         StreamMoneyMaxFrame.builder()
@@ -118,4 +120,38 @@ public class AssetDetailsFilter implements StreamPacketFilter {
     return streamPacketReply;
   }
 
+  //////////////////
+  // Private Helpers
+  //////////////////
+
+  /**
+   * Helper method to allow for determining if the remote asset details have changed.
+   *
+   * @return {@code true} the remote asset details have changed; {@code false} otherwise.
+   */
+  @VisibleForTesting
+  boolean remoteAssetChanged() {
+    return this.paymentSharedStateTracker.getAssetDetailsTracker().getRemoteAssetChanged();
+  }
+
+  /**
+   * Helper method to determine if a remote denomination has been returned in the Stream.
+   *
+   * @return {@code true} the remote denomination has been returned by the remote; {@code false} otherwise.
+   */
+  @VisibleForTesting
+  boolean remoteDenominationPresent() {
+    return this.paymentSharedStateTracker.getAssetDetailsTracker().getDestinationAccountDetails()
+      .denomination().isPresent();
+  }
+
+  /**
+   * Helper method to determine if the remote knows our own account info.
+   *
+   * @return {@code true} if the remote knows our own account; {@code false otherwise}.
+   */
+  @VisibleForTesting
+  boolean remoteKnowsOurAccount() {
+    return this.paymentSharedStateTracker.getAssetDetailsTracker().getRemoteKnowsOurAccount();
+  }
 }
