@@ -1,17 +1,19 @@
 package org.interledger.stream.pay.filters;
 
-import java.util.Objects;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 /**
  * Determines how the maximum packet amount is known or discovered.
@@ -22,6 +24,11 @@ public class MaxPacketAmountFilter implements StreamPacketFilter {
 
   private final MaxPacketAmountTracker maxPacketAmountTracker;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param maxPacketAmountTracker A {@link MaxPacketAmountTracker}.
+   */
   public MaxPacketAmountFilter(final MaxPacketAmountTracker maxPacketAmountTracker) {
     this.maxPacketAmountTracker = Objects.requireNonNull(maxPacketAmountTracker);
   }
