@@ -19,7 +19,8 @@ public interface StreamPacketFilter {
    * <ul>
    *   <li>Any controller can choose to immediately end the entire STREAM payment with an error, or choose to wait
    *   before sending the next packet.</li>
-   *   <li>Note: the packet may not be sent if other controllers decline, so don't apply side effects in this method.</li>
+   *   <li>Note: the packet may not be sent if other controllers decline, so don't apply side effects in this
+   *   method.</li>
    * </ul>
    * <p>
    *

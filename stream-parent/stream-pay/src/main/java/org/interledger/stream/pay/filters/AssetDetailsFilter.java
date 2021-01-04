@@ -26,11 +26,13 @@ import java.util.Objects;
  */
 public class AssetDetailsFilter implements StreamPacketFilter {
 
-  // Static because these filters will be constructed a lot.
-  // private static final Logger logger = LoggerFactory.getLogger(AssetDetailsFilter.class);
+  private final PaymentSharedStateTracker paymentSharedStateTracker;
 
-  private PaymentSharedStateTracker paymentSharedStateTracker;
-
+  /**
+   * Required-args Constructor.
+   *
+   * @param paymentSharedStateTracker A {@link PaymentSharedStateTracker}.
+   */
   public AssetDetailsFilter(final PaymentSharedStateTracker paymentSharedStateTracker) {
     this.paymentSharedStateTracker = Objects.requireNonNull(paymentSharedStateTracker);
   }
@@ -56,31 +58,22 @@ public class AssetDetailsFilter implements StreamPacketFilter {
       final InterledgerAddress destinationAddress = this.paymentSharedStateTracker
         .getAssetDetailsTracker().getDestinationAccountDetails().interledgerAddress();
 
-      /**
-       * Interledger.rs, Interledger4j, and `ilp-protocol-stream` < 2.5.0
-       * base64 URL encode 18 random bytes for the connection token (length 24).
-       *
-       * But... `ilp-protocol-stream` >= 2.5.0 encrypts it using the server secret, identifying that version, which
-       * is widely used in production.
-       */
+      // Interledger.rs, Interledger4j, and `ilp-protocol-stream` < 2.5.0 base64 URL encode 18 random bytes for the
+      // connection token (length 24). But... `ilp-protocol-stream` >= 2.5.0 encrypts it using the server secret,
+      // identifying that version, which is widely used in production.
       final String connectionToken = destinationAddress.lastSegment();
       if (connectionToken.length() == 24) {
-        /**
-         * Interledger.rs rejects with an F02 if we send a `ConnectionNewAddress` frame with an invalid (e.g. empty)
-         * address.
-         *
-         * Since both Rust & Java won't ever send any packets, we can use any address here, since it's just so they
-         * reply with asset details.
-         */
+
+        // Interledger.rs rejects with an F02 if we send a `ConnectionNewAddress` frame with an invalid (e.g. empty)
+        // address. Since both Rust & Java won't ever send any packets, we can use any address here, since it's just
+        // so they reply with asset details.
         streamPacketRequest.requestFrames().add(ConnectionNewAddressFrame.builder().sourceAddress(
           this.paymentSharedStateTracker.getAssetDetailsTracker().getSourceAccountDetails().interledgerAddress()
           ).build()
         );
       } else {
-        /**
-         * For `ilp-protocol-stream` >= 2.5.0, send `ConnectionNewAddress` with an empty address, which will (1)
-         * trigger a reply with asset details, and (2) not trigger a send loop.
-         */
+        // For `ilp-protocol-stream` >= 2.5.0, send `ConnectionNewAddress` with an empty address, which will (1)
+        // trigger a reply with asset details, and (2) not trigger a send loop.
         streamPacketRequest.requestFrames().add(ConnectionNewAddressFrame.builder().build());
       }
     }

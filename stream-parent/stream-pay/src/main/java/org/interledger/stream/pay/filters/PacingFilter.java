@@ -75,7 +75,7 @@ public class PacingFilter implements StreamPacketFilter {
     if (this.hasT04RejectCode(streamPacketReply)) {
       // Fractional rates are fine
       int reducedRate = Math.max(
-        pacingTracker.MIN_PACKETS_PER_SECOND,
+        PacingTracker.MIN_PACKETS_PER_SECOND,
         this.pacingTracker.getPacketsPerSecond() / 2 // Fractional rates are fine
       );
       if (LOGGER.isDebugEnabled()) {

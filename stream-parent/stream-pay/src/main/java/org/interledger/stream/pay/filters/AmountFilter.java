@@ -551,10 +551,12 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   /**
-   * @param amountTracker
-   * @param target
+   * Compute the source delivery limit.
    *
-   * @return
+   * @param amountTracker An {@link AmountTracker}.
+   * @param target        A {@link PaymentTargetConditions}.
+   *
+   * @return An {@link UnsignedLong} representing the delivery limit.
    */
   @VisibleForTesting
   protected UnsignedLong computeSourceAmountDeliveryLimit(
@@ -576,6 +578,14 @@ public class AmountFilter implements StreamPacketFilter {
       .highEndEstimate();
   }
 
+  /**
+   * Determine if the source delivery limit is invalid.
+   *
+   * @param amountTracker An {@link AmountTracker}.
+   * @param target        A {@link PaymentTargetConditions}.
+   *
+   * @return {@code true} if the delivery limit is invalid; {@code false} otherwise.
+   */
   @VisibleForTesting
   protected boolean isSourceAmountDeliveryLimitInvalid(
     final AmountTracker amountTracker, final PaymentTargetConditions target
