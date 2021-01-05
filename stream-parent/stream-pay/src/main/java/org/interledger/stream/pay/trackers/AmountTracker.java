@@ -193,20 +193,19 @@ public class AmountTracker {
       final BigInteger maxSourceAmount = FluentBigInteger.of(targetAmount)
         .timesCeil(minExchangeRate.reciprocal().orElse(Ratio.ZERO)).getValue().add(BigInteger.ONE);
 
-      final BigInteger minDeliveryAmount = targetAmount;
       final BigInteger estimatedNumberOfPackets = FluentBigInteger.of(maxSourceAmount)
         .divideCeil(maxSourcePacketAmount.bigIntegerValue()).getValue();
 
       this.paymentTargetConditionsAtomicReference.set(PaymentTargetConditions.builder()
         .paymentType(PaymentType.FIXED_DELIVERY)
-        .minPaymentAmountInDestinationUnits(minDeliveryAmount)
+        .minPaymentAmountInDestinationUnits(targetAmount)
         .maxPaymentAmountInSenderUnits(maxSourceAmount)
         .minExchangeRate(minExchangeRate)
         .build());
 
       return EstimatedPaymentOutcome.builder()
         .maxSendAmountInWholeSourceUnits(maxSourceAmount)
-        .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
+        .minDeliveryAmountInWholeDestinationUnits(targetAmount)
         .estimatedNumberOfPackets(estimatedNumberOfPackets)
         .build();
     } else {

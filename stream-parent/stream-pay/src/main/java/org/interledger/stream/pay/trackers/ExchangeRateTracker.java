@@ -47,13 +47,13 @@ public class ExchangeRateTracker {
    * Mapping of packet received amounts to its most recent sent amount. These values are typed as {@link UnsignedLong}
    * because ILP Prepare packets may never exceed `MaxUInt64`, which is equal to {@link UnsignedLong#MAX_VALUE}.
    */
-  private Map<UnsignedLong, UnsignedLong> sentAmounts = Maps.newConcurrentMap();
+  private final Map<UnsignedLong, UnsignedLong> sentAmounts = Maps.newConcurrentMap();
 
   /**
    * Mapping of packet sent amounts to its most recent received amount. These values are typed as {@link UnsignedLong} *
    * because ILP Prepare packets may never exceed `MaxUInt64`, which is equal to {@link UnsignedLong#MAX_VALUE}.
    */
-  private Map<UnsignedLong, UnsignedLong> receivedAmounts = Maps.newConcurrentMap();
+  private final Map<UnsignedLong, UnsignedLong> receivedAmounts = Maps.newConcurrentMap();
 
   /**
    * Update the current rate for this payment based upon the supplied values. Because intermediaries floor packet
@@ -73,10 +73,7 @@ public class ExchangeRateTracker {
     // If the exchange rate fluctuated and is "out of bounds," reset it
     Optional.ofNullable(this.receivedAmounts.get(sourceAmount)).ifPresent(previousReceivedAmount ->
     {
-      final boolean shouldResetExchangeRate = (FluentCompareTo.is(previousReceivedAmount).equalTo(receivedAmount) ||
-        FluentCompareTo.is(packetUpperBoundRate).lessThanOrEqualTo(this.lowerBoundRate.get()) ||
-        FluentCompareTo.is(packetLowerBoundRate).greaterThanEqualTo(this.upperBoundRate.get()));
-      if (shouldResetExchangeRate) {
+      if (shouldResetExchangeRate(packetLowerBoundRate, packetUpperBoundRate, previousReceivedAmount, receivedAmount)) {
         logger.debug(
           "Exchange rate changed. resetting to [{}, {}]",
           packetLowerBoundRate, packetUpperBoundRate
@@ -119,19 +116,20 @@ public class ExchangeRateTracker {
    *   <li>Low-end estimate: at least this amount will get delivered, if the rate hasn't fluctuated.</li>
    *   <li>High-end estimate: no more than this amount will get delivered, if the rate hasn't fluctuated.</li>
    * </ol>
+   *
+   * @param sourceAmount An {@link UnsignedLong} representing the source amount of a packet send.
+   *
+   * @return A {@link DeliveredExchangeRateBound}.
    */
-  // TODO: No need to synchronize if only called from nextState
   public synchronized DeliveredExchangeRateBound estimateDestinationAmount(final UnsignedLong sourceAmount) {
+    Objects.requireNonNull(sourceAmount);
+
     // If we already sent a packet for this amount, return how much the recipient got
     return Optional.ofNullable(this.receivedAmounts.get(sourceAmount))
       .map(amountReceived ->
         DeliveredExchangeRateBound.builder().lowEndEstimate(amountReceived).highEndEstimate(amountReceived).build()
       )
       .orElseGet(() -> {
-
-        // TODO: What happens if the lowerBound and upperBounds aren't set yet? It's likely that if receivedAmounts
-        // is not empty, then these will be populated, but worth a unit test.
-
         // Because ILPv4 only accepts UInt64, anything larger than MaxUInt64 will deliver no value, likely because the
         // receiver will overflow and reject the packet. Thus, if we compute that the calculating lowEndDestination
         // will overflow, we merely set it to 0 so that no send get attempted. Same for highEndDestination.
@@ -141,9 +139,7 @@ public class ExchangeRateTracker {
         // If source amount converts exactly to an integer, destination amount MUST be 1 unit less
         // If source amount doesn't convert precisely, we can't narrow it any better than that amount, floored ¯\_(ツ)_/¯
         final UnsignedLong highEndDestination = FluentUnsignedLong
-          .of(
-            getUpperBoundRate().multiplyCeilOrZero(sourceAmount)
-          )
+          .of(getUpperBoundRate().multiplyCeilOrZero(sourceAmount))
           .minusOrZero(UnsignedLong.ONE) // <-- Don't let this value go negative.
           .getValue();
         return DeliveredExchangeRateBound.builder()
@@ -194,11 +190,41 @@ public class ExchangeRateTracker {
   protected void setRateBounds(
     final Ratio lowerBoundRate, final Ratio upperBoundRate
   ) {
-    Objects.requireNonNull(lowerBoundRate);
-    Objects.requireNonNull(upperBoundRate);
-
     this.lowerBoundRate.set(lowerBoundRate);
     this.upperBoundRate.set(upperBoundRate);
   }
 
+  /**
+   * Compute whether the exchange rate should be reset.
+   *
+   * @param packetLowerBoundRate   A {@link Ratio} representing the lower-bound rate probed on the payment path.
+   * @param packetUpperBoundRate   A {@link Ratio} representing the upper-bound rate probed on the payment path.
+   * @param previousReceivedAmount An {@link UnsignedLong} representing the previously received amount.
+   * @param receivedAmount         An {@link UnsignedLong} representing the newly received amount.
+   *
+   * @return {@code true} if the previous amount is equal to the received amount; or if the upper-bound rate becomes
+   *   less-than the lower bound; of if the upper-bound rate becomes less than the lower-bound rate; {@code false}
+   *   otherwise.
+   */
+  @VisibleForTesting
+  boolean shouldResetExchangeRate(
+    final Ratio packetLowerBoundRate,
+    final Ratio packetUpperBoundRate,
+    final UnsignedLong previousReceivedAmount,
+    final UnsignedLong receivedAmount
+  ) {
+    return (FluentCompareTo.is(previousReceivedAmount).equalTo(receivedAmount) ||
+      FluentCompareTo.is(packetUpperBoundRate).lessThanOrEqualTo(this.lowerBoundRate.get()) ||
+      FluentCompareTo.is(packetLowerBoundRate).greaterThanEqualTo(this.upperBoundRate.get()));
+  }
+
+  @VisibleForTesting
+  Map<UnsignedLong, UnsignedLong> getReceivedAmounts() {
+    return this.receivedAmounts;
+  }
+
+  @VisibleForTesting
+  Map<UnsignedLong, UnsignedLong> getSentAmounts() {
+    return this.sentAmounts;
+  }
 }

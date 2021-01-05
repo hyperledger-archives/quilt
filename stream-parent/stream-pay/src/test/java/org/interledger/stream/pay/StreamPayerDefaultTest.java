@@ -2007,12 +2007,6 @@ public class StreamPayerDefaultTest {
     return paymentSharedStateTrackerMock;
   }
 
-//  private SharedSecret obtainSharedSecretFromServer(final InterledgerAddress receiverAddress) {
-//    return new SpspStreamConnectionGenerator().generateConnectionDetails(
-//      () -> SERVER_SECRET_BYTES, receiverAddress
-//    ).sharedSecret();
-//  }
-
   private static class TestableExchangeRateTracker extends ExchangeRateTracker {
 
     @Override
