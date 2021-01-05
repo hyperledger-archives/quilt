@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ExchangeRateTracker {
 
-  private final static Logger logger = LoggerFactory.getLogger(ExchangeRateTracker.class);
+  private static final Logger logger = LoggerFactory.getLogger(ExchangeRateTracker.class);
 
   /**
    * Realized exchange rate is greater than or equal to this ratio (inclusive) (i.e., destination / source).
@@ -32,11 +32,12 @@ public class ExchangeRateTracker {
 
   /**
    * The realized exchange-rate is less than this ratio (exclusive) (i.e., destination / source).
-   *
-   * @returnExchangeRateTracker
    */
   private final AtomicReference<Ratio> upperBoundRate;
 
+  /**
+   * No-args Constructor.
+   */
   public ExchangeRateTracker() {
     // These start off as null so that the greater/less-than code doesn't skip the first values.
     this.lowerBoundRate = new AtomicReference<>();
@@ -71,8 +72,7 @@ public class ExchangeRateTracker {
     final Ratio packetLowerBoundRate = Ratio.from(receivedAmount, sourceAmount);
 
     // If the exchange rate fluctuated and is "out of bounds," reset it
-    Optional.ofNullable(this.receivedAmounts.get(sourceAmount)).ifPresent(previousReceivedAmount ->
-    {
+    Optional.ofNullable(this.receivedAmounts.get(sourceAmount)).ifPresent(previousReceivedAmount -> {
       if (shouldResetExchangeRate(packetLowerBoundRate, packetUpperBoundRate, previousReceivedAmount, receivedAmount)) {
         logger.debug(
           "Exchange rate changed. resetting to [{}, {}]",
@@ -149,11 +149,8 @@ public class ExchangeRateTracker {
       });
   }
 
-  // TODO: No need to synchronize if only called from nextState
-
   /**
    * Estimate the source amount that delivers the given destination amount.
-   * <p>
    * <ol>
    *   <li>Low-end estimate: (may under-deliver, won't over-deliver): lowest source amount
    *     that *may* deliver the given destination amount, if the rate hasn't fluctuated.</li>
@@ -166,6 +163,11 @@ public class ExchangeRateTracker {
     throw new RuntimeException("Not yet implemented");
   }
 
+  /**
+   * Accessor for the lower rate bound.
+   *
+   * @return A {@link Ratio}.
+   */
   public Ratio getLowerBoundRate() {
     if (lowerBoundRate.get() == null) {
       throw new StreamPayerException("No lowerBoundRate was detected from the receiver", SendState.RateProbeFailed);
@@ -173,6 +175,11 @@ public class ExchangeRateTracker {
     return lowerBoundRate.get();
   }
 
+  /**
+   * Accessor for the upper rate bound.
+   *
+   * @return A {@link Ratio}.
+   */
   public Ratio getUpperBoundRate() {
     if (upperBoundRate.get() == null) {
       throw new StreamPayerException("No upperBoundRate was detected from the receiver", SendState.RateProbeFailed);
@@ -183,8 +190,8 @@ public class ExchangeRateTracker {
   /**
    * Helper method to allow the lower and upper rate bounds to be mocked without actually discovering them.
    *
-   * @param lowerBoundRate
-   * @param upperBoundRate
+   * @param lowerBoundRate A {@link Ratio} representing the lower rate-bound.
+   * @param upperBoundRate A {@link Ratio} representing the upper rate-bound.
    */
   @VisibleForTesting
   protected void setRateBounds(
@@ -218,11 +225,21 @@ public class ExchangeRateTracker {
       FluentCompareTo.is(packetLowerBoundRate).greaterThanEqualTo(this.upperBoundRate.get()));
   }
 
+  /**
+   * Accessor for the received amounts.
+   *
+   * @return A {@link Map}.
+   */
   @VisibleForTesting
   Map<UnsignedLong, UnsignedLong> getReceivedAmounts() {
     return this.receivedAmounts;
   }
 
+  /**
+   * Accessor for the received amounts.
+   *
+   * @return A {@link Map}.
+   */
   @VisibleForTesting
   Map<UnsignedLong, UnsignedLong> getSentAmounts() {
     return this.sentAmounts;
