@@ -229,25 +229,25 @@ public class ExchangeRateTrackerTest {
 
   @Test
   public void shouldResetExchangeRateUpperLessThanLower() {
-    exchangeRateTracker.updateRate(UnsignedLong.ONE, UnsignedLong.ONE);
-    assertThat(exchangeRateTracker.shouldResetExchangeRate(
-      Ratio.ONE, Ratio.ZERO, UnsignedLong.ONE, UnsignedLong.MAX_VALUE
-    )).isTrue();
-    assertThat(exchangeRateTracker.shouldResetExchangeRate(
-      Ratio.ZERO, Ratio.ZERO, UnsignedLong.ONE, UnsignedLong.MAX_VALUE
-    )).isTrue();
+    Ratio lowerBoundRate = Ratio.from(BigDecimal.valueOf(3L));
+    Ratio upperBoundRate = Ratio.ONE;
+    exchangeRateTracker.setRateBounds(lowerBoundRate, upperBoundRate);
 
+    assertThat(exchangeRateTracker.shouldResetExchangeRate(
+      // Lower is equal, Upper is less
+      Ratio.ONE, Ratio.from(BigDecimal.valueOf(2)), UnsignedLong.ONE, UnsignedLong.MAX_VALUE
+    )).isTrue();
   }
 
   @Test
   public void shouldResetExchangeRateLowerGreaterThanUpper() {
-    exchangeRateTracker.updateRate(UnsignedLong.ONE, UnsignedLong.ONE);
-    assertThat(exchangeRateTracker.shouldResetExchangeRate(
-      Ratio.ZERO, Ratio.ONE, UnsignedLong.ONE, UnsignedLong.MAX_VALUE
-    )).isTrue();
-    assertThat(exchangeRateTracker.shouldResetExchangeRate(
-      Ratio.ZERO, Ratio.ZERO, UnsignedLong.ONE, UnsignedLong.MAX_VALUE
-    )).isTrue();
+    Ratio lowerBoundRate = Ratio.ONE;
+    Ratio upperBoundRate = Ratio.from(BigDecimal.valueOf(2L));
+    exchangeRateTracker.setRateBounds(lowerBoundRate, upperBoundRate);
 
+    assertThat(exchangeRateTracker.shouldResetExchangeRate(
+      // Lower is greater, Upper is Equal
+      Ratio.from(BigDecimal.valueOf(3)), Ratio.from(BigDecimal.valueOf(2L)), UnsignedLong.ONE, UnsignedLong.MAX_VALUE
+    )).isTrue();
   }
 }
