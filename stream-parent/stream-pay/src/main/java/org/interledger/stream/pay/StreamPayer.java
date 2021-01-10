@@ -274,7 +274,6 @@ public interface StreamPayer {
         new PacingFilter(quote.paymentSharedStateTracker().getPacingTracker()),
         new AmountFilter(quote.paymentSharedStateTracker()),
         new ExchangeRateFilter(quote.paymentSharedStateTracker().getExchangeRateTracker())
-        // TODO: PendingRequestTracker?
       );
 
       return new RunLoop(link, streamPacketFilters, streamEncryptionUtils, quote.paymentSharedStateTracker())

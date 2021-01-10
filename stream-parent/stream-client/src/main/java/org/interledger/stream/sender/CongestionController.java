@@ -12,7 +12,10 @@ import java.util.Optional;
  * adjusting the rate at which ILP packets are sent based on network throughput limits). Congestion is an ILPv4-layer
  * concern, and will inform stream and connection-level flow control (i.e., adjusting the rate at which money and data
  * are sent).
+ *
+ * @deprecated Will be removed in a future version. Prefer ILP-Pay functionality instead.
  */
+@Deprecated
 public interface CongestionController {
 
   /**

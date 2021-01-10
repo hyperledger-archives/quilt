@@ -8,6 +8,8 @@ import java.util.Objects;
 
 /**
  * Utilities for normalizing scaled account values.
+ *
+ * NOTE: This class may appear unused, but is used by the Java Connector and potentially other software.
  */
 public class NumberScalingUtils {
 
@@ -21,14 +23,13 @@ public class NumberScalingUtils {
    * @param destinationScale An int representing a destination scale
    *
    * @return A new {@link BigInteger} containing an amount scaled into the {@code destinationScale} units. Note that if
-   *     there are any remainder units after performing the conversion, these will not be present in this return value
-   *     (they will be left in the balance tracker to be dealt with in future adjustments).
+   *   there are any remainder units after performing the conversion, these will not be present in this return value
+   *   (they will be left in the balance tracker to be dealt with in future adjustments).
    *
    * @see "https://java-connector.ilpv4.dev/overview/terminology#scale"
    */
-  // TODO: Use UnsignedLong?
   public static UnsignedLong translate(
-      final UnsignedLong sourceAmount, final short sourceScale, final short destinationScale
+    final UnsignedLong sourceAmount, final short sourceScale, final short destinationScale
   ) throws IllegalArgumentException {
     Objects.requireNonNull(sourceAmount, "sourceAmount must not be null");
     Preconditions.checkArgument(sourceScale >= 0, "sourceScale must be positive");
@@ -41,10 +42,10 @@ public class NumberScalingUtils {
 
     // TODO: Try shiftBy and compare speed?
     final BigInteger scaledAmount = scaleDifference > 0 ?
-        // value * (10^scaleDifference), always rounds to floor via BigInteger
-        sourceAmountBI.multiply(BigInteger.TEN.pow(scaleDifference)) :
-        // value / (10^-scaleDifference))
-        sourceAmountBI.divide((BigInteger.TEN.pow(scaleDifference * -1)));
+      // value * (10^scaleDifference), always rounds to floor via BigInteger
+      sourceAmountBI.multiply(BigInteger.TEN.pow(scaleDifference)) :
+      // value / (10^-scaleDifference))
+      sourceAmountBI.divide((BigInteger.TEN.pow(scaleDifference * -1)));
 
     // Throws IllegalArgumentException if the BigInteger is too large.
     return UnsignedLong.valueOf(scaledAmount);

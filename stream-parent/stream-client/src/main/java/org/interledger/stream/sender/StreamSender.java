@@ -9,7 +9,9 @@ import java.util.concurrent.CompletableFuture;
  * Defines a STREAM Client according to IL-RFC-29.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md"
+ * @deprecated Will be removed in a future version. Prefer ILP-Pay functionality instead.
  */
+@Deprecated
 public interface StreamSender {
 
   /**

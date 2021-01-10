@@ -18,7 +18,10 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * An implementation of {@link SenderAmountPaymentTracker} that uses a fixed amount to send, denominated in the sender's
  * units, as reflected in the `amountToDeliver`.
+ *
+ * @deprecated Will be removed in a future version. Prefer ILP-Pay functionality instead.
  */
+@Deprecated
 public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTracker {
 
   // The original amount, in sender's units, to send

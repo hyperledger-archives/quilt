@@ -68,6 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -83,7 +84,10 @@ import javax.annotation.concurrent.ThreadSafe;
  * packs a sufficient number of STREAM frames into a single Prepare packet for this 32kb limit to ever be reached;
  * Second, if the ILPv4 RFC ever changes to increase this size limitation, we don't want sender/receiver software to
  * have to be updated across the Interledger.</p>
+ *
+ * @deprecated Will be removed in a future version. Prefer ILP-Pay functionality instead.
  */
+@Deprecated
 @ThreadSafe
 public class SimpleStreamSender implements StreamSender {
 
@@ -359,6 +363,7 @@ public class SimpleStreamSender implements StreamSender {
      * Helper method to construct a {@link SendMoneyResult} that can be used when preflight checks are not successful.
      *
      * @param startPreflight An {@link Instant} representing the moment in time that preflight was started.
+     *
      * @return A {@link SendMoneyResult}.
      */
     private SendMoneyResult constructSendMoneyResultForInvalidPreflight(final Instant startPreflight) {
@@ -404,6 +409,7 @@ public class SimpleStreamSender implements StreamSender {
      * be closed.
      *
      * @return A {@link Denomination} that contains the asset information for the receiver.
+     *
      * @throws StreamConnectionClosedException if the denomination could not be loaded and the Stream should be closed.
      */
     @VisibleForTesting
@@ -707,6 +713,7 @@ public class SimpleStreamSender implements StreamSender {
      *                     and decrypt STREAM frames and packets sent and received inside of ILPv4 packets sent over the
      *                     Interledger between these two entities (i.e., sender and receiver).
      * @param streamPacket A {@link StreamPacket} to encode into ASN.1 OER and then encrypt into a byte array.
+     *
      * @return A byte-array containing the encrypted version of an ASN.1 OER encoded {@link StreamPacket}.
      */
     @VisibleForTesting
@@ -733,6 +740,7 @@ public class SimpleStreamSender implements StreamSender {
      *                                   of ILPv4 packets sent over the Interledger between these two entities (i.e.,
      *                                   sender and receiver).
      * @param encryptedStreamPacketBytes A byte-array containing an encrypted ASN.1 OER encoded {@link StreamPacket}.
+     *
      * @return The decrypted {@link StreamPacket}.
      */
     @VisibleForTesting
@@ -1019,10 +1027,10 @@ public class SimpleStreamSender implements StreamSender {
   @Override
   public String toString() {
     return new StringJoiner(", ", SimpleStreamSender.class.getSimpleName() + "[", "]")
-        .add("link=" + link)
-        .add("sendPacketSleepDuration=" + sendPacketSleepDuration)
-        .add("streamEncryptionService=" + streamEncryptionService)
-        .add("streamConnectionManager=" + streamConnectionManager)
-        .toString();
+      .add("link=" + link)
+      .add("sendPacketSleepDuration=" + sendPacketSleepDuration)
+      .add("streamEncryptionService=" + streamEncryptionService)
+      .add("streamConnectionManager=" + streamConnectionManager)
+      .toString();
   }
 }

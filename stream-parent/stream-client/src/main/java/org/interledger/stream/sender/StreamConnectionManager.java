@@ -24,9 +24,9 @@ import java.util.Optional;
  * Stream sender or receiver accidentally use sequences that might overlap. While this implementation does not guard
  * against two classes in _different_ JVMs using the same destination address and secret, and thus potentially
  * colliding, this possibility is considered to be extremely remote since the chances of two different JVMs using the
- * same shared secret remote. However, care should be taken when designing clustered STREAM senders and receivers
- * because it is possible that certain implementations of Stream Receiver might return the same shared secret if queried
- * more than once using the same receiver address.</p>
+ * same shared secret are considered to be remote. However, care should be taken when designing clustered STREAM senders
+ * and receivers because it is possible that certain implementations of Stream Receiver might return the same shared
+ * secret if queried more than once using the same receiver address.</p>
  */
 public class StreamConnectionManager {
 
@@ -77,9 +77,9 @@ public class StreamConnectionManager {
     // WARNING: Don't ever remove the connection once it's closed. Closed connections MUST never be re-used so that they
     // don't accidentally use a sequence number that exceeds the StreamConnection.MAX_FRAMES_PER_CONNECTION
     return Optional.ofNullable(connections.get(streamConnectionId))
-        .map(connectionToClose -> {
-          connectionToClose.closeConnection();
-          return connectionToClose;
-        });
+      .map(connectionToClose -> {
+        connectionToClose.closeConnection();
+        return connectionToClose;
+      });
   }
 }

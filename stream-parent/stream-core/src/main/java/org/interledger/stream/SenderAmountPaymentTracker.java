@@ -1,12 +1,13 @@
 package org.interledger.stream;
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.fx.Denomination;
+
+import com.google.common.primitives.UnsignedLong;
 
 /**
  * An extension of {@link PaymentTracker} that defines the {@link #getOriginalAmount()} to be in the sender's units.
  *
- * @deprecated TODO: Remove
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
  */
 @Deprecated
 public interface SenderAmountPaymentTracker extends PaymentTracker<SenderAmountMode> {
@@ -25,6 +26,7 @@ public interface SenderAmountPaymentTracker extends PaymentTracker<SenderAmountM
    *                             compute path-exchange-rates.
    * @param receiverDenomination A {@link Denomination} representing the asset information for the receiver, in order to
    *                             compute path-exchange-rates.
+   *
    * @return
    */
   @Override

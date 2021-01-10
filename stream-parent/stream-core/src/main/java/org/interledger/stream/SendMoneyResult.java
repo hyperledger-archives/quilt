@@ -1,15 +1,20 @@
 package org.interledger.stream;
 
-import com.google.common.primitives.UnsignedLong;
-import java.time.Duration;
-import java.util.Optional;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denomination;
 
+import com.google.common.primitives.UnsignedLong;
+
+import java.time.Duration;
+import java.util.Optional;
+
 /**
  * The result of a request to send money using the STREAM protocol.
+ *
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
  */
+@Deprecated
 @Immutable
 public interface SendMoneyResult {
 

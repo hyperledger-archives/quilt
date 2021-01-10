@@ -2,7 +2,10 @@ package org.interledger.stream;
 
 /**
  * The base exception for all STREAM exceptions.
+ *
+ * @deprecated Will be removed once StreamSender is removed.
  */
+@Deprecated
 public class StreamException extends RuntimeException {
 
   /**
@@ -42,9 +45,8 @@ public class StreamException extends RuntimeException {
 
   /**
    * Constructs a new runtime exception with the specified cause and a detail message of {@code (cause==null ? null :
-   * cause.toString())} (which typically contains the class and detail message of
-   * {@code cause}).  This constructor is useful for runtime exceptions
-   * that are little more than wrappers for other throwables.
+   * cause.toString())} (which typically contains the class and detail message of {@code cause}).  This constructor is
+   * useful for runtime exceptions that are little more than wrappers for other throwables.
    *
    * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method).  (A {@code null}
    *              value is permitted, and indicates that the cause is nonexistent or unknown.)
@@ -68,7 +70,7 @@ public class StreamException extends RuntimeException {
    * @since 1.7
    */
   protected StreamException(String message, Throwable cause, boolean enableSuppression,
-      boolean writableStackTrace) {
+    boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 }

@@ -4,10 +4,13 @@ import org.interledger.core.Immutable;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Derived;
-// TODO: Move to stream-core?
+
 /**
  * Contains summary information about a STREAM Connection.
+ *
+ * @deprecated Will be removed in a future version. Prefer ILP-Pay functionality instead.
  */
+@Deprecated
 @Immutable
 public interface ConnectionStatistics {
 
