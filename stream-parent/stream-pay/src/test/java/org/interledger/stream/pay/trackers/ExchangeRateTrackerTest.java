@@ -157,10 +157,7 @@ public class ExchangeRateTrackerTest {
         return true;
       }
     };
-    final UnsignedLong sourceAmount = ONE;
-    final UnsignedLong receivedAmount = TEN;
-    exchangeRateTracker.getReceivedAmounts().put(sourceAmount, receivedAmount);
-
+    exchangeRateTracker.getReceivedAmounts().put(ONE, TEN);
     exchangeRateTracker.updateRate(ONE, UnsignedLong.ONE);
 
     assertThat(exchangeRateTracker.getLowerBoundRate().toBigDecimal()).isEqualTo(BigDecimal.ONE);

@@ -26,6 +26,7 @@ public class PaymentSharedStateTrackerTest {
   @Mock
   private StreamConnection streamConnectionMock;
 
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);

@@ -28,9 +28,9 @@ import org.mockito.MockitoAnnotations;
 /**
  * Unit tests for {@link AssetDetailsTracker}.
  */
+@SuppressWarnings( {"checkstyle:MissingJavadocMethod", "OptionalGetWithoutIsPresent"})
 public class AssetDetailsTrackerTest {
 
-  private static final InterledgerAddress SENDER_ADDRESS = InterledgerAddress.of("example.sender");
   private static final InterledgerAddress RECEIVER_ADDRESS = InterledgerAddress.of("example.destination");
 
   @Rule

@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Unit tests for {@link MaxPacketAmountTracker}.
  */
+@SuppressWarnings( {"checkstyle:MissingJavadocMethod"})
 public class MaxPacketAmountTrackerTest {
 
   @Rule
@@ -253,7 +254,7 @@ public class MaxPacketAmountTrackerTest {
   }
 
   @Test
-  public void adjustPathCapacityWithZeroAckImpreciseWithNewPathCapcity() {
+  public void adjustPathCapacityWithZeroAckImpreciseWithNewPathCapacity() {
     this.maxPacketAmountTracker = new MaxPacketAmountTracker() {
       @Override
       public MaxPacketAmount getMaxPacketAmount() {
@@ -262,11 +263,6 @@ public class MaxPacketAmountTrackerTest {
           .value(UnsignedLong.valueOf(5L))
           .build();
       }
-
-//      @Override
-//      public UnsignedLong verifiedPathCapacity() {
-//        return UnsignedLong.ONE; // <-- The original verified path capacity.
-//      }
     };
     maxPacketAmountTracker.adjustPathCapacity(UnsignedLong.valueOf(4L));
 

@@ -68,6 +68,7 @@ import javax.money.convert.ExchangeRateProvider;
 /**
  * An abstract IT that hits a local docker container running the Rust ILP Connector.
  */
+@SuppressWarnings( {"ALL"})
 public abstract class AbstractRustIT {
 
   protected static final InterledgerAddress HOST_ADDRESS = InterledgerAddress.of("private.quilt-it.rs1");

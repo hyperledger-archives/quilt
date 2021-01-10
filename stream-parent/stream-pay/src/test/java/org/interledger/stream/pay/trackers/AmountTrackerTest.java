@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Unit tests for {@link AmountTracker}.
  */
+@SuppressWarnings("ALL")
 public class AmountTrackerTest {
 
   @Rule

@@ -2,8 +2,6 @@ package org.interledger.stream.pay;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.primitives.UnsignedLong;
-import java.math.BigInteger;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denominations;
 import org.interledger.link.Link;
@@ -12,12 +10,17 @@ import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketState;
+
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
+
+import java.math.BigInteger;
 
 /**
  * Unit tests for {@link org.interledger.stream.pay.probing.ExchangeRateProber}.
  */
 // TODO: Create an IT that hits the Java Connector via TestContainers.
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class ExchangeRateProberRustIT extends AbstractRustIT {
 
   /**
@@ -25,7 +28,7 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
    */
   @Test
   public void testRateProbeWithMaxPacket50kViaXrpToUsd() {
-    final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT_50K); // <-- All ILP operations from XRP_ACCOUNT
+    final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT_50K); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
     ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamEncryptionUtils, ilpLink);
 
@@ -47,9 +50,9 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
     // Even though none of the probe packets are exactly 50k, The MaxPacketAmount should be discovered imprecisely.
     // This is especially true for the Java Connector, which has a bug that doesn't send meta-data.
     // See https://github.com/interledger4j/ilpv4-connector/issues/660
-//    assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.ImpreciseMax);
-//    assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(99999L));
-//    assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
+    // assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.ImpreciseMax);
+    // assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(99999L));
+    // assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
 
     // Likewise, for the RustConnector, it doesn't send _any_ F08 rejections for the max-packet amount.
     assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.PreciseMax);
@@ -61,7 +64,6 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
 
   /**
    * Tests the rate probe on a path that has an unlimited max-packet value and a 1:1 FX using an XRP to XRP payment.
-   * <p>
    * <pre>
    * Sender Account: `demo_user`
    * Receiver Account: $rafiki.money/p/test@example.com
@@ -69,7 +71,7 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
    */
   @Test
   public void testRateProbeUnlimitedMaxPathWithXrpToXrp() {
-    final Link ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
+    final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
     ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamEncryptionUtils, ilpLink);
 

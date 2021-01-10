@@ -35,6 +35,7 @@ import org.mockito.stubbing.Answer;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RunLoopTest {
 
   @Mock
-  private Link linkMock;
+  private Link<?> linkMock;
 
   @Mock
   private StreamEncryptionUtils streamEncryptionUtilsMock;
@@ -67,7 +68,7 @@ public class RunLoopTest {
 
     // Return Wait one time during the run....
     StreamPacketFilter filter2 = new StreamPacketFilter() {
-      private AtomicInteger numRuns = new AtomicInteger(10);
+      private final AtomicInteger numRuns = new AtomicInteger(10);
 
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
@@ -149,7 +150,7 @@ public class RunLoopTest {
 
     // Return Wait one time during the run....
     StreamPacketFilter filter2 = new StreamPacketFilter() {
-      private AtomicInteger numRuns = new AtomicInteger(2);
+      private final AtomicInteger numRuns = new AtomicInteger(2);
 
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
@@ -223,7 +224,7 @@ public class RunLoopTest {
 
     // Return Wait one time during the run....
     StreamPacketFilter filter2 = new StreamPacketFilter() {
-      private AtomicInteger numRuns = new AtomicInteger(10);
+      private final AtomicInteger numRuns = new AtomicInteger(10);
 
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
@@ -299,9 +300,9 @@ public class RunLoopTest {
   }
 
   @Test
-  public void testFullRunWithInteruptedExceptionAfterSleepReady() {
+  public void testFullRunWithInterruptedExceptionAfterSleepReady() {
     StreamPacketFilter filter1 = new StreamPacketFilter() {
-      private AtomicInteger numRuns = new AtomicInteger(5);
+      private final AtomicInteger numRuns = new AtomicInteger(5);
 
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
@@ -321,7 +322,7 @@ public class RunLoopTest {
 
     RunLoop runLoop = new RunLoop(
       linkMock,
-      Arrays.asList(filter1),
+      Collections.singletonList(filter1),
       streamEncryptionUtilsMock,
       paymentSharedStateTrackerMock,
       200
@@ -365,9 +366,9 @@ public class RunLoopTest {
   }
 
   @Test
-  public void testFullRunWithInteruptedExceptionAfterSleepWait() {
+  public void testFullRunWithInterruptedExceptionAfterSleepWait() {
     StreamPacketFilter filter1 = new StreamPacketFilter() {
-      private AtomicInteger numRuns = new AtomicInteger(5);
+      private final AtomicInteger numRuns = new AtomicInteger(5);
 
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
@@ -387,7 +388,7 @@ public class RunLoopTest {
 
     RunLoop runLoop = new RunLoop(
       linkMock,
-      Arrays.asList(filter1),
+      Collections.singletonList(filter1),
       streamEncryptionUtilsMock,
       paymentSharedStateTrackerMock,
       200
@@ -432,7 +433,7 @@ public class RunLoopTest {
   public void shouldCloseConnection() {
     RunLoop runLoop = new RunLoop(
       linkMock,
-      Arrays.asList(),
+      Collections.emptyList(),
       streamEncryptionUtilsMock,
       paymentSharedStateTrackerMock
     );
@@ -446,17 +447,18 @@ public class RunLoopTest {
 
   @Test
   public void shouldCloseConnectionWithNoError() {
-    RunLoop runLoop = new RunLoop(
-      linkMock,
-      Arrays.asList(),
-      streamEncryptionUtilsMock,
-      paymentSharedStateTrackerMock
-    );
-
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
     when(streamConnectionMock.getSharedSecret()).thenReturn(mock(SharedSecret.class));
+
+    RunLoop runLoop = new RunLoop(
+      linkMock,
+      Collections.emptyList(),
+      streamEncryptionUtilsMock,
+      paymentSharedStateTrackerMock
+    );
+
     runLoop.closeConnection(streamConnectionMock);
   }
 
@@ -464,7 +466,7 @@ public class RunLoopTest {
   public void shouldCloseConnectionWithError() {
     RunLoop runLoop = new RunLoop(
       linkMock,
-      Arrays.asList(),
+      Collections.emptyList(),
       streamEncryptionUtilsMock,
       paymentSharedStateTrackerMock
     );

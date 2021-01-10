@@ -3,22 +3,6 @@ package org.interledger.stream;
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
@@ -40,10 +24,27 @@ import org.interledger.stream.pay.StreamPayer;
 import org.interledger.stream.pay.model.PaymentOptions;
 import org.interledger.stream.pay.model.PaymentReceipt;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import okhttp3.ConnectionPool;
+import okhttp3.ConnectionSpec;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.problem.ProblemModule;
 import org.zalando.problem.violations.ConstraintViolationProblemModule;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Example how to use Quilt to send a STREAM payment. See this module's README for more details.
@@ -53,11 +54,17 @@ public class IlpDrip {
   private static final Logger LOGGER = LoggerFactory.getLogger("IlpDrip");
 
   private static final InterledgerAddress OPERATOR_ADDRESS
-    = InterledgerAddress.of("private.org.interledger.ilpdrip.application~send-only");
+    = InterledgerAddress.of("private.org.interledger.ilpDrip.application~send-only");
 
   // Create SimpleStreamSender for sending STREAM payments
   private static StreamPayer streamPayer;
 
+  /**
+   * Main method.
+   *
+   * @param args An array of {@link String} containing application arguments.
+   */
+  @SuppressWarnings("InfiniteLoopStatement")
   public static void main(String[] args) {
 
     final String senderAccountUsername;
@@ -123,7 +130,7 @@ public class IlpDrip {
 
     try {
       // Use ILP over HTTP for our underlying link
-      final Link link = newIlpOverHttpLink(testNetUrl, senderAuthToken);
+      final Link<?> link = newIlpOverHttpLink(testNetUrl, senderAuthToken);
       link.setLinkId(LinkId.of("ILP Drip Account"));
 
       final StreamEncryptionUtils streamEncryptionUtils = new StreamEncryptionUtils(
@@ -143,22 +150,23 @@ public class IlpDrip {
             .build()
         ));
 
+      // Program never ends until it's halted at the command-line.
       while (true) {
         LOGGER.info("PAYMENT LINK\n{}\n\n", link);
 
         CompletableFuture<PaymentReceipt> firstPayment = quoteAndPay(receiver1);
         CompletableFuture<PaymentReceipt> secondPayment = receiver2
-          .map(destPaymentPointer -> quoteAndPay(destPaymentPointer))
+          .map(IlpDrip::quoteAndPay)
           .orElseGet(() -> CompletableFuture.completedFuture(null));
 
         // Wait for both to complete...
         CompletableFuture.allOf(
           firstPayment, secondPayment
         ).get();
-        LOGGER.info("\n"
-          + "$$$$$$$$$$$$$$$$$$$$$\n"
-          + "ALL PAYMENTS COMPLETE\n"
-          + "$$$$$$$$$$$$$$$$$$$$$\n"
+        LOGGER.info("\n" +
+          "$$$$$$$$$$$$$$$$$$$$$\n" +
+          "ALL PAYMENTS COMPLETE\n" +
+          "$$$$$$$$$$$$$$$$$$$$$\n"
         );
       }
     } catch (Exception e) {
@@ -171,8 +179,8 @@ public class IlpDrip {
    */
   private static void displayUsage() {
     LOGGER.info(
-      "USAGE: java -jar ilp-drip-1.0-SNAPSHOT-spring-boot.jar {senderAccountUsername} {senderAccountToken} "
-        + "{cryptoCompareApiKey} {receiver1PaymentPointer} {receiver2PaymentPointer [optional]}"
+      "USAGE: java -jar ilp-drip-1.0-SNAPSHOT-spring-boot.jar {senderAccountUsername} {senderAccountToken} " +
+        "{cryptoCompareApiKey} {receiver1PaymentPointer} {receiver2PaymentPointer [optional]}"
     );
   }
 
@@ -208,7 +216,7 @@ public class IlpDrip {
       });
   }
 
-  private static Link newIlpOverHttpLink(final HttpUrl testNetUrl, final String senderAuthToken) {
+  private static Link<?> newIlpOverHttpLink(final HttpUrl testNetUrl, final String senderAuthToken) {
     Objects.requireNonNull(testNetUrl);
     Objects.requireNonNull(senderAuthToken);
 
@@ -240,6 +248,7 @@ public class IlpDrip {
    * Strings) per RFC-7807, this ObjectMapper should not be used for payloads that involve Problems.
    *
    * @return An {@link ObjectMapper}.
+   *
    * @see "https://tools.ietf.org/html/rfc7807"
    */
   private static ObjectMapper createObjectMapperForProblemsJson() {
