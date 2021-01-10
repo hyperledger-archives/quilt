@@ -183,7 +183,7 @@ public class MaxPacketAmountTracker {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("No path adjustment required. maxPacketAmount={}", maxPacketAmount);
         }
-        return; // <-- Ignore: Can't adjust maxPacketAmount if we don't know a max yet.
+        //return <-- Can't adjust maxPacketAmount if we don't know a max yet.
       },
       maxPacketAmount -> { // <-- Handle ImpreciseMax
         if (newPathCapacity.equals(maxPacketAmountValue)) {
@@ -196,13 +196,13 @@ public class MaxPacketAmountTracker {
             .value(maxPacketAmountValue) // <-- This is set properly above in the reduce method.
             .build());
         }
-        return;
+        // return
       },
       maxPacketAmount -> { // <-- Handle PreciseMax
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("No path adjustment required. maxPacketAmount={}", maxPacketAmount);
         }
-        return;// <-- Ignore: Already know PreciseMax
+        // return <-- Ignore: Already know PreciseMax
       }
     );
   }
@@ -230,13 +230,10 @@ public class MaxPacketAmountTracker {
         final UnsignedLong verifiedPathCapacitySnapshot = this.verifiedPathCapacity();
         // Always positive: if verifiedCapacity=0, maxPacketAmount / 2 must round up to 1,
         // or if verifiedCapacity=maxPacketAmount, verifiedCapacity is positive, so adding it will always be positive
-        return Optional.of(this.getMaxPacketAmount().value())
-          .map(FluentUnsignedLong::of)
-          .map(ful -> ful.minusOrZero(verifiedPathCapacitySnapshot))
-          .map(FluentUnsignedLong::halfCeil)
-          .map(FluentUnsignedLong::getValue)
-          .map(ul -> ul.plus(verifiedPathCapacitySnapshot))
-          .get(); // <-- Will always be present due to the usage of `Optional.of()` above.
+        return FluentUnsignedLong.of(this.getMaxPacketAmount().value())
+          .minusOrZero(verifiedPathCapacitySnapshot)
+          .halfCeil().getValue()
+          .plus(verifiedPathCapacitySnapshot);
       }
       case PreciseMax:
       case UnknownMax:
@@ -248,25 +245,8 @@ public class MaxPacketAmountTracker {
   }
 
   /**
-   * Return a known limit on the max-packet amount of the path, if it has been discovered. Requires that at least 1 unit
-   * has been acknowledged by the receiver, and either the max packet amount has been precisely discovered, or no F08
-   * has been encountered yet.
+   * An enum to represent the state of the max-packet discovery process.
    */
-  // TODO: Use this during rate-probe.
-//  public Optional<UnsignedLong> getDiscoveredMaxPacketAmount() {
-//    if (FluentUnsignedLong.of(verifiedPathCapacityRef.get()).isPositive()) {
-//      if (this.getMaxPacketAmount().maxPacketState() == PreciseMax) {
-//        return Optional.of(this.getMaxPacketAmount().value());
-//      } else if (this.getMaxPacketAmount().maxPacketState() == UnknownMax) {
-//        return Optional.of(UnsignedLong.MAX_VALUE);
-//      } else {
-//        return Optional.empty();
-//      }
-//    } else {
-//      return Optional.empty();
-//    }
-//  }
-
   public enum MaxPacketState {
     /**
      * Initial state before any F08 errors have been encountered.
@@ -274,7 +254,7 @@ public class MaxPacketAmountTracker {
     UnknownMax,
 
     /**
-     * F08 errors included metadata to communicate the precise max packet amount
+     * F08 errors included metadata to communicate the precise max packet amount.
      */
     PreciseMax,
 
@@ -317,6 +297,9 @@ public class MaxPacketAmountTracker {
       return UnsignedLong.MAX_VALUE;
     }
 
+    /**
+     * Immutables check method.
+     */
     @Value.Check
     default void check() {
       if (maxPacketState() == UnknownMax) {
@@ -380,47 +363,5 @@ public class MaxPacketAmountTracker {
         }
       }
     }
-
-//    /**
-//     * Execute various operations on this state object depending on the current state. If the current state is {@link
-//     * MaxPacketState#UnknownMax}, then {@code fulfillHandler} will be executed. Otherwise, if the current state is
-//     * {@link MaxPacketState#ImpreciseMax}, then {@code impreciseMaxHandler} will be executed. Otherwise, if the current
-//     * state is {@link MaxPacketState#PreciseMax}, then {@code preciseMaxHandler} will be executed.
-//     *
-//     * @param unknownMaxHandler   A {@link Consumer} to call if {@link #maxPacketState()} packet is {@link
-//     *                            MaxPacketState#UnknownMax}.
-//     * @param impreciseMaxHandler A {@link Consumer} to call if {@link #maxPacketState()} packet is {@link
-//     *                            MaxPacketState#ImpreciseMax}.
-//     * @param preciseMaxHandler   A {@link Consumer} to call if {@link #maxPacketState()} packet is {@link
-//     *                            MaxPacketState#PreciseMax}.
-//     */
-//    default MaxPacketAmount handleStateAndReturn(
-//      final Consumer<MaxPacketAmount> unknownMaxHandler,
-//      final Consumer<MaxPacketAmount> impreciseMaxHandler,
-//      final Consumer<MaxPacketAmount> preciseMaxHandler
-//    ) {
-//      Objects.requireNonNull(unknownMaxHandler);
-//      Objects.requireNonNull(impreciseMaxHandler);
-//      Objects.requireNonNull(preciseMaxHandler);
-//
-//      switch (this.maxPacketState()) {
-//        case UnknownMax: {
-//          unknownMaxHandler.accept(this);
-//          break;
-//        }
-//        case ImpreciseMax: {
-//          impreciseMaxHandler.accept(this);
-//          break;
-//        }
-//        case PreciseMax: {
-//          preciseMaxHandler.accept(this);
-//          break;
-//        }
-//        default: {
-//          throw new RuntimeException("Unhandled MaxPacketSate: " + this.maxPacketState());
-//        }
-//      }
-//      return this;
-//    }
   }
 }
