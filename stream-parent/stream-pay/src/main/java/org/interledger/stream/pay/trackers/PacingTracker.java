@@ -33,37 +33,37 @@ public class PacingTracker {
   /**
    * Maximum number of packets to send in a 1 second interval, after ramp up (5ms delay).
    */
-  public static int MAX_PACKETS_PER_SECOND = 200;
+  public static final int MAX_PACKETS_PER_SECOND = 200;
 
   /**
    * RTT to use for pacing before an average can be ascertained.
    */
-  private static int DEFAULT_ROUND_TRIP_TIME_MS = 200;
+  private static final int DEFAULT_ROUND_TRIP_TIME_MS = 200;
 
   /**
    * Weight to compute next RTT average. Halves weight of past round trips every ~5 flights.
    */
-  private static float ROUND_TRIP_AVERAGE_WEIGHT = 0.9f;
+  private static final float ROUND_TRIP_AVERAGE_WEIGHT = 0.9f;
 
   /**
    * The {@link Instant} when the most recent packet was sent.
    */
-  private AtomicReference<Instant> lastPacketSentTime = new AtomicReference<>(Instant.now());
+  private final AtomicReference<Instant> lastPacketSentTime = new AtomicReference<>(Instant.now());
 
   /**
    * Number of packets currently in flight.
    */
-  private AtomicInteger numberInFlight = new AtomicInteger();
+  private final AtomicInteger numberInFlight = new AtomicInteger();
 
   /**
    * Exponential weighted moving average of the round trip time.
    */
-  private AtomicInteger averageRoundTripMs = new AtomicInteger(DEFAULT_ROUND_TRIP_TIME_MS);
+  private final AtomicInteger averageRoundTripMs = new AtomicInteger(DEFAULT_ROUND_TRIP_TIME_MS);
 
   /**
    * Rate of packets to send per second. This shouldn't ever be 0, but may become a small fraction.
    */
-  private AtomicInteger packetsPerSecond = new AtomicInteger(DEFAULT_PACKETS_PER_SECOND);
+  private final AtomicInteger packetsPerSecond = new AtomicInteger(DEFAULT_PACKETS_PER_SECOND);
 
   /**
    * Rate to send packets, in packets / millisecond, using packet rate-limit and round trip time. Corresponds to the ms
@@ -78,7 +78,7 @@ public class PacingTracker {
   }
 
   /**
-   * Earliest UNIX timestamp when the pacer will allow the next packet to be sent
+   * Earliest UNIX timestamp when the pacer will allow the next packet to be sent.
    */
   public Instant getNextPacketSendTime() {
     final Duration delayDuration = Duration.of(this.getPacketFrequency(), ChronoUnit.MILLIS);
