@@ -1,7 +1,8 @@
 package org.interledger.stream.pay.trackers;
 
-import java.util.Objects;
 import org.interledger.stream.pay.StreamConnection;
+
+import java.util.Objects;
 
 /**
  * Holds shared state for a Stream Payment across many packetized requests.

@@ -38,6 +38,9 @@ public class SequenceFilterTest {
 
   private SequenceFilter sequenceFilter;
 
+  /**
+   * Setup method.
+   */
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
