@@ -40,7 +40,8 @@ public class MaxPacketAmountTracker {
    * path-capacity will be 1.
    */
   private final AtomicReference<MaxPacketAmount> maxPacketAmountRef = new AtomicReference<>(
-    MaxPacketAmount.unknownMax());
+    MaxPacketAmount.unknownMax()
+  );
 
   /**
    * The greatest amount that the recipient has acknowledged to have received. Note: this is always reduced so it's
@@ -49,7 +50,7 @@ public class MaxPacketAmountTracker {
   private final AtomicReference<UnsignedLong> verifiedPathCapacityRef = new AtomicReference<>(UnsignedLong.ZERO);
 
   /**
-   * Is the max packet amount 0 and impossible to send value over this path?
+   * Is the max packet amount 0 and impossible to send value over this path.
    */
   private final AtomicBoolean noCapacityAvailableRef = new AtomicBoolean();
 
@@ -98,7 +99,7 @@ public class MaxPacketAmountTracker {
       .orElseGet(() -> {
         final MaxPacketAmount newMaxPacketAmount = MaxPacketAmount.builder()
           .maxPacketState(ImpreciseMax)
-          .value(sourceAmount.minus(UnsignedLong.ONE))
+          .value(FluentUnsignedLong.of(sourceAmount).minusOrZero(UnsignedLong.ONE).getValue())
           .build();
         return Optional.of(newMaxPacketAmount);
       })
@@ -161,8 +162,8 @@ public class MaxPacketAmountTracker {
   public synchronized void adjustPathCapacity(final UnsignedLong ackAmount) {
     Objects.requireNonNull(ackAmount);
 
-    final UnsignedLong originalVerifiedPathCapacitySnapshot = this.verifiedPathCapacityRef.get();
-    final MaxPacketAmount maxPacketAmountSnapshot = this.maxPacketAmountRef.get();
+    final UnsignedLong originalVerifiedPathCapacitySnapshot = this.verifiedPathCapacity();
+    final MaxPacketAmount maxPacketAmountSnapshot = this.getMaxPacketAmount();
     final UnsignedLong maxPacketAmountValue = maxPacketAmountSnapshot.value();
 
     final UnsignedLong newPathCapacity = FluentUnsignedLong.of(originalVerifiedPathCapacitySnapshot)
@@ -223,10 +224,10 @@ public class MaxPacketAmountTracker {
    * max packet amount is yet to be discovered.
    */
   public UnsignedLong getNextMaxPacketAmount() {
-    switch (this.maxPacketAmountRef.get().maxPacketState()) {
+    switch (this.getMaxPacketAmount().maxPacketState()) {
       // Use a binary search to discover the precise max
       case ImpreciseMax: {
-        final UnsignedLong verifiedPathCapacitySnapshot = this.verifiedPathCapacityRef.get();
+        final UnsignedLong verifiedPathCapacitySnapshot = this.verifiedPathCapacity();
         // Always positive: if verifiedCapacity=0, maxPacketAmount / 2 must round up to 1,
         // or if verifiedCapacity=maxPacketAmount, verifiedCapacity is positive, so adding it will always be positive
         return Optional.of(this.getMaxPacketAmount().value())
