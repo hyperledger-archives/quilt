@@ -1,5 +1,7 @@
 package org.interledger.stream.pay.trackers;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -56,7 +58,7 @@ public class PacingTracker {
   /**
    * Exponential weighted moving average of the round trip time.
    */
-  private AtomicInteger averageRoundTrip = new AtomicInteger(DEFAULT_ROUND_TRIP_TIME_MS);
+  private AtomicInteger averageRoundTripMs = new AtomicInteger(DEFAULT_ROUND_TRIP_TIME_MS);
 
   /**
    * Rate of packets to send per second. This shouldn't ever be 0, but may become a small fraction.
@@ -68,23 +70,38 @@ public class PacingTracker {
    * delay between each packet.
    */
   public int getPacketFrequency() {
-    int packetsPerSecondDelay = 1000 / this.packetsPerSecond.get();
-    int maxInFlightDelay = this.averageRoundTrip.get() / MAX_INFLIGHT_PACKETS;
+    final int packetsPerSecondSnapshot = this.getPacketsPerSecond();
+    int packetsPerSecondDelay = 1000 / (packetsPerSecondSnapshot == 0 ? 1 : packetsPerSecondSnapshot);
+    int maxInFlightDelay = this.getAverageRoundTripTimeMs() / MAX_INFLIGHT_PACKETS;
 
     return Math.max(packetsPerSecondDelay, maxInFlightDelay);
   }
-// TODO: Unit tests
 
   /**
    * Earliest UNIX timestamp when the pacer will allow the next packet to be sent
    */
   public Instant getNextPacketSendTime() {
     final Duration delayDuration = Duration.of(this.getPacketFrequency(), ChronoUnit.MILLIS);
-    return this.lastPacketSentTime.get().plus(delayDuration);
+    return getLastPacketSentTime().plus(delayDuration);
   }
 
+  /**
+   * Accessor for the number of packets currently "in-flight" (i.e., waiting on a response from the receiver).
+   *
+   * @return An int.
+   */
   public int getNumberInFlight() {
     return numberInFlight.get();
+  }
+
+  /**
+   * Accessor for the time the last packet was sent from this sender.
+   *
+   * @return An {@link Instant}.
+   */
+  @VisibleForTesting
+  Instant getLastPacketSentTime() {
+    return this.lastPacketSentTime.get();
   }
 
   public void setLastPacketSentTime(final Instant lastPacketSentTime) {
@@ -92,26 +109,58 @@ public class PacingTracker {
     this.lastPacketSentTime.set(lastPacketSentTime);
   }
 
+  /**
+   * Increase the number of packet currently "in-flight" by 1.
+   */
   public void incrementNumPacketsInFlight() {
     this.numberInFlight.getAndIncrement();
   }
 
+  /**
+   * Reduce the number of packet currently "in-flight" by 1.
+   */
   public void decrementNumPacketsInFlight() {
     this.numberInFlight.getAndDecrement();
   }
 
-  // TODO: Unit test!
-  public void updateAverageRoundTripTime(final int roundTripTime) {
-    this.averageRoundTrip.getAndAccumulate(roundTripTime, (rtt, existingValue) -> {
+  /**
+   * Update the average "round trip time" for a packet using a new value of {@code roundTripTimeMs}.
+   *
+   * @param roundTripTimeMs An integer representing the number of milliseconds that a packet took to make an entire
+   *                        round-trip from this payer to the receiver and back.
+   */
+  public void updateAverageRoundTripTime(final int roundTripTimeMs) {
+    this.averageRoundTripMs.getAndAccumulate(roundTripTimeMs, (rtt, existingValue) -> {
       float foo = (rtt * ROUND_TRIP_AVERAGE_WEIGHT) + (rtt * (1 - ROUND_TRIP_AVERAGE_WEIGHT));
       return (int) foo;
     });
   }
 
+  /**
+   * Accessor for the number of millis that a packet takes, on average, to reach the recipient and come back to the
+   * sender.
+   *
+   * @return An int.
+   */
+  @VisibleForTesting
+  int getAverageRoundTripTimeMs() {
+    return this.averageRoundTripMs.get();
+  }
+
+  /**
+   * Set the number of packets (per-second) that a sender should try not to exceed when sending packets.
+   *
+   * @param reducedRate The new value for the number of packets-per-second to not exceed.
+   */
   public void setPacketsPerSecond(int reducedRate) {
     this.packetsPerSecond.set(reducedRate);
   }
 
+  /**
+   * Accessor for the number of packets (per-second) that a sender should try not to exceed when sending packets.
+   *
+   * @return An int.
+   */
   public int getPacketsPerSecond() {
     return this.packetsPerSecond.get();
   }
