@@ -34,8 +34,10 @@ import org.interledger.spsp.client.InvalidReceiverClientException;
 import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
 import org.interledger.stream.StreamPacket;
+import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
 import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
@@ -99,7 +101,7 @@ public class StreamPayerDefaultTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  private StreamEncryptionUtils streamEncryptionUtils;
+  private StreamPacketEncryptionService streamPacketEncryptionService;
 
   private static final InterledgerAddress LINK_OPERATOR_ADDRESS = InterledgerAddress.of("example.connector");
 
@@ -107,8 +109,8 @@ public class StreamPayerDefaultTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
 
-    this.streamEncryptionUtils = new StreamEncryptionUtils(
-      StreamCodecContextFactory.oer(), new AesGcmStreamEncryptionService()
+    this.streamPacketEncryptionService = new StreamPacketEncryptionService(
+      StreamCodecContextFactory.oer(), new AesGcmSharedSecretCrypto()
     );
   }
 
@@ -122,7 +124,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
@@ -148,7 +150,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       newExternalExchangeRateProvider(Ratio.builder()
         .numerator(BigInteger.ONE)
@@ -181,7 +183,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
@@ -200,7 +202,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = this.getFulfillableLinkForTesting(Optional.of(InterledgerErrorCode.T02_PEER_BUSY));
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient()
     );
 
@@ -228,7 +230,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = this.getFulfillableLinkForTesting(Optional.of(InterledgerErrorCode.F00_BAD_REQUEST));
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient()
     );
 
@@ -256,7 +258,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       // Incompatible address scheme (`private` vs `example`)
       simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient(
@@ -294,7 +296,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient()
     );
@@ -329,7 +331,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient()
     );
 
@@ -368,7 +370,7 @@ public class StreamPayerDefaultTest {
       .newExternalExchangeRateProvider(externalExchangeRate);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
@@ -431,7 +433,7 @@ public class StreamPayerDefaultTest {
       .newExternalExchangeRateProvider(externalExchangeRate);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
@@ -514,7 +516,7 @@ public class StreamPayerDefaultTest {
     simulatedLink.setLinkId(LinkId.of("unit-test-loopback-link"));
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, externalExchangeRateProviderMock, this.spspMockClient()
+      streamPacketEncryptionService, simulatedLink, externalExchangeRateProviderMock, this.spspMockClient()
     );
     final BigDecimal amountToSendInXrp = new BigDecimal("0.000000001");
     final PaymentOptions paymentOptions = PaymentOptions.builder()
@@ -587,7 +589,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       statelessStreamReceiverLink,
       externalExchangeRateProviderMock,
       mockedSpspClient
@@ -644,7 +646,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, exchangeRateProviderMock,
+      streamPacketEncryptionService, simulatedLink, exchangeRateProviderMock,
       this.spspMockClient()
     ) {
       @Override
@@ -719,7 +721,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink, exchangeRateProviderMock,
+      streamPacketEncryptionService, simulatedLink, exchangeRateProviderMock,
       this.spspMockClient()
     ) {
       @Override
@@ -782,7 +784,7 @@ public class StreamPayerDefaultTest {
       .newExternalExchangeRateProvider(externalExchangeRate);
 
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
@@ -848,7 +850,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
@@ -919,7 +921,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink,
+      streamPacketEncryptionService, simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
     ) {
@@ -990,7 +992,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink,
+      streamPacketEncryptionService, simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
     ) {
@@ -1074,7 +1076,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink,
+      streamPacketEncryptionService, simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
     ) {
@@ -1180,7 +1182,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       mockedSpspClient
@@ -1223,7 +1225,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils, simulatedLink,
+      streamPacketEncryptionService, simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
     ) {
@@ -1326,7 +1328,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       mockedSpspClient
@@ -1381,7 +1383,7 @@ public class StreamPayerDefaultTest {
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       externalExchangeRateProviderMock,
       this.spspMockClient()
@@ -1441,7 +1443,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer.Default streamPayer = new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient()
@@ -1556,7 +1558,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     StreamPayer.Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     // Should be close to 0.8928571428571428
@@ -1588,7 +1590,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.obtainValidatedAmountToSend(null);
@@ -1601,7 +1603,7 @@ public class StreamPayerDefaultTest {
 
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
@@ -1624,7 +1626,7 @@ public class StreamPayerDefaultTest {
     when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.obtainValidatedAmountToSend(paymentOptionsMock);
@@ -1637,7 +1639,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
@@ -1659,7 +1661,7 @@ public class StreamPayerDefaultTest {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
@@ -1680,7 +1682,7 @@ public class StreamPayerDefaultTest {
     expectedException.expect(NullPointerException.class);
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.fetchRecipientAccountDetails(null);
@@ -1703,7 +1705,7 @@ public class StreamPayerDefaultTest {
     when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), mockSpspClient
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), mockSpspClient
     );
 
     streamPayer.fetchRecipientAccountDetails(paymentOptionsMock);
@@ -1718,7 +1720,7 @@ public class StreamPayerDefaultTest {
     when(spspClientMock.getStreamConnectionDetails(Mockito.<PaymentPointer>any()))
       .thenReturn(streamConnectionDetailsMock);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), spspClientMock
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), spspClientMock
     );
 
     PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
@@ -1742,7 +1744,7 @@ public class StreamPayerDefaultTest {
     final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.validateAllocationSchemes(null, streamConnectionDetailsMock);
@@ -1755,7 +1757,7 @@ public class StreamPayerDefaultTest {
     final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, null);
@@ -1769,7 +1771,7 @@ public class StreamPayerDefaultTest {
     when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, streamConnectionDetailsMock);
@@ -1783,7 +1785,7 @@ public class StreamPayerDefaultTest {
     when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, streamConnectionDetailsMock);
@@ -1800,7 +1802,7 @@ public class StreamPayerDefaultTest {
     when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("private.foo"));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
-      streamEncryptionUtils, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
+      streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
     streamPayer.validateAllocationSchemes(sourceAccountDetailsMock, streamConnectionDetailsMock);
@@ -1948,7 +1950,7 @@ public class StreamPayerDefaultTest {
   private StreamPayer.Default getStreamPayerDefault() {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     return new StreamPayer.Default(
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       simulatedLink,
       newExternalExchangeRateProvider(Ratio.ONE),
       this.spspMockClient() // <-- Use the default sender/dest account details.

@@ -2,11 +2,16 @@ package org.interledger.stream.errors;
 
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionId;
+import org.interledger.stream.StreamException;
 
 /**
  * A checked exception thrown when a Connection's sequence is too large or too small. This exception is checked so that
  * callers are forced to handle the error condition if a method throws it.
+ *
+ * @deprecated Will be removed once Stream Sender is removed. Prefer
+ * {@link org.interledger.stream.connection.StreamConnectionClosedException} instead.
  */
+@Deprecated
 public class StreamConnectionClosedException extends StreamException {
 
   /**

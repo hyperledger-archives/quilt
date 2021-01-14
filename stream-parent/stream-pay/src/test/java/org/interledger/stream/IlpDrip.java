@@ -17,8 +17,8 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.quilt.jackson.InterledgerModule;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
-import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamPayer;
 import org.interledger.stream.pay.model.PaymentOptions;
@@ -133,13 +133,13 @@ public class IlpDrip {
       final Link<?> link = newIlpOverHttpLink(testNetUrl, senderAuthToken);
       link.setLinkId(LinkId.of("ILP Drip Account"));
 
-      final StreamEncryptionUtils streamEncryptionUtils = new StreamEncryptionUtils(
-        StreamCodecContextFactory.oer(), new AesGcmStreamEncryptionService()
+      final StreamPacketEncryptionService streamPacketEncryptionService = new StreamPacketEncryptionService(
+        StreamCodecContextFactory.oer(), new AesGcmSharedSecretCrypto()
       );
 
       // Create StreamPayer for sending STREAM payments
       streamPayer = new StreamPayer.Default(
-        streamEncryptionUtils,
+        streamPacketEncryptionService,
         link,
         new CryptoCompareRateProvider(
           () -> cryptoCompareApiKey,

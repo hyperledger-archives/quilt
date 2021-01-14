@@ -13,8 +13,8 @@ import org.interledger.link.Link;
 import org.interledger.link.LinkSettings;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
-import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -94,7 +94,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
 
   private final Link<? extends LinkSettings> link;
 
-  private final StreamEncryptionUtils streamEncryptionUtils;
+  private final StreamPacketEncryptionService streamPacketEncryptionService;
 
   private final PaymentSharedStateTracker paymentSharedStateTracker;
 
@@ -113,20 +113,20 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
    * A chain of filters that are applied to a switchPacket request before attempting to determine the `next-hop` {@link
    * Link} to forward the packet onto.
    *
-   * @param streamPacketFilters       A {@link List} of type {@link StreamPacketFilter}.
-   * @param link                      A {@link Link}.
-   * @param streamEncryptionUtils     A {@link StreamEncryptionUtils}.
-   * @param paymentSharedStateTracker A {@link PaymentSharedStateTracker}.
+   * @param streamPacketFilters           A {@link List} of type {@link StreamPacketFilter}.
+   * @param link                          A {@link Link}.
+   * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
+   * @param paymentSharedStateTracker     A {@link PaymentSharedStateTracker}.
    */
   public DefaultStreamPacketFilterChain(
     final List<StreamPacketFilter> streamPacketFilters,
     final Link<? extends LinkSettings> link,
-    final StreamEncryptionUtils streamEncryptionUtils,
+    final StreamPacketEncryptionService streamPacketEncryptionService,
     final PaymentSharedStateTracker paymentSharedStateTracker
   ) {
     this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
     this.link = Objects.requireNonNull(link);
-    this.streamEncryptionUtils = Objects.requireNonNull(streamEncryptionUtils);
+    this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
     this.paymentSharedStateTracker = Objects.requireNonNull(paymentSharedStateTracker);
     this.internalFilterIndex = 0;
   }
@@ -207,7 +207,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                 final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
                   interledgerResponsePacket.getData(),
                   this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
-                  streamEncryptionUtils
+                  streamPacketEncryptionService
                 );
                 return StreamPacketReply.builder()
                   .interledgerPreparePacket(preparePacket)
@@ -234,7 +234,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                   final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
                     interledgerResponsePacket.getData(),
                     this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
-                    streamEncryptionUtils
+                    streamPacketEncryptionService
                   );
                   return StreamPacketReply.builder()
                     .interledgerPreparePacket(preparePacket)
@@ -284,7 +284,8 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       .build();
 
     final StreamConnection streamConnection = this.paymentSharedStateTracker.getStreamConnection();
-    final byte[] streamPacketData = streamEncryptionUtils.toEncrypted(streamConnection.getSharedSecret(), streamPacket);
+    final byte[] streamPacketData = streamPacketEncryptionService
+      .toEncrypted(streamConnection.getSharedSecret(), streamPacket);
     final InterledgerCondition executionCondition;
     if (streamPacketRequest.isFulfillable()) {
       // Create the ILP Prepare packet

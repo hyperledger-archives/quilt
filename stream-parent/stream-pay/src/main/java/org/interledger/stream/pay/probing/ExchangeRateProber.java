@@ -1,9 +1,40 @@
 package org.interledger.stream.pay.probing;
 
+import org.interledger.core.DateUtils;
+import org.interledger.core.InterledgerCondition;
+import org.interledger.core.InterledgerPacketType;
+import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.link.Link;
+import org.interledger.stream.StreamPacket;
+import org.interledger.stream.StreamPacketUtils;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.errors.StreamConnectionClosedException;
+import org.interledger.stream.frames.ConnectionNewAddressFrame;
+import org.interledger.stream.frames.StreamFrame;
+import org.interledger.stream.frames.StreamMoneyFrame;
+import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.pay.filters.AmountFilter;
+import org.interledger.stream.pay.filters.AssetDetailsFilter;
+import org.interledger.stream.pay.filters.ExchangeRateFilter;
+import org.interledger.stream.pay.filters.FailureFilter;
+import org.interledger.stream.pay.filters.MaxPacketAmountFilter;
+import org.interledger.stream.pay.filters.SequenceFilter;
+import org.interledger.stream.pay.filters.StreamPacketFilter;
+import org.interledger.stream.pay.filters.chain.DefaultStreamPacketFilterChain;
+import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
+import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
+import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.model.StreamPacketReply;
+import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
+import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -21,36 +52,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.interledger.core.DateUtils;
-import org.interledger.core.InterledgerCondition;
-import org.interledger.core.InterledgerPacketType;
-import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.link.Link;
-import org.interledger.stream.StreamPacket;
-import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.StreamUtils;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
-import org.interledger.stream.errors.StreamConnectionClosedException;
-import org.interledger.stream.frames.ConnectionNewAddressFrame;
-import org.interledger.stream.frames.StreamFrame;
-import org.interledger.stream.frames.StreamMoneyFrame;
-import org.interledger.stream.pay.StreamConnection;
-import org.interledger.stream.pay.filters.AmountFilter;
-import org.interledger.stream.pay.filters.AssetDetailsFilter;
-import org.interledger.stream.pay.filters.ExchangeRateFilter;
-import org.interledger.stream.pay.filters.FailureFilter;
-import org.interledger.stream.pay.filters.MaxPacketAmountFilter;
-import org.interledger.stream.pay.filters.SequenceFilter;
-import org.interledger.stream.pay.filters.StreamPacketFilter;
-import org.interledger.stream.pay.filters.chain.DefaultStreamPacketFilterChain;
-import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
-import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
-import org.interledger.stream.pay.model.SendState;
-import org.interledger.stream.pay.model.StreamPacketReply;
-import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
-import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A service for probing a particular path in order to determine exchange rates.
@@ -61,6 +62,7 @@ public interface ExchangeRateProber {
    * Accessor for the {@link PaymentSharedStateTracker} for the supplied {@code streamConnection}.
    *
    * @param streamConnection A {@link StreamConnection} to identify a payment.
+   *
    * @return An optionally present {@link PaymentSharedStateTracker}.
    */
   Optional<PaymentSharedStateTracker> getPaymentSharedStateTracker(StreamConnection streamConnection);
@@ -79,7 +81,7 @@ public interface ExchangeRateProber {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final StreamEncryptionUtils streamEncryptionUtils;
+    private final StreamPacketEncryptionService streamPacketEncryptionService;
     private final Link<?> link;
     private final ExecutorService executorService;
     private final Map<StreamConnection, PaymentSharedStateTracker> paymentSharedStateTrackersMap;
@@ -87,11 +89,8 @@ public interface ExchangeRateProber {
     private final List<Long> initialTestPacketAmounts;
     private Duration timeoutDuration;
 
-    public Default(
-      final StreamEncryptionUtils streamEncryptionUtils,
-      final Link<?> link
-    ) {
-      this.streamEncryptionUtils = Objects.requireNonNull(streamEncryptionUtils);
+    public Default(final StreamPacketEncryptionService streamPacketEncryptionService, final Link<?> link) {
+      this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
       this.link = Objects.requireNonNull(link);
 
       this.paymentSharedStateTrackersMap = Maps.newConcurrentMap();
@@ -172,7 +171,7 @@ public interface ExchangeRateProber {
               .setIsFulfillable(false)
               .setSourceAmount(prepareAmount);
             final StreamPacketFilterChain filterChain = new DefaultStreamPacketFilterChain(
-              streamPacketFilters, link, streamEncryptionUtils, paymentSharedStateTracker
+              streamPacketFilters, link, streamPacketEncryptionService, paymentSharedStateTracker
             );
 
             // Handle SendState stuff...
@@ -276,9 +275,9 @@ public interface ExchangeRateProber {
         .build();
 
       // Create the ILP Prepare packet
-      final byte[] streamPacketData = this.streamEncryptionUtils
+      final byte[] streamPacketData = this.streamPacketEncryptionService
         .toEncrypted(streamConnection.getSharedSecret(), streamPacket);
-      final InterledgerCondition executionCondition = StreamUtils.unfulfillableCondition();
+      final InterledgerCondition executionCondition = StreamPacketUtils.unfulfillableCondition();
 
       final Supplier<InterledgerPreparePacket> preparePacket = () -> InterledgerPreparePacket.builder()
         .destination(streamConnection.getDestinationAddress())

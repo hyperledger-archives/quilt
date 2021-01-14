@@ -41,7 +41,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
 
@@ -101,7 +101,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
 
@@ -163,7 +163,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
 
@@ -222,7 +222,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("0.01");
 
@@ -276,7 +276,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
@@ -357,7 +357,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
@@ -458,7 +458,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
   //    final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
   //    final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
   //
-  //    this.streamPayer = new StreamPayer.Default(streamEncryptionUtils, ilpLink, mockExchangeRateProvider(),
+  //    this.streamPayer = new StreamPayer.Default(streamEncryptionService, ilpLink, mockExchangeRateProvider(),
   //    spspClient);
   //
   //    // XRP is scale 9, whereas USD is scale 6. Thus, we can send Long.MAX XRP, and this should produce 250x the

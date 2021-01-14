@@ -26,6 +26,7 @@ import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.frames.StreamFrame;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.frames.StreamFrameType;
 
 import com.google.common.primitives.UnsignedLong;
@@ -103,7 +104,6 @@ public interface StreamPacket {
    *
    * @return A {@link UnsignedLong} for this packet's sequence.
    */
-  // TODO: Consider UnsignedInt
   UnsignedLong sequence();
 
   /**
@@ -118,7 +118,7 @@ public interface StreamPacket {
   @Derived
   default boolean sequenceIsSafeForSingleSharedSecret() {
     // Only return true if the `sequence` is below MAX_FRAMES_PER_CONNECTION. At or above is unsafe.
-    return is(this.sequence()).lessThan(StreamConnection.MAX_FRAMES_PER_CONNECTION);
+    return is(this.sequence()).lessThan(StreamConnection.MAX_PACKETS_PER_CONNECTION);
   }
 
   /**

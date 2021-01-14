@@ -1,6 +1,6 @@
 package org.interledger.stream.pay.trackers;
 
-import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.connection.StreamConnection;
 
 import java.util.Objects;
 

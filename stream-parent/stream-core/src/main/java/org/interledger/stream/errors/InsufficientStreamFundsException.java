@@ -2,10 +2,14 @@ package org.interledger.stream.errors;
 
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionId;
+import org.interledger.stream.StreamException;
 
 /**
  * A checked exception thrown when a there is no more value left to be sent for a STREAM payment.
+ *
+ * @deprecated Will be removed once Stream Sender is removed.
  */
+@Deprecated
 public class InsufficientStreamFundsException extends StreamException {
 
   private final int streamSequenceNumber;
@@ -33,8 +37,9 @@ public class InsufficientStreamFundsException extends StreamException {
    *                             that
    * @param streamSequenceNumber
    */
-  public InsufficientStreamFundsException(String message, StreamConnectionId streamConnectionId,
-      int streamSequenceNumber) {
+  public InsufficientStreamFundsException(
+    String message, StreamConnectionId streamConnectionId, int streamSequenceNumber
+  ) {
     super(message, streamConnectionId);
     this.streamSequenceNumber = streamSequenceNumber;
   }
@@ -57,7 +62,7 @@ public class InsufficientStreamFundsException extends StreamException {
    * @since 1.4
    */
   public InsufficientStreamFundsException(
-      String message, Throwable cause, StreamConnectionId streamConnectionId, int streamSequenceNumber
+    String message, Throwable cause, StreamConnectionId streamConnectionId, int streamSequenceNumber
   ) {
     super(message, cause, streamConnectionId);
     this.streamSequenceNumber = streamSequenceNumber;
@@ -78,7 +83,7 @@ public class InsufficientStreamFundsException extends StreamException {
    * @since 1.4
    */
   public InsufficientStreamFundsException(
-      Throwable cause, StreamConnectionId streamConnectionId, int streamSequenceNumber
+    Throwable cause, StreamConnectionId streamConnectionId, int streamSequenceNumber
   ) {
     super(cause, streamConnectionId);
     this.streamSequenceNumber = streamSequenceNumber;
@@ -101,8 +106,8 @@ public class InsufficientStreamFundsException extends StreamException {
   public String toString() {
     String str = getClass().getName();
     String message = getLocalizedMessage()
-        + " streamConnectionId=" + getStreamConnectionId().value()
-        + " streamSequenceNumber=" + streamSequenceNumber;
+      + " streamConnectionId=" + getStreamConnectionId().value()
+      + " streamSequenceNumber=" + streamSequenceNumber;
     return str + ": " + message;
   }
 

@@ -18,10 +18,10 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.link.Link;
-import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
+import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
 import org.interledger.stream.crypto.SharedSecret;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
-import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -45,10 +45,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Unit test for {@link DefaultStreamPacketFilterChain}.
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class DefaultStreamPacketFilterChainTest {
 
   @Mock
-  private Link linkMock;
+  private Link<?> linkMock;
 
   @Mock
   private PaymentSharedStateTracker paymentSharedStateTrackerMock;
@@ -56,18 +57,17 @@ public class DefaultStreamPacketFilterChainTest {
   @Mock
   private List<StreamPacketFilter> streamPacketFiltersMock;
 
-  private StreamEncryptionUtils streamEncryptionUtils;
-
   private List<StreamPacketFilter> streamPacketFilters;
   private StreamPacketFilterChain streamPacketFilterChain;
 
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
 
-    this.streamEncryptionUtils = new StreamEncryptionUtils(
+    StreamPacketEncryptionService streamPacketEncryptionService = new StreamPacketEncryptionService(
       StreamCodecContextFactory.oer(),
-      new AesGcmStreamEncryptionService()
+      new AesGcmSharedSecretCrypto()
     );
 
     this.streamPacketFilters = Lists.newArrayList();
@@ -75,7 +75,7 @@ public class DefaultStreamPacketFilterChainTest {
     this.streamPacketFilterChain = new DefaultStreamPacketFilterChain(
       streamPacketFilters,
       linkMock,
-      streamEncryptionUtils,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock
     );
   }
@@ -543,9 +543,7 @@ public class DefaultStreamPacketFilterChainTest {
 
     // The reply here should have an
     streamPacketReply.interledgerResponsePacket().get().handle(
-      interledgerFulfillPacket -> {
-        fail("Should not go here");
-      },
+      interledgerFulfillPacket -> fail("Should not go here"),
       interledgerRejectPacket -> {
         // Should be an F08 packet.
         AmountTooLargeErrorData amountTooLargeErrorData = ((AmountTooLargeErrorData) interledgerRejectPacket.typedData()
@@ -592,12 +590,8 @@ public class DefaultStreamPacketFilterChainTest {
 
     // The reply here should have an
     streamPacketReply.interledgerResponsePacket().get().handle(
-      interledgerFulfillPacket -> {
-        fail("Should not go here");
-      },
-      interledgerRejectPacket -> {
-        assertThat(interledgerRejectPacket.typedData()).isEmpty();
-      }
+      interledgerFulfillPacket -> fail("Should not go here"),
+      interledgerRejectPacket -> assertThat(interledgerRejectPacket.typedData()).isEmpty()
     );
 
     verify(paymentSharedStateTrackerMock, times(2)).getStreamConnection();
@@ -637,12 +631,8 @@ public class DefaultStreamPacketFilterChainTest {
 
     // The reply here should have an
     streamPacketReply.interledgerResponsePacket().get().handle(
-      interledgerFulfillPacket -> {
-        fail("Should not go here");
-      },
-      interledgerRejectPacket -> {
-        assertThat(interledgerRejectPacket.typedData()).isPresent();
-      }
+      interledgerFulfillPacket -> fail("Should not go here"),
+      interledgerRejectPacket -> assertThat(interledgerRejectPacket.typedData()).isPresent()
     );
 
     verify(paymentSharedStateTrackerMock, times(2)).getStreamConnection();

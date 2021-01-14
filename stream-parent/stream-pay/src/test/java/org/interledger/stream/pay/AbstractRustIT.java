@@ -26,8 +26,9 @@ import org.interledger.spsp.client.SpspClientDefaults;
 import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.spsp.client.rust.RustNodeAccount;
 import org.interledger.spsp.client.rust.UsdToXrpRatesRequest;
-import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
@@ -85,7 +86,7 @@ public abstract class AbstractRustIT {
 
   private final ObjectMapper objectMapperForPrettyPrinting = new ObjectMapper();
 
-  protected StreamEncryptionUtils streamEncryptionUtils;
+  protected StreamPacketEncryptionService streamPacketEncryptionService;
   protected SimpleSpspClient spspClient;
 
   protected final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -120,8 +121,8 @@ public abstract class AbstractRustIT {
 
   @Before
   public void setUp() throws IOException {
-    this.streamEncryptionUtils = new StreamEncryptionUtils(
-      StreamCodecContextFactory.oer(), new AesGcmStreamEncryptionService()
+    this.streamPacketEncryptionService = new StreamPacketEncryptionService(
+      StreamCodecContextFactory.oer(), new AesGcmSharedSecretCrypto()
     );
 
     this.initalizedConnectorAccounts();

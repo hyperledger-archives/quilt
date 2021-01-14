@@ -13,6 +13,7 @@ import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
@@ -139,8 +140,9 @@ public class StreamPacketUtilsTest {
 
   @Test
   public void mapToStreamPacketWithNullEncryptionUtils() {
+    StreamPacketEncryptionService nullService = null;
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.mapToStreamPacket(null, SharedSecret.of(new byte[32]), null);
+    StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]), nullService);
   }
 
   @Test
@@ -401,7 +403,7 @@ public class StreamPacketUtilsTest {
   private static ConnectionCloseFrame connectionCloseFrame() {
     return ConnectionCloseFrame.builder()
       .errorCode(ErrorCodes.UnsupportedError)
-      .errorMessage("erro")
+      .errorMessage("error")
       .build();
   }
 

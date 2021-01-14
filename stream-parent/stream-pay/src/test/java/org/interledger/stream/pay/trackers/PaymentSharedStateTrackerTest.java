@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.model.AccountDetails;
-import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.connection.StreamConnection;
 
 import org.junit.Before;
 import org.junit.Rule;

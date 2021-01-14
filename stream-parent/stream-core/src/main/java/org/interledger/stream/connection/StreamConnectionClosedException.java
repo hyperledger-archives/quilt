@@ -1,20 +1,14 @@
-package org.interledger.stream.errors;
+package org.interledger.stream.connection;
 
 import org.interledger.stream.StreamConnection;
 import org.interledger.stream.StreamConnectionId;
-
-import java.util.Objects;
+import org.interledger.stream.StreamException;
 
 /**
  * A checked exception thrown when a Connection's sequence is too large or too small. This exception is checked so that
  * callers are forced to handle the error condition if a method throws it.
- *
- * @deprecated Prefer {@link org.interledger.stream.StreamException} instead.
  */
-@Deprecated
-public class StreamException extends RuntimeException {
-
-  private final StreamConnectionId streamConnectionId;
+public class StreamConnectionClosedException extends StreamException {
 
   /**
    * Constructs a new runtime exception with {@code null} as its detail message.  The cause is not initialized, and may
@@ -23,9 +17,8 @@ public class StreamException extends RuntimeException {
    * @param streamConnectionId A {@link StreamConnectionId} that uniquely identifies the {@link StreamConnection} that
    *                           emitted this exception.
    */
-  public StreamException(StreamConnectionId streamConnectionId) {
-    super();
-    this.streamConnectionId = Objects.requireNonNull(streamConnectionId);
+  public StreamConnectionClosedException(StreamConnectionId streamConnectionId) {
+    super(streamConnectionId);
   }
 
   /**
@@ -37,9 +30,8 @@ public class StreamException extends RuntimeException {
    * @param streamConnectionId A {@link StreamConnectionId} that uniquely identifies the {@link StreamConnection} that
    *                           emitted this exception.
    */
-  public StreamException(String message, StreamConnectionId streamConnectionId) {
-    super(message);
-    this.streamConnectionId = Objects.requireNonNull(streamConnectionId);
+  public StreamConnectionClosedException(String message, StreamConnectionId streamConnectionId) {
+    super(message, streamConnectionId);
   }
 
   /**
@@ -58,10 +50,8 @@ public class StreamException extends RuntimeException {
    *
    * @since 1.4
    */
-  public StreamException(String message, Throwable cause,
-    StreamConnectionId streamConnectionId) {
-    super(message, cause);
-    this.streamConnectionId = Objects.requireNonNull(streamConnectionId);
+  public StreamConnectionClosedException(String message, Throwable cause, StreamConnectionId streamConnectionId) {
+    super(message, cause, streamConnectionId);
   }
 
   /**
@@ -77,51 +67,7 @@ public class StreamException extends RuntimeException {
    *
    * @since 1.4
    */
-  public StreamException(Throwable cause, StreamConnectionId streamConnectionId) {
-    super(cause);
-    this.streamConnectionId = Objects.requireNonNull(streamConnectionId);
-  }
-
-  /**
-   * Constructs a new runtime exception with the specified detail message, cause, suppression enabled or disabled, and
-   * writable stack trace enabled or disabled.
-   *
-   * @param message            the detail message.
-   * @param cause              the cause.  (A {@code null} value is permitted, and indicates that the cause is
-   *                           nonexistent or unknown.)
-   * @param enableSuppression  whether or not suppression is enabled or disabled
-   * @param writableStackTrace whether or not the stack trace should be writable
-   * @param streamConnectionId A {@link StreamConnectionId} that uniquely identifies the {@link StreamConnection} that
-   *                           emitted this exception.
-   *
-   * @since 1.7
-   */
-  protected StreamException(String message, Throwable cause, boolean enableSuppression,
-    boolean writableStackTrace, StreamConnectionId streamConnectionId) {
-    super(message, cause, enableSuppression, writableStackTrace);
-    this.streamConnectionId = Objects.requireNonNull(streamConnectionId);
-  }
-
-  /**
-   * Returns a short description of this throwable. The result is the concatenation of:
-   * <ul>
-   * <li> the {@linkplain Class#getName() name} of the class of this object
-   * <li> ": " (a colon and a space)
-   * <li> the result of invoking this object's {@link #getLocalizedMessage} method
-   * <li> the result of invoking the {@link StreamConnectionId#value()} method
-   * </ul>
-   * If {@code getLocalizedMessage} returns {@code null}, then just
-   * the class name is returned.
-   *
-   * @return a string representation of this throwable.
-   */
-  public String toString() {
-    String str = getClass().getName();
-    String message = getLocalizedMessage() + " streamConnectionId=" + streamConnectionId.value();
-    return str + ": " + message;
-  }
-
-  public StreamConnectionId getStreamConnectionId() {
-    return streamConnectionId;
+  public StreamConnectionClosedException(Throwable cause, StreamConnectionId streamConnectionId) {
+    super(cause, streamConnectionId);
   }
 }

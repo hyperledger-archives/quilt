@@ -11,26 +11,25 @@ import java.util.Objects;
 
 /**
  * A utility service for encryption operations required by the STREAM protocol.
- *
- * @deprecated Will be removed in a future version. Prefer {@link StreamPacketEncryptionService} instead.
  */
-@Deprecated
-public class StreamEncryptionUtils {
+public class StreamPacketEncryptionService {
+
+  // TODO: Unit tests
 
   private final CodecContext streamCodecContext;
-  private final StreamEncryptionService streamEncryptionService;
+  private final SharedSecretCrypto sharedSecretCrypto;
 
   /**
    * Required-args Constructor.
    *
-   * @param streamEncryptionService A {@link StreamEncryptionService}.
-   * @param streamCodecContext      A {@link CodecContext} that can operate on Stream packets.
+   * @param streamCodecContext A {@link CodecContext} that can operate on Stream packets.
+   * @param sharedSecretCrypto A {@link SharedSecretCrypto}.
    */
-  public StreamEncryptionUtils(
-    final CodecContext streamCodecContext, final StreamEncryptionService streamEncryptionService
+  public StreamPacketEncryptionService(
+    final CodecContext streamCodecContext, final SharedSecretCrypto sharedSecretCrypto
   ) {
     this.streamCodecContext = Objects.requireNonNull(streamCodecContext);
-    this.streamEncryptionService = Objects.requireNonNull(streamEncryptionService);
+    this.sharedSecretCrypto = Objects.requireNonNull(sharedSecretCrypto);
   }
 
   /**
@@ -52,7 +51,7 @@ public class StreamEncryptionUtils {
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
       streamCodecContext.write(streamPacket, baos);
       final byte[] streamPacketBytes = baos.toByteArray();
-      return streamEncryptionService.encrypt(sharedSecret, streamPacketBytes);
+      return sharedSecretCrypto.encrypt(sharedSecret, streamPacketBytes);
     } catch (IOException e) {
       throw new StreamException(e.getMessage(), e);
     }
@@ -74,7 +73,7 @@ public class StreamEncryptionUtils {
     Objects.requireNonNull(sharedSecret);
     Objects.requireNonNull(encryptedStreamPacketBytes);
 
-    final byte[] streamPacketBytes = this.streamEncryptionService.decrypt(sharedSecret, encryptedStreamPacketBytes);
+    final byte[] streamPacketBytes = this.sharedSecretCrypto.decrypt(sharedSecret, encryptedStreamPacketBytes);
     try {
       return streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
     } catch (IOException e) {

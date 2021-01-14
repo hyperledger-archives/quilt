@@ -28,7 +28,8 @@ public class ScaledExchangeRateTest {
       .originalInputScale((short) 9)
       .build();
 
-    assertThat(scaledExchangeRate.value()).isEqualTo(BigDecimal.TEN);
+    assertThat(scaledExchangeRate.value())
+      .isEqualTo(Ratio.builder().numerator(BigInteger.valueOf(100L)).denominator(BigInteger.TEN).build());
     assertThat(scaledExchangeRate.slippage()).isEqualTo(Slippage.ONE_PERCENT);
     assertThat(scaledExchangeRate.originalInputScale()).isEqualTo((short) 9);
   }
@@ -39,6 +40,10 @@ public class ScaledExchangeRateTest {
       .value(Ratio.from(BigDecimal.ZERO))
       .originalInputScale((short) 2)
       .build();
+
+    assertThat(scaledExchangeRate.value().toBigDecimal()).isEqualTo(BigDecimal.ZERO);
+    assertThat(scaledExchangeRate.slippage()).isEqualTo(Slippage.ONE_PERCENT);
+    assertThat(scaledExchangeRate.originalInputScale()).isEqualTo((short) 2);
   }
 
   @Test
@@ -58,7 +63,7 @@ public class ScaledExchangeRateTest {
       .build();
 
     assertThat(scaledExchangeRate.toString())
-      .isEqualTo("ScaledExchangeRate{value=1, originalInputScale=2, slippage=Slippage{value=0%}}");
+      .isEqualTo("ScaledExchangeRate{value=10/10[1], originalInputScale=2, slippage=Slippage{value=1%}}");
   }
 
   @Test
@@ -110,19 +115,17 @@ public class ScaledExchangeRateTest {
 
     // LowerBound
     final BigDecimal lowerBoundFromJS = new BigDecimal("86.8056180495575233622");
-    assertThat(scaledExchangeRate.lowerBound()).isEqualTo(lowerBoundFromJS);
-    assertThat(Ratio.builder()
-      .numerator(BigInteger.valueOf(8680561804955754L))
-      .denominator(BigInteger.valueOf(100000000000000L))
-      .build().toBigDecimal())
-      .isEqualTo(new BigDecimal("86.80561804955754"));
-    assertThat(scaledExchangeRate.lowerBound()).isEqualTo(lowerBoundFromJS);
+    assertThat(scaledExchangeRate.lowerBound().toBigDecimal()).isEqualTo(lowerBoundFromJS);
+    assertThat(scaledExchangeRate.lowerBound()).isEqualTo(Ratio.builder()
+      .numerator(new BigInteger("868056180495575233622"))
+      .denominator(new BigInteger("10000000000000000000"))
+      .build());
 
     // Value
-    assertThat(scaledExchangeRate.value()).isEqualTo(new BigDecimal("86.84991150442478"));
+    assertThat(scaledExchangeRate.value().toBigDecimal()).isEqualTo(new BigDecimal("86.84991150442478"));
 
     // Upper Bound
-    assertThat(scaledExchangeRate.upperBound()).isEqualTo(new BigDecimal("86.8942049592920366378"));
+    assertThat(scaledExchangeRate.upperBound().toBigDecimal()).isEqualTo(new BigDecimal("86.8942049592920366378"));
   }
 
 }

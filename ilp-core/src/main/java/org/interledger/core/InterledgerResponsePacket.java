@@ -20,11 +20,11 @@ package org.interledger.core;
  * =========================LICENSE_END==================================
  */
 
-import java.util.Optional;
 import org.immutables.value.Value.Default;
 
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -134,7 +134,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
   /**
    * Return a copy of this packet with the supplied {@code typedData} included.
    *
-   * @param typedData An arbitrary object for the data field.
+   * @param optTypedData An arbitrary object for the data field.
    * @return A {@link InterledgerResponsePacket}.
    */
 // TODO: Unit test

@@ -1,7 +1,9 @@
-package org.interledger.stream.sender;
+package org.interledger.stream.connection;
 
-import org.interledger.stream.StreamConnection;
+import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.StreamConnectionId;
+import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.model.AccountDetails;
 
 import com.google.common.collect.Maps;
 
@@ -27,37 +29,45 @@ import java.util.Optional;
  * same shared secret are considered to be remote. However, care should be taken when designing clustered STREAM senders
  * and receivers because it is possible that certain implementations of Stream Receiver might return the same shared
  * secret if queried more than once using the same receiver address.</p>
- *
- * @deprecated Prefer {@link org.interledger.stream.StreamConnectionManager} instead.
  */
-@Deprecated
 public class StreamConnectionManager {
 
   /**
    * A {@link Map} of {@link StreamConnection} keyed by a {@link StreamConnectionId}. This ensures that while multiple
-   * {@link StreamSender#sendMoney} requests can operate in parallel, the underlying StreamConnection will guarantee a
-   * monotonically increasing sequence number so that parallel Streams acrros multiple instances of the same
-   * StreamConnection do not interfere with each other. per Connection (i.e., SharedSecret+destination address) may be
-   * executed at a single time.
+   * consumers of a Stream connection can operate in parallel, the underlying {@link StreamConnection} will guarantee a
+   * monotonically increasing sequence number so that parallel Streams across multiple instances of the same connection
+   * will not interfere with each other.
    */
   private static final Map<StreamConnectionId, StreamConnection> connections = Maps.newConcurrentMap();
 
   /**
-   * Open a new Stream Connection for the specified {@code streamConnectionId}, or return an existing Connection if one
-   * has already been opened for this connection id.
+   * Open a new {@link StreamConnection} for the specified {@code streamConnectionId}, or return an existing stream
+   * connection if one has already been opened for this connection id.
    *
-   * @param streamConnectionId A {@link StreamConnectionId} that uniquely identifies a {@link StreamConnection}.
-   *                           Implementations should derive this identifier from a STREAM receiver address and shared
-   *                           secret combination, which per IL-RFC-29, will share a sequence number and should thus be
-   *                           considered to be a part of the same STREAM Connection.
+   * @param sourceAccountDetails A {@link StreamConnectionId} that uniquely identifies a {@link StreamConnection}.
+   *                             Implementations should derive this identifier from a STREAM receiver address and shared
+   *                             secret combination, which per IL-RFC-29, will share a sequence number and should thus
+   *                             be considered to be a part of the same STREAM Connection.
+   * @param destinationAddress   An {@link InterledgerAddress} for the destination of this payment (will be used with
+   *                             the SharedSecret to construct a receiver address).
+   * @param sharedSecret         A {@link SharedSecret} obtained from a setup protocol (e.g., SPSP).
    *
    * @return A {@link StreamConnection} that may have been newly constructed, or may have existed in this manager.
    */
-  public StreamConnection openConnection(final StreamConnectionId streamConnectionId) {
-    Objects.requireNonNull(streamConnectionId);
+  public StreamConnection openConnection(
+    final AccountDetails sourceAccountDetails,
+    final InterledgerAddress destinationAddress,
+    final SharedSecret sharedSecret
+  ) {
+    Objects.requireNonNull(sourceAccountDetails);
+    Objects.requireNonNull(destinationAddress);
+    Objects.requireNonNull(sharedSecret);
 
     // If the connection is already open, then return it. Otherwise, return a new Connection.
-    return connections.computeIfAbsent(streamConnectionId, StreamConnection::new);
+    final StreamConnectionId streamConnectionId = StreamConnectionId.from(destinationAddress, sharedSecret);
+    return connections.computeIfAbsent(streamConnectionId, $ ->
+      new StreamConnection(sourceAccountDetails, destinationAddress, sharedSecret)
+    );
   }
 
   /**

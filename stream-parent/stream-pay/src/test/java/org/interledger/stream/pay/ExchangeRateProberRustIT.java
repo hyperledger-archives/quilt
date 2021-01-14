@@ -6,6 +6,7 @@ import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denominations;
 import org.interledger.link.Link;
 import org.interledger.spsp.PaymentPointer;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
@@ -30,7 +31,7 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
   public void testRateProbeWithMaxPacket50kViaXrpToUsd() {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT_50K); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
-    ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamEncryptionUtils, ilpLink);
+    ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamPacketEncryptionService, ilpLink);
 
     final StreamConnection streamConnection = this.getNewStreamConnection(
       senderAccountDetails, PaymentPointer.of(PAYMENT_POINTER_USD_50K)
@@ -73,7 +74,7 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
   public void testRateProbeUnlimitedMaxPathWithXrpToXrp() {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
-    ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamEncryptionUtils, ilpLink);
+    ExchangeRateProber.Default exchangeRateProber = new ExchangeRateProber.Default(streamPacketEncryptionService, ilpLink);
 
     final StreamConnection streamConnection = this.getNewStreamConnection(
       senderAccountDetails, PaymentPointer.of(PAYMENT_POINTER_XRP)

@@ -2,7 +2,8 @@ package org.interledger.stream.pay;
 
 import org.interledger.link.Link;
 import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
@@ -36,7 +37,7 @@ class RunLoop {
   private final int runLoopWaitTimeMs;
   private final Link<?> link;
   private final List<StreamPacketFilter> streamPacketFilters;
-  private final StreamEncryptionUtils streamEncryptionUtils;
+  private final StreamPacketEncryptionService streamPacketEncryptionService;
   private final PaymentSharedStateTracker paymentSharedStateTracker;
 
   private final ExecutorService executorService;
@@ -44,42 +45,42 @@ class RunLoop {
   /**
    * Required-args Constructor.
    *
-   * @param link                      A {@link Link}.
-   * @param streamPacketFilters       A {@link List} of type {@link StreamPacketFilter}.
-   * @param streamEncryptionUtils     A {@link StreamEncryptionUtils}.
-   * @param paymentSharedStateTracker A {@link PaymentSharedStateTracker}.
+   * @param link                          A {@link Link}.
+   * @param streamPacketFilters           A {@link List} of type {@link StreamPacketFilter}.
+   * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
+   * @param paymentSharedStateTracker     A {@link PaymentSharedStateTracker}.
    */
   public RunLoop(
     final Link<?> link,
     final List<StreamPacketFilter> streamPacketFilters,
-    final StreamEncryptionUtils streamEncryptionUtils,
+    final StreamPacketEncryptionService streamPacketEncryptionService,
     final PaymentSharedStateTracker paymentSharedStateTracker
   ) {
     // Default # of ms to wait for each RunLoop when READY.
-    this(link, streamPacketFilters, streamEncryptionUtils, paymentSharedStateTracker, 200);
+    this(link, streamPacketFilters, streamPacketEncryptionService, paymentSharedStateTracker, 200);
   }
 
   /**
    * Required-args Constructor.
    *
-   * @param link                      A {@link Link}.
-   * @param streamPacketFilters       A {@link List} of type {@link StreamPacketFilter}.
-   * @param streamEncryptionUtils     A {@link StreamEncryptionUtils}.
-   * @param paymentSharedStateTracker A {@link PaymentSharedStateTracker}.
-   * @param runLoopWaitTimeMs         An int representing the number of milliseconds to wait after each {@link
-   *                                  SendState#Ready} result.
+   * @param link                          A {@link Link}.
+   * @param streamPacketFilters           A {@link List} of type {@link StreamPacketFilter}.
+   * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
+   * @param paymentSharedStateTracker     A {@link PaymentSharedStateTracker}.
+   * @param runLoopWaitTimeMs             An int representing the number of milliseconds to wait after each {@link
+   *                                      SendState#Ready} result.
    */
   @VisibleForTesting
   RunLoop(
     final Link<?> link,
     final List<StreamPacketFilter> streamPacketFilters,
-    final StreamEncryptionUtils streamEncryptionUtils,
+    final StreamPacketEncryptionService streamPacketEncryptionService,
     final PaymentSharedStateTracker paymentSharedStateTracker,
     final int runLoopWaitTimeMs
   ) {
     this.link = Objects.requireNonNull(link);
     this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
-    this.streamEncryptionUtils = Objects.requireNonNull(streamEncryptionUtils);
+    this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
     this.paymentSharedStateTracker = Objects.requireNonNull(paymentSharedStateTracker);
     this.executorService = Executors.newFixedThreadPool(5);
     this.runLoopWaitTimeMs = runLoopWaitTimeMs;
@@ -145,7 +146,7 @@ class RunLoop {
         } catch (InterruptedException e) {
           logger.error(e.getMessage(), e);
         }
-        break; // <-- Exit the runloop (no more packets)
+        break; // <-- Exit the run-loop (no more packets)
       } else if (nextSendState == SendState.Wait) {
         try {
           if (logger.isDebugEnabled()) {
@@ -155,7 +156,7 @@ class RunLoop {
         } catch (InterruptedException e) {
           logger.error(e.getMessage(), e);
         }
-        continue; // <-- Do the runloop one more time.
+        // continue; <-- Do the run-loop one more time.
       } else {
         throw new RuntimeException(String.format("Encountered unhandled sendState: %s", nextSendState));
       }
@@ -175,12 +176,12 @@ class RunLoop {
   /**
    * Construct a new filter chain (this method exists for testing purposes).
    *
-   * @return A newly contructed instance of {@link DefaultStreamPacketFilterChain}.
+   * @return A newly constructed instance of {@link DefaultStreamPacketFilterChain}.
    */
   @VisibleForTesting
   StreamPacketFilterChain constructNewFilterChain() {
     return new DefaultStreamPacketFilterChain(
-      this.streamPacketFilters, link, streamEncryptionUtils, paymentSharedStateTracker
+      this.streamPacketFilters, link, streamPacketEncryptionService, paymentSharedStateTracker
     );
   }
 
@@ -193,7 +194,8 @@ class RunLoop {
   @VisibleForTesting
   protected void closeConnection(StreamConnection streamConnection) {
     try {
-      link.sendPacket(StreamPacketUtils.constructPacketToCloseStream(streamConnection, this.streamEncryptionUtils));
+      link.sendPacket(
+        StreamPacketUtils.constructPacketToCloseStream(streamConnection, this.streamPacketEncryptionService));
     } catch (Exception e) {
       logger.error("Unable to close STREAM Connection: " + e.getMessage(), e);
       // swallow this error because the sender can still complete even though it couldn't get something to the receiver.
@@ -204,18 +206,14 @@ class RunLoop {
    * Based upon the supplied {@code sendState}, determines if a Connection Close frame should be sent to the
    * destination.
    *
-   * @return
+   * @return {@code true} if the connection should be closed; {@code false} otherwise.
    */
   @VisibleForTesting
   protected boolean shouldCloseConnection(final SendState sendState) {
     Objects.requireNonNull(sendState);
 
     if (sendState.isPaymentError()) {
-      if (sendState == SendState.ClosedByRecipient) {
-        return false; // <-- Connection already closed, so don't try to close it again.
-      } else {
-        return true;
-      }
+      return sendState != SendState.ClosedByRecipient; // <-- Connection already closed, so don't try to close it again.
     } else {
       return sendState == SendState.End;
     }

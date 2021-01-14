@@ -24,9 +24,9 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * An {@link StreamEncryptionService} that uses a JavaKeystore for underlying key storage.
+ * An {@link SharedSecretCrypto} that uses a JavaKeystore for underlying key storage.
  */
-public class AesGcmStreamEncryptionService implements StreamEncryptionService {
+public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
 
   /**
    * For GCM a 12 byte random byte-array is recommend by NIST because it's faster and more secure (See page 8 in the PDF
@@ -48,7 +48,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * No-args Constructor that initializes {@link #encryptionMode} to be {@link EncryptionMode#ENCRYPT_NON_STANDARD}
    * because this is the default because it's currently the most widely deploy mechanism.
    */
-  public AesGcmStreamEncryptionService() {
+  public AesGcmSharedSecretCrypto() {
     this(EncryptionMode.ENCRYPT_NON_STANDARD);
   }
 
@@ -57,7 +57,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    *
    * @param encryptionMode The {@link EncryptionMode} to use when encrypting and decrypting.
    */
-  public AesGcmStreamEncryptionService(final EncryptionMode encryptionMode) {
+  public AesGcmSharedSecretCrypto(final EncryptionMode encryptionMode) {
     this.encryptionMode = Objects.requireNonNull(encryptionMode);
   }
 
@@ -374,7 +374,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", AesGcmStreamEncryptionService.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", AesGcmSharedSecretCrypto.class.getSimpleName() + "[", "]")
       .add("encryptionMode=" + encryptionMode)
       .toString();
   }

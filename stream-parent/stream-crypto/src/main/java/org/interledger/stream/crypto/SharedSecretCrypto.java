@@ -1,11 +1,13 @@
 package org.interledger.stream.crypto;
 
 /**
- * A helper class for performing encryption and decryption operations required by the STREAM protocol.
+ * Defines methods for performing low-level encryption and decryption using {@link SharedSecret} for purposes of the
+ * STREAM protocol, which relies upon a mutally shared-secret (generally obtained via SPSP) in order to encrypt and
+ * decrypt the contents of a STREAM connection.
  *
  * @see "https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md#51-encryption"
  */
-public interface StreamEncryptionService {
+public interface SharedSecretCrypto {
 
   /**
    * Encrypt {@code plainText} using the underlying key-store of this implementation.

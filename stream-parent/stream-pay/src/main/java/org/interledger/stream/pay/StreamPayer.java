@@ -13,7 +13,8 @@ import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
 import org.interledger.stream.StreamException;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.AmountFilter;
@@ -97,36 +98,36 @@ public interface StreamPayer {
 
     private final Link<? extends LinkSettings> link;
     private final SpspClient spspClient;
-    private final StreamEncryptionUtils streamEncryptionUtils;
+    private final StreamPacketEncryptionService streamPacketEncryptionService;
     private final ExchangeRateProvider oracleExchangeRateProvider;
 
     /**
      * Required-args Constructor.
      *
-     * @param streamEncryptionUtils      A {@link StreamEncryptionUtils}.
+     * @param streamPacketEncryptionService      A {@link StreamPacketEncryptionService}.
      * @param link                       A {@link Link}.
      * @param oracleExchangeRateProvider An {@link ExchangeRateProvider}.
      */
     public Default(
-      final StreamEncryptionUtils streamEncryptionUtils,
+      final StreamPacketEncryptionService streamPacketEncryptionService,
       final Link<? extends LinkSettings> link,
       final ExchangeRateProvider oracleExchangeRateProvider
     ) {
-      this(streamEncryptionUtils, link, oracleExchangeRateProvider, new SimpleSpspClient());
+      this(streamPacketEncryptionService, link, oracleExchangeRateProvider, new SimpleSpspClient());
     }
 
 
     /**
      * Required-args Constructor for testing.
      *
-     * @param streamEncryptionUtils      A {@link StreamEncryptionUtils}.
+     * @param streamPacketEncryptionService      A {@link StreamPacketEncryptionService}.
      * @param link                       A {@link Link}.
      * @param oracleExchangeRateProvider An {@link ExchangeRateProvider}.
      * @param spspClient                 A {@link SpspClient}.
      */
     @VisibleForTesting
     Default(
-      final StreamEncryptionUtils streamEncryptionUtils,
+      final StreamPacketEncryptionService streamPacketEncryptionService,
       final Link<? extends LinkSettings> link,
       final ExchangeRateProvider oracleExchangeRateProvider,
       final SpspClient spspClient
@@ -134,7 +135,7 @@ public interface StreamPayer {
       this.link = Objects.requireNonNull(link);
       this.spspClient = Objects.requireNonNull(spspClient);
       this.oracleExchangeRateProvider = Objects.requireNonNull(oracleExchangeRateProvider);
-      this.streamEncryptionUtils = Objects.requireNonNull(streamEncryptionUtils);
+      this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
     }
 
     @Override
@@ -276,7 +277,7 @@ public interface StreamPayer {
         new ExchangeRateFilter(quote.paymentSharedStateTracker().getExchangeRateTracker())
       );
 
-      return new RunLoop(link, streamPacketFilters, streamEncryptionUtils, quote.paymentSharedStateTracker())
+      return new RunLoop(link, streamPacketFilters, streamPacketEncryptionService, quote.paymentSharedStateTracker())
         .start(quote);
     }
 
@@ -292,7 +293,7 @@ public interface StreamPayer {
      */
     @VisibleForTesting
     protected ExchangeRateProber newExchangeRateProber() {
-      return new ExchangeRateProber.Default(streamEncryptionUtils, link);
+      return new ExchangeRateProber.Default(streamPacketEncryptionService, link);
     }
 
     /**

@@ -2,7 +2,7 @@ package org.interledger.stream.pay.model;
 
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.model.AccountDetails;
-import org.interledger.stream.pay.StreamConnection;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.pay.model.ImmutableQuote.Builder;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;

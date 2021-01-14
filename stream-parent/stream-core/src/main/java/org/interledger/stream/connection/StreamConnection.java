@@ -1,22 +1,25 @@
-package org.interledger.stream.pay;
+package org.interledger.stream.connection;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.primitives.UnsignedInteger;
-import java.io.Closeable;
-import java.time.Instant;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.concurrent.atomic.AtomicReference;
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.crypto.SharedSecret;
-import org.interledger.stream.errors.StreamConnectionClosedException;
 import org.interledger.stream.model.AccountDetails;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * <p>The session established between two endpoints that uses a single shared secret and multiplexes multiple streams
@@ -28,7 +31,7 @@ import org.interledger.stream.model.AccountDetails;
 // TODO: Capture StreamConnectionTest and add constructor tests.
 public class StreamConnection implements Closeable {
 
-  public static final UnsignedInteger MAX_FRAMES_PER_CONNECTION = UnsignedInteger.valueOf((long) Math.pow(2, 31));
+  public static final UnsignedLong MAX_PACKETS_PER_CONNECTION = UnsignedLong.valueOf((long) Math.pow(2, 31));
 
   /**
    * The unique identifier of this Connection. A Connection is unique to a destination {@link InterledgerAddress} and a
@@ -59,7 +62,7 @@ public class StreamConnection implements Closeable {
 
   private final SharedSecret sharedSecret;
   private final StreamConnectionId streamConnectionId;
-  private final AtomicReference<UnsignedInteger> sequence;
+  private final AtomicReference<UnsignedLong> sequence;
   private final AtomicReference<StreamConnectionState> connectionState;
 
   // TODO: Javadoc
@@ -79,7 +82,15 @@ public class StreamConnection implements Closeable {
     final InterledgerAddress destinationAddress,
     final SharedSecret sharedSecret
   ) {
-    this(sourceAccountDetails, destinationAddress, sharedSecret, Optional.empty());
+    this.sourceAccountDetails = Objects.requireNonNull(sourceAccountDetails);
+    this.destinationAddress = Objects.requireNonNull(destinationAddress);
+    this.sharedSecret = Objects.requireNonNull(sharedSecret);
+
+    this.creationDateTime = DateUtils.now();
+    this.sequence = new AtomicReference<>(UnsignedLong.ONE);
+    this.streamConnectionId = Objects.requireNonNull(StreamConnectionId.from(destinationAddress, sharedSecret));
+    this.destinationDenomination = new AtomicReference<>(Optional.empty());
+    this.connectionState = new AtomicReference<>(StreamConnectionState.AVAILABLE);
   }
 
   /**
@@ -104,7 +115,7 @@ public class StreamConnection implements Closeable {
     this.sharedSecret = Objects.requireNonNull(sharedSecret);
 
     this.creationDateTime = DateUtils.now();
-    this.sequence = new AtomicReference<>(UnsignedInteger.ONE);
+    this.sequence = new AtomicReference<>(UnsignedLong.ONE);
     this.streamConnectionId = Objects.requireNonNull(StreamConnectionId.from(destinationAddress, sharedSecret));
     this.destinationDenomination = new AtomicReference<>(Objects.requireNonNull(destinationDenomination));
     this.connectionState = new AtomicReference<>(StreamConnectionState.AVAILABLE);
@@ -116,12 +127,13 @@ public class StreamConnection implements Closeable {
    * monotonically up to {2<sup>31</sup>}, after which the connection will be closed.
    *
    * @return A {@link UnsignedInteger} representing the next sequence number that can safely be used by a Stream Sender.
+   *
    * @throws StreamConnectionClosedException if the sequence can no longer be safely incremented.
    */
-  public UnsignedInteger nextSequence() throws StreamConnectionClosedException {
+  public UnsignedLong nextSequence() throws StreamConnectionClosedException {
     // Unique per-thread.
-    final UnsignedInteger nextSequence = sequence
-      .getAndUpdate(currentSequence -> currentSequence.plus(UnsignedInteger.ONE));
+    final UnsignedLong nextSequence = sequence
+      .getAndUpdate(currentSequence -> currentSequence.plus(UnsignedLong.ONE));
     if (sequenceIsSafeForSingleSharedSecret(nextSequence)) {
       return nextSequence;
     } else {
@@ -137,13 +149,13 @@ public class StreamConnection implements Closeable {
    * because both endpoints encrypt packets with the same key).
    *
    * @return {@code true} if the current sequence can safely be used with a single shared-secret; {@code false}
-   * otherwise.
+   *   otherwise.
    */
   @VisibleForTesting
-  boolean sequenceIsSafeForSingleSharedSecret(final UnsignedInteger sequence) {
-    // Only return true if the Connection is not closed, and the `sequence` is below MAX_FRAMES_PER_CONNECTION (above
+  boolean sequenceIsSafeForSingleSharedSecret(final UnsignedLong sequence) {
+    // Only return true if the Connection is not closed, and the `sequence` is below MAX_PACKETS_PER_CONNECTION (above
     // that value is unsafe).
-    return !isClosed() && is(Objects.requireNonNull(sequence)).lessThanOrEqualTo(MAX_FRAMES_PER_CONNECTION);
+    return !isClosed() && is(Objects.requireNonNull(sequence)).lessThanOrEqualTo(MAX_PACKETS_PER_CONNECTION);
   }
 
   public Instant getCreationDateTime() {
@@ -220,8 +232,11 @@ public class StreamConnection implements Closeable {
   /**
    * Transition this Stream Connection into the {@link StreamConnectionState#CLOSED}.
    */
-  public void closeConnection() {
+  public synchronized void closeConnection() {
     this.connectionState.set(StreamConnectionState.CLOSED);
+
+    // WARNING: Don't ever remove the connection once it's closed. Closed connections MUST never be re-used so that they
+    // don't accidentally use a sequence number that exceeds the StreamConnection.MAX_PACKETS_PER_CONNECTION
   }
 
   /**
@@ -255,15 +270,18 @@ public class StreamConnection implements Closeable {
   @Override
   public String toString() {
     return new StringJoiner(", ", StreamConnection.class.getSimpleName() + "[", "]")
-      .add("creationDateTime=" + creationDateTime)
-      .add("streamConnectionId=" + streamConnectionId)
-      .add("sequence=" + sequence)
-      .add("connectionState=" + connectionState)
+      .add("sourceAccountDetails=" + this.sourceAccountDetails)
+      .add("destinationAddress=" + this.destinationAddress)
+      .add("destinationDenomination=" + this.destinationDenomination)
+      .add("creationDateTime=" + this.creationDateTime)
+      .add("streamConnectionId=" + this.streamConnectionId)
+      .add("sequence=" + this.sequence)
+      .add("connectionState=" + this.connectionState)
       .toString();
   }
 
   @Override
-  public void close() {
+  public void close() throws IOException {
     this.closeConnection();
   }
 

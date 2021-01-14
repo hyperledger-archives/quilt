@@ -13,8 +13,9 @@ import static org.mockito.Mockito.when;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.stream.StreamPacket;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.SharedSecret;
-import org.interledger.stream.crypto.StreamEncryptionUtils;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -47,7 +48,7 @@ public class RunLoopTest {
   private Link<?> linkMock;
 
   @Mock
-  private StreamEncryptionUtils streamEncryptionUtilsMock;
+  private StreamPacketEncryptionService streamPacketEncryptionService;
 
   @Mock
   private PaymentSharedStateTracker paymentSharedStateTrackerMock;
@@ -105,7 +106,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Arrays.asList(filter1, filter2),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock,
       5
     ) {
@@ -133,12 +134,12 @@ public class RunLoopTest {
     // This value is 8 because doFilter is skipped once for the WAIT state, and then once for the END state.
     verify(streamPacketFilterChainMock, times(8)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamEncryptionUtilsMock).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
     verifyNoMoreInteractions(paymentSharedStateTrackerMock);
-    verifyNoMoreInteractions(streamEncryptionUtilsMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
     verifyNoMoreInteractions(linkMock);
   }
 
@@ -183,7 +184,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Arrays.asList(filter1, filter2),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock,
       5
     ) {
@@ -210,12 +211,12 @@ public class RunLoopTest {
     verify(streamPacketFilterChainMock, times(2)).nextState(any());
     verify(streamPacketFilterChainMock, times(1)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamEncryptionUtilsMock).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
     verifyNoMoreInteractions(paymentSharedStateTrackerMock);
-    verifyNoMoreInteractions(streamEncryptionUtilsMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
     verifyNoMoreInteractions(linkMock);
   }
 
@@ -261,7 +262,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Arrays.asList(filter1, filter2),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock,
       200
     ) {
@@ -290,12 +291,12 @@ public class RunLoopTest {
     verify(streamPacketFilterChainMock, times(8)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamEncryptionUtilsMock).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
     verifyNoMoreInteractions(paymentSharedStateTrackerMock);
-    verifyNoMoreInteractions(streamEncryptionUtilsMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
     verifyNoMoreInteractions(linkMock);
   }
 
@@ -323,7 +324,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Collections.singletonList(filter1),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock,
       200
     ) {
@@ -356,12 +357,12 @@ public class RunLoopTest {
     // This value is 8 because doFilter is skipped once for the WAIT state, and then once for the END state.
     verify(streamPacketFilterChainMock, times(4)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamEncryptionUtilsMock).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
     verifyNoMoreInteractions(paymentSharedStateTrackerMock);
-    verifyNoMoreInteractions(streamEncryptionUtilsMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
     verifyNoMoreInteractions(linkMock);
   }
 
@@ -389,7 +390,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Collections.singletonList(filter1),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock,
       200
     ) {
@@ -420,12 +421,12 @@ public class RunLoopTest {
 
     verify(streamPacketFilterChainMock, times(5)).nextState(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamEncryptionUtilsMock).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
     verifyNoMoreInteractions(paymentSharedStateTrackerMock);
-    verifyNoMoreInteractions(streamEncryptionUtilsMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
     verifyNoMoreInteractions(linkMock);
   }
 
@@ -434,7 +435,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Collections.emptyList(),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock
     );
 
@@ -455,7 +456,7 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Collections.emptyList(),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock
     );
 
@@ -467,13 +468,13 @@ public class RunLoopTest {
     RunLoop runLoop = new RunLoop(
       linkMock,
       Collections.emptyList(),
-      streamEncryptionUtilsMock,
+      streamPacketEncryptionService,
       paymentSharedStateTrackerMock
     );
 
     StreamPacket streamPacketMock = mock(StreamPacket.class);
-    when(streamEncryptionUtilsMock.fromEncrypted(any(), any())).thenReturn(streamPacketMock);
-    when(streamEncryptionUtilsMock.toEncrypted(any(), any())).thenReturn(new byte[0]);
+    when(streamPacketEncryptionService.fromEncrypted(any(), any())).thenReturn(streamPacketMock);
+    when(streamPacketEncryptionService.toEncrypted(any(), any())).thenReturn(new byte[0]);
 
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.ONE);
@@ -509,8 +510,8 @@ public class RunLoopTest {
     when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE);
 
     StreamPacket streamPacketMock = mock(StreamPacket.class);
-    when(streamEncryptionUtilsMock.fromEncrypted(any(), any())).thenReturn(streamPacketMock);
-    when(streamEncryptionUtilsMock.toEncrypted(any(), any())).thenReturn(new byte[0]);
+    when(streamPacketEncryptionService.fromEncrypted(any(), any())).thenReturn(streamPacketMock);
+    when(streamPacketEncryptionService.toEncrypted(any(), any())).thenReturn(new byte[0]);
 
     return quoteMock;
   }
