@@ -2,7 +2,7 @@ package org.interledger.stream.sender;
 
 import com.google.common.primitives.UnsignedLong;
 import java.util.Objects;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoExchangeRateException;
 

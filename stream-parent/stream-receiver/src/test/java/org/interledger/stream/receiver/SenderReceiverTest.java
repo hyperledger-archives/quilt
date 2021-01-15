@@ -7,7 +7,7 @@ import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.SendMoneyRequest;
 import org.interledger.stream.SendMoneyResult;
 import org.interledger.stream.calculators.ExchangeRateCalculator;

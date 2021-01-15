@@ -15,6 +15,7 @@ import org.interledger.spsp.client.SpspClient;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.AmountFilter;
@@ -104,9 +105,9 @@ public interface StreamPayer {
     /**
      * Required-args Constructor.
      *
-     * @param streamPacketEncryptionService      A {@link StreamPacketEncryptionService}.
-     * @param link                       A {@link Link}.
-     * @param oracleExchangeRateProvider An {@link ExchangeRateProvider}.
+     * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
+     * @param link                          A {@link Link}.
+     * @param oracleExchangeRateProvider    An {@link ExchangeRateProvider}.
      */
     public Default(
       final StreamPacketEncryptionService streamPacketEncryptionService,
@@ -120,10 +121,10 @@ public interface StreamPayer {
     /**
      * Required-args Constructor for testing.
      *
-     * @param streamPacketEncryptionService      A {@link StreamPacketEncryptionService}.
-     * @param link                       A {@link Link}.
-     * @param oracleExchangeRateProvider An {@link ExchangeRateProvider}.
-     * @param spspClient                 A {@link SpspClient}.
+     * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
+     * @param link                          A {@link Link}.
+     * @param oracleExchangeRateProvider    An {@link ExchangeRateProvider}.
+     * @param spspClient                    A {@link SpspClient}.
      */
     @VisibleForTesting
     Default(
@@ -315,7 +316,7 @@ public interface StreamPayer {
         paymentOptions.senderAccountDetails(),
         // SPSP Details.
         streamConnectionDetails.destinationAddress(),
-        streamConnectionDetails.sharedSecret()
+        StreamSharedSecret.of(streamConnectionDetails.sharedSecret().key())
         // No dest denomination known yet.
       );
     }

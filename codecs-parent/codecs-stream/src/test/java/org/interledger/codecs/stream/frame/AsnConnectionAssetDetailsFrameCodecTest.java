@@ -22,7 +22,7 @@ package org.interledger.codecs.stream.frame;
 
 import java.util.Arrays;
 import java.util.Collection;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

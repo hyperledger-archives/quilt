@@ -2,8 +2,8 @@ package org.interledger.stream.calculators;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.fx.Denomination;
-import org.interledger.fx.Denominations;
+import org.interledger.stream.Denomination;
+import org.interledger.stream.Denominations;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
@@ -21,13 +21,13 @@ public class ExchangeRateCalculatorTest {
     final ExchangeRateCalculator calculator = new ExchangeRateCalculator() {
       @Override
       public UnsignedLong calculateAmountToSend(UnsignedLong amountToSend, Denomination amountToSendDenomination,
-          Denomination receiverDenomination) throws NoExchangeRateException {
+        Denomination receiverDenomination) throws NoExchangeRateException {
         return null;
       }
 
       @Override
       public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendAmountDenomination)
-          throws NoExchangeRateException {
+        throws NoExchangeRateException {
         return null;
       }
     };
@@ -40,13 +40,13 @@ public class ExchangeRateCalculatorTest {
     final ExchangeRateCalculator calculator = new ExchangeRateCalculator() {
       @Override
       public UnsignedLong calculateAmountToSend(UnsignedLong amountToSend, Denomination amountToSendDenomination,
-          Denomination receiverDenomination) throws NoExchangeRateException {
+        Denomination receiverDenomination) throws NoExchangeRateException {
         return UnsignedLong.ZERO;
       }
 
       @Override
       public UnsignedLong calculateMinAmountToAccept(UnsignedLong sendAmount, Denomination sendAmountDenomination)
-          throws NoExchangeRateException {
+        throws NoExchangeRateException {
         called.set(true);
         return UnsignedLong.ZERO;
       }

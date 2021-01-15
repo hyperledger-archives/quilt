@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.primitives.UnsignedLong;
 import java.time.Duration;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 import org.junit.Test;
 
 /**

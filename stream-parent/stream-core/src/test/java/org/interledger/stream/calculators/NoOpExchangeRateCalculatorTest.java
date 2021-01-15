@@ -2,7 +2,7 @@ package org.interledger.stream.calculators;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.fx.Denominations;
+import org.interledger.stream.Denominations;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
@@ -16,13 +16,13 @@ public class NoOpExchangeRateCalculatorTest {
   public void calculateMinAmountToAcceptInReceiverAmountMode() {
     ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
     assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD, Denominations.EUR))
-        .isEqualTo(UnsignedLong.ZERO);
+      .isEqualTo(UnsignedLong.ZERO);
   }
 
   @Test
   public void calculateMinAmountToAcceptInSenderAmountMode() {
     ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
     assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD))
-        .isEqualTo(UnsignedLong.ZERO);
+      .isEqualTo(UnsignedLong.ZERO);
   }
 }

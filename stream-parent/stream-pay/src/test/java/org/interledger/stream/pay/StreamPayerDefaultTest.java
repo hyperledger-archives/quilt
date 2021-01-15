@@ -38,6 +38,7 @@ import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
@@ -497,7 +498,8 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected List<StreamFrame> constructResponseFrames(StreamPacket streamPacket, Denomination denomination) {
-        List<StreamFrame> existingFrames = super.constructResponseFrames(streamPacket, denomination);
+        List<StreamFrame> existingFrames = super
+          .constructResponseFrames(streamPacket, org.interledger.stream.Denomination.from(denomination));
         return existingFrames.stream()
           // Always exclude ConnectionAssetDetails
           .filter(streamFrame -> streamFrame.streamFrameType() != StreamFrameType.ConnectionAssetDetails)
@@ -553,9 +555,11 @@ public class StreamPayerDefaultTest {
       protected List<StreamFrame> constructResponseFrames(StreamPacket streamPacket,
         Denomination denomination) {
         return ImmutableList.<StreamFrame>builder().addAll(
-          super.constructResponseFrames(streamPacket, denomination))
-          .add(ConnectionAssetDetailsFrame.builder().sourceDenomination(Denominations.USD).build())
-          .add(ConnectionAssetDetailsFrame.builder().sourceDenomination(Denominations.EUR).build())
+          super.constructResponseFrames(streamPacket, org.interledger.stream.Denomination.from(denomination)))
+          .add(ConnectionAssetDetailsFrame.builder()
+            .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.USD)).build())
+          .add(ConnectionAssetDetailsFrame.builder()
+            .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR)).build())
           .build();
       }
     };
@@ -1981,7 +1985,7 @@ public class StreamPayerDefaultTest {
     return new StreamConnection(
       sourceAccountDetails,
       connectionDetails.destinationAddress(),
-      connectionDetails.sharedSecret()
+      StreamSharedSecret.of(connectionDetails.sharedSecret().key())
     );
   }
 

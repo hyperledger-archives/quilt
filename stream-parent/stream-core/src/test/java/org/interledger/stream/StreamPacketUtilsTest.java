@@ -1,6 +1,5 @@
 package org.interledger.stream;
 
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -11,7 +10,6 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
-import org.interledger.fx.Denomination;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.crypto.StreamSharedSecret;
@@ -22,6 +20,7 @@ import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
+import org.interledger.fx.Denomination;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
@@ -465,7 +464,11 @@ public class StreamPacketUtilsTest {
 
   private static ConnectionAssetDetailsFrame assetDetailsFrame(Denomination denomination) {
     return ConnectionAssetDetailsFrame.builder()
-      .sourceDenomination(denomination)
+      .sourceDenomination(org.interledger.stream.Denomination.builder()
+        .assetCode(denomination.assetCode())
+        .assetScale(denomination.assetScale())
+        .build()
+      )
       .build();
   }
 

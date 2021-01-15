@@ -130,10 +130,10 @@ public class AssetDetailsTrackerTest {
           .interledgerPacketType(InterledgerPacketType.REJECT)
           .frames(Lists.newArrayList(
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.EUR_CENTS)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR_CENTS))
               .build(),
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.EUR_CENTS)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR_CENTS))
               .build()
           ))
           .build())
@@ -154,7 +154,7 @@ public class AssetDetailsTrackerTest {
           .interledgerPacketType(InterledgerPacketType.REJECT)
           .frames(Lists.newArrayList(
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.EUR_CENTS)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR_CENTS))
               .build()
           ))
           .build())
@@ -183,7 +183,7 @@ public class AssetDetailsTrackerTest {
           .interledgerPacketType(InterledgerPacketType.REJECT)
           .frames(Lists.newArrayList(
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.EUR_CENTS)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR_CENTS))
               .build()
           ))
           .build())
@@ -207,7 +207,7 @@ public class AssetDetailsTrackerTest {
           .interledgerPacketType(InterledgerPacketType.REJECT)
           .frames(Lists.newArrayList(
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.USD)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.USD))
               .build()
           ))
           .build())
@@ -229,7 +229,7 @@ public class AssetDetailsTrackerTest {
           .interledgerPacketType(InterledgerPacketType.REJECT)
           .frames(Lists.newArrayList(
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.EUR_CENTS)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR_CENTS))
               .build()
           ))
           .build())
@@ -253,7 +253,7 @@ public class AssetDetailsTrackerTest {
           .interledgerPacketType(InterledgerPacketType.REJECT)
           .frames(Lists.newArrayList(
             ConnectionAssetDetailsFrame.builder()
-              .sourceDenomination(Denominations.EUR_CENTS)
+              .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.EUR_CENTS))
               .build()
           ))
           .build())

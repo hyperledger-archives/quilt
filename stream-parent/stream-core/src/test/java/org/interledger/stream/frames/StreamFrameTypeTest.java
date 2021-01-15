@@ -17,7 +17,7 @@ import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_BL
 import static org.interledger.stream.frames.StreamFrameConstants.STREAM_MONEY_MAX;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedLong;

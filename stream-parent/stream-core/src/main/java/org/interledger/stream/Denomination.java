@@ -16,6 +16,34 @@ public interface Denomination {
   }
 
   /**
+   * Helper to ease the transition to {@link org.interledger.fx.Denomination}.
+   *
+   * @param denomination A {@link org.interledger.fx.Denomination} to convert to.
+   *
+   * @return An identical instance of {@link Denomination}.
+   */
+  static Denomination from(final org.interledger.fx.Denomination denomination) {
+    return Denomination.builder()
+      .assetCode(denomination.assetCode())
+      .assetScale(denomination.assetScale())
+      .build();
+  }
+
+  /**
+   * Helper to ease the transition to {@link org.interledger.fx.Denomination}.
+   *
+   * @param denomination A {@link Denomination} to convert to.
+   *
+   * @return An identical instance of {@link org.interledger.fx.Denomination}.
+   */
+  static org.interledger.fx.Denomination to(final Denomination denomination) {
+    return org.interledger.fx.Denomination.builder()
+      .assetCode(denomination.assetCode())
+      .assetScale(denomination.assetScale())
+      .build();
+  }
+
+  /**
    * Currency code or other asset identifier. For example, `USD`, `EUR`, or `BTC`.
    *
    * @return A {@link String} containing the asset code.

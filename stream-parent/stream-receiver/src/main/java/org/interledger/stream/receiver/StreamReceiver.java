@@ -4,7 +4,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.spsp.StreamConnectionDetails;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 
 /**
  * <p>A service that fulfills incoming STREAM packets.</p>

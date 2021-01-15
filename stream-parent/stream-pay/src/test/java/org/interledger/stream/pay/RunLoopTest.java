@@ -14,8 +14,8 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.connection.StreamConnection;
-import org.interledger.core.SharedSecret;;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -31,6 +31,7 @@ import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 
@@ -134,7 +135,7 @@ public class RunLoopTest {
     // This value is 8 because doFilter is skipped once for the WAIT state, and then once for the END state.
     verify(streamPacketFilterChainMock, times(8)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamPacketEncryptionService).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
@@ -211,7 +212,7 @@ public class RunLoopTest {
     verify(streamPacketFilterChainMock, times(2)).nextState(any());
     verify(streamPacketFilterChainMock, times(1)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamPacketEncryptionService).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
@@ -291,7 +292,7 @@ public class RunLoopTest {
     verify(streamPacketFilterChainMock, times(8)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamPacketEncryptionService).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
@@ -357,7 +358,7 @@ public class RunLoopTest {
     // This value is 8 because doFilter is skipped once for the WAIT state, and then once for the END state.
     verify(streamPacketFilterChainMock, times(4)).doFilter(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamPacketEncryptionService).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
@@ -421,7 +422,7 @@ public class RunLoopTest {
 
     verify(streamPacketFilterChainMock, times(5)).nextState(any());
     verify(paymentSharedStateTrackerMock, times(2)).getAmountTracker();
-    verify(streamPacketEncryptionService).toEncrypted(any(), any());
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
     verify(linkMock).sendPacket(any());
 
     verifyNoMoreInteractions(streamPacketFilterChainMock);
@@ -451,7 +452,7 @@ public class RunLoopTest {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(SharedSecret.class));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(StreamSharedSecret.class));
 
     RunLoop runLoop = new RunLoop(
       linkMock,
@@ -473,13 +474,14 @@ public class RunLoopTest {
     );
 
     StreamPacket streamPacketMock = mock(StreamPacket.class);
-    when(streamPacketEncryptionService.fromEncrypted(any(), any())).thenReturn(streamPacketMock);
-    when(streamPacketEncryptionService.toEncrypted(any(), any())).thenReturn(new byte[0]);
+    when(streamPacketEncryptionService.fromEncrypted(Mockito.<StreamSharedSecret>any(), any()))
+      .thenReturn(streamPacketMock);
+    when(streamPacketEncryptionService.toEncrypted(Mockito.<StreamSharedSecret>any(), any())).thenReturn(new byte[0]);
 
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(SharedSecret.class));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(StreamSharedSecret.class));
     doThrow(new RuntimeException()).when(linkMock).sendPacket(any());
 
     try {
@@ -502,7 +504,7 @@ public class RunLoopTest {
     when(quoteMock.streamConnection()).thenReturn(streamConnectionMock);
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(SharedSecret.class));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(StreamSharedSecret.class));
 
     AmountTracker amountTrackerMock = mock(AmountTracker.class);
     when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTrackerMock);
@@ -510,8 +512,9 @@ public class RunLoopTest {
     when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE);
 
     StreamPacket streamPacketMock = mock(StreamPacket.class);
-    when(streamPacketEncryptionService.fromEncrypted(any(), any())).thenReturn(streamPacketMock);
-    when(streamPacketEncryptionService.toEncrypted(any(), any())).thenReturn(new byte[0]);
+    when(streamPacketEncryptionService.fromEncrypted(Mockito.<StreamSharedSecret>any(), any()))
+      .thenReturn(streamPacketMock);
+    when(streamPacketEncryptionService.toEncrypted(Mockito.<StreamSharedSecret>any(), any())).thenReturn(new byte[0]);
 
     return quoteMock;
   }

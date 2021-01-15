@@ -83,8 +83,9 @@ public class AssetDetailsTracker {
             destinationAccountDetailsSnapshot,
             AccountDetails.builder()
               .from(destinationAccountDetailsSnapshot)
-              .denomination(connectionAssetDetailsFrame.sourceDenomination())
-              .build());
+              .denomination(org.interledger.stream.Denomination.to(connectionAssetDetailsFrame.sourceDenomination()))
+              .build()
+          );
         } else {
           // Here, the denomination has already been set. So check the snapshot against the CAD frame.
           final Denomination denominationSnapshot = destinationAccountDetailsSnapshot.denomination().get();

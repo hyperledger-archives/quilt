@@ -1,11 +1,5 @@
 package org.interledger.link.spsp;
 
-import com.google.common.primitives.UnsignedLong;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.StringJoiner;
-import java.util.function.Supplier;
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.InterledgerAddress;
@@ -14,13 +8,21 @@ import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.fx.Denomination;
 import org.interledger.link.AbstractLink;
 import org.interledger.link.Link;
 import org.interledger.link.LinkHandler;
 import org.interledger.link.LinkType;
 import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.receiver.StreamReceiver;
+
+import com.google.common.primitives.UnsignedLong;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.function.Supplier;
 
 /**
  * <p>A {@link Link} that attempts to fulfill packets using an Stream receiver.</p>

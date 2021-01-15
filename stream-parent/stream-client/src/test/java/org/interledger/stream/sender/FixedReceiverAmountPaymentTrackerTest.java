@@ -2,9 +2,10 @@ package org.interledger.stream.sender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.primitives.UnsignedLong;
-import org.interledger.fx.Denominations;
+import org.interledger.stream.Denominations;
 import org.interledger.stream.PrepareAmounts;
+
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;
 
 /**
@@ -15,7 +16,7 @@ public class FixedReceiverAmountPaymentTrackerTest {
   @Test
   public void checkAllInteractions() {
     FixedReceiverAmountPaymentTracker tracker = new FixedReceiverAmountPaymentTracker(UnsignedLong.valueOf(10L),
-        new HalfsiesExchangeRateCalculator());
+      new HalfsiesExchangeRateCalculator());
 
     assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.ZERO);
@@ -23,7 +24,8 @@ public class FixedReceiverAmountPaymentTrackerTest {
     assertThat(tracker.getOriginalAmountLeft()).isEqualTo(UnsignedLong.valueOf(10));
     assertThat(tracker.moreToSend()).isTrue();
 
-    PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP_DROPS, Denominations.XRP_DROPS);
+    PrepareAmounts amounts = tracker
+      .getSendPacketAmounts(UnsignedLong.ZERO, Denominations.XRP_DROPS, Denominations.XRP_DROPS);
 
     assertThat(amounts.amountToSend()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amounts.minimumAmountToAccept()).isEqualTo(UnsignedLong.ZERO);

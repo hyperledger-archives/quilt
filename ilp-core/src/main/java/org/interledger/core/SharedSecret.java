@@ -3,6 +3,7 @@ package org.interledger.core;
 import org.immutables.value.Value;
 
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * <p>Wrapper for a Shared Secret (32-byte, base64 encoded).</p>
@@ -16,11 +17,12 @@ import java.util.Base64;
 @Value.Immutable
 public interface SharedSecret {
 
-  static SharedSecret of(String base64EncodedKey) {
+  static SharedSecret of(final String base64EncodedKey) {
     return ImmutableSharedSecret.of(base64EncodedKey);
   }
 
-  static SharedSecret of(byte[] key) {
+  static SharedSecret of(final byte[] key) {
+    Objects.requireNonNull(key);
     return ImmutableSharedSecret.of(Base64.getEncoder().withoutPadding().encodeToString(key));
   }
 
@@ -55,7 +57,7 @@ public interface SharedSecret {
   @Value.Check
   default SharedSecret validate() {
     if (key().length != 32) {
-      throw new IllegalStateException(String.valueOf("SharedSecret must be 32 bytes"));
+      throw new IllegalStateException("SharedSecret must be 32 bytes");
     }
     return this;
   }

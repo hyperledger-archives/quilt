@@ -5,7 +5,6 @@ import static org.interledger.stream.SenderAmountMode.RECEIVER_AMOUNT;
 import static org.interledger.stream.SenderAmountMode.SENDER_AMOUNT;
 
 import com.google.common.primitives.UnsignedLong;
-import org.interledger.fx.Denomination;
 import org.junit.Test;
 
 /**

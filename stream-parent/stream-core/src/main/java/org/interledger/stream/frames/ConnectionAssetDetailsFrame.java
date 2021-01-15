@@ -21,7 +21,7 @@ package org.interledger.stream.frames;
  */
 
 import org.interledger.core.Immutable;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 
 /**
  * A STREAM frame for propagating asset details for a Connection.

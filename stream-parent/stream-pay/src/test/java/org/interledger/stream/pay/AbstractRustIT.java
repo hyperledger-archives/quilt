@@ -29,6 +29,7 @@ import org.interledger.spsp.client.rust.UsdToXrpRatesRequest;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
@@ -529,7 +530,7 @@ public abstract class AbstractRustIT {
     return new StreamConnection(
       sourceAccountDetails,
       streamConnectionDetails.destinationAddress(),
-      streamConnectionDetails.sharedSecret()
+      StreamSharedSecret.of(streamConnectionDetails.sharedSecret().key())
     );
   }
 }

@@ -24,7 +24,7 @@ import org.interledger.encoding.asn.codecs.AsnSequenceCodec;
 import org.interledger.encoding.asn.codecs.AsnSizeConstraint;
 import org.interledger.encoding.asn.codecs.AsnUint8Codec;
 import org.interledger.encoding.asn.codecs.AsnUtf8StringCodec;
-import org.interledger.fx.Denomination;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 
 public class AsnConnectionAssetDetailsFrameDataCodec extends AsnSequenceCodec<ConnectionAssetDetailsFrame> {

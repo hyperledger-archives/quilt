@@ -2,7 +2,6 @@ package org.interledger.stream;
 
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.fx.Denomination;
 
 import com.google.common.primitives.UnsignedLong;
 
