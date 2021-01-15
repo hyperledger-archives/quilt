@@ -1,7 +1,6 @@
 package org.interledger.examples.packets;
 
 import static org.interledger.core.InterledgerConstants.ALL_ZEROS_FULFILLMENT;
-import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -15,11 +14,12 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerPreparePacketBuilder;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.SharedSecret;
-import org.interledger.fx.Denomination;
 import org.interledger.link.PingLoopbackLink;
 import org.interledger.stream.StreamPacket;
+import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
+import org.interledger.stream.crypto.StreamSharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecretCrypto;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
@@ -56,11 +56,16 @@ public class IlpPacketEmitter {
     .of("test.connie.bob.QeJvQtFp7eRiNhnoAg9PkusR");
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.connie");
 
-  private static final SharedSecret SHARED_SECRET = SharedSecret
+  private static final StreamSharedSecret SHARED_SECRET = StreamSharedSecret
     .of(Base64.getDecoder().decode("nHYRcu5KM5pyw8XehssZtvhEgCgkKP4Do5kJUpk84G4"));
 
-  private static final SharedSecretCrypto SHARED_SECRET_CRYPTO = new AesGcmStreamSharedSecretCrypto();
+  private static final StreamSharedSecretCrypto SHARED_SECRET_CRYPTO = new AesGcmStreamSharedSecretCrypto();
 
+  /**
+   * Main entry point.
+   *
+   * @param args
+   */
   public static void main(String[] args) throws IOException {
     emitPacketsWithNoData();
     emitPacketsWithStreamPayloads();
@@ -158,7 +163,7 @@ public class IlpPacketEmitter {
           .sourceAddress(InterledgerAddress.of("example.connie.bob"))
           .build(),
         ConnectionAssetDetailsFrame.builder()
-          .sourceDenomination(Denomination.builder()
+          .sourceDenomination(org.interledger.stream.Denomination.builder()
             .assetCode("USD")
             .assetScale((short) 2)
             .build())
@@ -168,7 +173,8 @@ public class IlpPacketEmitter {
 
     // Create the ILP Prepare packet
     final byte[] streamPacketData = toEncrypted(streamPacket);
-    final InterledgerCondition executionCondition = generatedFulfillableFulfillment(SHARED_SECRET, streamPacketData)
+    final InterledgerCondition executionCondition = StreamPacketUtils
+      .generateFulfillableFulfillment(SHARED_SECRET, streamPacketData)
       .getCondition();
     return preparePacketBuilder()
       .executionCondition(executionCondition)

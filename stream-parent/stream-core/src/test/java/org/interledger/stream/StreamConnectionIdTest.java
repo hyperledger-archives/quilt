@@ -30,7 +30,7 @@ public class StreamConnectionIdTest {
   @Test
   public void testConstructorWithNullStraemSharedSecret() {
     expectedException.expect(NullPointerException.class);
-    expectedException.expectMessage("sharedSecret must not be null");
+    expectedException.expectMessage("streamSharedSecret must not be null");
 
     StreamSharedSecret nullStreamSharedSecret = null;
     StreamConnectionId.from(mock(InterledgerAddress.class), nullStreamSharedSecret);

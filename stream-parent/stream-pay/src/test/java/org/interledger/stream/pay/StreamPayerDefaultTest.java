@@ -14,6 +14,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.SharedSecret;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
@@ -497,9 +498,10 @@ public class StreamPayerDefaultTest {
       StreamCodecContextFactory.oer()
     ) {
       @Override
-      protected List<StreamFrame> constructResponseFrames(StreamPacket streamPacket, Denomination denomination) {
-        List<StreamFrame> existingFrames = super
-          .constructResponseFrames(streamPacket, org.interledger.stream.Denomination.from(denomination));
+      protected List<StreamFrame> constructResponseFrames(
+        StreamPacket streamPacket, org.interledger.stream.Denomination denomination
+      ) {
+        List<StreamFrame> existingFrames = super.constructResponseFrames(streamPacket, denomination);
         return existingFrames.stream()
           // Always exclude ConnectionAssetDetails
           .filter(streamFrame -> streamFrame.streamFrameType() != StreamFrameType.ConnectionAssetDetails)
@@ -552,10 +554,11 @@ public class StreamPayerDefaultTest {
       StreamCodecContextFactory.oer()
     ) {
       @Override
-      protected List<StreamFrame> constructResponseFrames(StreamPacket streamPacket,
-        Denomination denomination) {
+      protected List<StreamFrame> constructResponseFrames(
+        StreamPacket streamPacket, org.interledger.stream.Denomination denomination
+      ) {
         return ImmutableList.<StreamFrame>builder().addAll(
-          super.constructResponseFrames(streamPacket, org.interledger.stream.Denomination.from(denomination)))
+          super.constructResponseFrames(streamPacket, denomination))
           .add(ConnectionAssetDetailsFrame.builder()
             .sourceDenomination(org.interledger.stream.Denomination.from(Denominations.USD)).build())
           .add(ConnectionAssetDetailsFrame.builder()
@@ -1936,7 +1939,7 @@ public class StreamPayerDefaultTest {
         final StreamConnection streamConnection = newStreamConnection(sourceAccountDetails, destinationAccountDetails);
         return StreamConnectionDetails.builder()
           .destinationAddress(streamConnection.getDestinationAddress())
-          .sharedSecret(streamConnection.getStreamSharedSecret())
+          .sharedSecret(SharedSecret.of(streamConnection.getStreamSharedSecret().key()))
           .build();
       }
 
@@ -1945,7 +1948,7 @@ public class StreamPayerDefaultTest {
         final StreamConnection streamConnection = newStreamConnection(sourceAccountDetails, destinationAccountDetails);
         return StreamConnectionDetails.builder()
           .destinationAddress(streamConnection.getDestinationAddress())
-          .sharedSecret(streamConnection.getStreamSharedSecret())
+          .sharedSecret(SharedSecret.of(streamConnection.getStreamSharedSecret().key()))
           .build();
       }
     };
