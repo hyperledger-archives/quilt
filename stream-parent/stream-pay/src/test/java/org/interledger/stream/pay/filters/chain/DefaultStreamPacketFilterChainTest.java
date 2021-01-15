@@ -18,8 +18,8 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.link.Link;
-import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
+import org.interledger.core.SharedSecret;;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
@@ -67,7 +67,7 @@ public class DefaultStreamPacketFilterChainTest {
 
     StreamPacketEncryptionService streamPacketEncryptionService = new StreamPacketEncryptionService(
       StreamCodecContextFactory.oer(),
-      new AesGcmSharedSecretCrypto()
+      new AesGcmStreamSharedSecretCrypto()
     );
 
     this.streamPacketFilters = Lists.newArrayList();
@@ -454,7 +454,7 @@ public class DefaultStreamPacketFilterChainTest {
   @Test
   public void doFilterWithSendStateReadyFulfillable() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.getSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("private.test"));
     when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(streamConnectionMock);
 
@@ -484,7 +484,7 @@ public class DefaultStreamPacketFilterChainTest {
   @Test
   public void doFilterWithSendStateReadyRejectionF08ThatCantDecode() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.getSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("private.test"));
     when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(streamConnectionMock);
 
@@ -515,7 +515,7 @@ public class DefaultStreamPacketFilterChainTest {
   @Test
   public void doFilterWithSendStateReadyRejectionF08Decodes() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.getSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("private.test"));
     when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(streamConnectionMock);
 
@@ -562,7 +562,7 @@ public class DefaultStreamPacketFilterChainTest {
   @Test
   public void doFilterWithSendStateReadyRejectionWithNoFrames() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.getSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("private.test"));
     when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(streamConnectionMock);
 
@@ -603,7 +603,7 @@ public class DefaultStreamPacketFilterChainTest {
   @Test
   public void doFilterWithSendStateReadyRejectionWith1Frame() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.getSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(SharedSecret.of(new byte[32]));
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("private.test"));
     when(paymentSharedStateTrackerMock.getStreamConnection()).thenReturn(streamConnectionMock);
 

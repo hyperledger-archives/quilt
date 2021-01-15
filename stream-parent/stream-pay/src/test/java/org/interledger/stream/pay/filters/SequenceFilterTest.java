@@ -15,6 +15,7 @@ import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class SequenceFilterTest {
 
   @Test
   public void nextStateUnderPacketLimit() {
-    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.ONE);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
 
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState response = sequenceFilter.nextState(request);
@@ -73,7 +74,7 @@ public class SequenceFilterTest {
 
   @Test
   public void nextStateOverPacketLimit() {
-    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.MAX_VALUE);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.MAX_VALUE);
 
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState response = sequenceFilter.nextState(request);

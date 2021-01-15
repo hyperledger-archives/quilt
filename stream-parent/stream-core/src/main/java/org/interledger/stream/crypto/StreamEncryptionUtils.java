@@ -1,5 +1,6 @@
 package org.interledger.stream.crypto;
 
+import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;

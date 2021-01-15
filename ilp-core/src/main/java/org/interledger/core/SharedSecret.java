@@ -1,4 +1,4 @@
-package org.interledger.stream.crypto;
+package org.interledger.core;
 
 import org.immutables.value.Value;
 
@@ -9,7 +9,10 @@ import java.util.Base64;
  *
  * <p>Note that this immutable has no concept of JSON or other coding/encoding because it is only required by Stream as
  * a Java concept.</p>
+ *
+ * @deprecated Prefer org.interledger.stream.crypto.StreamSharedSecret instead.
  */
+@Deprecated
 @Value.Immutable
 public interface SharedSecret {
 

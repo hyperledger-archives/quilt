@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.fail;
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.connection.StreamConnection.StreamConnectionState;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 
 import com.google.common.collect.Lists;
@@ -37,26 +37,26 @@ public class StreamConnectionTest {
   private AccountDetails sourceAccountDetailsMock;
 
   private final InterledgerAddress destinationAddress = InterledgerAddress.of("example.foo");
-  private final SharedSecret sharedSecret = SharedSecret.of(new byte[32]);
+  private final StreamSharedSecret streamSharedSecret = StreamSharedSecret.of(new byte[32]);
 
   private StreamConnection streamConnection;
 
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    this.streamConnection = new StreamConnection(sourceAccountDetailsMock, destinationAddress, sharedSecret);
+    this.streamConnection = new StreamConnection(sourceAccountDetailsMock, destinationAddress, streamSharedSecret);
   }
 
   @Test
   public void testConstructor1WithNullStreamConnectionId() {
     expectedException.expect(NullPointerException.class);
-    new StreamConnection(null, destinationAddress, sharedSecret);
+    new StreamConnection(null, destinationAddress, streamSharedSecret);
   }
 
   @Test
   public void testConstructor1WithNullDestAddress() {
     expectedException.expect(NullPointerException.class);
-    new StreamConnection(sourceAccountDetailsMock, null, sharedSecret);
+    new StreamConnection(sourceAccountDetailsMock, null, streamSharedSecret);
   }
 
   @Test
@@ -68,13 +68,13 @@ public class StreamConnectionTest {
   @Test
   public void testConstructor2WithNullStreamConnectionId() {
     expectedException.expect(NullPointerException.class);
-    new StreamConnection(null, destinationAddress, sharedSecret, Optional.empty());
+    new StreamConnection(null, destinationAddress, streamSharedSecret, Optional.empty());
   }
 
   @Test
   public void testConstructor2WithNullDestAddress() {
     expectedException.expect(NullPointerException.class);
-    new StreamConnection(sourceAccountDetailsMock, null, sharedSecret, Optional.empty());
+    new StreamConnection(sourceAccountDetailsMock, null, streamSharedSecret, Optional.empty());
   }
 
   @Test
@@ -86,7 +86,7 @@ public class StreamConnectionTest {
   @Test
   public void testConstructor2WithNullDenomination() {
     expectedException.expect(NullPointerException.class);
-    new StreamConnection(sourceAccountDetailsMock, destinationAddress, sharedSecret, null);
+    new StreamConnection(sourceAccountDetailsMock, destinationAddress, streamSharedSecret, null);
   }
 
   @Test
@@ -255,13 +255,13 @@ public class StreamConnectionTest {
   public void testEquals() {
     assertThat(streamConnection.equals(null)).isFalse();
     StreamConnection identicalStreamConnection = new StreamConnection(
-      sourceAccountDetailsMock, destinationAddress, sharedSecret
+      sourceAccountDetailsMock, destinationAddress, streamSharedSecret
     );
     assertThat(streamConnection.equals(identicalStreamConnection)).isTrue();
     assertThat(identicalStreamConnection.equals(streamConnection)).isTrue();
 
     StreamConnection nonIdenticalStreamConnection = new StreamConnection(
-      sourceAccountDetailsMock, InterledgerAddress.of("example.bar"), sharedSecret
+      sourceAccountDetailsMock, InterledgerAddress.of("example.bar"), streamSharedSecret
     );
     assertThat(streamConnection.equals(nonIdenticalStreamConnection)).isFalse();
     assertThat(nonIdenticalStreamConnection.equals(streamConnection)).isFalse();
@@ -270,11 +270,11 @@ public class StreamConnectionTest {
   @Test
   public void testHashCode() {
     StreamConnection identicalStreamConnection = new StreamConnection(sourceAccountDetailsMock, destinationAddress,
-      sharedSecret);
+      streamSharedSecret);
     assertThat(streamConnection.hashCode()).isEqualTo(identicalStreamConnection.hashCode());
 
     StreamConnection nonIdenticalStreamConnection = new StreamConnection(
-      sourceAccountDetailsMock, InterledgerAddress.of("example.bar"), sharedSecret
+      sourceAccountDetailsMock, InterledgerAddress.of("example.bar"), streamSharedSecret
     );
     assertThat(streamConnection.hashCode()).isNotEqualTo(nonIdenticalStreamConnection.hashCode());
   }

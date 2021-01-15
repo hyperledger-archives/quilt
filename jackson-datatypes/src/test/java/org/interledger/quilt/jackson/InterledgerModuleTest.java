@@ -26,7 +26,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerAddressPrefix;
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 import org.interledger.link.LinkId;
 import org.interledger.link.LinkType;
 import org.interledger.quilt.jackson.conditions.Encoding;
@@ -54,17 +54,17 @@ import java.util.Objects;
 public class InterledgerModuleTest {
 
   private static final String CONDITION_BYTES_HEX =
-      "D8391BB7F1E6AF13F9D21745481FF024AE8429A2280478B42B174D4716AC7353";
+    "D8391BB7F1E6AF13F9D21745481FF024AE8429A2280478B42B174D4716AC7353";
   private static final String CONDITION_BYTES_BASE64
-      = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M=";
+    = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M=";
   private static final String CONDITION_BYTES_BASE64_WITHOUTPADDING
-      = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M";
+    = "2Dkbt/HmrxP50hdFSB/wJK6EKaIoBHi0KxdNRxasc1M";
   private static final String CONDITION_BYTES_BASE64_URL
-      = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M=";
+    = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M=";
   private static final String CONDITION_BYTES_BASE64_URL_WITHOUTPADDING
-      = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M";
+    = "2Dkbt_HmrxP50hdFSB_wJK6EKaIoBHi0KxdNRxasc1M";
 
-  private static InterledgerCondition CONDITION = constructCondition();
+  private static final InterledgerCondition CONDITION = constructCondition();
 
   private ObjectMapper objectMapper;
   private InterledgerCondition condition;
@@ -79,8 +79,8 @@ public class InterledgerModuleTest {
    * @param condition            A {@link InterledgerCondition} to encode and decode for each test run.
    */
   public InterledgerModuleTest(
-      final Encoding encodingToUse, final String expectedEncodedValue,
-      final InterledgerCondition condition
+    final Encoding encodingToUse, final String expectedEncodedValue,
+    final InterledgerCondition condition
   ) {
     this.encodingToUse = Objects.requireNonNull(encodingToUse);
     this.expectedEncodedValue = Objects.requireNonNull(expectedEncodedValue);
@@ -102,22 +102,22 @@ public class InterledgerModuleTest {
     // Create and return a Collection of Object arrays. Each element in each array is a parameter
     // to the CryptoConditionsModuleConditionTest constructor.
     return Arrays.asList(new Object[][] {
-        {Encoding.HEX, CONDITION_BYTES_HEX, CONDITION},
-        {Encoding.BASE64, CONDITION_BYTES_BASE64, CONDITION},
-        {Encoding.BASE64_WITHOUT_PADDING, CONDITION_BYTES_BASE64_WITHOUTPADDING, CONDITION},
-        {Encoding.BASE64URL, CONDITION_BYTES_BASE64_URL, CONDITION},
-        {
-            Encoding.BASE64URL_WITHOUT_PADDING,
-            CONDITION_BYTES_BASE64_URL_WITHOUTPADDING,
-            CONDITION
-        }
+      {Encoding.HEX, CONDITION_BYTES_HEX, CONDITION},
+      {Encoding.BASE64, CONDITION_BYTES_BASE64, CONDITION},
+      {Encoding.BASE64_WITHOUT_PADDING, CONDITION_BYTES_BASE64_WITHOUTPADDING, CONDITION},
+      {Encoding.BASE64URL, CONDITION_BYTES_BASE64_URL, CONDITION},
+      {
+        Encoding.BASE64URL_WITHOUT_PADDING,
+        CONDITION_BYTES_BASE64_URL_WITHOUTPADDING,
+        CONDITION
+      }
     });
   }
 
   @Before
   public void setup() {
     this.objectMapper = new ObjectMapper()
-        .registerModule(new InterledgerModule(encodingToUse));
+      .registerModule(new InterledgerModule(encodingToUse));
   }
 
   @Test
@@ -132,29 +132,29 @@ public class InterledgerModuleTest {
     final SharedSecret expectedSharedSecret = SharedSecret.of(new byte[32]);
 
     final InterledgerContainer expectedContainer = ImmutableInterledgerContainer.builder()
-        .interledgerAddress(expectedAddress)
-        .interledgerAddressPrefix(expectedPrefix)
-        .condition(condition)
-        .linkId(expectedLinkId)
-        .linkType(expectedLinkType)
-        .sharedSecret(expectedSharedSecret)
-        .build();
+      .interledgerAddress(expectedAddress)
+      .interledgerAddressPrefix(expectedPrefix)
+      .condition(condition)
+      .linkId(expectedLinkId)
+      .linkType(expectedLinkType)
+      .sharedSecret(expectedSharedSecret)
+      .build();
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
     assertThat(json).isEqualTo(
-        String.format("{\"ledger_address\":\"%s\",\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\","
-                + "\"shared_secret\":\"%s\",\"link_id\":\"%s\",\"link_type\":\"%s\"}",
-            expectedContainer.getInterledgerAddress().getValue(),
-            expectedContainer.getInterledgerAddressPrefix().getValue(),
-            expectedEncodedValue,
-            expectedSharedSecret.value(),
-            expectedLinkId.value(),
-            expectedLinkType.value()
-        )
+      String.format("{\"ledger_address\":\"%s\",\"ledger_prefix\":\"%s\",\"execution_condition\":\"%s\","
+          + "\"shared_secret\":\"%s\",\"link_id\":\"%s\",\"link_type\":\"%s\"}",
+        expectedContainer.getInterledgerAddress().getValue(),
+        expectedContainer.getInterledgerAddressPrefix().getValue(),
+        expectedEncodedValue,
+        expectedSharedSecret.value(),
+        expectedLinkId.value(),
+        expectedLinkType.value()
+      )
     );
 
     final InterledgerContainer actualAddressContainer = objectMapper
-        .readValue(json, InterledgerContainer.class);
+      .readValue(json, InterledgerContainer.class);
 
     assertThat(actualAddressContainer).isEqualTo(expectedContainer);
     assertThat(actualAddressContainer.getInterledgerAddressPrefix()).isEqualTo(expectedPrefix);

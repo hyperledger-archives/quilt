@@ -17,7 +17,7 @@ import org.interledger.link.http.auth.SimpleBearerTokenSupplier;
 import org.interledger.quilt.jackson.InterledgerModule;
 import org.interledger.quilt.jackson.conditions.Encoding;
 import org.interledger.spsp.PaymentPointer;
-import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamPayer;
@@ -134,7 +134,7 @@ public class IlpDrip {
       link.setLinkId(LinkId.of("ILP Drip Account"));
 
       final StreamPacketEncryptionService streamPacketEncryptionService = new StreamPacketEncryptionService(
-        StreamCodecContextFactory.oer(), new AesGcmSharedSecretCrypto()
+        StreamCodecContextFactory.oer(), new AesGcmStreamSharedSecretCrypto()
       );
 
       // Create StreamPayer for sending STREAM payments

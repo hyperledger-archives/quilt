@@ -6,7 +6,7 @@ import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamConnectionId;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,7 +35,7 @@ public class StreamConnection implements Closeable {
 
   /**
    * The unique identifier of this Connection. A Connection is unique to a destination {@link InterledgerAddress} and a
-   * {@link SharedSecret}.
+   * {@link StreamSharedSecret}.
    */
   private final Instant creationDateTime;
 
@@ -60,7 +60,7 @@ public class StreamConnection implements Closeable {
    */
   private final AtomicReference<Optional<Denomination>> destinationDenomination;
 
-  private final SharedSecret sharedSecret;
+  private final StreamSharedSecret streamSharedSecret;
   private final StreamConnectionId streamConnectionId;
   private final AtomicReference<UnsignedLong> sequence;
   private final AtomicReference<StreamConnectionState> connectionState;
@@ -75,20 +75,22 @@ public class StreamConnection implements Closeable {
    *
    * @param sourceAccountDetails The {@link AccountDetails} for the sender.
    * @param destinationAddress   The {@link InterledgerAddress} of the receiver of this STREAM payment.
-   * @param sharedSecret         The {@link SharedSecret} used to encrypt and decrypt packets transmitted over this.
+   * @param streamSharedSecret         The {@link StreamSharedSecret} used to encrypt and decrypt packets transmitted over this.
    */
   public StreamConnection(
     final AccountDetails sourceAccountDetails,
     final InterledgerAddress destinationAddress,
-    final SharedSecret sharedSecret
+    final StreamSharedSecret streamSharedSecret
   ) {
     this.sourceAccountDetails = Objects.requireNonNull(sourceAccountDetails);
     this.destinationAddress = Objects.requireNonNull(destinationAddress);
-    this.sharedSecret = Objects.requireNonNull(sharedSecret);
+    this.streamSharedSecret = Objects.requireNonNull(streamSharedSecret);
 
     this.creationDateTime = DateUtils.now();
     this.sequence = new AtomicReference<>(UnsignedLong.ONE);
-    this.streamConnectionId = Objects.requireNonNull(StreamConnectionId.from(destinationAddress, sharedSecret));
+    this.streamConnectionId = Objects.requireNonNull(
+      StreamConnectionId.from(destinationAddress, org.interledger.core.SharedSecret.of(streamSharedSecret.key()))
+    );
     this.destinationDenomination = new AtomicReference<>(Optional.empty());
     this.connectionState = new AtomicReference<>(StreamConnectionState.AVAILABLE);
   }
@@ -101,22 +103,24 @@ public class StreamConnection implements Closeable {
    *
    * @param sourceAccountDetails    The {@link AccountDetails} for the sender.
    * @param destinationAddress      The {@link InterledgerAddress} of the receiver of this STREAM payment.
-   * @param sharedSecret            The {@link SharedSecret} used to encrypt and decrypt packets transmitted over this
+   * @param streamSharedSecret            The {@link StreamSharedSecret} used to encrypt and decrypt packets transmitted over this
    * @param destinationDenomination
    */
   public StreamConnection(
     final AccountDetails sourceAccountDetails,
     final InterledgerAddress destinationAddress,
-    final SharedSecret sharedSecret,
+    final StreamSharedSecret streamSharedSecret,
     final Optional<Denomination> destinationDenomination
   ) {
     this.sourceAccountDetails = Objects.requireNonNull(sourceAccountDetails);
     this.destinationAddress = Objects.requireNonNull(destinationAddress);
-    this.sharedSecret = Objects.requireNonNull(sharedSecret);
+    this.streamSharedSecret = Objects.requireNonNull(streamSharedSecret);
 
     this.creationDateTime = DateUtils.now();
     this.sequence = new AtomicReference<>(UnsignedLong.ONE);
-    this.streamConnectionId = Objects.requireNonNull(StreamConnectionId.from(destinationAddress, sharedSecret));
+    this.streamConnectionId = Objects.requireNonNull(
+      StreamConnectionId.from(destinationAddress, org.interledger.core.SharedSecret.of(streamSharedSecret.key()))
+    );
     this.destinationDenomination = new AtomicReference<>(Objects.requireNonNull(destinationDenomination));
     this.connectionState = new AtomicReference<>(StreamConnectionState.AVAILABLE);
   }
@@ -207,8 +211,8 @@ public class StreamConnection implements Closeable {
    *
    * @return
    */
-  public SharedSecret getSharedSecret() {
-    return sharedSecret;
+  public StreamSharedSecret getStreamSharedSecret() {
+    return streamSharedSecret;
   }
 
   /**

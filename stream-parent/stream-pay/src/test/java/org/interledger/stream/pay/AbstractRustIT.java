@@ -27,7 +27,7 @@ import org.interledger.spsp.client.rust.InterledgerRustNodeClient;
 import org.interledger.spsp.client.rust.RustNodeAccount;
 import org.interledger.spsp.client.rust.UsdToXrpRatesRequest;
 import org.interledger.stream.connection.StreamConnection;
-import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
@@ -122,7 +122,7 @@ public abstract class AbstractRustIT {
   @Before
   public void setUp() throws IOException {
     this.streamPacketEncryptionService = new StreamPacketEncryptionService(
-      StreamCodecContextFactory.oer(), new AesGcmSharedSecretCrypto()
+      StreamCodecContextFactory.oer(), new AesGcmStreamSharedSecretCrypto()
     );
 
     this.initalizedConnectorAccounts();

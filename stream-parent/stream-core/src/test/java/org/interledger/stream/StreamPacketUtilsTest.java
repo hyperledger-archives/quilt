@@ -10,10 +10,11 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.SharedSecret;
 import org.interledger.fx.Denomination;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
@@ -29,6 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
@@ -75,7 +77,10 @@ public class StreamPacketUtilsTest {
   private static final StreamPacket NO_FRAMES = newPacketBuilder().build();
 
   @Mock
-  private StreamEncryptionUtils streamEncryptionUtils;
+  private StreamEncryptionUtils streamEncryptionUtilsMock;
+
+  @Mock
+  private StreamPacketEncryptionService streamPacketEncryptionServiceMock;
 
   @Before
   public void setUp() {
@@ -97,7 +102,8 @@ public class StreamPacketUtilsTest {
   @Test
   public void generatedFulfillableFulfillmentNullSharedSecret() {
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.generateFulfillableFulfillment(null, new byte[32]);
+    SharedSecret nullSharedSecret = null;
+    StreamPacketUtils.generateFulfillableFulfillment(nullSharedSecret, new byte[32]);
   }
 
   @Test
@@ -122,6 +128,35 @@ public class StreamPacketUtilsTest {
       );
   }
 
+  @Test
+  public void generatedFulfillableFulfillmentWithNullStreamSharedSecret() {
+    expectedException.expect(NullPointerException.class);
+    StreamSharedSecret nullStreamSharedSecret = null;
+    StreamPacketUtils.generateFulfillableFulfillment(nullStreamSharedSecret, new byte[32]);
+  }
+
+  @Test
+  public void generatedFulfillableFulfillmentWithNullBytesStream() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketUtils.generateFulfillableFulfillment(StreamSharedSecret.of(new byte[32]), null);
+  }
+
+  @Test
+  public void generatedFulfillableFulfillmentWithInsufficientBytesStream() {
+    assertThat(StreamPacketUtils.generateFulfillableFulfillment(StreamSharedSecret.of(new byte[32]), new byte[0]))
+      .isEqualTo(
+        InterledgerFulfillment.of(BaseEncoding.base64().decode("uKsQg0EsVCm8gAJpXxoPjB6Z3BplNAxkeNyNRUluSAg="))
+      );
+  }
+
+  @Test
+  public void generatedFulfillableFulfillmentStream() {
+    assertThat(StreamPacketUtils.generateFulfillableFulfillment(StreamSharedSecret.of(new byte[32]), new byte[32]))
+      .isEqualTo(
+        InterledgerFulfillment.of(BaseEncoding.base64().decode("IFL4ByJE+dN7FLiNxUyWs5bPLl0d6LcpI+hCIeXTaH4="))
+      );
+  }
+
   //////////////////////////
   // mapToStreamPacket (bytes)
   //////////////////////////
@@ -129,33 +164,74 @@ public class StreamPacketUtilsTest {
   @Test
   public void mapToStreamPacketWithNullPacketData() {
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.mapToStreamPacket(null, SharedSecret.of(new byte[32]), streamEncryptionUtils);
+    StreamPacketUtils.mapToStreamPacket(null, SharedSecret.of(new byte[32]), streamEncryptionUtilsMock);
   }
 
   @Test
   public void mapToStreamPacketWithNullSharedSecret() {
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.mapToStreamPacket(new byte[1], null, streamEncryptionUtils);
+    StreamPacketUtils.mapToStreamPacket(new byte[1], null, streamEncryptionUtilsMock);
   }
 
   @Test
   public void mapToStreamPacketWithNullEncryptionUtils() {
-    StreamPacketEncryptionService nullService = null;
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]), nullService);
+    StreamEncryptionUtils nullStreamEncryptionUtils = null;
+    StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]), nullStreamEncryptionUtils);
+  }
+
+  @Test
+  public void mapToStreamPacket2WithNullPacketData() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketUtils.mapToStreamPacket(
+      null, StreamSharedSecret.of(new byte[32]), mock(StreamPacketEncryptionService.class)
+    );
+  }
+
+  @Test
+  public void mapToStreamPacketWithNullStreamSharedSecret() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketUtils.mapToStreamPacket(new byte[1], null, mock(StreamPacketEncryptionService.class));
+  }
+
+
+  @Test
+  public void mapToStreamPacketWithNullStreamPacketService() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketEncryptionService nullService = null;
+    StreamPacketUtils.mapToStreamPacket(new byte[1], StreamSharedSecret.of(new byte[32]), nullService);
   }
 
   @Test
   public void mapToStreamPacketWithEmptyPacket() {
-    assertThat(StreamPacketUtils.mapToStreamPacket(new byte[0], SharedSecret.of(new byte[32]), streamEncryptionUtils))
+    assertThat(StreamPacketUtils.mapToStreamPacket(new byte[0], SharedSecret.of(new byte[32]),
+      streamEncryptionUtilsMock))
       .isEmpty();
   }
 
   @Test
   public void mapToStreamPacketWhenPresent() {
-    when(streamEncryptionUtils.fromEncrypted(any(), any())).thenReturn(mock(StreamPacket.class));
-    assertThat(StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]), streamEncryptionUtils))
+    when(streamEncryptionUtilsMock.fromEncrypted(any(), any())).thenReturn(mock(StreamPacket.class));
+    assertThat(StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]),
+      streamEncryptionUtilsMock))
       .isPresent();
+  }
+
+  @Test
+  public void mapToStreamPacket2WithEmptyPacket() {
+    assertThat(StreamPacketUtils.mapToStreamPacket(
+      new byte[0], StreamSharedSecret.of(new byte[32]), streamPacketEncryptionServiceMock)
+    ).isEmpty();
+  }
+
+  @Test
+  public void mapToStreamPacket2WhenPresent() {
+    when(streamPacketEncryptionServiceMock
+      .fromEncrypted(Mockito.<StreamSharedSecret>any(), any()))
+      .thenReturn(mock(StreamPacket.class));
+    assertThat(StreamPacketUtils.mapToStreamPacket(
+      new byte[1], StreamSharedSecret.of(new byte[32]), streamPacketEncryptionServiceMock)
+    ).isPresent();
   }
 
   //////////////////////////

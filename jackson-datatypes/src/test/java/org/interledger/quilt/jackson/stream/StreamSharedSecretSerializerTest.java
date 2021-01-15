@@ -1,11 +1,9 @@
-package org.interledger.quilt.jackson.spsp;
+package org.interledger.quilt.jackson.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.core.SharedSecret;
-import org.interledger.quilt.jackson.sharedsecret.SharedSecretModule;
-import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
-import org.interledger.quilt.jackson.spsp.SharedSecretModuleTest.SharedSecretContainer;
+import org.interledger.quilt.jackson.stream.StreamSharedSecretModuleTest.StreamSharedSecretContainer;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -13,24 +11,19 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-;
-
 /**
- * Unit tests for {@link SharedSecretSerializer}.
- *
- * @deprecated Prefer {@link org.interledger.quilt.jackson.stream.StreamSharedSecretSerializer} instead.
+ * Unit tests for {@link StreamSharedSecretSerializer}.
  */
-@Deprecated
-public class SharedSecretSerializerTest {
+public class StreamSharedSecretSerializerTest {
 
-  private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
+  private static final StreamSharedSecret SHARED_SECRET = StreamSharedSecret.of(new byte[32]);
 
   protected ObjectMapper objectMapper;
 
   @Before
   public void setup() {
     this.objectMapper = new ObjectMapper()
-      .registerModule(new SharedSecretModule());
+      .registerModule(new StreamSharedSecretModule());
   }
 
 
@@ -42,8 +35,8 @@ public class SharedSecretSerializerTest {
 
   @Test
   public void shouldSerializeInContainer() throws IOException {
-    final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-      .sharedSecret(SHARED_SECRET)
+    final StreamSharedSecretContainer expectedContainer = ImmutableStreamSharedSecretContainer.builder()
+      .streamSharedSecret(SHARED_SECRET)
       .build();
 
     final String actualJson = objectMapper.writeValueAsString(expectedContainer);

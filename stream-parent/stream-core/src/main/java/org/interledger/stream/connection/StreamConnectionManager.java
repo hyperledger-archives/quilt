@@ -2,7 +2,7 @@ package org.interledger.stream.connection;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.StreamConnectionId;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 
 import com.google.common.collect.Maps;
@@ -50,23 +50,25 @@ public class StreamConnectionManager {
    *                             be considered to be a part of the same STREAM Connection.
    * @param destinationAddress   An {@link InterledgerAddress} for the destination of this payment (will be used with
    *                             the SharedSecret to construct a receiver address).
-   * @param sharedSecret         A {@link SharedSecret} obtained from a setup protocol (e.g., SPSP).
+   * @param streamSharedSecret         A {@link StreamSharedSecret} obtained from a setup protocol (e.g., SPSP).
    *
    * @return A {@link StreamConnection} that may have been newly constructed, or may have existed in this manager.
    */
   public StreamConnection openConnection(
     final AccountDetails sourceAccountDetails,
     final InterledgerAddress destinationAddress,
-    final SharedSecret sharedSecret
+    final StreamSharedSecret streamSharedSecret
   ) {
     Objects.requireNonNull(sourceAccountDetails);
     Objects.requireNonNull(destinationAddress);
-    Objects.requireNonNull(sharedSecret);
+    Objects.requireNonNull(streamSharedSecret);
 
     // If the connection is already open, then return it. Otherwise, return a new Connection.
-    final StreamConnectionId streamConnectionId = StreamConnectionId.from(destinationAddress, sharedSecret);
+    final StreamConnectionId streamConnectionId = StreamConnectionId.from(destinationAddress,
+      org.interledger.core.SharedSecret.of(streamSharedSecret.key())
+    );
     return connections.computeIfAbsent(streamConnectionId, $ ->
-      new StreamConnection(sourceAccountDetails, destinationAddress, sharedSecret)
+      new StreamConnection(sourceAccountDetails, destinationAddress, streamSharedSecret)
     );
   }
 

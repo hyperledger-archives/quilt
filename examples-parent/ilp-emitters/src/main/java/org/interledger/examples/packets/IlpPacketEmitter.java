@@ -15,12 +15,12 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerPreparePacketBuilder;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
+import org.interledger.core.SharedSecret;
 import org.interledger.link.PingLoopbackLink;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.StreamPacket;
-import org.interledger.stream.crypto.SharedSecretCrypto;
+Crypto;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
@@ -60,7 +60,7 @@ public class IlpPacketEmitter {
   private static final SharedSecret SHARED_SECRET = SharedSecret
     .of(Base64.getDecoder().decode("nHYRcu5KM5pyw8XehssZtvhEgCgkKP4Do5kJUpk84G4"));
 
-  private static final SharedSecretCrypto SHARED_SECRET_CRYPTO = new AesGcmSharedSecretCrypto();
+  private static final SharedSecretCrypto SHARED_SECRET_CRYPTO = new AesGcmStreamSharedSecretCrypto();
 
   public static void main(String[] args) throws IOException {
     emitPacketsWithNoData();

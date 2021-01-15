@@ -9,6 +9,7 @@ import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,9 @@ public class SequenceFilter implements StreamPacketFilter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SequenceFilter.class);
 
-  private static final UnsignedInteger PACKET_LIMIT = UnsignedInteger.MAX_VALUE; // <-- 2^32
+  private static final UnsignedLong PACKET_LIMIT = UnsignedLong.valueOf(
+    UnsignedInteger.MAX_VALUE.longValue() // <-- 2^32
+  );
 
   private final PaymentSharedStateTracker paymentSharedStateTracker;
 
@@ -39,7 +42,7 @@ public class SequenceFilter implements StreamPacketFilter {
     Objects.requireNonNull(modifiableStreamPacketRequest);
 
     // Obtain a sequence for this packet.
-    final UnsignedInteger nextSequence = paymentSharedStateTracker.getStreamConnection().nextSequence();
+    final UnsignedLong nextSequence = paymentSharedStateTracker.getStreamConnection().nextSequence();
     modifiableStreamPacketRequest.setSequence(nextSequence);
 
     // Destroy the connection after 2^32 packets are sent for encryption safety:

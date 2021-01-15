@@ -3,7 +3,7 @@ package org.interledger.stream.receiver;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.crypto.Random;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;

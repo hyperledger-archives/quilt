@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.spsp.ImmutableStreamConnectionDetails.Builder;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 
 /**
  * Contains information that can be used to initiate and process a STREAM connection. This information typically

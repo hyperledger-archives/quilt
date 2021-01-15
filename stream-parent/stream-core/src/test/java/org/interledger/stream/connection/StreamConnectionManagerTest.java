@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.stream.StreamConnectionId;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 
 import org.junit.Before;
@@ -28,26 +28,26 @@ public class StreamConnectionManagerTest {
 
     final AccountDetails sourceAccountDetails = mock(AccountDetails.class);
     final InterledgerAddress destinationAddress = InterledgerAddress.of("example.foo");
-    final SharedSecret sharedSecret = SharedSecret.of(new byte[32]);
+    final StreamSharedSecret streamSharedSecret = StreamSharedSecret.of(new byte[32]);
 
-    StreamConnectionId streamConnectionId = StreamConnectionId.from(destinationAddress, sharedSecret);
+    StreamConnectionId streamConnectionId = StreamConnectionId.from(destinationAddress, streamSharedSecret);
     final StreamConnection streamConnection = streamConnectionManager
       .openConnection(
         sourceAccountDetails,
         destinationAddress,
-        sharedSecret
+        streamSharedSecret
       );
     assertThat(streamConnectionManager
       .openConnection(
         sourceAccountDetails,
         destinationAddress,
-        sharedSecret
+        streamSharedSecret
       )).isEqualTo(streamConnection);
     assertThat(streamConnectionManager
       .openConnection(
         sourceAccountDetails,
         destinationAddress,
-        sharedSecret
+        streamSharedSecret
       )).isEqualTo(streamConnection);
 
     assertThat(streamConnectionManager.closeConnection(streamConnectionId)).get().isEqualTo(streamConnection);

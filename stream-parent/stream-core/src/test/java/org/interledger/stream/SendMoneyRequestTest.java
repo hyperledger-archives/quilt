@@ -2,16 +2,17 @@ package org.interledger.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.primitives.UnsignedLong;
-import java.time.Duration;
-import java.util.UUID;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.crypto.SharedSecret;
-import org.interledger.fx.Denomination;
+import org.interledger.core.SharedSecret;
+
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.time.Duration;
+import java.util.UUID;
 
 /**
  * Unit tests for {@link SendMoneyRequest}.

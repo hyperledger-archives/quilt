@@ -20,13 +20,17 @@ package org.interledger.quilt.jackson.sharedsecret;
  * =========================LICENSE_END==================================
  */
 
+import org.interledger.core.SharedSecret;
+
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.interledger.stream.crypto.SharedSecret;
 
 /**
  * A Jackson {@link SimpleModule} for serializing and deserializing {@link SharedSecret} objects.
+ *
+ * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
  */
+@Deprecated
 public class SharedSecretModule extends SimpleModule {
 
   private static final String NAME = SharedSecretModule.class.getName();

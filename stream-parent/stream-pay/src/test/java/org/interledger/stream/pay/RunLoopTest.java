@@ -14,7 +14,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.link.Link;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.connection.StreamConnection;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
@@ -27,7 +27,7 @@ import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.AmountTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
-import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -449,9 +449,9 @@ public class RunLoopTest {
   @Test
   public void shouldCloseConnectionWithNoError() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.ONE);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    when(streamConnectionMock.getSharedSecret()).thenReturn(mock(SharedSecret.class));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(SharedSecret.class));
 
     RunLoop runLoop = new RunLoop(
       linkMock,
@@ -477,9 +477,9 @@ public class RunLoopTest {
     when(streamPacketEncryptionService.toEncrypted(any(), any())).thenReturn(new byte[0]);
 
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
-    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.ONE);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    when(streamConnectionMock.getSharedSecret()).thenReturn(mock(SharedSecret.class));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(SharedSecret.class));
     doThrow(new RuntimeException()).when(linkMock).sendPacket(any());
 
     try {
@@ -500,9 +500,9 @@ public class RunLoopTest {
 
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
     when(quoteMock.streamConnection()).thenReturn(streamConnectionMock);
-    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedInteger.ONE);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    when(streamConnectionMock.getSharedSecret()).thenReturn(mock(SharedSecret.class));
+    when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(SharedSecret.class));
 
     AmountTracker amountTrackerMock = mock(AmountTracker.class);
     when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTrackerMock);

@@ -4,8 +4,8 @@ import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.crypto.Random;
-import org.interledger.stream.crypto.SharedSecret;
 
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedLong;
@@ -19,7 +19,7 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * Utilities to support the STREAM protocol.
  *
- * @deprecated Use StreamPacketUtils instead.
+ * @deprecated Will be removed once stream-client module is removed. Prefer {@link StreamPacketUtils} where possible.
  */
 @Deprecated
 public class StreamUtils {
@@ -37,7 +37,10 @@ public class StreamUtils {
    * can generate an unfulfillable random condition.
    *
    * @return A {@link InterledgerCondition} that is not fulfillable.
+   *
+   * @deprecated Prefer {@link StreamPacketUtils#unfulfillableCondition()}.
    */
+  @Deprecated
   public static InterledgerCondition unfulfillableCondition() {
     return InterledgerCondition.of(Random.randBytes(32));
   }
@@ -52,7 +55,10 @@ public class StreamUtils {
    * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
    *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
+   *
+   * @deprecated Prefer {@link StreamPacketUtils#generateFulfillableFulfillment(SharedSecret, byte[])}.
    */
+  @Deprecated
   public static InterledgerFulfillment generatedFulfillableFulfillment(
     final SharedSecret sharedSecret, final byte[] data
   ) {
@@ -77,7 +83,10 @@ public class StreamUtils {
    * @param value2 The second value.
    *
    * @return The smaller of the two supplied values.
+   *
+   * @deprecated Will be removed once stream-client module is removed.
    */
+  @Deprecated
   public static UnsignedLong min(final UnsignedLong value1, final UnsignedLong value2) {
     Objects.requireNonNull(value1);
     Objects.requireNonNull(value2);
@@ -96,7 +105,10 @@ public class StreamUtils {
    * @param value2 The second value.
    *
    * @return The smaller of the two supplied values.
+   *
+   * @deprecated Will be removed once stream-client module is removed.
    */
+  @Deprecated
   public static UnsignedLong max(final UnsignedLong value1, final UnsignedLong value2) {
     Objects.requireNonNull(value1);
     Objects.requireNonNull(value2);

@@ -1,9 +1,8 @@
-package org.interledger.quilt.jackson.spsp;
+package org.interledger.quilt.jackson.stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.core.SharedSecret;
-import org.interledger.quilt.jackson.sharedsecret.SharedSecretModule;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,17 +17,12 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 
-;
-
 /**
- * Unit tests for {@link SharedSecretModule}.
- *
- * @deprecated Prefer {@link org.interledger.quilt.jackson.stream.StreamSharedSecretSerializer} instead.
+ * Unit tests for {@link StreamSharedSecretModule}.
  */
-@Deprecated
-public class SharedSecretModuleTest {
+public class StreamSharedSecretModuleTest {
 
-  private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
+  private static final StreamSharedSecret SHARED_SECRET = StreamSharedSecret.of(new byte[32]);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -38,18 +32,18 @@ public class SharedSecretModuleTest {
   @Before
   public void setup() {
     this.objectMapper = new ObjectMapper()
-      .registerModule(new SharedSecretModule());
+      .registerModule(new StreamSharedSecretModule());
   }
 
   @Test
   public void shouldSerializeAndDeserialize() throws IOException {
-    final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-      .sharedSecret(SHARED_SECRET)
+    final StreamSharedSecretContainer expectedContainer = ImmutableStreamSharedSecretContainer.builder()
+      .streamSharedSecret(SHARED_SECRET)
       .build();
 
     final String json = objectMapper.writeValueAsString(expectedContainer);
-    final SharedSecretContainer actualContainer = objectMapper
-      .readValue(json, SharedSecretContainer.class);
+    final StreamSharedSecretContainer actualContainer = objectMapper
+      .readValue(json, StreamSharedSecretContainer.class);
 
     assertThat(actualContainer).isEqualTo(expectedContainer);
   }
@@ -57,21 +51,21 @@ public class SharedSecretModuleTest {
   @Test
   public void shouldNotSerializeAndDeserialize() throws IOException {
     ObjectMapper objectMapperWithoutModule = new ObjectMapper(); // No Module!
-    final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-      .sharedSecret(SHARED_SECRET)
+    final StreamSharedSecretContainer expectedContainer = ImmutableStreamSharedSecretContainer.builder()
+      .streamSharedSecret(SHARED_SECRET)
       .build();
 
     expectedException.expect(InvalidDefinitionException.class);
     final String actualJson = objectMapperWithoutModule.writeValueAsString(expectedContainer);
-    objectMapperWithoutModule.readValue(actualJson, SharedSecretContainer.class);
+    objectMapperWithoutModule.readValue(actualJson, StreamSharedSecretContainer.class);
   }
 
   @Value.Immutable
-  @JsonSerialize(as = ImmutableSharedSecretContainer.class)
-  @JsonDeserialize(as = ImmutableSharedSecretContainer.class)
-  public interface SharedSecretContainer {
+  @JsonSerialize(as = ImmutableStreamSharedSecretContainer.class)
+  @JsonDeserialize(as = ImmutableStreamSharedSecretContainer.class)
+  public interface StreamSharedSecretContainer {
 
     @JsonProperty("shared_secret")
-    SharedSecret getSharedSecret();
+    StreamSharedSecret streamSharedSecret();
   }
 }

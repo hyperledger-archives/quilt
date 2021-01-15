@@ -6,7 +6,7 @@ import static org.junit.Assert.fail;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.fx.Denomination;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;

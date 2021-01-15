@@ -35,7 +35,7 @@ import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.connection.StreamConnection;
-import org.interledger.stream.crypto.AesGcmSharedSecretCrypto;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
@@ -110,7 +110,7 @@ public class StreamPayerDefaultTest {
     MockitoAnnotations.initMocks(this);
 
     this.streamPacketEncryptionService = new StreamPacketEncryptionService(
-      StreamCodecContextFactory.oer(), new AesGcmSharedSecretCrypto()
+      StreamCodecContextFactory.oer(), new AesGcmStreamSharedSecretCrypto()
     );
   }
 
@@ -1932,7 +1932,7 @@ public class StreamPayerDefaultTest {
         final StreamConnection streamConnection = newStreamConnection(sourceAccountDetails, destinationAccountDetails);
         return StreamConnectionDetails.builder()
           .destinationAddress(streamConnection.getDestinationAddress())
-          .sharedSecret(streamConnection.getSharedSecret())
+          .sharedSecret(streamConnection.getStreamSharedSecret())
           .build();
       }
 
@@ -1941,7 +1941,7 @@ public class StreamPayerDefaultTest {
         final StreamConnection streamConnection = newStreamConnection(sourceAccountDetails, destinationAccountDetails);
         return StreamConnectionDetails.builder()
           .destinationAddress(streamConnection.getDestinationAddress())
-          .sharedSecret(streamConnection.getSharedSecret())
+          .sharedSecret(streamConnection.getStreamSharedSecret())
           .build();
       }
     };

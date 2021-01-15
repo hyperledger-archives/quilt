@@ -1,4 +1,4 @@
-package org.interledger.quilt.jackson.sharedsecret;
+package org.interledger.quilt.jackson.stream;
 
 /*-
  * ========================LICENSE_START=================================
@@ -20,33 +20,30 @@ package org.interledger.quilt.jackson.sharedsecret;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+
+import java.io.IOException;
 
 /**
- * An extension of {@link FromStringDeserializer} that deserializes a JSON string into an instance of {@link
- * SharedSecret}.
- *
- * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
+ * Jackson Serializer for {@link StreamSharedSecret}.
  */
-@Deprecated
-public class SharedSecretDeserializer extends FromStringDeserializer<SharedSecret> {
+public class StreamSharedSecretSerializer extends StdScalarSerializer<StreamSharedSecret> {
 
-  public static final SharedSecretDeserializer INSTANCE = new SharedSecretDeserializer();
+  public static final StreamSharedSecretSerializer INSTANCE = new StreamSharedSecretSerializer();
 
   /**
    * No-args Constructor.
    */
-  public SharedSecretDeserializer() {
-    super(SharedSecret.class);
+  public StreamSharedSecretSerializer() {
+    super(StreamSharedSecret.class, false);
   }
 
   @Override
-  protected SharedSecret _deserialize(
-    final String value, final DeserializationContext deserializationContext
-  ) {
-    return SharedSecret.of(value);
+  public void serialize(StreamSharedSecret value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+    gen.writeString(value.value());
   }
 }

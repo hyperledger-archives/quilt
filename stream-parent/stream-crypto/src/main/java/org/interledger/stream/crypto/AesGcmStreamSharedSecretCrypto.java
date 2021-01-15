@@ -24,9 +24,9 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * An {@link SharedSecretCrypto} that uses a JavaKeystore for underlying key storage.
+ * An {@link StreamSharedSecretCrypto} that uses a JavaKeystore for underlying key storage.
  */
-public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
+public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto {
 
   /**
    * For GCM a 12 byte random byte-array is recommend by NIST because it's faster and more secure (See page 8 in the PDF
@@ -48,7 +48,7 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    * No-args Constructor that initializes {@link #encryptionMode} to be {@link EncryptionMode#ENCRYPT_NON_STANDARD}
    * because this is the default because it's currently the most widely deploy mechanism.
    */
-  public AesGcmSharedSecretCrypto() {
+  public AesGcmStreamSharedSecretCrypto() {
     this(EncryptionMode.ENCRYPT_NON_STANDARD);
   }
 
@@ -57,13 +57,13 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    *
    * @param encryptionMode The {@link EncryptionMode} to use when encrypting and decrypting.
    */
-  public AesGcmSharedSecretCrypto(final EncryptionMode encryptionMode) {
+  public AesGcmStreamSharedSecretCrypto(final EncryptionMode encryptionMode) {
     this.encryptionMode = Objects.requireNonNull(encryptionMode);
   }
 
   @Override
-  public byte[] encrypt(final SharedSecret sharedSecret, final byte[] plainText) throws EncryptionException {
-    Objects.requireNonNull(sharedSecret);
+  public byte[] encrypt(final StreamSharedSecret streamSharedSecret, final byte[] plainText) throws EncryptionException {
+    Objects.requireNonNull(streamSharedSecret);
     Objects.requireNonNull(plainText);
 
     // Create an initialization vector. For GCM a 12 byte random byte-array is recommend by NIST
@@ -71,20 +71,20 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
     // https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
     final byte[] iv = Random.randBytes(AES_GCM_NONCE_IV_LENGTH);
 
-    return encryptWithIv(sharedSecret, plainText, iv);
+    return encryptWithIv(streamSharedSecret, plainText, iv);
   }
 
   @VisibleForTesting
-  byte[] encryptWithIv(final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv)
+  byte[] encryptWithIv(final StreamSharedSecret streamSharedSecret, final byte[] plainText, final byte[] iv)
     throws EncryptionException {
-    Objects.requireNonNull(sharedSecret);
+    Objects.requireNonNull(streamSharedSecret);
     Objects.requireNonNull(plainText);
     Objects.requireNonNull(iv);
 
     if (this.encryptionMode == EncryptionMode.ENCRYPT_NON_STANDARD) {
-      return this.nonStandardModeEncryptWithIv(sharedSecret, plainText, iv);
+      return this.nonStandardModeEncryptWithIv(streamSharedSecret, plainText, iv);
     } else {
-      return this.standardModeEncryptWithIv(sharedSecret, plainText, iv);
+      return this.standardModeEncryptWithIv(streamSharedSecret, plainText, iv);
     }
   }
 
@@ -92,7 +92,7 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    * <p>Encrypts {@code plainText} with {@code iv} using the standard byte arrangement of the ciphertext where the
    * AuthTag goes last, as specified by NIST.</p>
    *
-   * @param sharedSecret A {@link SharedSecret} used for encryption.
+   * @param streamSharedSecret A {@link StreamSharedSecret} used for encryption.
    * @param plainText    A byte-array to encrypt.
    * @param iv           An initialization vector used AES/GCM.
    *
@@ -102,12 +102,12 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
   private byte[] standardModeEncryptWithIv(
-    final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
+    final StreamSharedSecret streamSharedSecret, final byte[] plainText, final byte[] iv
   ) throws EncryptionException {
     Objects.requireNonNull(plainText);
     Preconditions.checkArgument(iv.length == AES_GCM_NONCE_IV_LENGTH);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = Hashing.hmacSha256(streamSharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // See https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9
@@ -153,7 +153,7 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    * isn't technically broken, and  works as long as everyone uses the same arrangement when encrypting/decrypting,
    * which is the case in most Interledger deployments.</p>
    *
-   * @param sharedSecret A {@link SharedSecret} used for encryption.
+   * @param streamSharedSecret A {@link StreamSharedSecret} used for encryption.
    * @param plainText    A byte-array to encrypt.
    * @param iv           An initialization vector used AES/GCM.
    *
@@ -161,17 +161,17 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    *   inverted from the NIST specification).
    *
    * @see "https://github.com/hyperledger/quilt/issues/237"
-   * @deprecated This method will be removed in a future version. Prefer {@link #standardModeEncryptWithIv(SharedSecret,
+   * @deprecated This method will be removed in a future version. Prefer {@link #standardModeEncryptWithIv(StreamSharedSecret,
    *   byte[], byte[])} instead.
    */
   @Deprecated
   private byte[] nonStandardModeEncryptWithIv(
-    final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
+    final StreamSharedSecret streamSharedSecret, final byte[] plainText, final byte[] iv
   ) throws EncryptionException {
     Objects.requireNonNull(plainText);
     Preconditions.checkArgument(iv.length == AES_GCM_NONCE_IV_LENGTH);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = Hashing.hmacSha256(streamSharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // See https://proandroiddev.com/security-best-practices-symmetric-encryption-with-aes-in-java-7616beaaade9
@@ -219,23 +219,23 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
   }
 
   @Override
-  public byte[] decrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
-    Objects.requireNonNull(sharedSecret);
+  public byte[] decrypt(final StreamSharedSecret streamSharedSecret, final byte[] cipherMessage) {
+    Objects.requireNonNull(streamSharedSecret);
     Objects.requireNonNull(cipherMessage);
 
     if (this.encryptionMode == EncryptionMode.ENCRYPT_NON_STANDARD) {
       try {
-        return this.nonStandardModeDecrypt(sharedSecret, cipherMessage);
+        return this.nonStandardModeDecrypt(streamSharedSecret, cipherMessage);
       } catch (EncryptionException e) {
         logger.warn(
           "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
           EncryptionMode.ENCRYPT_NON_STANDARD, EncryptionMode.ENCRYPT_STANDARD
         );
-        return this.standardModeDecrypt(sharedSecret, cipherMessage);
+        return this.standardModeDecrypt(streamSharedSecret, cipherMessage);
       }
     } else {
       try {
-        return this.standardModeDecrypt(sharedSecret, cipherMessage);
+        return this.standardModeDecrypt(streamSharedSecret, cipherMessage);
       } catch (EncryptionException e) {
         logger.warn(
           "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
@@ -243,7 +243,7 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
           EncryptionMode.ENCRYPT_NON_STANDARD,
           e
         );
-        return this.nonStandardModeDecrypt(sharedSecret, cipherMessage);
+        return this.nonStandardModeDecrypt(streamSharedSecret, cipherMessage);
       }
     }
   }
@@ -252,17 +252,17 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    * <p>Decrypts {@code cipherMessage} using the standard byte arrangement of the embedded ciphertext where the
    * AuthTag goes last, as specified by NIST.</p>
    *
-   * @param sharedSecret  A {@link SharedSecret} used for encryption.
+   * @param streamSharedSecret  A {@link StreamSharedSecret} used for encryption.
    * @param cipherMessage A byte-array to decrypt.
    *
    * @return A byte-array containing decrypted plaintext.
    *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
-  private byte[] standardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
+  private byte[] standardModeDecrypt(final StreamSharedSecret streamSharedSecret, final byte[] cipherMessage) {
     Objects.requireNonNull(cipherMessage);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = Hashing.hmacSha256(streamSharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // First, deconstruct the message
@@ -298,21 +298,21 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
    * isn't technically broken, and  works as long as everyone uses the same arrangement when encrypting/decrypting,
    * which is the case in most Interledger deployments.</p>
    *
-   * @param sharedSecret  A {@link SharedSecret} used for encryption.
+   * @param streamSharedSecret  A {@link StreamSharedSecret} used for encryption.
    * @param cipherMessage A byte-array to decrypt.
    *
    * @return A byte-array containing decrypted plaintext.
    *
    * @see "https://github.com/hyperledger/quilt/issues/237"
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
-   * @deprecated This method will be removed in a future version. Prefer {@link #standardModeDecrypt(SharedSecret,
+   * @deprecated This method will be removed in a future version. Prefer {@link #standardModeDecrypt(StreamSharedSecret,
    *   byte[])} instead.
    */
   @Deprecated
-  private byte[] nonStandardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
+  private byte[] nonStandardModeDecrypt(final StreamSharedSecret streamSharedSecret, final byte[] cipherMessage) {
     Objects.requireNonNull(cipherMessage);
 
-    byte[] encryptionKey = Hashing.hmacSha256(sharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
+    byte[] encryptionKey = Hashing.hmacSha256(streamSharedSecret.key()).hashBytes(ENCRYPTION_KEY_STRING).asBytes();
     final SecretKey typedEncryptionKey = new SecretKeySpec(encryptionKey, "AES");
 
     // First, deconstruct the message
@@ -374,7 +374,7 @@ public class AesGcmSharedSecretCrypto implements SharedSecretCrypto {
 
   @Override
   public String toString() {
-    return new StringJoiner(", ", AesGcmSharedSecretCrypto.class.getSimpleName() + "[", "]")
+    return new StringJoiner(", ", AesGcmStreamSharedSecretCrypto.class.getSimpleName() + "[", "]")
       .add("encryptionMode=" + encryptionMode)
       .toString();
   }

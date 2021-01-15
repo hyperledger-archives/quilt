@@ -1,4 +1,4 @@
-package org.interledger.quilt.jackson.sharedsecret;
+package org.interledger.quilt.jackson.stream;
 
 /*-
  * ========================LICENSE_START=================================
@@ -20,33 +20,30 @@ package org.interledger.quilt.jackson.sharedsecret;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 
 /**
  * An extension of {@link FromStringDeserializer} that deserializes a JSON string into an instance of {@link
- * SharedSecret}.
- *
- * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
+ * StreamSharedSecret}.
  */
-@Deprecated
-public class SharedSecretDeserializer extends FromStringDeserializer<SharedSecret> {
+public class StreamSharedSecretDeserializer extends FromStringDeserializer<StreamSharedSecret> {
 
-  public static final SharedSecretDeserializer INSTANCE = new SharedSecretDeserializer();
+  public static final StreamSharedSecretDeserializer INSTANCE = new StreamSharedSecretDeserializer();
 
   /**
    * No-args Constructor.
    */
-  public SharedSecretDeserializer() {
-    super(SharedSecret.class);
+  public StreamSharedSecretDeserializer() {
+    super(StreamSharedSecret.class);
   }
 
   @Override
-  protected SharedSecret _deserialize(
+  protected StreamSharedSecret _deserialize(
     final String value, final DeserializationContext deserializationContext
   ) {
-    return SharedSecret.of(value);
+    return StreamSharedSecret.of(value);
   }
 }

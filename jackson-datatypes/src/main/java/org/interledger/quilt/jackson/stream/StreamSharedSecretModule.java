@@ -1,4 +1,4 @@
-package org.interledger.quilt.jackson.sharedsecret;
+package org.interledger.quilt.jackson.stream;
 
 /*-
  * ========================LICENSE_START=================================
@@ -20,33 +20,29 @@ package org.interledger.quilt.jackson.sharedsecret;
  * =========================LICENSE_END==================================
  */
 
-import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
-
-import java.io.IOException;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
- * Jackson Serializer for {@link SharedSecret}.
- *
- * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
+ * A Jackson {@link SimpleModule} for serializing and deserializing {@link StreamSharedSecret} objects.
  */
-@Deprecated
-public class SharedSecretSerializer extends StdScalarSerializer<SharedSecret> {
+public class StreamSharedSecretModule extends SimpleModule {
 
-  public static final SharedSecretSerializer INSTANCE = new SharedSecretSerializer();
+  private static final String NAME = StreamSharedSecretModule.class.getName();
 
   /**
    * No-args Constructor.
    */
-  public SharedSecretSerializer() {
-    super(SharedSecret.class, false);
+  public StreamSharedSecretModule() {
+    super(
+      NAME,
+      new Version(1, 0, 0, null, "org.interledger.stream", "jackson-datatype-stream-shared-secret")
+    );
+
+    addSerializer(StreamSharedSecret.class, StreamSharedSecretSerializer.INSTANCE);
+    addDeserializer(StreamSharedSecret.class, StreamSharedSecretDeserializer.INSTANCE);
   }
 
-  @Override
-  public void serialize(SharedSecret value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-    gen.writeString(value.value());
-  }
 }

@@ -5,7 +5,7 @@ import static org.junit.Assert.fail;
 
 import org.interledger.core.InterledgerCondition;
 import org.interledger.core.InterledgerFulfillment;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Test;

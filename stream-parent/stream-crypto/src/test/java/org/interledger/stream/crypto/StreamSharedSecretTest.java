@@ -9,9 +9,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 /**
- * Unit test for {@link SharedSecret}.
+ * Unit test for {@link StreamSharedSecret}.
  */
-public class SharedSecretTest {
+public class StreamSharedSecretTest {
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
@@ -23,9 +23,9 @@ public class SharedSecretTest {
       byte[] key = new byte[32];
       random.nextBytes(key);
       String base64 = Base64.getEncoder().encodeToString(key);
-      SharedSecret sharedSecret = SharedSecret.of(base64);
-      assertThat(sharedSecret.value()).isEqualTo(base64);
-      assertThat(sharedSecret.key()).isEqualTo(key);
+      StreamSharedSecret streamSharedSecret = StreamSharedSecret.of(base64);
+      assertThat(streamSharedSecret.value()).isEqualTo(base64);
+      assertThat(streamSharedSecret.key()).isEqualTo(key);
     }
   }
 
@@ -36,9 +36,9 @@ public class SharedSecretTest {
       byte[] key = new byte[32];
       random.nextBytes(key);
       String base64Url = Base64.getUrlEncoder().encodeToString(key);
-      SharedSecret sharedSecret = SharedSecret.of(base64Url);
-      assertThat(sharedSecret.value()).isEqualTo(base64Url);
-      assertThat(sharedSecret.key()).isEqualTo(key);
+      StreamSharedSecret streamSharedSecret = StreamSharedSecret.of(base64Url);
+      assertThat(streamSharedSecret.value()).isEqualTo(base64Url);
+      assertThat(streamSharedSecret.key()).isEqualTo(key);
     }
   }
 
@@ -46,7 +46,7 @@ public class SharedSecretTest {
   public void exceptionIfNotBase64() {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("SharedSecret must be base64 encoded");
-    SharedSecret.of("!");
+    StreamSharedSecret.of("!");
   }
 
   @Test
@@ -55,7 +55,7 @@ public class SharedSecretTest {
     String base64 = Base64.getEncoder().encodeToString(smallKey);
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("SharedSecret must be 32 bytes");
-    SharedSecret.of(base64);
+    StreamSharedSecret.of(base64);
   }
 
   @Test
@@ -64,7 +64,7 @@ public class SharedSecretTest {
     String base64 = Base64.getEncoder().encodeToString(bigKey);
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("SharedSecret must be 32 bytes");
-    SharedSecret.of(base64);
+    StreamSharedSecret.of(base64);
   }
 
 }

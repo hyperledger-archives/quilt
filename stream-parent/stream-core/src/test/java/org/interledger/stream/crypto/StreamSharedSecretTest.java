@@ -2,7 +2,7 @@ package org.interledger.stream.crypto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,7 +14,7 @@ import java.util.Random;
 /**
  * Unit test for {@link SharedSecret}.
  */
-public class SharedSecretTest {
+public class StreamSharedSecretTest {
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();

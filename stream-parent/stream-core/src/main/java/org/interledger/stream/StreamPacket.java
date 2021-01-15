@@ -24,7 +24,7 @@ import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerPacketType;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.frames.StreamFrameType;

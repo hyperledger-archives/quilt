@@ -1,7 +1,7 @@
 package org.interledger.stream.pay.model;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.crypto.SharedSecret;
+import org.interledger.core.SharedSecret;;
 import org.interledger.fx.Denomination;
 
 import com.google.common.primitives.UnsignedLong;

@@ -6,7 +6,6 @@ import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.pay.model.ImmutableStreamPacketRequest.Builder;
 
-import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Derived;
@@ -39,8 +38,8 @@ public interface StreamPacketRequest {
    * Sequence number of the STREAM packet.
    */
   @Default
-  default UnsignedInteger sequence() {
-    return UnsignedInteger.ZERO;
+  default UnsignedLong sequence() {
+    return UnsignedLong.ZERO;
   }
 
   /**

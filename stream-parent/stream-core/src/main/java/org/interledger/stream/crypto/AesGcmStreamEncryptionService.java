@@ -1,5 +1,7 @@
 package org.interledger.stream.crypto;
 
+import org.interledger.core.SharedSecret;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
@@ -26,7 +28,7 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * An {@link StreamEncryptionService} that uses a JavaKeystore for underlying key storage.
  *
- * @deprecated Will be removed in a future version. Prefer {@link SharedSecretCrypto} instead.
+ * @deprecated Will be removed in a future version. Prefer {@link StreamSharedSecretCrypto} instead.
  */
 @Deprecated
 public class AesGcmStreamEncryptionService implements StreamEncryptionService {

@@ -87,7 +87,7 @@ public interface ExchangeRateProber {
     private final Map<StreamConnection, PaymentSharedStateTracker> paymentSharedStateTrackersMap;
 
     private final List<Long> initialTestPacketAmounts;
-    private Duration timeoutDuration;
+    private final Duration timeoutDuration;
 
     public Default(final StreamPacketEncryptionService streamPacketEncryptionService, final Link<?> link) {
       this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
@@ -147,7 +147,6 @@ public interface ExchangeRateProber {
 //        new PacingFilter(paymentSharedStateTracker.getPacingTracker()),
         new AmountFilter(paymentSharedStateTracker),
         new ExchangeRateFilter(paymentSharedStateTracker.getExchangeRateTracker())
-        // TODO: PendingRequestTracker?
       );
 
       // Collects any replies that have an exception.
@@ -276,7 +275,7 @@ public interface ExchangeRateProber {
 
       // Create the ILP Prepare packet
       final byte[] streamPacketData = this.streamPacketEncryptionService
-        .toEncrypted(streamConnection.getSharedSecret(), streamPacket);
+        .toEncrypted(streamConnection.getStreamSharedSecret(), streamPacket);
       final InterledgerCondition executionCondition = StreamPacketUtils.unfulfillableCondition();
 
       final Supplier<InterledgerPreparePacket> preparePacket = () -> InterledgerPreparePacket.builder()

@@ -13,8 +13,8 @@ import org.interledger.link.Link;
 import org.interledger.link.LinkSettings;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -23,7 +23,6 @@ import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
-import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,7 +205,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
               interledgerFulfillPacket -> {
                 final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
                   interledgerResponsePacket.getData(),
-                  this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
+                  this.paymentSharedStateTracker.getStreamConnection().getStreamSharedSecret(),
                   streamPacketEncryptionService
                 );
                 return StreamPacketReply.builder()
@@ -233,7 +232,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                 } else {
                   final Optional<StreamPacket> typedStreamPacket = StreamPacketUtils.mapToStreamPacket(
                     interledgerResponsePacket.getData(),
-                    this.paymentSharedStateTracker.getStreamConnection().getSharedSecret(),
+                    this.paymentSharedStateTracker.getStreamConnection().getStreamSharedSecret(),
                     streamPacketEncryptionService
                   );
                   return StreamPacketReply.builder()
@@ -279,18 +278,18 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       .interledgerPacketType(InterledgerPacketType.PREPARE)
       // Per IL-RFC-29, this is the min amount the receiver should accept
       .prepareAmount(streamPacketRequest.minDestinationAmount())
-      .sequence(UnsignedLong.valueOf(streamPacketRequest.sequence().longValue()))
+      .sequence(streamPacketRequest.sequence())
       .frames(streamPacketRequest.requestFrames())
       .build();
 
     final StreamConnection streamConnection = this.paymentSharedStateTracker.getStreamConnection();
     final byte[] streamPacketData = streamPacketEncryptionService
-      .toEncrypted(streamConnection.getSharedSecret(), streamPacket);
+      .toEncrypted(streamConnection.getStreamSharedSecret(), streamPacket);
     final InterledgerCondition executionCondition;
     if (streamPacketRequest.isFulfillable()) {
       // Create the ILP Prepare packet
       executionCondition = StreamPacketUtils.generateFulfillableFulfillment(
-        streamConnection.getSharedSecret(), streamPacketData
+        streamConnection.getStreamSharedSecret(), streamPacketData
       ).getCondition();
     } else {
       executionCondition = StreamPacketUtils.unfulfillableCondition();
