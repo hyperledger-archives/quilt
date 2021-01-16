@@ -2,14 +2,18 @@ package org.interledger.stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacketType;
+import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
 import org.interledger.core.SharedSecret;
+import org.interledger.fx.Denomination;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.crypto.StreamSharedSecret;
@@ -18,9 +22,9 @@ import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamCloseFrame;
+import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
-import org.interledger.fx.Denomination;
 
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
@@ -37,6 +41,7 @@ import java.util.Optional;
 /**
  * Unit tests for {@link StreamPacketUtils}.
  */
+@SuppressWarnings("deprecation")
 public class StreamPacketUtilsTest {
 
   private static final Denomination DENOMINATION = Denomination.builder()
@@ -98,6 +103,7 @@ public class StreamPacketUtilsTest {
   // generateFulfillableFulfillment
   //////////////////////////
 
+  @SuppressWarnings("ConstantConditions")
   @Test
   public void generatedFulfillableFulfillmentNullSharedSecret() {
     expectedException.expect(NullPointerException.class);
@@ -217,6 +223,17 @@ public class StreamPacketUtilsTest {
   }
 
   @Test
+  public void mapToStreamPacketWhenException() {
+    doThrow(new RuntimeException())
+      .when(streamEncryptionUtilsMock)
+      .fromEncrypted(any(), any());
+
+    assertThat(StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]),
+      streamEncryptionUtilsMock))
+      .isEmpty();
+  }
+
+  @Test
   public void mapToStreamPacket2WithEmptyPacket() {
     assertThat(StreamPacketUtils.mapToStreamPacket(
       new byte[0], StreamSharedSecret.of(new byte[32]), streamPacketEncryptionServiceMock)
@@ -228,9 +245,21 @@ public class StreamPacketUtilsTest {
     when(streamPacketEncryptionServiceMock
       .fromEncrypted(Mockito.<StreamSharedSecret>any(), any()))
       .thenReturn(mock(StreamPacket.class));
+
     assertThat(StreamPacketUtils.mapToStreamPacket(
       new byte[1], StreamSharedSecret.of(new byte[32]), streamPacketEncryptionServiceMock)
     ).isPresent();
+  }
+
+  @Test
+  public void mapToStreamPacket2WhenException() {
+    doThrow(new RuntimeException())
+      .when(streamPacketEncryptionServiceMock)
+      .fromEncrypted(Mockito.<StreamSharedSecret>any(), any());
+
+    assertThat(StreamPacketUtils.mapToStreamPacket(new byte[1], StreamSharedSecret.of(new byte[32]),
+      streamPacketEncryptionServiceMock))
+      .isEmpty();
   }
 
   //////////////////////////
@@ -429,6 +458,50 @@ public class StreamPacketUtilsTest {
     InterledgerResponsePacket responsePacketMock = mock(InterledgerResponsePacket.class);
     when(responsePacketMock.typedData()).thenReturn(Optional.empty());
     assertThat(StreamPacketUtils.hasAuthenticStreamPacket(responsePacketMock)).isFalse();
+  }
+
+  //////////////////////////
+  // constructPacketToCloseStream
+//////////////////////////
+
+  @Test
+  public void constructPacketToCloseStreamWithNullStreamConnection() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketUtils.constructPacketToCloseStream(null, streamPacketEncryptionServiceMock);
+  }
+
+  @Test
+  public void constructPacketToCloseStreamWithNullService() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketUtils.constructPacketToCloseStream(mock(StreamConnection.class), null);
+  }
+
+  @Test
+  public void constructPacketToCloseStream() {
+    StreamConnection streamConnectionMock = mock(StreamConnection.class);
+    when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.ONE);
+    when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.dest"));
+    when(streamPacketEncryptionServiceMock.toEncrypted(Mockito.<StreamSharedSecret>any(), any()))
+      .thenReturn(new byte[1]);
+
+    final InterledgerPreparePacket packet = StreamPacketUtils
+      .constructPacketToCloseStream(streamConnectionMock, streamPacketEncryptionServiceMock);
+
+    assertThat(packet.getDestination()).isEqualTo(InterledgerAddress.of("example.dest"));
+    assertThat(packet.getAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(packet.getExecutionCondition()).isNotNull();
+    assertThat(packet.getExpiresAt()).isNotNull();
+    // StreamPacket data.
+    assertThat(packet.getData()).hasSize(1);
+    assertThat(((StreamPacket) packet.typedData().get()).sequenceIsSafeForSingleSharedSecret()).isTrue();
+    assertThat(((StreamPacket) packet.typedData().get()).prepareAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(((StreamPacket) packet.typedData().get()).sequence()).isEqualTo(UnsignedLong.ONE);
+    assertThat(((StreamPacket) packet.typedData().get()).version()).isEqualTo((short) 1);
+    assertThat(((StreamPacket) packet.typedData().get()).frames().size()).isEqualTo(2);
+    assertThat(((StreamPacket) packet.typedData().get()).frames().get(0).streamFrameType())
+      .isEqualTo(StreamFrameType.StreamClose);
+    assertThat(((StreamPacket) packet.typedData().get()).frames().get(1).streamFrameType())
+      .isEqualTo(StreamFrameType.ConnectionClose);
   }
 
   //////////////////

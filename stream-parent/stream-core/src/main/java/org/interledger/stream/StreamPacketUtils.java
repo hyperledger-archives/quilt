@@ -7,11 +7,13 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.SharedSecret;
 import org.interledger.fx.Denomination;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.Random;
-import org.interledger.stream.crypto.SharedSecret;
 import org.interledger.stream.crypto.StreamEncryptionUtils;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
@@ -20,7 +22,6 @@ import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
-import org.interledger.stream.connection.StreamConnection;
 
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
@@ -39,14 +40,13 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-// TODO: Used? Javadoc? Tested?
-
 /**
  * Utilities for helping interact with Stream packets.
  */
+@SuppressWarnings("UnstableApiUsage")
 public class StreamPacketUtils {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(StreamPacketUtils.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StreamPacketUtils.class);
 
   /**
    * A {@link Set} of all frames that can be used to indicate that a STREAM should be closed.
@@ -92,9 +92,29 @@ public class StreamPacketUtils {
    * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
    *
    * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
+   *
+   * @deprecated Will be removed once {@link SharedSecret} is removed.
    */
+  @Deprecated
   public static InterledgerFulfillment generateFulfillableFulfillment(
     final SharedSecret sharedSecret, final byte[] data
+  ) {
+    return generateFulfillableFulfillment(StreamSharedSecret.of(sharedSecret.key()), data);
+  }
+
+  /**
+   * <p>If the sender _does_ want the receiver to be able to fulfill the condition, the condition MUST be generated
+   * from a fulfillment in the following manner: First, the shared_secret is the cryptographic seed exchanged during
+   * Setup. The string "ilp_stream_fulfillment" is encoded as UTF-8 or ASCII (the byte representation is the same with
+   * both encodings). Finally, the data is the encrypted STREAM packet.</p>
+   *
+   * @param sharedSecret The cryptographic seed exchanged during STREAM Setup.
+   * @param data         The encrypted STREAM packet in ASN.1 OER bytes.
+   *
+   * @return An {@link InterledgerFulfillment} that can be used to prove a payment.
+   */
+  public static InterledgerFulfillment generateFulfillableFulfillment(
+    final StreamSharedSecret sharedSecret, final byte[] data
   ) {
     Objects.requireNonNull(sharedSecret);
     Objects.requireNonNull(data);
@@ -119,7 +139,7 @@ public class StreamPacketUtils {
    *
    * @return An optionally-present instance of {@link StreamPacket}.
    *
-   * @deprecated Prefer {@link #mapToStreamPacket(byte[], SharedSecret, StreamPacketEncryptionService)} instead.
+   * @deprecated Prefer {@link #mapToStreamPacket(byte[], StreamSharedSecret, StreamPacketEncryptionService)} instead.
    */
   @Deprecated
   public static Optional<StreamPacket> mapToStreamPacket(
@@ -130,7 +150,7 @@ public class StreamPacketUtils {
     Objects.requireNonNull(streamEncryptionUtils);
 
     try {
-      return Optional.ofNullable(ilpPacketData)
+      return Optional.of(ilpPacketData)
         .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
         .map(data -> streamEncryptionUtils.fromEncrypted(sharedSecret, data));
     } catch (Exception e) {
@@ -143,28 +163,42 @@ public class StreamPacketUtils {
    * A helper function to map from a byte-array of ILP packet binary data to an instance of {@link StreamPacket}.
    *
    * @param ilpPacketData                 A byte-array of binary data representing an encrypted {@link StreamPacket}.
-   * @param sharedSecret                  A {@link SharedSecret} to decrypt the binary data.
+   * @param streamSharedSecret            A {@link SharedSecret} to decrypt the binary data.
    * @param streamPacketEncryptionService An instance of {@link StreamPacketEncryptionService} to decrypt with.
    *
    * @return An optionally-present instance of {@link StreamPacket}.
    */
   public static Optional<StreamPacket> mapToStreamPacket(
     final byte[] ilpPacketData,
-    final SharedSecret sharedSecret,
+    final StreamSharedSecret streamSharedSecret,
     final StreamPacketEncryptionService streamPacketEncryptionService
   ) {
     Objects.requireNonNull(ilpPacketData);
-    Objects.requireNonNull(sharedSecret);
+    Objects.requireNonNull(streamSharedSecret);
     Objects.requireNonNull(streamPacketEncryptionService);
 
     try {
-      return Optional.ofNullable(ilpPacketData)
+      return Optional.of(ilpPacketData)
         .filter(data -> data.length > 0) // <-- Ensures we don't even try with empty data payloads.
-        .map(data -> streamPacketEncryptionService.fromEncrypted(sharedSecret, data));
+        .map(data -> streamPacketEncryptionService.fromEncrypted(streamSharedSecret, data));
     } catch (Exception e) {
       LOGGER.error("Unable to decrypt ILP response packet's data. packetData={}", ilpPacketData, e);
       return Optional.empty();
     }
+  }
+
+  /**
+   * Map an {@link InterledgerResponsePacket} to an optionally-present {@link StreamPacket}.
+   *
+   * @param responsePacket An {@link InterledgerResponsePacket}.
+   *
+   * @return An optionally-present {@link StreamPacket}.
+   */
+  public static Optional<StreamPacket> mapToStreamPacket(final InterledgerResponsePacket responsePacket) {
+    Objects.requireNonNull(responsePacket);
+    return responsePacket.typedData()
+      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
+      .map($ -> (StreamPacket) $);
   }
 
   /**
@@ -181,6 +215,11 @@ public class StreamPacketUtils {
       .filter(frame -> frame.streamFrameType().equals(StreamFrameType.ConnectionAssetDetails))
       .map(frame -> ((ConnectionAssetDetailsFrame) frame))
       .map(ConnectionAssetDetailsFrame::sourceDenomination)
+      .map(deprecatedDenomination -> org.interledger.fx.Denomination.builder()
+        .assetCode(deprecatedDenomination.assetCode())
+        .assetScale(deprecatedDenomination.assetScale())
+        .build())
+      .map($ -> (Denomination) $) // TODO: This case shouldn't be necessary
       .findFirst();
   }
 
@@ -303,22 +342,6 @@ public class StreamPacketUtils {
   }
 
   /**
-   * Count the number of {@link ConnectionAssetDetailsFrame} in a {@link StreamPacket}.
-   *
-   * @param streamPacket A {@link StreamPacket}.
-   *
-   * @return The number of {@link ConnectionAssetDetailsFrame} in the packet.
-   */
-  public static long countConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
-    Objects.requireNonNull(streamPacket);
-    return streamPacket.frames().stream()
-      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
-      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
-      .map($ -> (ConnectionAssetDetailsFrame) $)
-      .count();
-  }
-
-  /**
    * Find a {@link ConnectionAssetDetailsFrame} in a {@link Collection} of stream frames.
    *
    * @param streamFrames A {@link Collection} of type {@link StreamFrame}.
@@ -334,6 +357,22 @@ public class StreamPacketUtils {
       .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
       .map($ -> (ConnectionAssetDetailsFrame) $)
       .findFirst();
+  }
+
+  /**
+   * Count the number of {@link ConnectionAssetDetailsFrame} in a {@link StreamPacket}.
+   *
+   * @param streamPacket A {@link StreamPacket}.
+   *
+   * @return The number of {@link ConnectionAssetDetailsFrame} in the packet.
+   */
+  public static long countConnectionAssetDetailsFrame(final StreamPacket streamPacket) {
+    Objects.requireNonNull(streamPacket);
+    return streamPacket.frames().stream()
+      .filter((streamFrame) -> streamFrame.streamFrameType() == StreamFrameType.ConnectionAssetDetails)
+      .filter(streamFrame -> ConnectionAssetDetailsFrame.class.isAssignableFrom(streamFrame.getClass()))
+      .map($ -> (ConnectionAssetDetailsFrame) $)
+      .count();
   }
 
   /**
@@ -365,20 +404,6 @@ public class StreamPacketUtils {
   }
 
   /**
-   * Map an {@link InterledgerResponsePacket} to an optionally-present {@link StreamPacket}.
-   *
-   * @param responsePacket An {@link InterledgerResponsePacket}.
-   *
-   * @return An optionally-present {@link StreamPacket}.
-   */
-  public static Optional<StreamPacket> mapToStreamPacket(final InterledgerResponsePacket responsePacket) {
-    Objects.requireNonNull(responsePacket);
-    return responsePacket.typedData()
-      .filter(typedData -> StreamPacket.class.isAssignableFrom(typedData.getClass()))
-      .map($ -> (StreamPacket) $);
-  }
-
-  /**
    * Determine if an {@link InterledgerResponsePacket} authentic (i.e., if it has a {@link StreamPacket} that could be
    * decrypted out of the ILP packet's data payload.
    *
@@ -389,57 +414,17 @@ public class StreamPacketUtils {
   public static boolean hasAuthenticStreamPacket(final InterledgerResponsePacket interledgerResponsePacket) {
     Objects.requireNonNull(interledgerResponsePacket);
 
-    return StreamPacketUtils.mapToStreamPacket(interledgerResponsePacket)
-      .map(streamPacket -> true)
-      .orElse(false);
+    return StreamPacketUtils.mapToStreamPacket(interledgerResponsePacket).isPresent();
   }
 
   /**
-   * TODO
+   * Construct a Prepare packet with a Stream packet inside that will close the Stream.
    *
-   * @param streamConnection
-   * @param streamEncryptionUtils
+   * @param streamConnection              A {@link StreamConnection}/
+   * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
    *
-   * @return
-   *
-   * @deprecated prefer {@link #constructPacketToCloseStream(StreamConnection, StreamPacketEncryptionService)} instead.
+   * @return An {@link InterledgerPreparePacket} that can be sent to close the stream.
    */
-  public static InterledgerPreparePacket constructPacketToCloseStream(
-    StreamConnection streamConnection, StreamEncryptionUtils streamEncryptionUtils
-  ) {
-    Objects.requireNonNull(streamConnection);
-
-    final StreamPacket streamPacket = StreamPacket.builder()
-      .interledgerPacketType(InterledgerPacketType.PREPARE)
-      // Per IL-RFC-29, this is the min amount the receiver should accept. We expect this packet to reject, so setting
-      // it to 0 is fine.
-      .prepareAmount(UnsignedLong.ZERO)
-      .sequence(UnsignedLong.valueOf(streamConnection.nextSequence().longValue()))
-      .addFrames(
-        StreamCloseFrame.builder()
-          .streamId(DEFAULT_STREAM_ID)
-          .errorCode(ErrorCodes.NoError)
-          .build(),
-        ConnectionCloseFrame.builder()
-          .errorCode(ErrorCodes.NoError)
-          .build()
-      )
-      .build();
-
-    final byte[] streamPacketData = streamEncryptionUtils.toEncrypted(streamConnection.getSharedSecret(), streamPacket);
-
-    return InterledgerPreparePacket.builder()
-      .destination(streamConnection.getDestinationAddress())
-      .amount(UnsignedLong.ZERO)
-      .executionCondition(StreamPacketUtils.unfulfillableCondition())
-      .expiresAt(DateUtils.now().plus(Duration.ofSeconds(60)))
-      .data(streamPacketData)
-      .typedData(streamPacket)
-      .build();
-  }
-
-  // TODO: Javadoc?
-  // TODO: Used?
   public static InterledgerPreparePacket constructPacketToCloseStream(
     StreamConnection streamConnection, StreamPacketEncryptionService streamPacketEncryptionService
   ) {
@@ -464,7 +449,7 @@ public class StreamPacketUtils {
       .build();
 
     final byte[] streamPacketData = streamPacketEncryptionService
-      .toEncrypted(streamConnection.getSharedSecret(), streamPacket);
+      .toEncrypted(streamConnection.getStreamSharedSecret(), streamPacket);
 
     return InterledgerPreparePacket.builder()
       .destination(streamConnection.getDestinationAddress())
