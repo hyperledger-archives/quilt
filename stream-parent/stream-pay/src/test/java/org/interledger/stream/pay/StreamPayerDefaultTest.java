@@ -903,7 +903,7 @@ public class StreamPayerDefaultTest {
     assertThat(error).isNotNull();
     assertThat(error.getCause().getMessage()).contains(
       "Probed exchange-rate of 99/100[0.99] (floored to 0) is less-than than the minimum exchange-rate of " +
-        "10/10[1] (ceil'd to 1)"
+        "10/10[1] (ceiled to 1)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -973,7 +973,7 @@ public class StreamPayerDefaultTest {
     assertThat(error).isNotNull();
     assertThat(error.getCause().getMessage()).contains(
       "Probed exchange-rate of 98/100[0.98] (floored to 0) is less-than than the minimum exchange-rate of " +
-        "10/10[1] (ceil'd to 1)"
+        "10/10[1] (ceiled to 1)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
@@ -1435,7 +1435,7 @@ public class StreamPayerDefaultTest {
 
     assertThat(error.getCause().getMessage()).contains(
       "Probed exchange-rate of 10001/10000[1.0001] (floored to 1) is less-than than the minimum exchange-rate " +
-        "of 10001/10000[1.0001] (ceil'd to 2)"
+        "of 10001/10000[1.0001] (ceiled to 2)"
     );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.InsufficientExchangeRate);

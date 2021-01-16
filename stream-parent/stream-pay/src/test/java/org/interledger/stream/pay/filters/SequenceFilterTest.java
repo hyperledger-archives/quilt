@@ -14,7 +14,6 @@ import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketRequest;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
-import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +67,7 @@ public class SequenceFilterTest {
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState response = sequenceFilter.nextState(request);
 
-    assertThat(request.sequence()).isEqualTo(UnsignedInteger.ONE);
+    assertThat(request.sequence()).isEqualTo(UnsignedLong.ONE);
     assertThat(response).isEqualTo(SendState.Ready);
   }
 
@@ -79,7 +78,7 @@ public class SequenceFilterTest {
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState response = sequenceFilter.nextState(request);
 
-    assertThat(request.sequence()).isEqualTo(UnsignedInteger.MAX_VALUE);
+    assertThat(request.sequence()).isEqualTo(UnsignedLong.MAX_VALUE);
     assertThat(response).isEqualTo(SendState.ExceededMaxSequence);
   }
 
