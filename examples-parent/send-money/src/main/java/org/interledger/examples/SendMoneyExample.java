@@ -55,8 +55,12 @@ public class SendMoneyExample {
   private static final InterledgerAddress OPERATOR_ADDRESS =
     InterledgerAddress.of("private.org.interledger.examples.sendmoneyexample").with(SENDER_ACCOUNT_USERNAME);
 
-  // TODO: Javadoc
 
+  /**
+   * Main method.
+   *
+   * @param args A String array.
+   */
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     SpspClient spspClient = new SimpleSpspClient();
 

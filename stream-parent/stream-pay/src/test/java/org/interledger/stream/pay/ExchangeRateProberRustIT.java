@@ -20,7 +20,7 @@ import java.math.BigInteger;
 /**
  * Unit tests for {@link org.interledger.stream.pay.probing.ExchangeRateProber}.
  */
-// TODO[NEW_FEATURE]: Create an IT that hits the Java Connector via TestContainers.
+// TODO [NewFeature]: Create an IT that hits the Java Connector via TestContainers.
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class ExchangeRateProberRustIT extends AbstractRustIT {
 

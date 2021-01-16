@@ -301,6 +301,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       .executionCondition(executionCondition)
       .expiresAt(DateUtils.now().plus(DEFAULT_PACKET_TIMEOUT))
       .data(streamPacketData)
+      // Added here for JVM convenience, but only the bytes above are encoded to ASN.1 OER
       .typedData(streamPacket)
       .build();
   }
