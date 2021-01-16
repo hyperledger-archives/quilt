@@ -1,8 +1,13 @@
 package org.interledger.link.spsp;
 
+import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
+import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.core.InterledgerResponsePacket;
+import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.link.AbstractLink;
 import org.interledger.link.Link;
 import org.interledger.link.LinkHandler;
@@ -11,6 +16,10 @@ import org.interledger.link.exceptions.LinkHandlerAlreadyRegisteredException;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.receiver.StreamReceiver;
 
+import com.google.common.primitives.UnsignedLong;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.function.Supplier;
@@ -61,20 +70,45 @@ public class StatelessSpspReceiverLink extends AbstractLink<StatelessSpspReceive
   public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
     Objects.requireNonNull(preparePacket, "preparePacket must not be null");
 
-    return streamReceiver.receiveMoney(preparePacket, this.getOperatorAddressSupplier().get(), this.denomination)
-      .map(fulfillPacket -> {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Packet fulfilled! preparePacket={} fulfillPacket={}", preparePacket, fulfillPacket);
+    final UnsignedLong maxPacketAmount = this.getLinkSettings()
+      .maxPacketAmount()
+      .orElse(UnsignedLong.MAX_VALUE);
+
+    if (FluentCompareTo.is(preparePacket.getAmount()).greaterThan(maxPacketAmount)) {
+      final AmountTooLargeErrorData amountTooLargeErrorData = AmountTooLargeErrorData.builder()
+        .maximumAmount(maxPacketAmount)
+        .receivedAmount(preparePacket.getAmount())
+        .build();
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        InterledgerCodecContextFactory.oer().write(amountTooLargeErrorData, baos);
+      } catch (IOException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+
+      return InterledgerRejectPacket.builder()
+        .triggeredBy(this.getOperatorAddressSupplier().get())
+        .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
+        .message("Prepare packet amount was too large")
+        .data(baos.toByteArray())
+        .typedData(amountTooLargeErrorData)
+        .build();
+    } else {
+      return streamReceiver.receiveMoney(preparePacket, this.getOperatorAddressSupplier().get(), this.denomination)
+        .map(fulfillPacket -> {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Packet fulfilled! preparePacket={} fulfillPacket={}", preparePacket, fulfillPacket);
+            }
+            return fulfillPacket;
+          },
+          rejectPacket -> {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Packet rejected! preparePacket={} rejectPacket={}", preparePacket, rejectPacket);
+            }
+            return rejectPacket;
           }
-          return fulfillPacket;
-        },
-        rejectPacket -> {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Packet rejected! preparePacket={} rejectPacket={}", preparePacket, rejectPacket);
-          }
-          return rejectPacket;
-        }
-      );
+        );
+    }
   }
 
   @Override

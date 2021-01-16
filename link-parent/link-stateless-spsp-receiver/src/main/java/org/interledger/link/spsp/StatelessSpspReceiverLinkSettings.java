@@ -1,11 +1,13 @@
 package org.interledger.link.spsp;
 
-import com.google.common.primitives.UnsignedLong;
-import java.util.Optional;
-import org.immutables.value.Value;
-import org.immutables.value.Value.Derived;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
+
+import com.google.common.primitives.UnsignedLong;
+import org.immutables.value.Value;
+import org.immutables.value.Value.Derived;
+
+import java.util.Optional;
 
 /**
  * An extension of {@link LinkSettings} for Stateless SPSP receiver links.
@@ -18,7 +20,7 @@ public interface StatelessSpspReceiverLinkSettings extends LinkSettings {
 
   @Override
   default LinkType getLinkType() {
-    return StatelessStreamReceiverLink.LINK_TYPE;
+    return StatelessSpspReceiverLink.LINK_TYPE;
   }
 
   /**
@@ -48,7 +50,7 @@ public interface StatelessSpspReceiverLinkSettings extends LinkSettings {
     @Derived
     @Override
     public LinkType getLinkType() {
-      return StatelessStreamReceiverLink.LINK_TYPE;
+      return StatelessSpspReceiverLink.LINK_TYPE;
     }
 
   }

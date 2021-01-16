@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * An implementation of {@link LinkFactory} for constructing instances of {@link StatelessStreamReceiverLink}.
+ * An implementation of {@link LinkFactory} for constructing instances of {@link StatelessSpspReceiverLink}.
  */
 public class StatelessSpspReceiverLinkFactory implements LinkFactory {
 
@@ -30,41 +30,41 @@ public class StatelessSpspReceiverLinkFactory implements LinkFactory {
    * @param statelessStreamReceiver A {@link StatelessStreamReceiver} for encrypting/decrypting STREAM packets.
    */
   public StatelessSpspReceiverLinkFactory(
-      final PacketRejector packetRejector, final StatelessStreamReceiver statelessStreamReceiver
+    final PacketRejector packetRejector, final StatelessStreamReceiver statelessStreamReceiver
   ) {
     this.packetRejector = Objects.requireNonNull(packetRejector, "packetRejector must not be null");
     this.statelessStreamReceiver = Objects
-        .requireNonNull(statelessStreamReceiver, "statelessStreamReceiver must not be null");
+      .requireNonNull(statelessStreamReceiver, "statelessStreamReceiver must not be null");
   }
 
 
   @Override
   public Link<?> constructLink(
-      final Supplier<InterledgerAddress> operatorAddressSupplier, final LinkSettings linkSettings
+    final Supplier<InterledgerAddress> operatorAddressSupplier, final LinkSettings linkSettings
   ) {
     Objects.requireNonNull(operatorAddressSupplier, "operatorAddressSupplier must not be null");
     Objects.requireNonNull(linkSettings, "linkSettings must not be null");
 
     if (!this.supports(linkSettings.getLinkType())) {
       throw new LinkException(
-          String.format("LinkType not supported by this factory. linkType=%s", linkSettings.getLinkType()),
-          LinkId.of("n/a")
+        String.format("LinkType not supported by this factory. linkType=%s", linkSettings.getLinkType()),
+        LinkId.of("n/a")
       );
     }
 
     Preconditions.checkArgument(
-        StatelessSpspReceiverLinkSettings.class.isAssignableFrom(linkSettings.getClass()),
-        "Constructing an instance of StatelessSpspReceiverLink requires an instance of StatelessSpspReceiverLinkSettings"
+      StatelessSpspReceiverLinkSettings.class.isAssignableFrom(linkSettings.getClass()),
+      "Constructing an instance of StatelessSpspReceiverLink requires an instance of StatelessSpspReceiverLinkSettings"
     );
 
-    return new StatelessStreamReceiverLink(
-        operatorAddressSupplier, (StatelessSpspReceiverLinkSettings) linkSettings, statelessStreamReceiver
+    return new StatelessSpspReceiverLink(
+      operatorAddressSupplier, (StatelessSpspReceiverLinkSettings) linkSettings, statelessStreamReceiver
     );
   }
 
   @Override
   public boolean supports(LinkType linkType) {
-    return StatelessStreamReceiverLink.LINK_TYPE.equals(linkType);
+    return StatelessSpspReceiverLink.LINK_TYPE.equals(linkType);
   }
 
 }

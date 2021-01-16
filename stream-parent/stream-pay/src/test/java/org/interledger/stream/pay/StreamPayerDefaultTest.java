@@ -28,7 +28,6 @@ import org.interledger.link.LinkType;
 import org.interledger.link.LoopbackLink;
 import org.interledger.link.PacketRejector;
 import org.interledger.link.spsp.StatelessSpspReceiverLinkSettings;
-import org.interledger.link.spsp.StatelessStreamReceiverLink;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.InvalidReceiverClientException;

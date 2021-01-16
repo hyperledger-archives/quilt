@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import com.google.common.primitives.UnsignedLong;
 import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
@@ -16,6 +15,8 @@ import org.interledger.core.InterledgerFulfillPacket;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.link.LinkId;
 import org.interledger.stream.receiver.StreamReceiver;
+
+import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,9 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Unit tests for {@link StatelessStreamReceiverLink}.
+ * Unit tests for {@link StatelessSpspReceiverLink}.
  */
-public class StatelessStreamReceiverLinkTest {
+@SuppressWarnings("OptionalGetWithoutIsPresent")
+public class StatelessSpspReceiverLinkTest {
 
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.foo");
 
@@ -40,13 +42,14 @@ public class StatelessStreamReceiverLinkTest {
   @Mock
   private StreamReceiver streamReceiverMock;
 
-  private StatelessStreamReceiverLink link;
+  private StatelessSpspReceiverLink link;
 
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
 
-    this.link = new StatelessStreamReceiverLink(
+    this.link = new StatelessSpspReceiverLink(
       () -> OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder().assetCode("XRP").assetScale((short) 9).build(),
       streamReceiverMock
@@ -84,9 +87,7 @@ public class StatelessStreamReceiverLinkTest {
 
     final InterledgerPreparePacket preparePacket = preparePacket();
     link.sendPacket(preparePacket).handle(
-      fulfillPacket -> {
-        assertThat(fulfillPacket).isEqualTo(actualFulfillPacket);
-      },
+      fulfillPacket -> assertThat(fulfillPacket).isEqualTo(actualFulfillPacket),
       rejectPacket -> {
         logger.error("rejectPacket={}", rejectPacket);
         fail("Expected a Fulfill");
@@ -99,7 +100,7 @@ public class StatelessStreamReceiverLinkTest {
    */
   @Test
   public void sendPacketTooBig() {
-    this.link = new StatelessStreamReceiverLink(
+    this.link = new StatelessSpspReceiverLink(
       () -> OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder()
         .assetCode("XRP")
@@ -112,9 +113,7 @@ public class StatelessStreamReceiverLinkTest {
 
     final InterledgerPreparePacket preparePacket = preparePacket();
     link.sendPacket(preparePacket).handle(
-      fulfillPacket -> {
-        fail("Packet with amount 10 should not fulfill because it's too large");
-      },
+      fulfillPacket -> fail("Packet with amount 10 should not fulfill because it's too large"),
       rejectPacket -> {
         logger.error("rejectPacket={}", rejectPacket);
         assertThat(rejectPacket.typedData()).isPresent();
