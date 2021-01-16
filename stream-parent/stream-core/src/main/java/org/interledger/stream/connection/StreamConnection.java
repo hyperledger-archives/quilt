@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>Note that any given {@link StreamConnection} in a JVM manages a unique sequence id that can be incremented
  * for each Stream Packet sent over the connection.</p>
  */
-// TODO: Capture StreamConnectionTest and add constructor tests.
 public class StreamConnection implements Closeable {
 
   public static final UnsignedLong MAX_PACKETS_PER_CONNECTION = UnsignedLong.valueOf((long) Math.pow(2, 31));
@@ -65,8 +64,6 @@ public class StreamConnection implements Closeable {
   private final AtomicReference<UnsignedLong> sequence;
   private final AtomicReference<StreamConnectionState> connectionState;
 
-  // TODO: Javadoc
-
   /**
    * Required-args Constructor that derives the {@link StreamConnectionId} from the supplied inputs. This implementation
    * derives a {@link StreamConnectionId} from the supplied {@code sharedSecret} by computing a SHA-256 hash of the
@@ -75,7 +72,8 @@ public class StreamConnection implements Closeable {
    *
    * @param sourceAccountDetails The {@link AccountDetails} for the sender.
    * @param destinationAddress   The {@link InterledgerAddress} of the receiver of this STREAM payment.
-   * @param streamSharedSecret         The {@link StreamSharedSecret} used to encrypt and decrypt packets transmitted over this.
+   * @param streamSharedSecret   The {@link StreamSharedSecret} used to encrypt and decrypt packets transmitted over
+   *                             this.
    */
   public StreamConnection(
     final AccountDetails sourceAccountDetails,
@@ -103,9 +101,11 @@ public class StreamConnection implements Closeable {
    *
    * @param sourceAccountDetails    The {@link AccountDetails} for the sender.
    * @param destinationAddress      The {@link InterledgerAddress} of the receiver of this STREAM payment.
-   * @param streamSharedSecret            The {@link StreamSharedSecret} used to encrypt and decrypt packets transmitted over this
-   * @param destinationDenomination
+   * @param streamSharedSecret      The {@link StreamSharedSecret} used to encrypt and decrypt packets transmitted over
+   *                                this
+   * @param destinationDenomination An optionally-present {@link Denomination} for the destination address.
    */
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public StreamConnection(
     final AccountDetails sourceAccountDetails,
     final InterledgerAddress destinationAddress,
@@ -152,6 +152,8 @@ public class StreamConnection implements Closeable {
    * unsafe to use AES-GCM for more than 2^32 packets using the same encryption key (STREAM uses the limit of 2^31
    * because both endpoints encrypt packets with the same key).
    *
+   * @param sequence An {@link UnsignedLong} representing the current Stream sequence.
+   *
    * @return {@code true} if the current sequence can safely be used with a single shared-secret; {@code false}
    *   otherwise.
    */
@@ -194,31 +196,38 @@ public class StreamConnection implements Closeable {
   }
 
   /**
-   * TODO
+   * Accessor for the destination address of this Stream connection.
    *
-   * @return
+   * @return An {@link InterledgerAddress}.
    */
   public InterledgerAddress getDestinationAddress() {
     return destinationAddress;
   }
 
+  /**
+   * Accessor for the optionally-present denomination for the destination address of this Stream connection. This value
+   * is optional because it is often discovered as part of a stream probe. Thus, at the beginning of a connection, this
+   * value may be {@link Optional#empty()}.
+   *
+   * @return An optionally-present {@link Denomination}.
+   */
   public Optional<Denomination> getDestinationDenomination() {
     return destinationDenomination.get();
   }
 
   /**
-   * TODO
+   * Accessor for the shared secret that encrypts data between a sender and receiver in this stream connection.
    *
-   * @return
+   * @return A {@link StreamSharedSecret}.
    */
   public StreamSharedSecret getStreamSharedSecret() {
     return streamSharedSecret;
   }
 
   /**
-   * TODO
+   * Accessor for the current state of this stream connection.
    *
-   * @return
+   * @return A {@link StreamConnectionState}.
    */
   public StreamConnectionState getConnectionState() {
     return connectionState.get();

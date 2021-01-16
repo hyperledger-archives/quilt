@@ -98,6 +98,16 @@ public class StreamConnectionTest {
   }
 
   @Test
+  public void accessors() throws StreamConnectionClosedException {
+    assertThat(streamConnection.getCreationDateTime()).isNotNull();
+    assertThat(streamConnection.getConnectionState()).isEqualTo(StreamConnectionState.AVAILABLE);
+    assertThat(streamConnection.getDestinationAddress()).isEqualTo(InterledgerAddress.of("example.foo"));
+    assertThat(streamConnection.getDestinationDenomination()).isEmpty();
+    assertThat(streamConnection.getStreamSharedSecret()).isNotNull();
+    assertThat(streamConnection.getSourceAccountDetails()).isEqualTo(sourceAccountDetailsMock);
+  }
+
+  @Test
   public void nextSequenceMultiThreaded() throws StreamConnectionClosedException {
     final List<CompletableFuture<UnsignedLong>> allFutures = Lists.newArrayList();
     final int numRepetitions = 50000;
@@ -251,6 +261,7 @@ public class StreamConnectionTest {
     assertThat(streamConnection.sequenceIsSafeForSingleSharedSecret(UnsignedLong.valueOf(Long.MAX_VALUE))).isFalse();
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test
   public void testEquals() {
     assertThat(streamConnection.equals(null)).isFalse();
