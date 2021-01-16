@@ -1,11 +1,7 @@
 package org.interledger.stream.pay;
 
 import org.interledger.link.Link;
-import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
-import org.interledger.stream.frames.ConnectionCloseFrame;
-import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.DefaultStreamPacketFilterChain;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
@@ -30,14 +26,13 @@ import java.util.concurrent.TimeUnit;
  * Executes a loop of packet-send attempts, based upon various information in any associated trackers found in {@link
  * org.interledger.stream.pay.trackers}.
  */
-class RunLoop {
+class RunLoop extends AbstractPayWrapper {
 
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private final int runLoopWaitTimeMs;
   private final Link<?> link;
   private final List<StreamPacketFilter> streamPacketFilters;
-  private final StreamPacketEncryptionService streamPacketEncryptionService;
   private final PaymentSharedStateTracker paymentSharedStateTracker;
 
   private final ExecutorService executorService;
@@ -78,9 +73,9 @@ class RunLoop {
     final PaymentSharedStateTracker paymentSharedStateTracker,
     final int runLoopWaitTimeMs
   ) {
+    super(streamPacketEncryptionService);
     this.link = Objects.requireNonNull(link);
     this.streamPacketFilters = Objects.requireNonNull(streamPacketFilters);
-    this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
     this.paymentSharedStateTracker = Objects.requireNonNull(paymentSharedStateTracker);
     this.executorService = Executors.newFixedThreadPool(5);
     this.runLoopWaitTimeMs = runLoopWaitTimeMs;
@@ -181,46 +176,12 @@ class RunLoop {
   @VisibleForTesting
   StreamPacketFilterChain constructNewFilterChain() {
     return new DefaultStreamPacketFilterChain(
-      this.streamPacketFilters, link, streamPacketEncryptionService, paymentSharedStateTracker
+      this.streamPacketFilters, link, getStreamEncryptionService(), paymentSharedStateTracker
     );
   }
 
-  /**
-   * Close the Stream Connection by sending a final packet with both a {@link ConnectionCloseFrame} and a {@link
-   * StreamCloseFrame}.
-   *
-   * @param streamConnection A {@link StreamConnection} to close.
-   */
-  @VisibleForTesting
-  protected void closeConnection(StreamConnection streamConnection) {
-    try {
-      link.sendPacket(
-        StreamPacketUtils.constructPacketToCloseStream(streamConnection, this.streamPacketEncryptionService));
-    } catch (Exception e) {
-      logger.error("Unable to close STREAM Connection: " + e.getMessage(), e);
-      // swallow this error because the sender can still complete even though it couldn't get something to the receiver.
-    }
-  }
-
-  /**
-   * Based upon the supplied {@code sendState}, determines if a Connection Close frame should be sent to the
-   * destination.
-   *
-   * @return {@code true} if the connection should be closed; {@code false} otherwise.
-   */
-  @VisibleForTesting
-  protected boolean shouldCloseConnection(final SendState sendState) {
-    Objects.requireNonNull(sendState);
-
-    if (sendState.isPaymentError()) {
-      return sendState != SendState.ClosedByRecipient; // <-- Connection already closed, so don't try to close it again.
-    } else {
-      return sendState == SendState.End;
-    }
-  }
-
-  @VisibleForTesting
-  protected void sleep(int sleepTimeMs) throws InterruptedException {
-    Thread.sleep(sleepTimeMs);
+  @Override
+  protected Link<?> getLink() {
+    return this.link;
   }
 }

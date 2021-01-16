@@ -3,10 +3,10 @@ package org.interledger.stream.pay.probing;
 import org.interledger.link.Link;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
+import org.interledger.stream.pay.AbstractPayWrapper;
 import org.interledger.stream.pay.filters.AmountFilter;
 import org.interledger.stream.pay.filters.AssetDetailsFilter;
 import org.interledger.stream.pay.filters.ExchangeRateFilter;
-import org.interledger.stream.pay.filters.FailureFilter;
 import org.interledger.stream.pay.filters.MaxPacketAmountFilter;
 import org.interledger.stream.pay.filters.SequenceFilter;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
@@ -71,11 +71,10 @@ public interface ExchangeRateProber {
   /**
    * The default implementation of {@link ExchangeRateProber}.
    */
-  class DefaultExchangeRateProber implements ExchangeRateProber {
+  class DefaultExchangeRateProber extends AbstractPayWrapper implements ExchangeRateProber {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final StreamPacketEncryptionService streamPacketEncryptionService;
     private final Link<?> link;
     private final ExecutorService executorService;
     private final Map<StreamConnection, PaymentSharedStateTracker> paymentSharedStateTrackersMap;
@@ -92,11 +91,12 @@ public interface ExchangeRateProber {
     public DefaultExchangeRateProber(
       final StreamPacketEncryptionService streamPacketEncryptionService, final Link<?> link
     ) {
-      this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
+      super(streamPacketEncryptionService);
       this.link = Objects.requireNonNull(link);
 
       this.paymentSharedStateTrackersMap = Maps.newConcurrentMap();
-      this.executorService = Executors.newFixedThreadPool(10); // TODO: 2? 5?
+      // TODO [New Feature] Consider making this configurable.
+      this.executorService = Executors.newFixedThreadPool(3);
       this.timeoutDuration = Duration.of(30, ChronoUnit.SECONDS);
       this.initialTestPacketAmounts = Lists.newArrayList(
         1_000_000_000_000L,
@@ -145,15 +145,22 @@ public interface ExchangeRateProber {
       final List<StreamPacketFilter> streamPacketFilters = Lists.newArrayList(
         // First so all other controllers log the sequence number
         new SequenceFilter(paymentSharedStateTracker),
-        // Fail-fast on terminal rejects or timeouts
-        new FailureFilter(),
+
+        // FailureFilter: Don't use the failure filter because ALL probe packets will reject, and this will cause a
+        // false negative. It's also tolerable to not use the FailureFilter because there are only 14 packets to send,
+        // and so sending those packets even if there's a terminal error is a small enough risk to ignore.
+
         // Fail-fast on destination asset detail conflict
         new AssetDetailsFilter(paymentSharedStateTracker),
+
         // Fail-fast if max packet amount is 0
         new MaxPacketAmountFilter(paymentSharedStateTracker.getMaxPacketAmountTracker()),
-        // NOTE: Probing only sends a limited number of packets, no need to limit how frequently packets are sent
-        // (i.e., don't add a PacingFilter).
+
+        // PacingFilter: Don't use because probing only sends a limited number of packets, no need to limit how
+        // frequently packets are send.
+
         new AmountFilter(paymentSharedStateTracker),
+
         new ExchangeRateFilter(paymentSharedStateTracker.getExchangeRateTracker())
       );
 
@@ -166,61 +173,59 @@ public interface ExchangeRateProber {
       // return the outcome.
 
       // Handle the result
-      // TODO: Ignore replies that aren't authentic
-
       CompletableFuture<Void> allFutures = CompletableFuture
         .allOf(this.initialTestPacketAmounts.stream()
-            .map(UnsignedLong::valueOf)
-            .map(prepareAmount -> {
-              // Send a StreamPacket and get a response.
-              final Supplier<StreamPacketReply> streamResponseSupplier = () -> {
+          .map(UnsignedLong::valueOf)
+          .map(prepareAmount -> {
+            // Send a StreamPacket and get a response.
+            final Supplier<StreamPacketReply> streamResponseSupplier = () -> {
 
-                // Probe packets should never fulfill.
-                final ModifiableStreamPacketRequest streamPacketRequest = ModifiableStreamPacketRequest.create()
-                  .setIsFulfillable(false)
-                  .setSourceAmount(prepareAmount);
-                final StreamPacketFilterChain filterChain = new DefaultStreamPacketFilterChain(
-                  streamPacketFilters, link, streamPacketEncryptionService, paymentSharedStateTracker
-                );
+              // Probe packets should never fulfill.
+              final ModifiableStreamPacketRequest streamPacketRequest = ModifiableStreamPacketRequest.create()
+                .setIsFulfillable(false)
+                .setSourceAmount(prepareAmount);
+              final StreamPacketFilterChain filterChain = new DefaultStreamPacketFilterChain(
+                streamPacketFilters, link, getStreamEncryptionService(), paymentSharedStateTracker
+              );
 
-                // Handle SendState stuff...
-                final SendState nextSendState = filterChain.nextState(streamPacketRequest);
-                if (nextSendState == SendState.Ready) {
-
-                  // Packet is sent via Link at end of this chain.
-                  return filterChain.doFilter(streamPacketRequest);
-                } else if (nextSendState == SendState.End || nextSendState.isPaymentError()) {
-                  // Wait for any requests to stop.
-//                if (shouldCloseConnection(nextSendState)) {
-                  // TODO: Close connection
-//                }
-                  return filterChain.doFilter(streamPacketRequest);
-                } else {
-                  // TODO: Log a Wait?
-                  return filterChain.doFilter(streamPacketRequest);
+              // Handle SendState stuff...
+              final SendState nextSendState = filterChain.nextState(streamPacketRequest);
+              if (nextSendState == SendState.Ready || nextSendState == SendState.Wait) {
+                // Packet is sent via Link at end of this chain.
+                return filterChain.doFilter(streamPacketRequest);
+              } else if (nextSendState.isPaymentError()) {
+                logger.info("Ending Payment with sendState={}", nextSendState);
+                if (shouldCloseConnection(nextSendState)) {
+                  this.closeConnection(streamConnection);
                 }
-              };
+                return StreamPacketReply.builder()
+                  .interledgerPreparePacket(streamPacketRequest.interledgerPreparePacket())
+                  .build();
+              } else {
+                throw new RuntimeException(String.format("Encountered unhandled sendState: %s", nextSendState));
+              }
+            };
 
-              // Execute the Supplier
-              return CompletableFuture.supplyAsync(streamResponseSupplier, executorService)
-                // Logging
-                .handle((streamPacketReply, throwable) -> {
-                  if (throwable != null) {
-                    logger.error("ExchangeRateProbe packet failed: " + throwable.getMessage(), throwable);
+            // Execute the Supplier
+            return CompletableFuture.supplyAsync(streamResponseSupplier, executorService)
+              // Logging
+              .handle((streamPacketReply, throwable) -> {
+                if (throwable != null) {
+                  logger.error("ExchangeRateProbe packet failed: " + throwable.getMessage(), throwable);
+                }
+                if (streamPacketReply != null) {
+                  if (logger.isDebugEnabled()) {
+                    logger.debug("StreamPacketReply={}", streamPacketReply);
                   }
-                  if (streamPacketReply != null) {
-                    if (logger.isDebugEnabled()) {
-                      logger.debug("StreamPacketReply={}", streamPacketReply);
-                    }
-                    // Add the packet to the error packets if there's an exception
-                    streamPacketReply.exception().ifPresent(e -> errorReplies.add(streamPacketReply));
-                  }
-                  return streamPacketReply; // Null or not.
-                });
-            })
-            // Passing empty array is most performant.
-            // See https://stackoverflow.com/questions/53284214/toarray-with-pre-sized-array
-            .toArray(CompletableFuture[]::new)
+                  // Add the packet to the error packets if there's an exception
+                  streamPacketReply.exception().ifPresent(e -> errorReplies.add(streamPacketReply));
+                }
+                return streamPacketReply; // Null or not.
+              });
+          })
+          // Passing empty array is most performant.
+          // See https://stackoverflow.com/questions/53284214/toarray-with-pre-sized-array
+          .toArray(CompletableFuture[]::new)
         ).whenComplete(($, error) -> {
           executorService.shutdown();
           if (error != null) {
@@ -259,6 +264,11 @@ public interface ExchangeRateProber {
     public Optional<PaymentSharedStateTracker> getPaymentSharedStateTracker(final StreamConnection streamConnection) {
       Objects.requireNonNull(streamConnection);
       return Optional.ofNullable(paymentSharedStateTrackersMap.get(streamConnection));
+    }
+
+    @Override
+    protected Link<?> getLink() {
+      return this.link;
     }
   }
 }
