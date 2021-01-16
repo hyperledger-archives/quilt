@@ -31,6 +31,7 @@ import org.interledger.stream.pay.model.PaymentReceipt;
 import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
+import org.interledger.stream.pay.probing.ExchangeRateProber.DefaultExchangeRateProber;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
@@ -294,7 +295,7 @@ public interface StreamPayer {
      */
     @VisibleForTesting
     protected ExchangeRateProber newExchangeRateProber() {
-      return new ExchangeRateProber.Default(streamPacketEncryptionService, link);
+      return new DefaultExchangeRateProber(streamPacketEncryptionService, link);
     }
 
     /**
