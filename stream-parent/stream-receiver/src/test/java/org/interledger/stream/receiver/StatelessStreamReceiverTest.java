@@ -15,20 +15,21 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerPreparePacketBuilder;
 import org.interledger.core.InterledgerRejectPacket;
+import org.interledger.core.SharedSecret;
 import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.stream.Denomination;
 import org.interledger.spsp.StreamConnectionDetails;
+import org.interledger.stream.Denomination;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.StreamUtils;
+import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-import org.interledger.core.SharedSecret;;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecretCrypto;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.frames.StreamMoneyFrame;
-import org.interledger.stream.connection.StreamConnection;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Immutable;
@@ -47,6 +48,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+;
 
 /**
  * Unit tests for {@link StatelessStreamReceiver}.
@@ -115,11 +118,26 @@ public class StatelessStreamReceiverTest {
 
   @Test(expected = NullPointerException.class)
   public void generateConnectionDetailsWithNullStreamEncryptionService() {
+    StreamEncryptionService nullStreamEncryptionService = null;
     try {
-      new StatelessStreamReceiver(serverSecretSupplier, streamConnectionGenerator, null,
-        StreamCodecContextFactory.oer());
+      new StatelessStreamReceiver(
+        serverSecretSupplier, streamConnectionGenerator, nullStreamEncryptionService, StreamCodecContextFactory.oer()
+      );
     } catch (NullPointerException e) {
       assertThat(e.getMessage()).isEqualTo("streamEncryptionService must not be null");
+      throw e;
+    }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void generateConnectionDetailsWithNullStreamSharedSecretCrypto() {
+    StreamSharedSecretCrypto nullStreamSharedSecretCrypto = null;
+    try {
+      new StatelessStreamReceiver(
+        serverSecretSupplier, streamConnectionGenerator, nullStreamSharedSecretCrypto, StreamCodecContextFactory.oer()
+      );
+    } catch (NullPointerException e) {
+      assertThat(e.getMessage()).isEqualTo("streamSharedSecretCrypto must not be null");
       throw e;
     }
   }

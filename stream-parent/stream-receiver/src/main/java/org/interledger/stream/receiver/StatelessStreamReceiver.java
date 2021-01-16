@@ -16,8 +16,10 @@ import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.StreamException;
 import org.interledger.stream.StreamPacket;
-import org.interledger.stream.StreamUtils;
+import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.crypto.StreamSharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecretCrypto;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ErrorCodes;
@@ -39,8 +41,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
-;
-
 /**
  * <p>A stateless implementation of {@link StreamReceiver} that does **not** maintain STREAM state, but instead
  * fulfills all incoming packets to collect the money.</p>
@@ -60,17 +60,60 @@ public class StatelessStreamReceiver implements StreamReceiver {
   private final ServerSecretSupplier serverSecretSupplier;
   private final StreamConnectionGenerator streamConnectionGenerator;
   private final StreamEncryptionService streamEncryptionService;
+  private final StreamSharedSecretCrypto streamSharedSecretCrypto;
   private final CodecContext streamCodecContext;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param serverSecretSupplier      A {@link ServerSecretSupplier}.
+   * @param streamConnectionGenerator A {@link StreamConnectionGenerator}.
+   * @param streamEncryptionService   A {@link StreamEncryptionService}.
+   * @param streamCodecContext        A {@link CodecContext} that can handle Stream encoding and decoding.
+   *
+   * @deprecated Prefer {@link #StatelessStreamReceiver(ServerSecretSupplier, StreamConnectionGenerator,
+   *   StreamSharedSecretCrypto, CodecContext)} instead.
+   */
+  @Deprecated
   public StatelessStreamReceiver(
-    final ServerSecretSupplier serverSecretSupplier, final StreamConnectionGenerator streamConnectionGenerator,
-    final StreamEncryptionService streamEncryptionService, final CodecContext streamCodecContext
+    final ServerSecretSupplier serverSecretSupplier,
+    final StreamConnectionGenerator streamConnectionGenerator,
+    final StreamEncryptionService streamEncryptionService,
+    final CodecContext streamCodecContext
   ) {
     this.serverSecretSupplier = Objects.requireNonNull(serverSecretSupplier, "serverSecretSupplier must not be null");
     this.streamConnectionGenerator = Objects
       .requireNonNull(streamConnectionGenerator, "connectionGenerator must not be null");
+
     this.streamEncryptionService = Objects
       .requireNonNull(streamEncryptionService, "streamEncryptionService must not be null");
+    this.streamSharedSecretCrypto = null;
+
+    this.streamCodecContext = Objects.requireNonNull(streamCodecContext, "streamCodecContext must not be null");
+  }
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param serverSecretSupplier      A {@link ServerSecretSupplier}.
+   * @param streamConnectionGenerator A {@link StreamConnectionGenerator}.
+   * @param streamSharedSecretCrypto  A {@link StreamSharedSecretCrypto}.
+   * @param streamCodecContext        A {@link CodecContext} that can handle Stream encoding and decoding.
+   */
+  public StatelessStreamReceiver(
+    final ServerSecretSupplier serverSecretSupplier,
+    final StreamConnectionGenerator streamConnectionGenerator,
+    final StreamSharedSecretCrypto streamSharedSecretCrypto,
+    final CodecContext streamCodecContext
+  ) {
+    this.serverSecretSupplier = Objects.requireNonNull(serverSecretSupplier, "serverSecretSupplier must not be null");
+    this.streamConnectionGenerator = Objects
+      .requireNonNull(streamConnectionGenerator, "connectionGenerator must not be null");
+
+    this.streamEncryptionService = null;
+    this.streamSharedSecretCrypto = Objects
+      .requireNonNull(streamSharedSecretCrypto, "streamSharedSecretCrypto must not be null");
+
     this.streamCodecContext = Objects.requireNonNull(streamCodecContext, "streamCodecContext must not be null");
   }
 
@@ -82,18 +125,17 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
   @Override
   public InterledgerResponsePacket receiveMoney(
-    final InterledgerPreparePacket preparePacket, final InterledgerAddress receiverAddress,
+    final InterledgerPreparePacket preparePacket,
+    final InterledgerAddress receiverAddress,
     final Denomination denomination
   ) {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(receiverAddress);
 
-    // TODO: Use StreamPacketUtils here instead.
-
     // Will throw if there's an error...
-    final SharedSecret spspSharedSecret = this.streamConnectionGenerator
+    final SharedSecret deprecatedStreamSharedSecret = this.streamConnectionGenerator
       .deriveSecretFromAddress(serverSecretSupplier, preparePacket.getDestination());
-    final SharedSecret streamSharedSecret = SharedSecret.of(spspSharedSecret.key());
+    final StreamSharedSecret streamSharedSecret = StreamSharedSecret.of(deprecatedStreamSharedSecret.key());
 
     final StreamPacket streamPacket;
     try {
@@ -104,9 +146,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
           .triggeredBy(receiverAddress)
           .build();
       }
-      // TODO: Replace this with the StreamEncryptionUtils?
       // Try to parse the STREAM data from the payload.
-      final byte[] streamPacketBytes = streamEncryptionService.decrypt(streamSharedSecret, preparePacket.getData());
+      final byte[] streamPacketBytes = this.decryptHelper(streamSharedSecret, preparePacket.getData());
       streamPacket = streamCodecContext.read(StreamPacket.class, new ByteArrayInputStream(streamPacketBytes));
     } catch (Exception e) {
       logger.error(
@@ -123,8 +164,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
     final List<StreamFrame> responseFrames = this.constructResponseFrames(streamPacket, denomination);
 
     // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
-    final InterledgerFulfillment fulfillment = StreamUtils
-      .generatedFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
+    final InterledgerFulfillment fulfillment
+      = StreamPacketUtils.generateFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
     final boolean isFulfillable = this.isFulfillable(preparePacket, fulfillment);
 
     // Return Fulfill or Reject Packet
@@ -134,7 +175,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         .interledgerPacketType(InterledgerPacketType.FULFILL)
         .prepareAmount(preparePacket.getAmount())
         .frames(responseFrames)
-        .sharedSecret(streamSharedSecret)
+        .sharedSecret(SharedSecret.of(streamSharedSecret.key()))
         .build();
 
       logger.debug(
@@ -146,9 +187,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
-        final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-          .encrypt(streamSharedSecret, returnableStreamPacketBytes);
-
+        final byte[] encryptedReturnableStreamPacketBytes
+          = this.encryptHelper(streamSharedSecret, returnableStreamPacketBytes);
         return InterledgerFulfillPacket.builder()
           .fulfillment(fulfillment)
           .data(encryptedReturnableStreamPacketBytes)
@@ -184,12 +224,12 @@ public class StatelessStreamReceiver implements StreamReceiver {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         streamCodecContext.write(returnableStreamPacketResponse, baos);
         final byte[] returnableStreamPacketBytes = baos.toByteArray();
-        final byte[] encryptedReturnableStreamPacketBytes = streamEncryptionService
-          .encrypt(streamSharedSecret, returnableStreamPacketBytes);
+        final byte[] encryptedReturnableStreamPacketBytes
+          = this.encryptHelper(streamSharedSecret, returnableStreamPacketBytes);
 
         return InterledgerRejectPacket.builder()
           .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
-          // TODO: Could be due to correct amounts just not fulfillilable.
+          // TODO: Could be due to correct amounts just not fulfillable.
           .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
           .triggeredBy(receiverAddress)
           .data(encryptedReturnableStreamPacketBytes)
@@ -207,6 +247,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
    *
    * @param streamPacket A {@link StreamPacket} to inspect when creating response frames.
    * @param denomination The {@link Denomination} of the incoming packet payment.
+   *
    * @return A {@link List} of {@link StreamFrame}.
    */
   @VisibleForTesting
@@ -255,6 +296,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
    *
    * @param preparePacket A {@link InterledgerPreparePacket} to check.
    * @param fulfillment   A published {@link InterledgerFulfillment} to verify the packet against.
+   *
    * @return {@code true} if the supplied fulfillment validates the supplied Prepare packet; {@code false} otherwise.
    */
   @VisibleForTesting
@@ -265,5 +307,54 @@ public class StatelessStreamReceiver implements StreamReceiver {
     Objects.requireNonNull(preparePacket);
 
     return fulfillment.getCondition().equals(preparePacket.getExecutionCondition());
+  }
+
+  /**
+   * Decrypt the prepare packet's data using whichever encryption service was passed-in via the constructor.
+   *
+   * @param streamSharedSecret A {@link StreamSharedSecret}.
+   * @param preparePacketData  A byte array containing the data from a prepare packet.
+   *
+   * @return A byte[] containing the decrypted bytes of a {@link StreamPacket}.
+   */
+  @VisibleForTesting
+  protected byte[] decryptHelper(final StreamSharedSecret streamSharedSecret, byte[] preparePacketData) {
+    Objects.requireNonNull(streamSharedSecret);
+    Objects.requireNonNull(preparePacketData);
+
+    if (this.streamSharedSecretCrypto != null) {
+      return streamSharedSecretCrypto.decrypt(streamSharedSecret, preparePacketData);
+    } else if (this.streamEncryptionService != null) {
+      return streamEncryptionService.decrypt(SharedSecret.of(streamSharedSecret.key()), preparePacketData);
+    } else {
+      throw new IllegalStateException(
+        "One of either streamSharedSecretCrypto or streamEncryptionService must be non-null"
+      );
+    }
+  }
+
+  /**
+   * Decrypt the prepare packet's data using whichever encryption service was passed-in via the constructor.
+   *
+   * @param streamSharedSecret           A {@link StreamSharedSecret}.
+   * @param unencryptedStreamPacketBytes A byte array containing the unencrypted bytes of a Stream packet.
+   *
+   * @return A byte[] containing the decrypted bytes of a {@link StreamPacket}.
+   */
+  @VisibleForTesting
+  protected byte[] encryptHelper(final StreamSharedSecret streamSharedSecret, byte[] unencryptedStreamPacketBytes) {
+    Objects.requireNonNull(streamSharedSecret);
+    Objects.requireNonNull(unencryptedStreamPacketBytes);
+
+    if (this.streamSharedSecretCrypto != null) {
+      return this.streamSharedSecretCrypto.encrypt(streamSharedSecret, unencryptedStreamPacketBytes);
+    } else if (this.streamEncryptionService != null) {
+      return this.streamEncryptionService
+        .encrypt(SharedSecret.of(streamSharedSecret.key()), unencryptedStreamPacketBytes);
+    } else {
+      throw new IllegalStateException(
+        "One of either streamSharedSecretCrypto or streamEncryptionService must be non-null"
+      );
+    }
   }
 }
