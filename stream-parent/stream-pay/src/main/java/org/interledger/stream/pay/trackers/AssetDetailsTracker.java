@@ -89,7 +89,8 @@ public class AssetDetailsTracker {
         } else {
           // Here, the denomination has already been set. So check the snapshot against the CAD frame.
           final Denomination denominationSnapshot = destinationAccountDetailsSnapshot.denomination().get();
-          if (!denominationSnapshot.equals(connectionAssetDetailsFrame.sourceDenomination())) {
+          if (!denominationSnapshot
+            .equals(org.interledger.stream.Denomination.to(connectionAssetDetailsFrame.sourceDenomination()))) {
             throw new StreamPayerException(
               String.format(
                 "Ending payment: remote unexpectedly changed destination asset from %s to %s",
