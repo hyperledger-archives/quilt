@@ -27,6 +27,7 @@ import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 import org.interledger.link.LoopbackLink;
 import org.interledger.link.PacketRejector;
+import org.interledger.link.spsp.StatelessSpspReceiverLink;
 import org.interledger.link.spsp.StatelessSpspReceiverLinkSettings;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
@@ -35,8 +36,8 @@ import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.connection.StreamConnection;
-import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.AesGcmStreamEncryptionService;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
@@ -94,7 +95,7 @@ import javax.money.convert.RateType;
 /**
  * Unit tests for {@link StreamPayer.Default}.
  */
-@SuppressWarnings( {"checkstyle:MissingJavadocMethod", "OptionalUsedAsFieldOrParameterType"})
+@SuppressWarnings( {"ALL"})
 public class StreamPayerDefaultTest {
 
   public static final byte[] SERVER_SECRET_BYTES = new byte[32];
@@ -507,7 +508,7 @@ public class StreamPayerDefaultTest {
           .collect(Collectors.toList());
       }
     };
-    final StatelessStreamReceiverLink simulatedLink = new StatelessStreamReceiverLink(
+    final StatelessSpspReceiverLink simulatedLink = new StatelessSpspReceiverLink(
       () -> LINK_OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder()
         .maxPacketAmount(UnsignedLong.MAX_VALUE)
@@ -565,7 +566,7 @@ public class StreamPayerDefaultTest {
           .build();
       }
     };
-    final StatelessStreamReceiverLink statelessStreamReceiverLink = new StatelessStreamReceiverLink(
+    final StatelessSpspReceiverLink statelessStreamReceiverLink = new StatelessSpspReceiverLink(
       () -> LINK_OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder()
         .maxPacketAmount(UnsignedLong.MAX_VALUE)
@@ -1158,7 +1159,7 @@ public class StreamPayerDefaultTest {
       new AesGcmStreamEncryptionService(),
       StreamCodecContextFactory.oer()
     );
-    final StatelessStreamReceiverLink simulatedLink = new StatelessStreamReceiverLink(
+    final StatelessSpspReceiverLink simulatedLink = new StatelessSpspReceiverLink(
       () -> LINK_OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder()
         .maxPacketAmount(maxPacketAmount)
@@ -1220,10 +1221,9 @@ public class StreamPayerDefaultTest {
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     final Ratio externalExchangeRate = Ratio.ONE;
     final Ratio trackedLowerBoundRate = externalExchangeRate;
-    final Ratio trackedUpperBoundRate = externalExchangeRate;
 
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = this.newPaymentSharedStateTrackerMock(
-      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, trackedUpperBoundRate
+      sourceAccountDetails, destinationAccountDetails, trackedLowerBoundRate, externalExchangeRate
     );
 
     final ExchangeRateProvider externalExchangeRateProviderMock = this
@@ -1250,7 +1250,7 @@ public class StreamPayerDefaultTest {
                 .build()
               )
               .lowerBoundRate(trackedLowerBoundRate)
-              .upperBoundRate(trackedUpperBoundRate)
+              .upperBoundRate(externalExchangeRate)
               .build()
           );
         when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
@@ -1304,7 +1304,7 @@ public class StreamPayerDefaultTest {
         return false; // <-- No packet should fulfill, but Stream responses still work on rejects.
       }
     };
-    final StatelessStreamReceiverLink simulatedLink = new StatelessStreamReceiverLink(
+    final StatelessSpspReceiverLink simulatedLink = new StatelessSpspReceiverLink(
       () -> LINK_OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder()
         .maxPacketAmount(UnsignedLong.MAX_VALUE)
@@ -1370,7 +1370,7 @@ public class StreamPayerDefaultTest {
     final AccountDetails sourceAccountDetails = this.getSourceAccountDetails();
     final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails();
 
-    final StatelessStreamReceiverLink simulatedLink = this.getFulfillableLinkForTesting(true);
+    final StatelessSpspReceiverLink simulatedLink = this.getFulfillableLinkForTesting(true);
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     final Ratio externalExchangeRate = Ratio.builder()
@@ -1846,7 +1846,7 @@ public class StreamPayerDefaultTest {
       .build();
   }
 
-  private StatelessStreamReceiverLink getFulfillableLinkForTesting(final boolean fulfillable) {
+  private StatelessSpspReceiverLink getFulfillableLinkForTesting(final boolean fulfillable) {
     final StatelessStreamReceiver statelessStreamReceiver = new StatelessStreamReceiver(
       () -> SERVER_SECRET_BYTES,
       new SpspStreamConnectionGenerator(),
@@ -1860,7 +1860,7 @@ public class StreamPayerDefaultTest {
         return fulfillable; // <-- No packet should fulfill, but Stream responses still work on rejects.
       }
     };
-    final StatelessStreamReceiverLink simulatedLink = new StatelessStreamReceiverLink(
+    final StatelessSpspReceiverLink simulatedLink = new StatelessSpspReceiverLink(
       () -> LINK_OPERATOR_ADDRESS,
       StatelessSpspReceiverLinkSettings.builder()
         .maxPacketAmount(UnsignedLong.MAX_VALUE)
