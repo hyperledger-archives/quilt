@@ -23,6 +23,7 @@ import org.interledger.stream.sender.FixedSenderAmountPaymentTracker;
 import org.interledger.stream.sender.SimpleStreamSender;
 import org.interledger.stream.sender.StreamSender;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
@@ -107,8 +108,7 @@ public class SenderReceiverTest {
         .link(link)
         .build();
   }
-
-
+  
   private static <T> List<T> awaitResults(List<CompletableFuture<T>> futures) {
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
@@ -116,6 +116,8 @@ public class SenderReceiverTest {
 
   @Before
   public void setup() {
+    final ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    logger.setLevel(Level.INFO);
     this.initIlpNetworkForStream();
   }
 
