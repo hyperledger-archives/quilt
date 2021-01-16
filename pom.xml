@@ -540,7 +540,7 @@
         <!-- org.jacoco:jacoc-maven-plugin -->
         <plugin>
           <groupId>org.jacoco</groupId>
-          <version>0.8.4</version>
+          <version>0.8.6</version>
           <artifactId>jacoco-maven-plugin</artifactId>
           <executions>
             <execution>
