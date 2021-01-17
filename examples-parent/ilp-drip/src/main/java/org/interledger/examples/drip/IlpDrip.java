@@ -1,7 +1,4 @@
-package org.interledger.stream;
-
-import static okhttp3.CookieJar.NO_COOKIES;
-import static org.assertj.core.api.Assertions.fail;
+package org.interledger.examples.drip;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -31,6 +28,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
+import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
@@ -202,16 +200,17 @@ public class IlpDrip {
     return streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         if (throwable != null) {
-          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
-          return null;
+          throw new RuntimeException("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
+          //return null;
         } else if (quote != null) {
           LOGGER.info("RECEIPT={}", quote);
           final PaymentReceipt paymentReceipt = streamPayer.pay(quote).join();
           LOGGER.info("STREAM PAY RECEIPT: \n{}\n\n", paymentReceipt);
           return paymentReceipt;
         } else {
-          fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
-          return null;
+          throw new RuntimeException(
+            "Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
+          //return null;
         }
       });
   }
@@ -235,7 +234,7 @@ public class IlpDrip {
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     OkHttpClient.Builder builder = new OkHttpClient.Builder()
       .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
-      .cookieJar(NO_COOKIES)
+      .cookieJar(CookieJar.NO_COOKIES)
       .connectTimeout(5000, TimeUnit.MILLISECONDS)
       .readTimeout(35, TimeUnit.SECONDS)
       .writeTimeout(35, TimeUnit.SECONDS);

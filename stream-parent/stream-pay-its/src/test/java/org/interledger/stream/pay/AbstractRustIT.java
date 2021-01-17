@@ -2,8 +2,6 @@ package org.interledger.stream.pay;
 
 import static okhttp3.CookieJar.NO_COOKIES;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -47,6 +45,7 @@ import org.javamoney.moneta.spi.DefaultNumberValue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -133,85 +132,6 @@ public abstract class AbstractRustIT {
   // Protected Helpers
   ////////////////////
 
-  //
-//  protected OkHttpClient constructOkHttpClient() {
-//    ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
-//    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
-//    OkHttpClient.Builder builder = new OkHttpClient.Builder()
-//      .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
-//      .cookieJar(NO_COOKIES)
-//      .connectTimeout(5000, TimeUnit.MILLISECONDS)
-//      .readTimeout(30, TimeUnit.SECONDS)
-//      .writeTimeout(30, TimeUnit.SECONDS);
-//    return builder.connectionPool(connectionPool).build();
-//  }
-//
-//  /**
-//   * Construct an {@link ObjectMapper} that can be used to serialize and deserialize ProblemsJSON where JSON numbers
-//   * emit as non-String values. Because Problems+Json requires HTTP status codes to be serialized as numbers (and not
-//   * Strings) per RFC-7807, this ObjectMapper should not be used for payloads that involve Problems.
-//   *
-//   * @return An {@link ObjectMapper}.
-//   * @see "https://tools.ietf.org/html/rfc7807"
-//   */
-//  protected static ObjectMapper newObjectMapperForProblemsJson() {
-//    return new ObjectMapper()
-//      .registerModule(new Jdk8Module())
-//      .registerModule(new InterledgerModule(Encoding.BASE64))
-//      .registerModule(new ProblemModule())
-//      .registerModule(new ConstraintViolationProblemModule())
-//      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-//      .configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, false);
-//  }
-//
-//  /**
-//   * Helper method to construct a new {@link Link} for transmitting ILP packets.
-//   *
-//   * @return A {@link Link}.
-//   */
-//  protected Link newIlpOverHttpLinkForQuiltIT() {
-//    final Link link = new IlpOverHttpLink(
-//      this::getSenderAddress,
-//      getTestnetUrl(ACCOUNT_USERNAME_QUILT_IT),
-//      constructOkHttpClient(),
-//      newObjectMapperForProblemsJson(),
-//      InterledgerCodecContextFactory.oer(),
-//      new SimpleBearerTokenSupplier(PASS_KEY_QUILT_IT)
-//    );
-//
-//    link.setLinkId(LinkId.of(getClass().getSimpleName() + "-ilpv4"));
-//    return link;
-//  }
-//
-//  /**
-//   * Helper method to construct a new {@link Link} for transmitting ILP packets.
-//   *
-//   * @return A {@link Link}.
-//   */
-//  @Deprecated
-//  protected Link newIlpOverHttpLinkForDemoUser() {
-//    final Link link = new IlpOverHttpLink(
-//      this::getSenderAddress,
-//      getTestnetUrl(ACCOUNT_USERNAME_DEMO_USER),
-//      constructOkHttpClient(),
-//      newObjectMapperForProblemsJson(),
-//      InterledgerCodecContextFactory.oer(),
-//      new SimpleBearerTokenSupplier(PASS_KEY_DEMO_USER)
-//    );
-//
-//    link.setLinkId(LinkId.of(getClass().getSimpleName() + "-ilpv4"));
-//    return link;
-//  }
-//
-//  protected HttpUrl getTestnetUrl(final String senderAccountUsername) {
-//    Objects.requireNonNull(senderAccountUsername);
-//    return HttpUrl.parse("https://rxprod.wc.wallet.ripplex.io/accounts/" + senderAccountUsername + "/ilp");
-//  }
-//
-//  protected InterledgerAddressPrefix getSenderAddressPrefix() {
-//    return SENDER_ADDRESS_PREFIX;
-//  }
-//
   protected <T> String pretty(final T jsonObject) {
     try {
       return objectMapperForPrettyPrinting.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
@@ -220,31 +140,6 @@ public abstract class AbstractRustIT {
       return jsonObject.toString();
     }
   }
-//
-//  protected InterledgerAddress getSenderAddress() {
-//    return InterledgerAddress.of(
-//      this.getSenderAddressPrefix()
-//        .with(this.getClass().getSimpleName().toLowerCase())
-//        .getValue()
-//    );
-//  }
-//
-//  protected ExchangeRateProvider mockExchangeRateProvider() {
-//    final ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
-//
-//    ExchangeRate xrpUsdRate = mock(ExchangeRate.class);
-//    when(xrpUsdRate.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("0.2429546")));
-//    when(exchangeRateProvider.getExchangeRate("XRP", "USD")).thenReturn(xrpUsdRate);
-//
-//    CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
-//    when(xrpUsdRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
-//
-//    CurrencyUnit currencyUnit = mock(CurrencyUnit.class);
-//    when(xrpUsdRate.getCurrency()).thenReturn(currencyUnit);
-//
-//    return exchangeRateProvider;
-//  }
-
 
   /**
    * Called to initialize 3 accounts on the Connector:
@@ -471,24 +366,24 @@ public abstract class AbstractRustIT {
   }
 
   protected ExchangeRateProvider mockExchangeRateProvider() {
-    final ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
+    final ExchangeRateProvider exchangeRateProvider = Mockito.mock(ExchangeRateProvider.class);
 
     {
-      ExchangeRate xrpUsdRate = mock(ExchangeRate.class);
-      when(xrpUsdRate.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("0.2429546")));
-      when(exchangeRateProvider.getExchangeRate("XRP", "USD")).thenReturn(xrpUsdRate);
-      CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
-      when(xrpUsdRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
-      when(xrpUsdRate.getCurrency()).thenReturn(baseCurrencyUnit);
+      ExchangeRate xrpUsdRate = Mockito.mock(ExchangeRate.class);
+      Mockito.when(xrpUsdRate.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("0.2429546")));
+      Mockito.when(exchangeRateProvider.getExchangeRate("XRP", "USD")).thenReturn(xrpUsdRate);
+      CurrencyUnit baseCurrencyUnit = Mockito.mock(CurrencyUnit.class);
+      Mockito.when(xrpUsdRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
+      Mockito.when(xrpUsdRate.getCurrency()).thenReturn(baseCurrencyUnit);
     }
     {
-      ExchangeRate identityRate = mock(ExchangeRate.class);
-      when(identityRate.getFactor()).thenReturn(DefaultNumberValue.of(BigDecimal.ONE));
-      when(exchangeRateProvider.getExchangeRate("XRP", "XRP")).thenReturn(identityRate);
-      when(exchangeRateProvider.getExchangeRate("USD", "USD")).thenReturn(identityRate);
-      CurrencyUnit baseCurrencyUnit = mock(CurrencyUnit.class);
-      when(identityRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
-      when(identityRate.getCurrency()).thenReturn(baseCurrencyUnit);
+      ExchangeRate identityRate = Mockito.mock(ExchangeRate.class);
+      Mockito.when(identityRate.getFactor()).thenReturn(DefaultNumberValue.of(BigDecimal.ONE));
+      Mockito.when(exchangeRateProvider.getExchangeRate("XRP", "XRP")).thenReturn(identityRate);
+      Mockito.when(exchangeRateProvider.getExchangeRate("USD", "USD")).thenReturn(identityRate);
+      CurrencyUnit baseCurrencyUnit = Mockito.mock(CurrencyUnit.class);
+      Mockito.when(identityRate.getBaseCurrency()).thenReturn(baseCurrencyUnit);
+      Mockito.when(identityRate.getCurrency()).thenReturn(baseCurrencyUnit);
     }
 
     return exchangeRateProvider;

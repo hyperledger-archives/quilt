@@ -1,7 +1,7 @@
 package org.interledger.stream.pay;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
@@ -41,7 +41,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
 
@@ -101,7 +102,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
 
@@ -163,7 +165,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
 
@@ -222,7 +225,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("0.01");
 
@@ -276,7 +280,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
@@ -357,7 +362,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(), spspClient);
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()

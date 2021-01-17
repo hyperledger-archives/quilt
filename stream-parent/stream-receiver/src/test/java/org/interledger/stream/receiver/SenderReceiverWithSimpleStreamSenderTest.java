@@ -50,9 +50,8 @@ import java.util.stream.IntStream;
  * A unit tests that simulates network connectivity between a sender and a receiver in order isolate and control various
  * network conditions as part of a STREAM payment.
  */
-public class SenderReceiverTest {
-
-  // TODO: Rework this for new Stream Payer
+@SuppressWarnings("deprecation")
+public class SenderReceiverWithSimpleStreamSenderTest {
 
   private static final String SHARED_SECRET_HEX = "9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D";
 
@@ -72,7 +71,7 @@ public class SenderReceiverTest {
   private SimulatedIlpv4Network simulatedIlpNetwork;
 
   private static StreamNode initNode(
-    Link link,
+    Link<?> link,
     InterledgerAddress senderAddress,
     InterledgerAddress receiverAddress
   ) {
@@ -90,7 +89,7 @@ public class SenderReceiverTest {
   }
 
   private static StreamNode initNode(
-    Link link,
+    Link<?> link,
     InterledgerAddress senderAddress,
     InterledgerAddress receiverAddress,
     StreamReceiver streamReceiver
@@ -584,7 +583,7 @@ public class SenderReceiverTest {
      *
      * @return the {@link Link}.
      */
-    Link link();
+    Link<?> link();
 
     /**
      * The {@link StreamSender} that this node uses to send STREAM payments.
@@ -615,8 +614,7 @@ public class SenderReceiverTest {
   /**
    * An {@link ExchangeRateCalculator} that specifies a fixed exchange rate forever.
    */
-  @Deprecated
-  static class FixedRateExchangeCalculator implements ExchangeRateCalculator {
+  private static class FixedRateExchangeCalculator implements ExchangeRateCalculator {
 
     // exchange rate from sender unit's to receiver unit's
     // if rate = 0.9 then 1 sender unit = 0.9 receiver units

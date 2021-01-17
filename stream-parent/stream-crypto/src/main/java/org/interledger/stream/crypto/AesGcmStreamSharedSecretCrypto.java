@@ -62,7 +62,8 @@ public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto 
   }
 
   @Override
-  public byte[] encrypt(final StreamSharedSecret streamSharedSecret, final byte[] plainText) throws EncryptionException {
+  public byte[] encrypt(final StreamSharedSecret streamSharedSecret, final byte[] plainText)
+    throws EncryptionException {
     Objects.requireNonNull(streamSharedSecret);
     Objects.requireNonNull(plainText);
 
@@ -93,8 +94,8 @@ public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto 
    * AuthTag goes last, as specified by NIST.</p>
    *
    * @param streamSharedSecret A {@link StreamSharedSecret} used for encryption.
-   * @param plainText    A byte-array to encrypt.
-   * @param iv           An initialization vector used AES/GCM.
+   * @param plainText          A byte-array to encrypt.
+   * @param iv                 An initialization vector used AES/GCM.
    *
    * @return A byte-array containing encrypted cipherMessage, which consists of the iv plus ciphertext (note this is
    *   inverted from the NIST specification).
@@ -154,8 +155,8 @@ public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto 
    * which is the case in most Interledger deployments.</p>
    *
    * @param streamSharedSecret A {@link StreamSharedSecret} used for encryption.
-   * @param plainText    A byte-array to encrypt.
-   * @param iv           An initialization vector used AES/GCM.
+   * @param plainText          A byte-array to encrypt.
+   * @param iv                 An initialization vector used AES/GCM.
    *
    * @return A byte-array containing encrypted cipherMessage, which consists of the iv plus ciphertext (note this is
    *   inverted from the NIST specification).
@@ -207,12 +208,12 @@ public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto 
       Arrays.fill(encryptionKey, (byte) 0);
 
       return cipherMessage;
-    } catch (NoSuchAlgorithmException
-      | NoSuchPaddingException
-      | InvalidAlgorithmParameterException
-      | InvalidKeyException
-      | BadPaddingException
-      | IllegalBlockSizeException e
+    } catch (NoSuchAlgorithmException |
+      NoSuchPaddingException |
+      InvalidAlgorithmParameterException |
+      InvalidKeyException |
+      BadPaddingException |
+      IllegalBlockSizeException e
     ) {
       throw new EncryptionException("Unable to Encrypt: ", e);
     }
@@ -252,8 +253,8 @@ public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto 
    * <p>Decrypts {@code cipherMessage} using the standard byte arrangement of the embedded ciphertext where the
    * AuthTag goes last, as specified by NIST.</p>
    *
-   * @param streamSharedSecret  A {@link StreamSharedSecret} used for encryption.
-   * @param cipherMessage A byte-array to decrypt.
+   * @param streamSharedSecret A {@link StreamSharedSecret} used for encryption.
+   * @param cipherMessage      A byte-array to decrypt.
    *
    * @return A byte-array containing decrypted plaintext.
    *
@@ -298,8 +299,8 @@ public class AesGcmStreamSharedSecretCrypto implements StreamSharedSecretCrypto 
    * isn't technically broken, and  works as long as everyone uses the same arrangement when encrypting/decrypting,
    * which is the case in most Interledger deployments.</p>
    *
-   * @param streamSharedSecret  A {@link StreamSharedSecret} used for encryption.
-   * @param cipherMessage A byte-array to decrypt.
+   * @param streamSharedSecret A {@link StreamSharedSecret} used for encryption.
+   * @param cipherMessage      A byte-array to decrypt.
    *
    * @return A byte-array containing decrypted plaintext.
    *

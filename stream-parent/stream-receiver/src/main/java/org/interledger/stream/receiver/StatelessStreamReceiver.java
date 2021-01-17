@@ -163,10 +163,11 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
     final List<StreamFrame> responseFrames = this.constructResponseFrames(streamPacket, denomination);
 
-    // Generate fulfillment using the shared secret that was pre-negotiated with the sender.
-    final InterledgerFulfillment fulfillment
+    // Generate expectedFulfillment using the shared secret that was pre-negotiated with the sender.
+    final InterledgerFulfillment expectedFulfillment
       = StreamPacketUtils.generateFulfillableFulfillment(streamSharedSecret, preparePacket.getData());
-    final boolean isFulfillable = this.isFulfillable(preparePacket, fulfillment);
+    // The packet is fulfillable based upon the condition/expectedFulfillment. However, we need to check the amounts below
+    final boolean isFulfillable = this.isFulfillable(preparePacket, expectedFulfillment);
 
     // Return Fulfill or Reject Packet
     if (isFulfillable && is(preparePacket.getAmount()).greaterThanEqualTo(streamPacket.prepareAmount())) {
@@ -179,8 +180,8 @@ public class StatelessStreamReceiver implements StreamReceiver {
         .build();
 
       logger.debug(
-        "Fulfilling prepare packet. preparePacket={} fulfillment={} returnableStreamPacketResponse={}",
-        preparePacket, fulfillment, returnableStreamPacketResponse
+        "Fulfilling prepare packet. preparePacket={} expectedFulfillment={} returnableStreamPacketResponse={}",
+        preparePacket, expectedFulfillment, returnableStreamPacketResponse
       );
 
       try {
@@ -190,7 +191,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         final byte[] encryptedReturnableStreamPacketBytes
           = this.encryptHelper(streamSharedSecret, returnableStreamPacketBytes);
         return InterledgerFulfillPacket.builder()
-          .fulfillment(fulfillment)
+          .fulfillment(expectedFulfillment)
           .data(encryptedReturnableStreamPacketBytes)
           .typedData(returnableStreamPacketResponse)
           .build();
@@ -199,6 +200,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
         throw new StreamException(e.getMessage(), e);
       }
     } else {
+      // Either the packet was simply not fulfillable, or, the amounts were wrong.
       final StreamPacket returnableStreamPacketResponse = StreamPacket.builder()
         .sequence(streamPacket.sequence())
         .interledgerPacketType(InterledgerPacketType.REJECT)
@@ -206,13 +208,17 @@ public class StatelessStreamReceiver implements StreamReceiver {
         .frames(responseFrames)
         .build();
 
-      if (isFulfillable) {
-        logger.debug("Packet is unfulfillable. preparePacket={}", preparePacket);
-      } else if (is(preparePacket.getAmount()).lessThan(streamPacket.prepareAmount())) {
+      final String rejectionErrorMessage;
+      if (!isFulfillable) {
+        logger.debug("Incoming Prepare packet is unfulfillable due to invalid condition/expectedFulfillment mismatch "
+          + "or other unknown reasons preparePacket={} expectedFulfillment={}", preparePacket, expectedFulfillment);
+        rejectionErrorMessage = "Packet not fulfillable";
+      } else {
         logger.debug(
           "Received only: {} when we should have received at least: {}",
           preparePacket.getAmount(), streamPacket.prepareAmount()
         );
+        rejectionErrorMessage = "STREAM packet not fulfillable (prepare amount < stream packet prepareAmount)";
       }
 
       logger.debug(
@@ -229,8 +235,7 @@ public class StatelessStreamReceiver implements StreamReceiver {
 
         return InterledgerRejectPacket.builder()
           .code(InterledgerErrorCode.F99_APPLICATION_ERROR)
-          // TODO: Could be due to correct amounts just not fulfillable.
-          .message("STREAM packet not fulfillable (prepare amount < stream packet amount)")
+          .message(rejectionErrorMessage)
           .triggeredBy(receiverAddress)
           .data(encryptedReturnableStreamPacketBytes)
           .typedData(returnableStreamPacketResponse)

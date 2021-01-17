@@ -1,13 +1,6 @@
 package org.interledger.stream.pay;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.pay.SendStateMatcher.hasSendState;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
@@ -73,6 +66,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
@@ -379,9 +373,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -395,7 +389,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -442,9 +436,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(Denominations.USD)
@@ -458,7 +452,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -649,7 +643,7 @@ public class StreamPayerDefaultTest {
     );
 
     final ExchangeRateProvider exchangeRateProviderMock = newExternalExchangeRateProvider(externalExchangeRate);
-    doThrow(new RuntimeException("no rate found")).when(exchangeRateProviderMock).getExchangeRate("FOO", "USD");
+    Mockito.doThrow(new RuntimeException("no rate found")).when(exchangeRateProviderMock).getExchangeRate("FOO", "USD");
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
@@ -658,9 +652,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceDenomination)
@@ -674,7 +668,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -724,7 +718,7 @@ public class StreamPayerDefaultTest {
     );
 
     final ExchangeRateProvider exchangeRateProviderMock = newExternalExchangeRateProvider(externalExchangeRate);
-    doThrow(new RuntimeException("no rate found")).when(exchangeRateProviderMock).getExchangeRate("USD", "FOO");
+    Mockito.doThrow(new RuntimeException("no rate found")).when(exchangeRateProviderMock).getExchangeRate("USD", "FOO");
 
     // By setting a very small FX rate, we can simulate a destination amount of 0.
     StreamPayer streamPayer = new StreamPayer.Default(
@@ -733,9 +727,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceDenomination)
@@ -749,7 +743,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -798,9 +792,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -814,7 +808,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -864,9 +858,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -880,7 +874,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -934,9 +928,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -950,7 +944,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -1005,9 +999,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -1021,7 +1015,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -1089,9 +1083,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -1105,7 +1099,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -1237,9 +1231,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -1253,7 +1247,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(externalExchangeRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -1396,9 +1390,9 @@ public class StreamPayerDefaultTest {
     ) {
       @Override
       protected ExchangeRateProber newExchangeRateProber() {
-        ExchangeRateProber exchangeRateProberMock = mock(ExchangeRateProber.class);
+        ExchangeRateProber exchangeRateProberMock = Mockito.mock(ExchangeRateProber.class);
 
-        when(exchangeRateProberMock.probePath(any()))
+        Mockito.when(exchangeRateProberMock.probePath(ArgumentMatchers.any()))
           .thenReturn(
             ExchangeRateProbeOutcome.builder()
               .sourceDenomination(sourceAccountDetails.denomination())
@@ -1412,7 +1406,7 @@ public class StreamPayerDefaultTest {
               .upperBoundRate(trackedUpperBoundRate)
               .build()
           );
-        when(exchangeRateProberMock.getPaymentSharedStateTracker(any()))
+        Mockito.when(exchangeRateProberMock.getPaymentSharedStateTracker(ArgumentMatchers.any()))
           .thenReturn(Optional.of(paymentSharedStateTrackerMock));
         return exchangeRateProberMock;
       }
@@ -1518,7 +1512,7 @@ public class StreamPayerDefaultTest {
     final StreamPayer.Default streamPayer = this.getStreamPayerDefault();
     expectedException.expect(NullPointerException.class);
     streamPayer.determineScaledExternalRate(
-      null, mock(AccountDetails.class), mock(ExchangeRate.class), Slippage.NONE
+      null, Mockito.mock(AccountDetails.class), Mockito.mock(ExchangeRate.class), Slippage.NONE
     );
   }
 
@@ -1527,7 +1521,7 @@ public class StreamPayerDefaultTest {
     final StreamPayer.Default streamPayer = this.getStreamPayerDefault();
     expectedException.expect(NullPointerException.class);
     streamPayer.determineScaledExternalRate(
-      mock(AccountDetails.class), null, mock(ExchangeRate.class), Slippage.NONE
+      Mockito.mock(AccountDetails.class), null, Mockito.mock(ExchangeRate.class), Slippage.NONE
     );
   }
 
@@ -1536,7 +1530,7 @@ public class StreamPayerDefaultTest {
     final StreamPayer.Default streamPayer = this.getStreamPayerDefault();
     expectedException.expect(NullPointerException.class);
     streamPayer.determineScaledExternalRate(
-      mock(AccountDetails.class), mock(AccountDetails.class), null, Slippage.NONE
+      Mockito.mock(AccountDetails.class), Mockito.mock(AccountDetails.class), null, Slippage.NONE
     );
   }
 
@@ -1545,7 +1539,7 @@ public class StreamPayerDefaultTest {
     final StreamPayer.Default streamPayer = this.getStreamPayerDefault();
     expectedException.expect(NullPointerException.class);
     streamPayer.determineScaledExternalRate(
-      mock(AccountDetails.class), mock(AccountDetails.class), mock(ExchangeRate.class), null
+      Mockito.mock(AccountDetails.class), Mockito.mock(AccountDetails.class), Mockito.mock(ExchangeRate.class), null
     );
   }
 
@@ -1554,12 +1548,12 @@ public class StreamPayerDefaultTest {
    */
   @Test
   public void testDetermineScaledExternalRateFromJS() {
-    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
-    when(sourceAccountDetailsMock.denomination())
+    final AccountDetails sourceAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(sourceAccountDetailsMock.denomination())
       .thenReturn(Optional.of(Denomination.builder().assetCode("EUR").assetScale((short) 3).build()));
 
-    final AccountDetails destinationAccountDetailsMock = mock(AccountDetails.class);
-    when(destinationAccountDetailsMock.denomination())
+    final AccountDetails destinationAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(destinationAccountDetailsMock.denomination())
       .thenReturn(Optional.of(Denomination.builder().assetCode("USD").assetScale((short) 4).build()));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
@@ -1569,8 +1563,8 @@ public class StreamPayerDefaultTest {
 
     // Should be close to 0.8928571428571428
     final BigDecimal simulatedRate = BigDecimal.ONE.divide(new BigDecimal("1.12"), MathContext.DECIMAL64);
-    final ExchangeRate externalExchangeRateMock = mock(ExchangeRate.class);
-    when(externalExchangeRateMock.getFactor()).thenReturn(new DefaultNumberValue(simulatedRate));
+    final ExchangeRate externalExchangeRateMock = Mockito.mock(ExchangeRate.class);
+    Mockito.when(externalExchangeRateMock.getFactor()).thenReturn(new DefaultNumberValue(simulatedRate));
     final Slippage slippageMock = Slippage.ONE_PERCENT;
 
     ScaledExchangeRate actual = streamPayer.determineScaledExternalRate(
@@ -1605,31 +1599,31 @@ public class StreamPayerDefaultTest {
   @Test
   public void obtainValidatedAmountToSendWhenSendAmountIs0() {
     expectedException.expect(StreamPayerException.class);
-    expectedException.expect(hasSendState(SendState.InvalidSourceAmount));
+    expectedException.expect(SendStateMatcher.hasSendState(SendState.InvalidSourceAmount));
 
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
-    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
-    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE.subtract(BigDecimal.valueOf(2L)));
+    PaymentOptions paymentOptionsMock = Mockito.mock(PaymentOptions.class);
+    Mockito.when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE.subtract(BigDecimal.valueOf(2L)));
     streamPayer.obtainValidatedAmountToSend(paymentOptionsMock);
   }
 
   @Test
   public void obtainValidatedAmountToSendWhenNoSendDenomination() {
     expectedException.expect(StreamPayerException.class);
-    expectedException.expect(hasSendState(SendState.UnknownSourceAsset));
+    expectedException.expect(SendStateMatcher.hasSendState(SendState.UnknownSourceAsset));
 
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
-    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
-    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+    PaymentOptions paymentOptionsMock = Mockito.mock(PaymentOptions.class);
+    Mockito.when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
 
-    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
-    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.empty());
-    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    AccountDetails senderAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(senderAccountDetailsMock.denomination()).thenReturn(Optional.empty());
+    Mockito.when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1641,23 +1635,23 @@ public class StreamPayerDefaultTest {
   @Test
   public void obtainValidatedAmountToSendWithRoundingException() {
     expectedException.expect(StreamPayerException.class);
-    expectedException.expect(hasSendState(SendState.InvalidSourceAmount));
+    expectedException.expect(SendStateMatcher.hasSendState(SendState.InvalidSourceAmount));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
-    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
-    BigDecimal bdMock = mock(BigDecimal.class);
-    when(bdMock.compareTo(any())).thenReturn(1);
-    when(bdMock.toBigIntegerExact()).thenReturn(BigInteger.ONE);
-    doThrow(new ArithmeticException()).when(bdMock).movePointRight(anyInt());
-    when(paymentOptionsMock.amountToSend()).thenReturn(bdMock);
+    PaymentOptions paymentOptionsMock = Mockito.mock(PaymentOptions.class);
+    BigDecimal bdMock = Mockito.mock(BigDecimal.class);
+    Mockito.when(bdMock.compareTo(ArgumentMatchers.any())).thenReturn(1);
+    Mockito.when(bdMock.toBigIntegerExact()).thenReturn(BigInteger.ONE);
+    Mockito.doThrow(new ArithmeticException()).when(bdMock).movePointRight(ArgumentMatchers.anyInt());
+    Mockito.when(paymentOptionsMock.amountToSend()).thenReturn(bdMock);
 
-    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
-    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
-    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    AccountDetails senderAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    Mockito.when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
     assertThat(streamPayer.obtainValidatedAmountToSend(paymentOptionsMock)).isEqualTo(BigInteger.valueOf(1000000L));
   }
@@ -1670,12 +1664,12 @@ public class StreamPayerDefaultTest {
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
     );
 
-    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
-    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+    PaymentOptions paymentOptionsMock = Mockito.mock(PaymentOptions.class);
+    Mockito.when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
 
-    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
-    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
-    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    AccountDetails senderAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    Mockito.when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
     assertThat(streamPayer.obtainValidatedAmountToSend(paymentOptionsMock)).isEqualTo(BigInteger.valueOf(1000000L));
   }
 
@@ -1697,18 +1691,18 @@ public class StreamPayerDefaultTest {
   @Test
   public void fetchRecipientAccountDetailsWithSpspException() {
     expectedException.expect(StreamPayerException.class);
-    expectedException.expect(hasSendState(SendState.QueryFailed));
+    expectedException.expect(SendStateMatcher.hasSendState(SendState.QueryFailed));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
-    SpspClient mockSpspClient = mock(SpspClient.class);
-    doThrow(new IllegalArgumentException()).when(mockSpspClient)
+    SpspClient mockSpspClient = Mockito.mock(SpspClient.class);
+    Mockito.doThrow(new IllegalArgumentException()).when(mockSpspClient)
       .getStreamConnectionDetails(Mockito.<PaymentPointer>any());
-    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
-    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+    PaymentOptions paymentOptionsMock = Mockito.mock(PaymentOptions.class);
+    Mockito.when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
 
-    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
-    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
-    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    AccountDetails senderAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    Mockito.when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), mockSpspClient
@@ -1721,20 +1715,20 @@ public class StreamPayerDefaultTest {
   public void fetchRecipientAccountDetails() {
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
 
-    StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
-    SpspClient spspClientMock = mock(SpspClient.class);
-    when(spspClientMock.getStreamConnectionDetails(Mockito.<PaymentPointer>any()))
+    StreamConnectionDetails streamConnectionDetailsMock = Mockito.mock(StreamConnectionDetails.class);
+    SpspClient spspClientMock = Mockito.mock(SpspClient.class);
+    Mockito.when(spspClientMock.getStreamConnectionDetails(Mockito.<PaymentPointer>any()))
       .thenReturn(streamConnectionDetailsMock);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), spspClientMock
     );
 
-    PaymentOptions paymentOptionsMock = mock(PaymentOptions.class);
-    when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
+    PaymentOptions paymentOptionsMock = Mockito.mock(PaymentOptions.class);
+    Mockito.when(paymentOptionsMock.amountToSend()).thenReturn(BigDecimal.ONE);
 
-    AccountDetails senderAccountDetailsMock = mock(AccountDetails.class);
-    when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
-    when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
+    AccountDetails senderAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
+    Mockito.when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
     assertThat(streamPayer.fetchRecipientAccountDetails(paymentOptionsMock)).isEqualTo(streamConnectionDetailsMock);
   }
@@ -1747,7 +1741,7 @@ public class StreamPayerDefaultTest {
   public void validateAllocationSchemesWhenNullAccountDetails() {
     expectedException.expect(NullPointerException.class);
 
-    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
+    final StreamConnectionDetails streamConnectionDetailsMock = Mockito.mock(StreamConnectionDetails.class);
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1760,7 +1754,7 @@ public class StreamPayerDefaultTest {
   public void validateAllocationSchemesWhenNullConnection() {
     expectedException.expect(NullPointerException.class);
 
-    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
+    final AccountDetails sourceAccountDetailsMock = Mockito.mock(AccountDetails.class);
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1771,10 +1765,10 @@ public class StreamPayerDefaultTest {
 
   @Test
   public void validateAllocationSchemesWhenSourceIsPrivate() {
-    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
-    when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("private.foo"));
-    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
-    when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final AccountDetails sourceAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("private.foo"));
+    final StreamConnectionDetails streamConnectionDetailsMock = Mockito.mock(StreamConnectionDetails.class);
+    Mockito.when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1785,10 +1779,10 @@ public class StreamPayerDefaultTest {
 
   @Test
   public void validateAllocationSchemesWhenSame() {
-    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
-    when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
-    when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final AccountDetails sourceAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final StreamConnectionDetails streamConnectionDetailsMock = Mockito.mock(StreamConnectionDetails.class);
+    Mockito.when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1800,12 +1794,12 @@ public class StreamPayerDefaultTest {
   @Test
   public void validateAllocationSchemesWhenDifferent() {
     expectedException.expect(StreamPayerException.class);
-    expectedException.expect(hasSendState(SendState.IncompatibleInterledgerNetworks));
+    expectedException.expect(SendStateMatcher.hasSendState(SendState.IncompatibleInterledgerNetworks));
 
-    final AccountDetails sourceAccountDetailsMock = mock(AccountDetails.class);
-    when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("example.foo"));
-    final StreamConnectionDetails streamConnectionDetailsMock = mock(StreamConnectionDetails.class);
-    when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("private.foo"));
+    final AccountDetails sourceAccountDetailsMock = Mockito.mock(AccountDetails.class);
+    Mockito.when(sourceAccountDetailsMock.interledgerAddress()).thenReturn(InterledgerAddress.of("example.foo"));
+    final StreamConnectionDetails streamConnectionDetailsMock = Mockito.mock(StreamConnectionDetails.class);
+    Mockito.when(streamConnectionDetailsMock.destinationAddress()).thenReturn(InterledgerAddress.of("private.foo"));
     final Link<?> simulatedLink = getFulfillableLinkForTesting(false);
     Default streamPayer = new Default(
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), new SimpleSpspClient()
@@ -1827,8 +1821,9 @@ public class StreamPayerDefaultTest {
       .setTerm(CurrencyUnitBuilder.of("USD", "usdProvider").build())
       .build();
 
-    ExchangeRateProvider exchangeRateProviderMock = mock(ExchangeRateProvider.class);
-    when(exchangeRateProviderMock.getExchangeRate(anyString(), anyString())).thenReturn(exchangeRateMock);
+    ExchangeRateProvider exchangeRateProviderMock = Mockito.mock(ExchangeRateProvider.class);
+    Mockito.when(exchangeRateProviderMock.getExchangeRate(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
+      .thenReturn(exchangeRateMock);
     return exchangeRateProviderMock;
   }
 
@@ -1966,9 +1961,9 @@ public class StreamPayerDefaultTest {
   private AssetDetailsTracker assetDetailsTrackerMock(
     final AccountDetails sourceAccountDetails, final AccountDetails destinationAccountDetails
   ) {
-    AssetDetailsTracker assetDetailsTrackerMock = mock(AssetDetailsTracker.class);
-    when(assetDetailsTrackerMock.getSourceAccountDetails()).thenReturn(sourceAccountDetails);
-    when(assetDetailsTrackerMock.getDestinationAccountDetails()).thenReturn(destinationAccountDetails);
+    AssetDetailsTracker assetDetailsTrackerMock = Mockito.mock(AssetDetailsTracker.class);
+    Mockito.when(assetDetailsTrackerMock.getSourceAccountDetails()).thenReturn(sourceAccountDetails);
+    Mockito.when(assetDetailsTrackerMock.getDestinationAccountDetails()).thenReturn(destinationAccountDetails);
     return assetDetailsTrackerMock;
   }
 
@@ -2006,15 +2001,15 @@ public class StreamPayerDefaultTest {
     exchangeRateTracker.setRateBounds(lowerBoundExchangeRate, upperBoundExchangeRate);
 
     final AmountTracker amountTracker = new AmountTracker(exchangeRateTracker);
-    final PaymentSharedStateTracker paymentSharedStateTrackerMock = mock(PaymentSharedStateTracker.class);
-    when(paymentSharedStateTrackerMock.getStreamConnection())
+    final PaymentSharedStateTracker paymentSharedStateTrackerMock = Mockito.mock(PaymentSharedStateTracker.class);
+    Mockito.when(paymentSharedStateTrackerMock.getStreamConnection())
       .thenReturn(newStreamConnection(sourceAccountDetails, receiverAccountDetails));
-    when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTracker);
-    when(paymentSharedStateTrackerMock.getExchangeRateTracker()).thenReturn(exchangeRateTracker);
+    Mockito.when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTracker);
+    Mockito.when(paymentSharedStateTrackerMock.getExchangeRateTracker()).thenReturn(exchangeRateTracker);
     AssetDetailsTracker assetTrackerMock = assetDetailsTrackerMock(sourceAccountDetails, receiverAccountDetails);
-    when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetTrackerMock);
-    when(paymentSharedStateTrackerMock.getPacingTracker()).thenReturn(new PacingTracker());
-    when(paymentSharedStateTrackerMock.getMaxPacketAmountTracker()).thenReturn(new MaxPacketAmountTracker());
+    Mockito.when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetTrackerMock);
+    Mockito.when(paymentSharedStateTrackerMock.getPacingTracker()).thenReturn(new PacingTracker());
+    Mockito.when(paymentSharedStateTrackerMock.getMaxPacketAmountTracker()).thenReturn(new MaxPacketAmountTracker());
     return paymentSharedStateTrackerMock;
   }
 

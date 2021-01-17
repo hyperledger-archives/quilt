@@ -118,7 +118,6 @@ public interface StreamPayer {
       this(streamPacketEncryptionService, link, oracleExchangeRateProvider, new SimpleSpspClient());
     }
 
-
     /**
      * Required-args Constructor for testing.
      *
@@ -128,7 +127,7 @@ public interface StreamPayer {
      * @param spspClient                    A {@link SpspClient}.
      */
     @VisibleForTesting
-    Default(
+    public Default(
       final StreamPacketEncryptionService streamPacketEncryptionService,
       final Link<? extends LinkSettings> link,
       final ExchangeRateProvider oracleExchangeRateProvider,

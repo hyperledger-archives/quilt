@@ -1,7 +1,6 @@
 package org.interledger.ildcp;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
 
 import org.interledger.core.DateUtils;
 

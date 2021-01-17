@@ -49,10 +49,15 @@ public interface StreamSharedSecret {
     }
   }
 
+  /**
+   * Precondition check method.
+   *
+   * @return A {@link StreamSharedSecret}.
+   */
   @Value.Check
   default StreamSharedSecret validate() {
     if (key().length != 32) {
-      throw new IllegalStateException(String.valueOf("SharedSecret must be 32 bytes"));
+      throw new IllegalStateException("SharedSecret must be 32 bytes");
     }
     return this;
   }
