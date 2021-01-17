@@ -16,32 +16,29 @@ import java.util.Optional;
  */
 public class InterledgerPacketUtils {
 
-  // TODO: Unit test.
-  // TODO: Is this module used?
-
   private static final Logger logger = LoggerFactory.getLogger(InterledgerPacketUtils.class);
 
   public static Optional<AmountTooLargeErrorData> getAmountTooLargeErrorData(
-      final InterledgerRejectPacket rejectPacket
+    final InterledgerRejectPacket rejectPacket
   ) {
     Objects.requireNonNull(rejectPacket);
 
     // Look in typed-data first. If not found there, try to decode from the data.
     return Optional.ofNullable(rejectPacket.typedData()
-        .filter($ -> AmountTooLargeErrorData.class.isAssignableFrom($.getClass()))
-        .map($ -> (AmountTooLargeErrorData) $)
-        .orElseGet(() -> Optional.ofNullable(rejectPacket.getData())
-            .filter(data -> data.length > 0)
-            .map(data -> {
-              try {
-                ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                return InterledgerCodecContextFactory.oer().read(AmountTooLargeErrorData.class, bais);
-              } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-                return null; // to manifest as an Optional.empty
-              }
-            })
-            .orElse(null))
+      .filter($ -> AmountTooLargeErrorData.class.isAssignableFrom($.getClass()))
+      .map($ -> (AmountTooLargeErrorData) $)
+      .orElseGet(() -> Optional.ofNullable(rejectPacket.getData())
+        .filter(data -> data.length > 0)
+        .map(data -> {
+          try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(data);
+            return InterledgerCodecContextFactory.oer().read(AmountTooLargeErrorData.class, bais);
+          } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return null; // to manifest as an Optional.empty
+          }
+        })
+        .orElse(null))
     );
   }
 }
