@@ -64,7 +64,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     } else if (InterledgerRejectPacket.class.isAssignableFrom(this.getClass())) {
       rejectHandler.accept((InterledgerRejectPacket) this);
     } else {
-      throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
+      throw new IllegalStateException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
     }
   }
 
@@ -79,6 +79,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param fulfillHandler A {@link Consumer} to call if this packet is an instance of {@link
    *                       InterledgerFulfillPacket}.
    * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
+   *
    * @return This instance of {@link InterledgerResponsePacket}.
    */
   default InterledgerResponsePacket handleAndReturn(
@@ -96,6 +97,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param fulfillMapper A {@link Function} to call if this packet is an instance of {@link InterledgerFulfillPacket}.
    * @param rejectMapper  A {@link Function} to call if this packet is an instance of {@link InterledgerRejectPacket}.
    * @param <R>           The return type of this mapping function.
+   *
    * @return An instance of {@code R}.
    */
   default <R> R map(
@@ -109,7 +111,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     } else if (InterledgerRejectPacket.class.isAssignableFrom(this.getClass())) {
       return rejectMapper.apply((InterledgerRejectPacket) this);
     } else {
-      throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
+      throw new IllegalStateException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
     }
   }
 
@@ -123,6 +125,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param responseMapper A {@link Function} to call if this packet is an instance of {@link
    *                       InterledgerResponsePacket}.
    * @param <R>            The return type of this mapping function.
+   *
    * @return An instance of {@code R}.
    */
   default <R> R mapResponse(final Function<InterledgerResponsePacket, R> responseMapper) {
@@ -130,14 +133,13 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     return responseMapper.apply(this);
   }
 
-
   /**
    * Return a copy of this packet with the supplied {@code typedData} included.
    *
    * @param optTypedData An arbitrary object for the data field.
+   *
    * @return A {@link InterledgerResponsePacket}.
    */
-// TODO: Unit test
   default InterledgerResponsePacket withTypedDataOrThis(final Optional<?> optTypedData) {
     Objects.requireNonNull(optTypedData);
     return optTypedData
