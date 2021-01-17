@@ -219,7 +219,8 @@ public class StreamPacketUtils {
         .assetCode(deprecatedDenomination.assetCode())
         .assetScale(deprecatedDenomination.assetScale())
         .build())
-      .map($ -> (Denomination) $) // TODO: This case shouldn't be necessary
+      .filter($ -> Denomination.class.isAssignableFrom($.getClass()))
+      .map($ -> (Denomination) $)
       .findFirst();
   }
 

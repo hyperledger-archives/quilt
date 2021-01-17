@@ -40,7 +40,7 @@ public class NumberScalingUtils {
     // The difference between the two `scale` values
     final int scaleDifference = destinationScale - sourceScale;
 
-    // TODO: Try shiftBy and compare speed?
+    // TODO [New Feature]: Try shiftBy and compare speed?
     final BigInteger scaledAmount = scaleDifference > 0 ?
       // value * (10^scaleDifference), always rounds to floor via BigInteger
       sourceAmountBI.multiply(BigInteger.TEN.pow(scaleDifference)) :
