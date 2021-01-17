@@ -85,7 +85,9 @@
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <configuration>
-          <usedDependencies>jakarta.annotation:jakarta.annotation-api</usedDependencies>
+          <usedDependencies>
+            <usedDependency>jakarta.annotation:jakarta.annotation-api</usedDependency>
+          </usedDependencies>
         </configuration>
       </plugin>
     </plugins>
