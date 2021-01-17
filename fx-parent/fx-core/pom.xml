@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <name>Quilt :: FX Parent</name>
+  <name>Quilt :: FX Parent :: FX Core</name>
   <artifactId>fx-core</artifactId>
   <description>Core FX support for Interledger</description>
 
