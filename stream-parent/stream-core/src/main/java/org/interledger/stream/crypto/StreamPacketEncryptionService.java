@@ -14,8 +14,6 @@ import java.util.Objects;
  */
 public class StreamPacketEncryptionService {
 
-  // TODO: Unit tests
-
   private final CodecContext streamCodecContext;
   private final StreamSharedSecretCrypto streamSharedSecretCrypto;
 
