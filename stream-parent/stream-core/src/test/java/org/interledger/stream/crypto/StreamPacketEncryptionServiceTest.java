@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import org.interledger.encoding.asn.framework.CodecContext;
 import org.interledger.stream.StreamPacket;
@@ -11,6 +12,7 @@ import org.interledger.stream.StreamPacket;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 
@@ -29,6 +31,7 @@ public class StreamPacketEncryptionServiceTest {
 
   @Before
   public void setUp() {
+    MockitoAnnotations.openMocks(this);
     this.streamPacketEncryptionService = new StreamPacketEncryptionService(
       streamCodecContextMock, streamSharedSecretCryptoMock
     );
@@ -47,6 +50,7 @@ public class StreamPacketEncryptionServiceTest {
 
   @Test
   public void fromEncrypted() throws IOException {
+    when(streamSharedSecretCryptoMock.decrypt(any(), any())).thenReturn(new byte[32]);
     streamPacketEncryptionService.fromEncrypted(StreamSharedSecret.of(new byte[32]), new byte[32]);
 
     verify(streamCodecContextMock).read(any(), any());
