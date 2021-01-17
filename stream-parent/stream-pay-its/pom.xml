@@ -61,7 +61,6 @@
       <artifactId>ildcp-core</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>link-core</artifactId>
@@ -152,11 +151,6 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
-    <!--    <dependency>-->
-    <!--      <groupId>org.immutables</groupId>-->
-    <!--      <artifactId>value</artifactId>-->
-    <!--      <scope>provided</scope>-->
-    <!--    </dependency>-->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -180,7 +174,6 @@
     <dependency>
       <groupId>org.zalando</groupId>
       <artifactId>problem-violations</artifactId>
-      <version>0.25.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
