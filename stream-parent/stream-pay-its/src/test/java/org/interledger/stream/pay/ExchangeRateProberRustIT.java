@@ -30,7 +30,8 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
   public void testRateProbeWithMaxPacket50kViaXrpToUsd() {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT_50K); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
-    DefaultExchangeRateProber exchangeRateProber = new DefaultExchangeRateProber(streamPacketEncryptionService, ilpLink);
+    DefaultExchangeRateProber exchangeRateProber = new DefaultExchangeRateProber(streamPacketEncryptionService,
+      ilpLink);
 
     final StreamConnection streamConnection = this.getNewStreamConnection(
       senderAccountDetails, PaymentPointer.of(PAYMENT_POINTER_USD_50K)
@@ -39,7 +40,8 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
     final ExchangeRateProbeOutcome exchangeRateProbeOutcome = exchangeRateProber.probePath(streamConnection);
 
     Assertions.assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
-    Assertions.assertThat(exchangeRateProbeOutcome.destinationDenomination().get()).isEqualTo(Denominations.USD_MILLI_DOLLARS);
+    Assertions.assertThat(exchangeRateProbeOutcome.destinationDenomination().get())
+      .isEqualTo(Denominations.USD_MILLI_DOLLARS);
     Assertions.assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(
       Ratio.builder().numerator(BigInteger.valueOf(2)).denominator(BigInteger.valueOf(10000L)).build()
     );
@@ -55,7 +57,8 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
     // assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
 
     // Likewise, for the RustConnector, it doesn't send _any_ F08 rejections for the max-packet amount.
-    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.PreciseMax);
+    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState())
+      .isEqualTo(MaxPacketState.PreciseMax);
     Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(50000L));
     // This value is 10000 because the probe amount of 100000 is rejected via F08, so we never actually validate
     // anything greater than 10,000.
@@ -65,15 +68,16 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
   /**
    * Tests the rate probe on a path that has an unlimited max-packet value and a 1:1 FX using an XRP to XRP payment.
    * <pre>
-   * Sender Account: `demo_user`
-   * Receiver Account: $rafiki.money/p/test@example.com
+   * Source Account: `demo_user`
+   * Destination Account: $rafiki.money/p/test@example.com
    * </pre>
    */
   @Test
   public void testRateProbeUnlimitedMaxPathWithXrpToXrp() {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
-    DefaultExchangeRateProber exchangeRateProber = new DefaultExchangeRateProber(streamPacketEncryptionService, ilpLink);
+    DefaultExchangeRateProber exchangeRateProber = new DefaultExchangeRateProber(streamPacketEncryptionService,
+      ilpLink);
 
     final StreamConnection streamConnection = this.getNewStreamConnection(
       senderAccountDetails, PaymentPointer.of(PAYMENT_POINTER_XRP)
@@ -82,10 +86,13 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
     final ExchangeRateProbeOutcome exchangeRateProbeOutcome = exchangeRateProber.probePath(streamConnection);
 
     Assertions.assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
-    Assertions.assertThat(exchangeRateProbeOutcome.destinationDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
-    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.UnknownMax);
+    Assertions.assertThat(exchangeRateProbeOutcome.destinationDenomination().get())
+      .isEqualTo(Denominations.XRP_MILLI_DROPS);
+    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState())
+      .isEqualTo(MaxPacketState.UnknownMax);
     Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
-    Assertions.assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(1000000000000L));
+    Assertions.assertThat(exchangeRateProbeOutcome.verifiedPathCapacity())
+      .isEqualTo(UnsignedLong.valueOf(1000000000000L));
     Assertions.assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(Ratio.builder()
       .numerator(BigInteger.valueOf(1000000000000L))
       .denominator(BigInteger.valueOf(1000000000000L))

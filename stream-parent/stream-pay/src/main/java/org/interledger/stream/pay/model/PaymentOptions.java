@@ -39,6 +39,11 @@ public interface PaymentOptions {
   //  code ahead of time.
   BigDecimal amountToSend();
 
+  /**
+   * The Payment Pointer for the destination account.
+   *
+   * @return A {@link PaymentPointer}.
+   */
   PaymentPointer destinationPaymentPointer();
 
   /**
@@ -46,7 +51,7 @@ public interface PaymentOptions {
    *
    * @return An optionally-present {@link Denomination}.
    */
-  Optional<Denomination> expectedReceiverDenomination();
+  Optional<Denomination> expectedDestinationDenomination();
 
   @Default
   default Slippage slippage() {

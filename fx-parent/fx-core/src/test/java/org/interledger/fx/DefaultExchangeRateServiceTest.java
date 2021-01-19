@@ -1,9 +1,10 @@
 package org.interledger.fx;
 
-import javax.money.convert.ExchangeRateProvider;
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import javax.money.convert.ExchangeRateProvider;
 
 /**
  * Unit tests for {@link DefaultExchangeRateService}.

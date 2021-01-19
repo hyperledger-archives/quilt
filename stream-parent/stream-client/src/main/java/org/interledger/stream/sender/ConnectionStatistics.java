@@ -43,7 +43,7 @@ public interface ConnectionStatistics {
   }
 
   /**
-   * The total amount delivered to the receiver.
+   * The total amount delivered to the destination.
    *
    * @return An {@link UnsignedLong} representing the total amount delivered.
    */

@@ -1,7 +1,5 @@
 package org.interledger.stream;
 
-import org.interledger.stream.Denomination;
-
 import com.google.common.primitives.UnsignedLong;
 
 /**

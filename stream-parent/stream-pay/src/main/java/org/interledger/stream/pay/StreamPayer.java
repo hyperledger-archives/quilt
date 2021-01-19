@@ -280,7 +280,7 @@ public interface StreamPayer {
       final Denomination sourceDenomination = paymentOptions.senderAccountDetails().denomination()
         .orElseThrow(() -> new IllegalArgumentException("Sender denomination is required."));
 
-      final Denomination receiverDenomination = paymentOptions.expectedReceiverDenomination()
+      final Denomination receiverDenomination = paymentOptions.expectedDestinationDenomination()
         .orElseThrow(() -> new IllegalArgumentException("Receiver denomination is required."));
 
       final BigInteger totalAmountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);

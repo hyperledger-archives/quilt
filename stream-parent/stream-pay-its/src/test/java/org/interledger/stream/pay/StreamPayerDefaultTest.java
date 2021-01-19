@@ -1993,12 +1993,12 @@ public class StreamPayerDefaultTest {
 
   private PaymentSharedStateTracker newPaymentSharedStateTrackerMock(
     final AccountDetails sourceAccountDetails,
-    final AccountDetails receiverAccountDetails,
+    final AccountDetails destinationAccountDetails,
     final Ratio lowerBoundExchangeRate,
     final Ratio upperBoundExchangeRate
   ) {
     Objects.requireNonNull(sourceAccountDetails);
-    Objects.requireNonNull(receiverAccountDetails);
+    Objects.requireNonNull(destinationAccountDetails);
     Objects.requireNonNull(lowerBoundExchangeRate);
     Objects.requireNonNull(upperBoundExchangeRate);
 
@@ -2008,10 +2008,10 @@ public class StreamPayerDefaultTest {
     final AmountTracker amountTracker = new AmountTracker(exchangeRateTracker);
     final PaymentSharedStateTracker paymentSharedStateTrackerMock = Mockito.mock(PaymentSharedStateTracker.class);
     Mockito.when(paymentSharedStateTrackerMock.getStreamConnection())
-      .thenReturn(newStreamConnection(sourceAccountDetails, receiverAccountDetails));
+      .thenReturn(newStreamConnection(sourceAccountDetails, destinationAccountDetails));
     Mockito.when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTracker);
     Mockito.when(paymentSharedStateTrackerMock.getExchangeRateTracker()).thenReturn(exchangeRateTracker);
-    AssetDetailsTracker assetTrackerMock = assetDetailsTrackerMock(sourceAccountDetails, receiverAccountDetails);
+    AssetDetailsTracker assetTrackerMock = assetDetailsTrackerMock(sourceAccountDetails, destinationAccountDetails);
     Mockito.when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetTrackerMock);
     Mockito.when(paymentSharedStateTrackerMock.getPacingTracker()).thenReturn(new PacingTracker());
     Mockito.when(paymentSharedStateTrackerMock.getMaxPacketAmountTracker()).thenReturn(new MaxPacketAmountTracker());

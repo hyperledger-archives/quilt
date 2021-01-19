@@ -57,11 +57,11 @@ public interface PaymentTargetConditions {
 
   enum PaymentType {
     /**
-     * The amount that should be sent for this payment is fixed in the sender's units.
+     * The amount that should be sent for this payment is fixed in the source account's units.
      */
     FIXED_SEND,
     /**
-     * The amount that should be sent for this payment is fixed in the receiver's units.
+     * The amount that should be sent for this payment is fixed in the destination account's units.
      */
     FIXED_DELIVERY
   }
