@@ -2,7 +2,6 @@ package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
-import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasErrorCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -100,7 +99,6 @@ public class AmountFilterTest {
   public void nextStateWithProtocolViolation() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.ReceiverProtocolViolation));
-    expectedException.expect(hasErrorCode(ErrorCodes.ProtocolViolation));
 
     when(amountTrackerMock.encounteredProtocolViolation()).thenReturn(true);
 
@@ -127,10 +125,8 @@ public class AmountFilterTest {
   public void nextStateWithIncompatibleReceiveMax() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.IncompatibleReceiveMax));
-    expectedException.expect(hasErrorCode(ErrorCodes.ApplicationError));
-    expectedException.expectMessage(
-      "Ending payment: minimum delivery amount is too much for recipient. minDeliveryAmount=1 remoteReceiveMax=Optional[18446744073709551615]"
-    );
+    expectedException.expectMessage("Ending payment: minimum delivery amount is too much for recipient. "
+      + "minDeliveryAmount=1 remoteReceiveMax=Optional[18446744073709551615]");
 
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
       @Override
@@ -296,7 +292,6 @@ public class AmountFilterTest {
   public void nextStateWithFixedDeliveryAndInvalidDeliveryLimit() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
-    expectedException.expect(hasErrorCode(ErrorCodes.NoError));
     expectedException.expectMessage("Payment cannot complete: exchange rate dropped to 0");
 
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
@@ -485,7 +480,6 @@ public class AmountFilterTest {
   public void nextStateWithDeliveryDeficitWillNotCompletePayment() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
-    expectedException.expect(hasErrorCode(ErrorCodes.NoError));
     expectedException.expectMessage("Payment cannot complete because exchange rate dropped below minimum.");
 
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
@@ -537,7 +531,6 @@ public class AmountFilterTest {
   public void nextStateWithDeliveryDeficitShortfallLessThanDeficit() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
-    expectedException.expect(hasErrorCode(ErrorCodes.NoError));
     expectedException.expectMessage("Payment cannot complete because exchange rate dropped below minimum.");
 
     when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(UnsignedLong.ZERO);

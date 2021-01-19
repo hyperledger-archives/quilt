@@ -28,7 +28,7 @@ import java.util.Optional;
  * and receivers because it is possible that certain implementations of Stream Receiver might return the same shared
  * secret if queried more than once using the same receiver address.</p>
  *
- * @deprecated Prefer {@link org.interledger.stream.StreamConnectionManager} instead.
+ * @deprecated Prefer {@link org.interledger.stream.connection.StreamConnectionManager} instead.
  */
 @Deprecated
 public class StreamConnectionManager {

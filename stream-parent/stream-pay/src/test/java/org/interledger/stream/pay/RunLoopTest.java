@@ -18,6 +18,7 @@ import org.interledger.stream.StreamPacket;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.crypto.StreamSharedSecret;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
@@ -479,7 +480,7 @@ public class RunLoopTest {
       paymentSharedStateTrackerMock
     );
 
-    runLoop.closeConnection(streamConnectionMock);
+    runLoop.closeConnection(streamConnectionMock, ErrorCodes.NoError);
   }
 
   @Test
@@ -503,13 +504,11 @@ public class RunLoopTest {
     doThrow(new RuntimeException()).when(linkMock).sendPacket(any());
 
     try {
-      runLoop.closeConnection(streamConnectionMock);
+      runLoop.closeConnection(streamConnectionMock, ErrorCodes.NoError);
     } catch (RuntimeException e) {
       fail(); // <-- No Exception should be thrown...
     }
   }
-
-  // Thread never finishes (timeout error)
 
   ///////////////////
   // Private Helpers

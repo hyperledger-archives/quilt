@@ -6,6 +6,7 @@ import static org.assertj.core.api.Fail.fail;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
+import org.interledger.fx.Denominations;
 import org.interledger.fx.Slippage;
 import org.interledger.link.Link;
 import org.interledger.spsp.PaymentPointer;
@@ -358,6 +359,46 @@ public class StreamPayerRustIT extends AbstractRustIT {
   }
 
   @Test
+  public void testPay1XrpToUsdAccountWithNoProbe() throws ExecutionException, InterruptedException, TimeoutException {
+    final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
+    final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
+
+    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
+      spspClient);
+
+    final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(senderAccountDetails)
+      .amountToSend(amountToSendInXrp)
+      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD_50K))
+      .expectedDestinationDenomination(Denominations.USD_MILLI_DOLLARS)
+      .slippage(Slippage.of(Percentage.ONE_PERCENT)) // <-- Allow up to 1% slippage.
+      .build();
+
+    streamPayer.pay(paymentOptions)
+      .handle((paymentReceipt, throwable) -> {
+        if (throwable != null) {
+          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
+          return null;
+        } else if (paymentReceipt != null) {
+          logger.info("paymentReceipt={}", paymentReceipt);
+          assertThat(paymentReceipt.paymentError()).isEmpty();
+          assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(
+            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+          );
+          assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isLessThan(
+            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+          );
+          assertThat(paymentReceipt.successfulPayment()).isTrue();
+          return paymentReceipt;
+        } else {
+          fail("Neither paymentReceipt nor throwable was return from streamPayer.pay(paymentOptions)");
+          return null;
+        }
+      }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
+  }
+
+  @Test
   public void testPay4XrpToXrpAccount() throws ExecutionException, InterruptedException, TimeoutException {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
@@ -427,6 +468,8 @@ public class StreamPayerRustIT extends AbstractRustIT {
           assertThat(paymentReceipt.originalQuote()).isEqualTo(quote);
           assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(4000000000L));
           assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(4000000000L));
+          assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isEqualTo(Percentage.FIVE_PERCENT);
+
           return quote;
         } else {
           fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");

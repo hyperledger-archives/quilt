@@ -47,8 +47,8 @@ public interface CongestionController {
    * prior stream activity.</p>
    *
    * <p>This computation depends on a sub-computation called `amountLeftInWindow`, which is the difference between the
-   * {@link #maxInFlight} and the current {@link #amountInFlight}. The {@code maxAmount} returned by this function is
-   * then computed by taking the min of `amountLeftInWindow` and {@link #maxPacketAmount}.</p>
+   * {@link #getMaxInFlight} and the current {@link #getAmountInFlight}. The {@code maxAmount} returned by this function
+   * is then computed by taking the min of `amountLeftInWindow` and {@link #getMaxPacketAmount}.</p>
    *
    * @return An {@link UnsignedLong} representing the current max packet amount for packets in this stream.
    */

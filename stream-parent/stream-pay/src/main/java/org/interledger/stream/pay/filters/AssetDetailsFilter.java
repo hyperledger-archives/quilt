@@ -50,9 +50,7 @@ public class AssetDetailsFilter implements StreamPacketFilter {
           .build()
       );
       throw new StreamPayerException(
-        "Destination asset changed, but this is prohibited by the IL-RFC-29.",
-        SendState.DestinationAssetConflict,
-        ErrorCodes.ProtocolViolation
+        "Destination asset changed, but this is prohibited by the IL-RFC-29.", SendState.DestinationAssetConflict
       );
     }
 

@@ -54,8 +54,9 @@ import javax.money.convert.ExchangeRate;
 import javax.money.convert.ExchangeRateProvider;
 
 /**
- * A unit tests that simulates network connectivity between a sender and a receiver in order isolate and control various
- * network conditions as part of a STREAM payment. This test
+ * A unit tests that simulates network connectivity between a sender and a receiver in order to isolate and control
+ * various network conditions as part of a STREAM payment. This test uses two nodes that have the same Denomination
+ * settings, and validates the sender/receiver using a {@link StreamPayer} and a {@link StatelessStreamReceiver}.
  */
 @SuppressWarnings( {"OptionalGetWithoutIsPresent", "deprecation"})
 public class SenderReceiverWithStreamPayerTest {
@@ -98,9 +99,6 @@ public class SenderReceiverWithStreamPayerTest {
     logger.setLevel(previousLogValue);
   }
 
-  // TODO: Rename source to sender?
-  // TODO: Rename destination to receiver? Check RFC.
-
   ////////////////
   // Left to Right
   ////////////////
@@ -109,7 +107,7 @@ public class SenderReceiverWithStreamPayerTest {
   public void sendFromLeftToRight() {
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1000);
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000000));
@@ -139,7 +137,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(0.9); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(900000));
@@ -175,7 +173,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
@@ -210,7 +208,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isFalse();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
@@ -251,7 +249,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
@@ -290,7 +288,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
@@ -329,7 +327,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(0.1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(100000));
@@ -360,7 +358,7 @@ public class SenderReceiverWithStreamPayerTest {
   public void sendFromRightToLeft() {
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1000);
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000000));
@@ -390,7 +388,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1);
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
@@ -426,7 +424,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
@@ -461,7 +459,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isFalse();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
@@ -502,7 +500,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
@@ -541,15 +539,15 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
     assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
     assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
     assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
-    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isGreaterThan(40); // <-- Expect ~>40 rejections.
-    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(90);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // <-- Expect ~>40 rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(51);
     // Should be somewhere around 20%.
     assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
       Percentage.of(new BigDecimal("0.40")),
@@ -580,7 +578,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     // PAY
     final BigDecimal paymentAmount = BigDecimal.valueOf(0.1); // <-- Send 1 XRP
-    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    final PaymentReceipt paymentReceipt = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     assertThat(paymentReceipt.successfulPayment()).isTrue();
     assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(100000));
@@ -613,8 +611,8 @@ public class SenderReceiverWithStreamPayerTest {
   @Test
   public void sendBothDirections() {
     final BigDecimal paymentAmount = new BigDecimal(1); // <-- Send 1 XRP, or 1x10^6 units.
-    PaymentReceipt leftToRightResult = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
-    PaymentReceipt rightToLeftResult = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+    PaymentReceipt leftToRightResult = pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    PaymentReceipt rightToLeftResult = pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
 
     Lists.newArrayList(leftToRightResult, rightToLeftResult).forEach(paymentReceipt -> {
       assertThat(paymentReceipt.successfulPayment()).isTrue();
@@ -650,7 +648,7 @@ public class SenderReceiverWithStreamPayerTest {
 
     final BigDecimal paymentAmount = new BigDecimal(1); // <-- Send 1 XRP, or 1x10^6 units.
     List<CompletableFuture<PaymentReceipt>> results =
-      runInParallel(parallelism, runCount, () -> sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount));
+      runInParallel(parallelism, runCount, () -> pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount));
 
     awaitResults(results).forEach(paymentReceipt -> {
       assertThat(paymentReceipt.successfulPayment()).isTrue();
@@ -687,11 +685,11 @@ public class SenderReceiverWithStreamPayerTest {
 
     // queue up left-to-right send
     final List<CompletableFuture<PaymentReceipt>> results =
-      runInParallel(parallelism, runs, () -> sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount));
+      runInParallel(parallelism, runs, () -> pay(leftStreamPayerNode, rightStreamPayerNode, paymentAmount));
 
     // queue up right-to-left send
     results.addAll(
-      runInParallel(parallelism, runs, () -> sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount))
+      runInParallel(parallelism, runs, () -> pay(rightStreamPayerNode, leftStreamPayerNode, paymentAmount))
     );
 
     awaitResults(results).forEach(paymentReceipt -> {
@@ -714,7 +712,7 @@ public class SenderReceiverWithStreamPayerTest {
   // Helper Methods
   /////////////////
 
-  private PaymentReceipt sendMoney(
+  private PaymentReceipt pay(
     final StreamPayerNode fromNode, final StreamPayerNode toNode, final BigDecimal paymentAmount
   ) {
     Objects.requireNonNull(fromNode);
@@ -735,8 +733,7 @@ public class SenderReceiverWithStreamPayerTest {
         PaymentPointer.of("$example.com/" + toNode.link().getLinkId()) // <-- toNode is the receiver
       )
       .amountToSend(paymentAmount)
-      .expectedReceiverDenomination(toNode.denomination()) // <-- toNode is the receiver
-      //.slippage(Slippage.of(Percentage.FIFTY_PERCENT))
+      .expectedDestinationDenomination(toNode.denomination()) // <-- toNode is the receiver
       .build();
 
     // PAY
@@ -984,5 +981,4 @@ public class SenderReceiverWithStreamPayerTest {
     }
 
   }
-
 }

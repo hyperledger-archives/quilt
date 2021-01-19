@@ -52,7 +52,14 @@ public class StreamPacketUtilsTest {
   private static final InterledgerAddress ADDRESS = InterledgerAddress.of("test.foo");
 
   private static final StreamPacket JUST_CONNECTION_ASSET_DETAILS_FRAME =
-    newPacketBuilder().addFrames(assetDetailsFrame(DENOMINATION)).build();
+    newPacketBuilder().addFrames(
+      ConnectionAssetDetailsFrame.builder()
+        .sourceDenomination(org.interledger.stream.Denomination.builder()
+          .assetCode(DENOMINATION.assetCode())
+          .assetScale(DENOMINATION.assetScale())
+          .build()
+        ).build()
+    ).build();
 
   private static final StreamPacket JUST_MONEY_FRAME =
     newPacketBuilder().addFrames(moneyFrame()).build();
@@ -67,16 +74,27 @@ public class StreamPacketUtilsTest {
     newPacketBuilder().addFrames(connectionCloseFrame()).build();
 
   private static final StreamPacket JUST_CONNECTION_NEW_ADDRESS_FRAME =
-    newPacketBuilder().addFrames(connectionNewAddressFrame(ADDRESS)).build();
+    newPacketBuilder().addFrames(ConnectionNewAddressFrame.builder()
+      .sourceAddress(ADDRESS)
+      .build()
+    ).build();
 
   private static final StreamPacket ALL_THE_FRAMES =
     newPacketBuilder().addFrames(
       streamCloseFrame(),
       connectionCloseFrame(),
-      assetDetailsFrame(DENOMINATION),
+      ConnectionAssetDetailsFrame.builder()
+        .sourceDenomination(org.interledger.stream.Denomination.builder()
+          .assetCode(DENOMINATION.assetCode())
+          .assetScale(DENOMINATION.assetScale())
+          .build()
+        ).build(),
       moneyFrame(),
       maxMoneyFrame(),
-      connectionNewAddressFrame(ADDRESS)).build();
+      ConnectionNewAddressFrame.builder()
+        .sourceAddress(ADDRESS)
+        .build()
+    ).build();
 
   private static final StreamPacket NO_FRAMES = newPacketBuilder().build();
 
@@ -136,8 +154,7 @@ public class StreamPacketUtilsTest {
   @Test
   public void generatedFulfillableFulfillmentWithNullStreamSharedSecret() {
     expectedException.expect(NullPointerException.class);
-    StreamSharedSecret nullStreamSharedSecret = null;
-    StreamPacketUtils.generateFulfillableFulfillment(nullStreamSharedSecret, new byte[32]);
+    StreamPacketUtils.generateFulfillableFulfillment((StreamSharedSecret) null, new byte[32]);
   }
 
   @Test
@@ -181,8 +198,7 @@ public class StreamPacketUtilsTest {
   @Test
   public void mapToStreamPacketWithNullEncryptionUtils() {
     expectedException.expect(NullPointerException.class);
-    StreamEncryptionUtils nullStreamEncryptionUtils = null;
-    StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]), nullStreamEncryptionUtils);
+    StreamPacketUtils.mapToStreamPacket(new byte[1], SharedSecret.of(new byte[32]), null);
   }
 
   @Test
@@ -203,8 +219,7 @@ public class StreamPacketUtilsTest {
   @Test
   public void mapToStreamPacketWithNullStreamPacketService() {
     expectedException.expect(NullPointerException.class);
-    StreamPacketEncryptionService nullService = null;
-    StreamPacketUtils.mapToStreamPacket(new byte[1], StreamSharedSecret.of(new byte[32]), nullService);
+    StreamPacketUtils.mapToStreamPacket(new byte[1], StreamSharedSecret.of(new byte[32]), null);
   }
 
   @Test
@@ -467,15 +482,23 @@ public class StreamPacketUtilsTest {
   @Test
   public void constructPacketToCloseStreamWithNullStreamConnection() {
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.constructPacketToCloseStream(null, streamPacketEncryptionServiceMock);
+    StreamPacketUtils.constructPacketToCloseStream(null, streamPacketEncryptionServiceMock, ErrorCodes.NoError);
   }
 
   @Test
   public void constructPacketToCloseStreamWithNullService() {
     expectedException.expect(NullPointerException.class);
-    StreamPacketUtils.constructPacketToCloseStream(mock(StreamConnection.class), null);
+    StreamPacketUtils.constructPacketToCloseStream(mock(StreamConnection.class), null, ErrorCodes.NoError);
   }
 
+  @Test
+  public void constructPacketToCloseStreamWithNullErrorCode() {
+    expectedException.expect(NullPointerException.class);
+    StreamPacketUtils
+      .constructPacketToCloseStream(mock(StreamConnection.class), streamPacketEncryptionServiceMock, null);
+  }
+
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void constructPacketToCloseStream() {
     StreamConnection streamConnectionMock = mock(StreamConnection.class);
@@ -484,8 +507,9 @@ public class StreamPacketUtilsTest {
     when(streamPacketEncryptionServiceMock.toEncrypted(Mockito.<StreamSharedSecret>any(), any()))
       .thenReturn(new byte[1]);
 
-    final InterledgerPreparePacket packet = StreamPacketUtils
-      .constructPacketToCloseStream(streamConnectionMock, streamPacketEncryptionServiceMock);
+    final InterledgerPreparePacket packet = StreamPacketUtils.constructPacketToCloseStream(
+      streamConnectionMock, streamPacketEncryptionServiceMock, ErrorCodes.ApplicationError
+    );
 
     assertThat(packet.getDestination()).isEqualTo(InterledgerAddress.of("example.dest"));
     assertThat(packet.getAmount()).isEqualTo(UnsignedLong.ZERO);
@@ -493,15 +517,22 @@ public class StreamPacketUtilsTest {
     assertThat(packet.getExpiresAt()).isNotNull();
     // StreamPacket data.
     assertThat(packet.getData()).hasSize(1);
-    assertThat(((StreamPacket) packet.typedData().get()).sequenceIsSafeForSingleSharedSecret()).isTrue();
-    assertThat(((StreamPacket) packet.typedData().get()).prepareAmount()).isEqualTo(UnsignedLong.ZERO);
-    assertThat(((StreamPacket) packet.typedData().get()).sequence()).isEqualTo(UnsignedLong.ONE);
-    assertThat(((StreamPacket) packet.typedData().get()).version()).isEqualTo((short) 1);
-    assertThat(((StreamPacket) packet.typedData().get()).frames().size()).isEqualTo(2);
-    assertThat(((StreamPacket) packet.typedData().get()).frames().get(0).streamFrameType())
-      .isEqualTo(StreamFrameType.StreamClose);
-    assertThat(((StreamPacket) packet.typedData().get()).frames().get(1).streamFrameType())
-      .isEqualTo(StreamFrameType.ConnectionClose);
+
+    final StreamPacket streamPacket = (StreamPacket) packet.typedData().get();
+
+    assertThat(streamPacket.sequenceIsSafeForSingleSharedSecret()).isTrue();
+    assertThat(streamPacket.prepareAmount()).isEqualTo(UnsignedLong.ZERO);
+    assertThat(streamPacket.sequence()).isEqualTo(UnsignedLong.ONE);
+    assertThat(streamPacket.version()).isEqualTo((short) 1);
+    assertThat(streamPacket.frames().size()).isEqualTo(2);
+
+    final StreamCloseFrame streamCloseFrame = (StreamCloseFrame) streamPacket.frames().get(0);
+    assertThat(streamCloseFrame.streamFrameType()).isEqualTo(StreamFrameType.StreamClose);
+    assertThat(streamCloseFrame.errorCode()).isEqualTo(ErrorCodes.ApplicationError);
+
+    final ConnectionCloseFrame connectionCloseFrame = (ConnectionCloseFrame) streamPacket.frames().get(1);
+    assertThat(connectionCloseFrame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
+    assertThat(connectionCloseFrame.errorCode()).isEqualTo(ErrorCodes.ApplicationError);
   }
 
   //////////////////
@@ -527,21 +558,6 @@ public class StreamPacketUtilsTest {
       .streamId(UnsignedLong.ONE)
       .receiveMax(UnsignedLong.MAX_VALUE)
       .totalReceived(UnsignedLong.ONE)
-      .build();
-  }
-
-  private static ConnectionNewAddressFrame connectionNewAddressFrame(InterledgerAddress address) {
-    return ConnectionNewAddressFrame.builder().sourceAddress(address)
-      .build();
-  }
-
-  private static ConnectionAssetDetailsFrame assetDetailsFrame(Denomination denomination) {
-    return ConnectionAssetDetailsFrame.builder()
-      .sourceDenomination(org.interledger.stream.Denomination.builder()
-        .assetCode(denomination.assetCode())
-        .assetScale(denomination.assetScale())
-        .build()
-      )
       .build();
   }
 

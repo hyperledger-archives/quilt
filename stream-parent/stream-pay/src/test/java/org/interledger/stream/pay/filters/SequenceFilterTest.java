@@ -1,7 +1,6 @@
 package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasErrorCode;
 import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -10,7 +9,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import org.interledger.stream.connection.StreamConnection;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -79,7 +77,6 @@ public class SequenceFilterTest {
   public void nextStateOverPacketLimit() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.ExceededMaxSequence));
-    expectedException.expect(hasErrorCode(ErrorCodes.ProtocolViolation));
     expectedException.expectMessage("Ending payment (cannot exceed max safe sequence number).");
 
     when(streamConnectionMock.nextSequence()).thenReturn(UnsignedLong.MAX_VALUE);

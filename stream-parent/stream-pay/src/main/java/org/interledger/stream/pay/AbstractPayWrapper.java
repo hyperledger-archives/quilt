@@ -5,6 +5,7 @@ import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.frames.ConnectionCloseFrame;
+import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.pay.model.SendState;
 
@@ -38,11 +39,12 @@ public abstract class AbstractPayWrapper {
    *
    * @param streamConnection A {@link StreamConnection} to close.
    */
-  protected void closeConnection(final StreamConnection streamConnection) {
+  protected void closeConnection(final StreamConnection streamConnection, final ErrorCode errorCode) {
     Objects.requireNonNull(streamConnection);
     try {
-      getLink().sendPacket(
-        StreamPacketUtils.constructPacketToCloseStream(streamConnection, this.getStreamEncryptionService()));
+      getLink().sendPacket(StreamPacketUtils.constructPacketToCloseStream(
+        streamConnection, this.getStreamEncryptionService(), errorCode
+      ));
     } catch (Exception e) {
       logger.error("Unable to close STREAM Connection: " + e.getMessage(), e);
       // swallow this error because the sender can still complete even though it couldn't get something to the receiver.

@@ -7,7 +7,6 @@ import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.FluentUnsignedLong;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
@@ -57,9 +56,7 @@ public class AmountFilter implements StreamPacketFilter {
 
     if (amountTracker.encounteredProtocolViolation()) {
       throw new StreamPayerException(
-        "Stream Protocol violation encountered.",
-        SendState.ReceiverProtocolViolation,
-        ErrorCodes.ProtocolViolation
+        "Stream Protocol violation encountered.", SendState.ReceiverProtocolViolation
       );
     }
 
@@ -75,7 +72,7 @@ public class AmountFilter implements StreamPacketFilter {
             target.minPaymentAmountInDestinationUnits(),
             amountTracker.getRemoteReceivedMax()
           );
-          throw new StreamPayerException(errorMessage, SendState.IncompatibleReceiveMax, ErrorCodes.ApplicationError);
+          throw new StreamPayerException(errorMessage, SendState.IncompatibleReceiveMax);
         }
 
         // Check PaidFixedSend
@@ -145,7 +142,6 @@ public class AmountFilter implements StreamPacketFilter {
 
         // Enforce the minimum exchange rate, and estimate how much will be received.
         UnsignedLong minDestinationPacketAmount = this.computeMinDestinationPacketAmount(
-          // TODO: StreamPacket source is null here. Why is that?
           sourcePacketAmount, target.minExchangeRate()
         );
         final UnsignedLong estimatedDestinationPacketAmount = computeEstimatedDestinationAmount(sourcePacketAmount);

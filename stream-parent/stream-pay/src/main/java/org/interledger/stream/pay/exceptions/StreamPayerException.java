@@ -1,8 +1,6 @@
 package org.interledger.stream.pay.exceptions;
 
 import org.interledger.stream.StreamException;
-import org.interledger.stream.frames.ErrorCode;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.pay.model.SendState;
 
 import com.google.common.base.Preconditions;
@@ -11,7 +9,6 @@ import java.util.Objects;
 
 public class StreamPayerException extends StreamException {
 
-  private final ErrorCode streamErrorCodeForConnectionClose;
   private final SendState sendState;
 
   /**
@@ -24,7 +21,6 @@ public class StreamPayerException extends StreamException {
     Objects.requireNonNull(sendState);
     Preconditions
       .checkArgument(sendState.isPaymentError(), "SendState exceptions may only be used with Payment Errors.");
-    this.streamErrorCodeForConnectionClose = ErrorCodes.NoError;
     this.sendState = sendState;
   }
 
@@ -43,26 +39,6 @@ public class StreamPayerException extends StreamException {
     Preconditions
       .checkArgument(sendState != SendState.Ready && sendState != SendState.Wait,
         "StreamPayerException exceptions may not be used with the `Ready` or `Wait` SendState.");
-    this.streamErrorCodeForConnectionClose = ErrorCodes.NoError;
-    this.sendState = sendState;
-  }
-
-  /**
-   * Constructs a new runtime exception with the specified detail message. The cause is not initialized, and may
-   * subsequently be initialized by a call to {@link #initCause}.
-   *
-   * @param message   the detail message. The detail message is saved for later retrieval by the {@link #getMessage()}
-   *                  method.
-   * @param sendState
-   */
-  public StreamPayerException(String message, SendState sendState, ErrorCode errorCode) {
-    super(message);
-
-    Objects.requireNonNull(sendState);
-    Preconditions
-      .checkArgument(sendState != SendState.Ready && sendState != SendState.Wait,
-        "StreamPayerException exceptions may not be used with the `Ready` or `Wait` SendState.");
-    this.streamErrorCodeForConnectionClose = Objects.requireNonNull(errorCode);
     this.sendState = sendState;
   }
 
@@ -84,7 +60,6 @@ public class StreamPayerException extends StreamException {
     Objects.requireNonNull(sendState);
     Preconditions
       .checkArgument(sendState.isPaymentError(), "SendState exceptions may only be used with Payment Errors.");
-    this.streamErrorCodeForConnectionClose = ErrorCodes.NoError;
     this.sendState = sendState;
   }
 
@@ -105,8 +80,6 @@ public class StreamPayerException extends StreamException {
     Objects.requireNonNull(sendState);
     Preconditions
       .checkArgument(sendState.isPaymentError(), "SendState exceptions may only be used with Payment Errors.");
-
-    this.streamErrorCodeForConnectionClose = ErrorCodes.NoError;
     this.sendState = sendState;
   }
 
@@ -130,8 +103,6 @@ public class StreamPayerException extends StreamException {
     Objects.requireNonNull(sendState);
     Preconditions
       .checkArgument(sendState.isPaymentError(), "SendState exceptions may only be used with Payment Errors.");
-
-    this.streamErrorCodeForConnectionClose = ErrorCodes.NoError;
     this.sendState = sendState;
   }
 
@@ -142,15 +113,6 @@ public class StreamPayerException extends StreamException {
    */
   public SendState getSendState() {
     return sendState;
-  }
-
-  /**
-   * Accessor for the error code to include when closing the stream.
-   *
-   * @return A {@link ErrorCode}.
-   */
-  public ErrorCode getStreamErrorCodeForConnectionClose() {
-    return streamErrorCodeForConnectionClose;
   }
 
   @Override
@@ -174,8 +136,7 @@ public class StreamPayerException extends StreamException {
   public String toString() {
     String message = getLocalizedMessage();
     String output = getClass().getName() + ": " + message +
-      " (sendState=" + sendState + ")" +
-      " (streamErrorCodeForConnectionClose=" + streamErrorCodeForConnectionClose + ")";
+      " (sendState=" + sendState + ")";
     return output;
   }
 }

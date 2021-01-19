@@ -1,6 +1,10 @@
 package org.interledger.stream.pay.model;
 
+import org.interledger.stream.frames.ErrorCode;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
+
+import java.util.Objects;
 
 /**
  * A state as signaled by a given {@link StreamPacketFilter}.
@@ -126,6 +130,26 @@ public enum SendState {
    * require more slippage, or exchange rate may be insufficient.
    */
   ExchangeRateRoundingError;
+
+  /**
+   * Helper method to determine, for a supplied {@code sendState} which {@link ErrorCode} should be specified in a
+   * Connection or Stream close frame.
+   *
+   * @param sendState A {@link SendState}.
+   *
+   * @return An {@link ErrorCode}.
+   */
+  public static ErrorCode getCorrespondingErrorCode(final SendState sendState) {
+    Objects.requireNonNull(sendState);
+    switch (sendState) {
+      case ExceededMaxSequence:
+      case IncompatibleReceiveMax:
+      case ReceiverProtocolViolation:
+        return ErrorCodes.ProtocolViolation;
+      default:
+        return ErrorCodes.NoError;
+    }
+  }
 
   /**
    * Indicates if this SendState is a payment error or not.

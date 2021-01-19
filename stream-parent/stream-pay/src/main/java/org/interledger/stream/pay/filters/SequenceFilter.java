@@ -1,7 +1,6 @@
 package org.interledger.stream.pay.filters;
 
 import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -54,7 +53,7 @@ public class SequenceFilter implements StreamPacketFilter {
         "Ending payment (cannot exceed max safe sequence number). streamConnection=%s",
         paymentSharedStateTracker.getStreamConnection()
       );
-      throw new StreamPayerException(errorMessage, SendState.ExceededMaxSequence, ErrorCodes.ProtocolViolation);
+      throw new StreamPayerException(errorMessage, SendState.ExceededMaxSequence);
     }
 
     return SendState.Ready;

@@ -196,7 +196,7 @@ public interface ExchangeRateProber {
               } else if (nextSendState.isPaymentError()) {
                 logger.info("Ending Payment with sendState={}", nextSendState);
                 if (shouldCloseConnection(nextSendState)) {
-                  this.closeConnection(streamConnection);
+                  this.closeConnection(streamConnection, SendState.getCorrespondingErrorCode(nextSendState));
                 }
                 return StreamPacketReply.builder()
                   .interledgerPreparePacket(streamPacketRequest.interledgerPreparePacket())

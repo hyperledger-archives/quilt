@@ -17,7 +17,7 @@ import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
-import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
@@ -427,10 +427,13 @@ public class StreamPacketUtils {
    * @return An {@link InterledgerPreparePacket} that can be sent to close the stream.
    */
   public static InterledgerPreparePacket constructPacketToCloseStream(
-    StreamConnection streamConnection, StreamPacketEncryptionService streamPacketEncryptionService
+    final StreamConnection streamConnection,
+    final StreamPacketEncryptionService streamPacketEncryptionService,
+    final ErrorCode errorCode
   ) {
     Objects.requireNonNull(streamConnection);
     Objects.requireNonNull(streamPacketEncryptionService);
+    Objects.requireNonNull(errorCode);
 
     final StreamPacket streamPacket = StreamPacket.builder()
       .interledgerPacketType(InterledgerPacketType.PREPARE)
@@ -441,10 +444,10 @@ public class StreamPacketUtils {
       .addFrames(
         StreamCloseFrame.builder()
           .streamId(DEFAULT_STREAM_ID)
-          .errorCode(ErrorCodes.NoError)
+          .errorCode(errorCode)
           .build(),
         ConnectionCloseFrame.builder()
-          .errorCode(ErrorCodes.NoError)
+          .errorCode(errorCode)
           .build()
       )
       .build();

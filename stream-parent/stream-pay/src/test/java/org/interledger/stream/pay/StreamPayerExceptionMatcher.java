@@ -1,6 +1,5 @@
 package org.interledger.stream.pay;
 
-import org.interledger.stream.frames.ErrorCode;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
 
@@ -27,22 +26,4 @@ public class StreamPayerExceptionMatcher {
       }
     };
   }
-
-  /**
-   * A {@link CustomTypeSafeMatcher} for ensuring that an instance of {@link StreamPayerException} has the indicated
-   * {@link ErrorCode}.
-   *
-   * @param errorCode The {@link ErrorCode} to require.
-   *
-   * @return An instance of {@link CustomTypeSafeMatcher}.
-   */
-  public static CustomTypeSafeMatcher<StreamPayerException> hasErrorCode(final ErrorCode errorCode) {
-    return new CustomTypeSafeMatcher<StreamPayerException>("Has ErrorCode") {
-      @Override
-      protected boolean matchesSafely(final StreamPayerException item) {
-        return item.getStreamErrorCodeForConnectionClose().equals(errorCode);
-      }
-    };
-  }
-
 }

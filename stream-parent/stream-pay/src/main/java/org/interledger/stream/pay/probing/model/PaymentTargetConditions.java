@@ -20,6 +20,11 @@ public interface PaymentTargetConditions {
     return ImmutablePaymentTargetConditions.builder();
   }
 
+  /**
+   * The Payment Type for this class.
+   *
+   * @return A {@link PaymentType}.
+   */
   PaymentType paymentType();
 
   /**
@@ -43,6 +48,9 @@ public interface PaymentTargetConditions {
    */
   Ratio minExchangeRate();
 
+  /**
+   * Helper method for immutables.
+   */
   @Value.Check
   default void check() {
     Preconditions.checkState(
@@ -55,6 +63,9 @@ public interface PaymentTargetConditions {
     );
   }
 
+  /**
+   * The type of payment to be made.
+   */
   enum PaymentType {
     /**
      * The amount that should be sent for this payment is fixed in the source account's units.

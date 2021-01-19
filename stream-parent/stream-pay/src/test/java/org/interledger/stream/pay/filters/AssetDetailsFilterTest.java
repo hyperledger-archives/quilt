@@ -1,7 +1,6 @@
 package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasErrorCode;
 import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.when;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denominations;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.model.AccountDetails;
@@ -84,7 +82,6 @@ public class AssetDetailsFilterTest {
   public void nextStateWhenRemoteAssetDetailsChanged() {
     expectedException.expect(StreamPayerException.class);
     expectedException.expect(hasSendState(SendState.DestinationAssetConflict));
-    expectedException.expect(hasErrorCode(ErrorCodes.ProtocolViolation));
     expectedException.expectMessage("Destination asset changed, but this is prohibited by the IL-RFC-29.");
 
     this.assetDetailsFilter = new AssetDetailsFilter(paymentSharedStateTrackerMock) {
@@ -97,12 +94,6 @@ public class AssetDetailsFilterTest {
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
 
     assetDetailsFilter.nextState(request);
-
-    // TODO: Ensure that protocol violation makes it into the stream close frame.
-//    assertThat(response).isEqualTo(SendState.DestinationAssetConflict);
-//    StreamFrame frame = request.requestFrames().get(0);
-//    assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
-//    assertThat(((ConnectionCloseFrame) frame).errorCode()).isEqualTo(ProtocolViolation);
   }
 
   @Test

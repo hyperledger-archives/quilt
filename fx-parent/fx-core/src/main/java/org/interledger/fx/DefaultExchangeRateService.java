@@ -1,12 +1,15 @@
 package org.interledger.fx;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import java.math.BigDecimal;
 import java.util.Objects;
+
 import javax.money.convert.ExchangeRateProvider;
 
-// TODO: JavaDoc
-// TODO: Move to fx-core, plus tests
+/**
+ * The default implementation of {@link ExchangeRateService}.
+ */
 public class DefaultExchangeRateService implements ExchangeRateService {
 
   private final ExchangeRateProvider exchangeRateProvider;
@@ -17,20 +20,21 @@ public class DefaultExchangeRateService implements ExchangeRateService {
 
   @Override
   public BigDecimal getScaledExchangeRate(
-    final Denomination senderDenomination, final Denomination receiverDenomination, final BigDecimal slippagePercent
+    final Denomination sourceDenomination, final Denomination destinationDenomination, final BigDecimal slippagePercent
   ) {
-    Objects.requireNonNull(senderDenomination);
-    Objects.requireNonNull(receiverDenomination);
+    Objects.requireNonNull(sourceDenomination);
+    Objects.requireNonNull(destinationDenomination);
     Objects.requireNonNull(slippagePercent);
 
-    final BigDecimal exchangeRate = getExchangeRate(senderDenomination.assetCode(), receiverDenomination.assetCode());
+    final BigDecimal exchangeRate = getExchangeRate(sourceDenomination.assetCode(),
+      destinationDenomination.assetCode());
     BigDecimal rateWithSlippage = exchangeRate.multiply(BigDecimal.ONE.subtract(slippagePercent));
 
     // Scale rate based on source scale
-    rateWithSlippage = rateWithSlippage.divide(BigDecimal.TEN.pow(senderDenomination.assetScale()));
+    rateWithSlippage = rateWithSlippage.divide(BigDecimal.TEN.pow(sourceDenomination.assetScale()));
 
     // Scale rate based on destination scale
-    rateWithSlippage = rateWithSlippage.multiply(BigDecimal.TEN.pow(receiverDenomination.assetScale()));
+    rateWithSlippage = rateWithSlippage.multiply(BigDecimal.TEN.pow(destinationDenomination.assetScale()));
 
     return rateWithSlippage;
   }
