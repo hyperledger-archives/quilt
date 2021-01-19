@@ -103,7 +103,7 @@ public class StreamPayerDefaultTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     this.streamPacketEncryptionService = new StreamPacketEncryptionService(
       StreamCodecContextFactory.oer(), new AesGcmStreamSharedSecretCrypto()
@@ -135,7 +135,9 @@ public class StreamPayerDefaultTest {
       return throwable;
     }).get();
 
-    assertThat(error.getCause().getMessage()).isEqualTo("Unable to obtain STREAM connection details via SPSP.");
+    assertThat(error.getCause().getMessage()).isEqualTo(
+      "Unable to obtain STREAM connection details via SPSP for paymentPointer=$example.com/foo"
+    );
     assertThat(error.getCause() instanceof StreamPayerException).isTrue();
     assertThat(((StreamPayerException) error.getCause()).getSendState()).isEqualTo(SendState.QueryFailed);
   }
@@ -163,7 +165,9 @@ public class StreamPayerDefaultTest {
       .destinationPaymentPointer(PaymentPointer.of("$example.com/foo"))
       .build();
     streamPayer.getQuote(paymentOptions).handle(($, throwable) -> {
-      assertThat(throwable.getCause().getMessage()).isEqualTo("Unable to obtain STREAM connection details via SPSP.");
+      assertThat(throwable.getCause().getMessage()).isEqualTo(
+        "Unable to obtain STREAM connection details via SPSP for paymentPointer=$example.com/foo"
+      );
       assertThat(throwable.getCause() instanceof StreamPayerException).isTrue();
       assertThat(((StreamPayerException) throwable.getCause()).getSendState()).isEqualTo(SendState.QueryFailed);
       return null;
@@ -1708,7 +1712,7 @@ public class StreamPayerDefaultTest {
       streamPacketEncryptionService, simulatedLink, newExternalExchangeRateProvider(Ratio.ONE), mockSpspClient
     );
 
-    streamPayer.fetchRecipientAccountDetails(paymentOptionsMock);
+    streamPayer.fetchRecipientAccountDetails(PaymentPointer.of("$example.com/foo"));
   }
 
   @Test
@@ -1730,7 +1734,8 @@ public class StreamPayerDefaultTest {
     Mockito.when(senderAccountDetailsMock.denomination()).thenReturn(Optional.of(Denominations.XRP_DROPS));
     Mockito.when(paymentOptionsMock.senderAccountDetails()).thenReturn(senderAccountDetailsMock);
 
-    assertThat(streamPayer.fetchRecipientAccountDetails(paymentOptionsMock)).isEqualTo(streamConnectionDetailsMock);
+    assertThat(streamPayer.fetchRecipientAccountDetails(PaymentPointer.of("$example.com/foo")))
+      .isEqualTo(streamConnectionDetailsMock);
   }
 
   //////////////////

@@ -2,7 +2,6 @@ package org.interledger.stream.pay.filters;
 
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -20,6 +19,7 @@ import java.util.Objects;
  */
 public class MaxPacketAmountFilter implements StreamPacketFilter {
 
+  // Static because this filter will be constructed a lot.
   private static final Logger LOGGER = LoggerFactory.getLogger(MaxPacketAmountFilter.class);
 
   private final MaxPacketAmountTracker maxPacketAmountTracker;
@@ -39,7 +39,6 @@ public class MaxPacketAmountFilter implements StreamPacketFilter {
 
     // Stop sending if no capacity is available.
     if (this.maxPacketAmountTracker.getNoCapacityAvailable()) {
-      streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
       return SendState.ConnectorError;
     }
 

@@ -13,7 +13,6 @@ import org.interledger.core.InterledgerFulfillment;
 import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.stream.StreamPacket;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -44,7 +43,7 @@ public class MaxPacketAmountFilterTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     this.maxPacketAmountFilter = new MaxPacketAmountFilter(maxPacketAmountTrackerMock);
   }
 
@@ -72,7 +71,6 @@ public class MaxPacketAmountFilterTest {
 
     SendState response = this.maxPacketAmountFilter.nextState(request);
     assertThat(response).isEqualTo(SendState.ConnectorError);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
   }
 
   @Test

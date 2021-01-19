@@ -40,7 +40,7 @@ public class ExchangeRateFilterTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     this.exchangeRateFilter = new ExchangeRateFilter(exchangeRateTrackerMock);
   }
 

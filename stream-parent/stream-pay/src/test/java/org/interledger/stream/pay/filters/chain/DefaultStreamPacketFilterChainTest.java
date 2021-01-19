@@ -63,7 +63,7 @@ public class DefaultStreamPacketFilterChainTest {
   @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     StreamPacketEncryptionService streamPacketEncryptionService = new StreamPacketEncryptionService(
       StreamCodecContextFactory.oer(),
@@ -225,20 +225,16 @@ public class DefaultStreamPacketFilterChainTest {
 
     assertThat(this.streamPacketFilters.size()).isEqualTo(3);
 
-    try {
-      streamPacketFilterChain.nextState(ModifiableStreamPacketRequest.create());
-      fail("should have thrown");
-    } catch (StreamPayerException e) {
-      // Only the first filter should get called.
-      assertThat(filter1.getNumCalls().get()).isEqualTo(1);
-      assertThat(filter2.getNumCalls().get()).isEqualTo(0);
-      assertThat(filter3.getNumCalls().get()).isEqualTo(0);
+    SendState value = streamPacketFilterChain.nextState(ModifiableStreamPacketRequest.create());
+    assertThat(value).isEqualTo(SendState.End);
 
-      verifyNoMoreInteractions(linkMock);
-      verifyNoMoreInteractions(paymentSharedStateTrackerMock);
+    // Only the first filter should get called.
+    assertThat(filter1.getNumCalls().get()).isEqualTo(1);
+    assertThat(filter2.getNumCalls().get()).isEqualTo(0);
+    assertThat(filter3.getNumCalls().get()).isEqualTo(0);
 
-      assertThat(e.getSendState()).isEqualTo(SendState.End);
-    }
+    verifyNoMoreInteractions(linkMock);
+    verifyNoMoreInteractions(paymentSharedStateTrackerMock);
   }
 
   @Test

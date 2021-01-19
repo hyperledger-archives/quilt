@@ -67,12 +67,14 @@ public interface ExchangeRateProbeOutcome {
   /**
    * The realized exchange-rate is less than this ratio (exclusive) (i.e., destination / source).
    *
-   * @return
+   * @return A {@link Ratio}.
    */
   Ratio upperBoundRate();
 
   /**
    * The realized exchange rate is greater than or equal to this ratio (inclusive) (i.e., destination / source).
+   *
+   * @return A {@link Ratio}.
    */
   Ratio lowerBoundRate();
 

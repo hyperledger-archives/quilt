@@ -18,7 +18,7 @@ import java.util.Objects;
  */
 public class ExchangeRateFilter implements StreamPacketFilter {
 
-  // Static because these filters will be constructed a lot.
+  // Static because this filter will be constructed a lot.
   private static final Logger LOGGER = LoggerFactory.getLogger(ExchangeRateFilter.class);
 
   private final ExchangeRateTracker exchangeRateTracker;

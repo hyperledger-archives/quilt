@@ -1,7 +1,7 @@
 package org.interledger.stream.pay.trackers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.pay.SendStateMatcher.hasSendState;
+import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
 
 import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
@@ -32,7 +32,7 @@ public class ExchangeRateTrackerTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     this.exchangeRateTracker = new ExchangeRateTracker();
   }
 

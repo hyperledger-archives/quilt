@@ -93,7 +93,7 @@ public class DefaultExchangeRateServiceParameterizedTest {
   
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     this.populateTestRates();
 

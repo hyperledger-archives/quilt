@@ -2,7 +2,7 @@ package org.interledger.stream.pay.trackers;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
-import static org.interledger.stream.pay.SendStateMatcher.hasSendState;
+import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +47,7 @@ public class AmountTrackerTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     this.amountTracker = new AmountTracker(exchangeRateTrackerMock);
   }
 

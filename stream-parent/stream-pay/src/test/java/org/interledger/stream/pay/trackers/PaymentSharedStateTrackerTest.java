@@ -29,7 +29,7 @@ public class PaymentSharedStateTrackerTest {
   @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     when(streamConnectionMock.getSourceAccountDetails()).thenReturn(mock(AccountDetails.class));
     when(streamConnectionMock.getDestinationAddress()).thenReturn(mock(InterledgerAddress.class));
   }

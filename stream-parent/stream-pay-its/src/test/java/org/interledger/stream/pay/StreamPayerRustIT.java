@@ -66,7 +66,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
 
     // Estimated Payment Outcome.
     assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.valueOf(1000L));
-    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
 
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
       .isEqualTo(BigInteger.valueOf(236)); // <- Due to up-to 3% slippage.
@@ -129,7 +129,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
       .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
     // Estimated Payment Outcome.
     assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.valueOf(123L));
-    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
       .isBetween(BigInteger.valueOf(10L), BigInteger.valueOf(100L));
     // Min ExchangeRate
@@ -192,7 +192,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
       .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
     // Estimated Payment Outcome.
     assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.valueOf(123L));
-    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
       .isBetween(BigInteger.valueOf(10L), BigInteger.valueOf(100L));
     // Min ExchangeRate
@@ -252,7 +252,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
       .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
     // Estimated Payment Outcome.
     assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits()).isEqualTo(BigInteger.ZERO);
-    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+    assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
     assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits()).isEqualTo(BigInteger.ZERO);
     // Min ExchangeRate
     assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.240525054"));
@@ -313,7 +313,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
           // Estimated Payment Outcome.
           assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits())
             .isEqualTo(BigInteger.valueOf(4L));
-          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
           assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
             .isEqualTo(BigInteger.ONE);
           // Min ExchangeRate, due to slippage
@@ -393,7 +393,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
           // Estimated Payment Outcome.
           assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits())
             .isEqualTo(BigInteger.valueOf(4L));
-          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(1);
+          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
           assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
             .isEqualTo(BigInteger.valueOf(4L));
           // Min ExchangeRate, due to slippage

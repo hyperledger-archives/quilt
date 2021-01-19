@@ -31,7 +31,7 @@ public class MaxPacketAmountTrackerTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     this.maxPacketAmountTracker = new MaxPacketAmountTracker();
   }

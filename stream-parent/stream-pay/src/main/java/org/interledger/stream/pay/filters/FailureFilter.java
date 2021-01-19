@@ -2,22 +2,20 @@ package org.interledger.stream.pay.filters;
 
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerErrorCode.ErrorFamily;
-import org.interledger.core.fluent.Percentage;
 import org.interledger.stream.StreamPacketUtils;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.model.StreamPacketRequest;
+import org.interledger.stream.pay.trackers.StatisticsTracker;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -25,7 +23,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -33,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class FailureFilter implements StreamPacketFilter {
 
-  // Static because these filters will be constructed a lot.
+  // Static because this filter will be constructed a lot.
   private static final Logger LOGGER = LoggerFactory.getLogger(FailureFilter.class);
 
   /**
@@ -56,28 +53,19 @@ public class FailureFilter implements StreamPacketFilter {
    */
   private final AtomicBoolean remoteClosedRef;
 
-  /**
-   * The total number of rejection packets received on the stream, for stopping the payment if the reject:fulfill ratio
-   * becomes to large.
-   */
-  private final AtomicInteger numRejects;
-
-  /**
-   * The total number of fulfill packets received on the stream, for stopping the payment if the reject:fulfill ratio
-   * becomes to large.
-   */
-  private final AtomicInteger numFulfills;
+  private final StatisticsTracker statisticsTracker;
 
   /**
    * Required-args Constructor.
+   *
+   * @param statisticsTracker A {@link StatisticsTracker}.
    */
-  public FailureFilter() {
+  public FailureFilter(final StatisticsTracker statisticsTracker) {
+    this.statisticsTracker = Objects.requireNonNull(statisticsTracker);
+
     this.lastFulfillTimeRef = new AtomicReference<>(Optional.empty());
     this.terminalRejectRef = new AtomicBoolean();
     this.remoteClosedRef = new AtomicBoolean();
-
-    this.numRejects = new AtomicInteger(0);
-    this.numFulfills = new AtomicInteger(0);
   }
 
   @Override
@@ -85,35 +73,39 @@ public class FailureFilter implements StreamPacketFilter {
     Objects.requireNonNull(streamPacketRequest);
 
     if (this.terminalRejectEncountered()) {
-      streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
-      return SendState.ConnectorError; // <-- Signal to close the connection.
+      // Signal to close the connection.
+      throw new StreamPayerException("Terminal rejection encountered.", SendState.ConnectorError);
     }
 
     if (this.remoteClosed()) {
-      return SendState.ClosedByRecipient; // <-- Connection already closed, so no need to signal to close the connection
+      // Connection already closed, so no need to signal to close the connection
+      throw new StreamPayerException("Remote connection was closed by the receiver.", SendState.ClosedByRecipient);
     }
 
-    // Allow for rate-probe rejections.
-    if ((double) getNumFulfills() / (double) getNumRejects() < 0.05) {
-      LOGGER.error(
-        "Too many overall rejections. Fulfill:Reject Ratio={}:{} ({})",
-        getNumFulfills(), getNumRejects(),
-        Percentage.of(
-          new BigDecimal(getNumFulfills()).divide(new BigDecimal(getNumRejects()), 3, RoundingMode.HALF_EVEN)
-        )
-      );
-      return SendState.End; // <-- Too many rejects in proportion to the number of fulfills.
-    }
+    // This implementation tolerates failures. If it only _ever_ gets failures, then the implementation will halt due
+    // to timeout.
+//    if (FluentCompareTo.is(computeFailurePercentage()).greaterThan(Percentage.FIFTY_PERCENT)) {
+//      final String errorMessage = String.format(
+//        "Too many overall rejections. Reject:Fulfill=%s:%s (%s failure)",
+//        statisticsTracker.getNumRejects(),
+//        statisticsTracker.getNumFulfills(),
+//        computeFailurePercentage()
+//      );
+//      //Too many rejects in proportion to the number of fulfills.
+//      throw new StreamPayerException(errorMessage, SendState.End);
+//    }
 
     return getLastFulfillmentTime()
       .map(lastFulfillTime -> {
         final Instant deadline = lastFulfillTime.plus(MAX_DURATION_SINCE_LAST_FULFILL);
         if (Instant.now().isAfter(deadline)) {
-          LOGGER.error(
-            "Ending payment because no Fulfill was received before idle deadline. lastFulfill={} deadline={}",
-            lastFulfillTime, deadline
+          final String errorMessage = String.format(
+            "Ending payment because no Fulfill was received before idle deadline. lastFulfill=%s deadline=%s",
+            lastFulfillTime,
+            deadline
           );
-          return SendState.IdleTimeout;
+          //Too many rejects in proportion to the number of fulfills.
+          throw new StreamPayerException(errorMessage, SendState.IdleTimeout);
         } else {
           return SendState.Ready;
         }
@@ -140,10 +132,10 @@ public class FailureFilter implements StreamPacketFilter {
     streamPacketReply.interledgerResponsePacket().ifPresent(ilpResponse -> ilpResponse.handle(
       fulfillPacket -> {
         this.lastFulfillTimeRef.set(Optional.of(Instant.now()));
-        this.numFulfills.getAndIncrement(); // <-- Count the fulfills
+        this.statisticsTracker.incrementNumFulfills(); // <-- Count the fulfills
       },
       rejectPacket -> {
-        this.numRejects.getAndIncrement(); // <-- Count the rejections.
+        this.statisticsTracker.incrementNumRejects(); // <-- Count the rejections.
         // Ignore all temporary errors, F08, F99, & R01
         if (rejectPacket.getCode().getErrorFamily() == ErrorFamily.TEMPORARY ||
           rejectPacket.getCode() == InterledgerErrorCode.F08_AMOUNT_TOO_LARGE ||
@@ -194,32 +186,12 @@ public class FailureFilter implements StreamPacketFilter {
   }
 
   /**
-   * Getter for the number of Fulfill packets that have been encountered in this payment.
-   *
-   * @return An int.
-   */
-  @VisibleForTesting
-  int getNumFulfills() {
-    return this.numFulfills.get();
-  }
-
-  /**
-   * Getter for the number of Reject packets that have been encountered in this payment.
-   *
-   * @return An int.
-   */
-  @VisibleForTesting
-  int getNumRejects() {
-    return this.numRejects.get();
-  }
-
-  /**
    * Getter for the last time a Fulfill packet was encountered.
    *
    * @return An optionally-present {@link Instant}.
    */
   @VisibleForTesting
-  Optional<Instant> getLastFulfillmentTime() {
+  protected Optional<Instant> getLastFulfillmentTime() {
     return this.lastFulfillTimeRef.get();
   }
 }

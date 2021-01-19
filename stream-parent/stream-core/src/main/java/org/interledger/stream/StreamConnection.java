@@ -4,7 +4,7 @@ import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;;
+import org.interledger.core.SharedSecret;
 import org.interledger.stream.errors.StreamConnectionClosedException;
 
 import com.google.common.annotations.VisibleForTesting;

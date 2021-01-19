@@ -9,6 +9,7 @@ import org.interledger.core.fluent.Ratio;
 import org.interledger.stream.StreamPacketUtils;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamMoneyFrame;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -36,7 +37,9 @@ import java.util.Optional;
  */
 public class AmountFilter implements StreamPacketFilter {
 
+  // Static because this filter will be constructed a lot.
   private static final Logger LOGGER = LoggerFactory.getLogger(AmountFilter.class);
+
   private static final boolean NO_MORE_TO_DELIVER = false;
   private static final boolean NOT_VALID = false;
 
@@ -53,8 +56,11 @@ public class AmountFilter implements StreamPacketFilter {
     final AmountTracker amountTracker = paymentSharedStateTracker.getAmountTracker();
 
     if (amountTracker.encounteredProtocolViolation()) {
-      streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.ProtocolViolation);
-      return SendState.ReceiverProtocolViolation;
+      throw new StreamPayerException(
+        "Stream Protocol violation encountered.",
+        SendState.ReceiverProtocolViolation,
+        ErrorCodes.ProtocolViolation
+      );
     }
 
     // If there are no PaymentTargetConditions, then always return READY (ergo, this `map` is correct).
@@ -63,13 +69,13 @@ public class AmountFilter implements StreamPacketFilter {
 
         // Check ReceiveMax vs SendMin.
         if (this.checkForIncompatibleReceiveMax(amountTracker, target)) {
-          LOGGER.error(String.format(
-            "Ending payment: minimum delivery amount is too much for recipient. " +
-              "minDeliveryAmount=%s remoteReceiveMax=%s",
-            target.minPaymentAmountInDestinationUnits(), amountTracker.getRemoteReceivedMax()
-          ));
-          streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.ApplicationError);
-          return SendState.IncompatibleReceiveMax;
+          final String errorMessage = String.format(
+            "Ending payment: minimum delivery amount is too much for recipient. "
+              + "minDeliveryAmount=%s remoteReceiveMax=%s",
+            target.minPaymentAmountInDestinationUnits(),
+            amountTracker.getRemoteReceivedMax()
+          );
+          throw new StreamPayerException(errorMessage, SendState.IncompatibleReceiveMax, ErrorCodes.ApplicationError);
         }
 
         // Check PaidFixedSend
@@ -80,7 +86,6 @@ public class AmountFilter implements StreamPacketFilter {
               amountTracker.getAmountSentInSourceUnits()
             );
           }
-          streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
           return SendState.End;
         }
 
@@ -119,7 +124,6 @@ public class AmountFilter implements StreamPacketFilter {
                 amountTracker.getAmountDeliveredInDestinationUnits(), target.minPaymentAmountInDestinationUnits()
               );
             }
-            streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
             return SendState.End;
           }
 
@@ -128,9 +132,9 @@ public class AmountFilter implements StreamPacketFilter {
           }
 
           if (this.isSourceAmountDeliveryLimitInvalid(amountTracker, target)) {
-            LOGGER.warn("Payment cannot complete: exchange rate dropped to 0");
-            streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
-            return SendState.InsufficientExchangeRate;
+            throw new StreamPayerException(
+              "Payment cannot complete: exchange rate dropped to 0", SendState.InsufficientExchangeRate
+            );
           }
 
           final UnsignedLong sourcePacketAmountDeliveryLimit = this
@@ -141,7 +145,8 @@ public class AmountFilter implements StreamPacketFilter {
 
         // Enforce the minimum exchange rate, and estimate how much will be received.
         UnsignedLong minDestinationPacketAmount = this.computeMinDestinationPacketAmount(
-          streamPacketRequest.sourceAmount(), target.minExchangeRate()
+          // TODO: StreamPacket source is null here. Why is that?
+          sourcePacketAmount, target.minExchangeRate()
         );
         final UnsignedLong estimatedDestinationPacketAmount = computeEstimatedDestinationAmount(sourcePacketAmount);
 
@@ -159,11 +164,20 @@ public class AmountFilter implements StreamPacketFilter {
           if (!willPaymentComplete ||
             FluentCompareTo.is(amountTracker.getAvailableDeliveryShortfall()).lessThan(packetDeliveryDeficit)
           ) {
-            if (LOGGER.isWarnEnabled()) {
-              LOGGER.warn("Payment cannot complete: exchange rate dropped below minimum");
-            }
-            streamPacketRequest.setStreamErrorCodeForConnectionClose(ErrorCodes.NoError);
-            return SendState.InsufficientExchangeRate;
+            String errorMessage = String
+              .format("Payment cannot complete because exchange rate dropped below minimum. " +
+                  "availableToSend=%s "
+                  + "sourcePacketAmount=%s "
+                  + "estimatedDestinationPacketAmount=%s "
+                  + "availableDeliverShortfall=%s "
+                  + "packetDeliverDeficiti=%s",
+                availableToSend,
+                sourcePacketAmount,
+                estimatedDestinationPacketAmount,
+                amountTracker.getAvailableDeliveryShortfall(),
+                packetDeliveryDeficit
+              );
+            throw new StreamPayerException(errorMessage, SendState.InsufficientExchangeRate);
           }
 
           minDestinationPacketAmount = estimatedDestinationPacketAmount;

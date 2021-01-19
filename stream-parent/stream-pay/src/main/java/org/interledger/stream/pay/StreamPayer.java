@@ -9,6 +9,7 @@ import org.interledger.fx.ScaledExchangeRate;
 import org.interledger.fx.Slippage;
 import org.interledger.link.Link;
 import org.interledger.link.LinkSettings;
+import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.SimpleSpspClient;
 import org.interledger.spsp.client.SpspClient;
@@ -36,11 +37,13 @@ import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.trackers.AssetDetailsTracker;
+import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketAmount;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +85,7 @@ public interface StreamPayer {
   CompletableFuture<Quote> getQuote(PaymentOptions paymentOptions) throws StreamException;
 
   /**
-   * Make an actual payment using the probed (or otherwise statically configured) information in {@code quote}.
+   * Make a payment using the probed (or otherwise statically configured) information in {@code quote}.
    *
    * @param quote A soft {@link Quote} with details about a payment path.
    *
@@ -90,6 +93,16 @@ public interface StreamPayer {
    *   optionally-present {@link StreamPayerException} if anything went wrong with the payment).
    */
   CompletableFuture<PaymentReceipt> pay(Quote quote);
+
+  /**
+   * Make a payment without first probing the payment path.
+   *
+   * @param paymentOptions A {@link PaymentOptions} with information about what to send in a payment.
+   *
+   * @return A {@link CompletableFuture} that completes with a payment {@link PaymentReceipt} (which has an
+   *   optionally-present {@link StreamPayerException} if anything went wrong with the payment).
+   */
+  CompletableFuture<PaymentReceipt> pay(PaymentOptions paymentOptions);
 
   /**
    * The default implementation of {@link StreamPayer}.
@@ -145,7 +158,8 @@ public interface StreamPayer {
       return CompletableFuture.supplyAsync(() -> {
 
         final BigInteger totalAmountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);
-        final StreamConnectionDetails streamConnectionDetails = this.fetchRecipientAccountDetails(paymentOptions);
+        final StreamConnectionDetails streamConnectionDetails = this
+          .fetchRecipientAccountDetails(paymentOptions.destinationPaymentPointer());
         this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
 
         final StreamConnection streamConnection = this.newStreamConnection(paymentOptions, streamConnectionDetails);
@@ -260,6 +274,116 @@ public interface StreamPayer {
     }
 
     @Override
+    public CompletableFuture<PaymentReceipt> pay(final PaymentOptions paymentOptions) {
+      Objects.requireNonNull(paymentOptions);
+
+      final Denomination sourceDenomination = paymentOptions.senderAccountDetails().denomination()
+        .orElseThrow(() -> new IllegalArgumentException("Sender denomination is required."));
+
+      final Denomination receiverDenomination = paymentOptions.expectedReceiverDenomination()
+        .orElseThrow(() -> new IllegalArgumentException("Receiver denomination is required."));
+
+      final BigInteger totalAmountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);
+      final StreamConnectionDetails streamConnectionDetails = this
+        .fetchRecipientAccountDetails(paymentOptions.destinationPaymentPointer());
+      this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
+
+      final StreamConnection streamConnection = this.newStreamConnection(paymentOptions, streamConnectionDetails);
+      final AccountDetails receiverAccountsDetails = AccountDetails.builder()
+        .interledgerAddress(streamConnection.getDestinationAddress())
+        .denomination(receiverDenomination)
+        .build();
+
+      final PaymentSharedStateTracker paymentSharedStateTracker = new PaymentSharedStateTracker(streamConnection);
+      // Assume a 1:1 FX rate since we're not probing.
+      paymentSharedStateTracker.getExchangeRateTracker().updateRate(UnsignedLong.ONE, UnsignedLong.ONE);
+
+      // TODO: This should be optional...?
+      final ExchangeRateProbeOutcome rateProbeOutcome = ExchangeRateProbeOutcome.builder()
+        .maxPacketAmount(MaxPacketAmount.unknownMax())
+        .sourceDenomination(paymentOptions.senderAccountDetails().denomination())
+        .destinationDenomination(receiverDenomination)
+        .upperBoundRate(Ratio.ONE) // TODO: Is this correct?
+        .lowerBoundRate(Ratio.ONE) // TODO: Is this correct?
+        .build();
+
+      // Get the current FX rate.
+      // TODO: Change this to only require the source and dest denominations.
+      final ExchangeRate currentExternalExchangeRate = getExchangeRate(paymentOptions, rateProbeOutcome);
+
+      final ScaledExchangeRate scaledExternalRate = this.determineScaledExternalRate(
+        paymentOptions.senderAccountDetails(),
+        receiverAccountsDetails,
+        currentExternalExchangeRate,
+        paymentOptions.slippage()
+      );
+
+      final Ratio minScaledExchangeRate = scaledExternalRate.lowerBound();
+      logger.debug("Calculated min exchange rate of {}", minScaledExchangeRate);
+
+      final EstimatedPaymentOutcome estimatedPaymentOutcome = paymentSharedStateTracker
+        .getAmountTracker().setPaymentTarget(
+          PaymentType.FIXED_SEND,  // TODO: Invoices are fixed delivery, but not yet supported.
+          minScaledExchangeRate,
+          rateProbeOutcome.maxPacketAmount().value(),
+          totalAmountToSendInSourceUnits
+        );
+
+      logger.debug("Quote complete. Assembling normalized version");
+
+      // Normalize all values to the
+      final Function<Ratio, Ratio> shiftRate = (rate) -> this.shiftRateForNormalization(
+        rate, sourceDenomination.assetScale(), receiverDenomination.assetScale()
+      );
+
+      final Ratio lowerBoundRate = shiftRate
+        .apply(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate());
+      final Ratio upperBoundRate = shiftRate
+        .apply(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate());
+      final Ratio minExchangeRate = shiftRate.apply(minScaledExchangeRate);
+      final BigInteger maxSourceAmount = new BigDecimal(estimatedPaymentOutcome.maxSendAmountInWholeSourceUnits())
+        .movePointLeft(sourceDenomination.assetScale())
+        .setScale(0, RoundingMode.HALF_EVEN)
+        .toBigIntegerExact();
+      final BigInteger minDeliveryAmount = new BigDecimal(
+        estimatedPaymentOutcome.minDeliveryAmountInWholeDestinationUnits())
+        .movePointLeft(receiverDenomination.assetScale())
+        .setScale(0, RoundingMode.HALF_EVEN)
+        .toBigIntegerExact();
+
+      // Estimate how long the payment may take based on max packet amount, RTT, and rate of packet sending
+      final int packetFrequency = paymentSharedStateTracker.getPacingTracker().getPacketFrequency();
+      final Duration estimatedDuration = Duration.of(
+        estimatedPaymentOutcome.estimatedNumberOfPackets().multiply(BigInteger.valueOf(packetFrequency)).longValue(),
+        ChronoUnit.MILLIS
+      );
+
+      final Quote quote = Quote.builder()
+        .paymentOptions(paymentOptions)
+        .streamConnection(streamConnection)
+        .paymentSharedStateTracker(paymentSharedStateTracker)
+        .sourceAccount(paymentOptions.senderAccountDetails())
+        .destinationAccount(receiverAccountsDetails)
+        .estimatedDuration(estimatedDuration)
+        .estimatedPaymentOutcome(
+          EstimatedPaymentOutcome.builder()
+            .maxSendAmountInWholeSourceUnits(maxSourceAmount)
+            .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
+            .estimatedNumberOfPackets(estimatedPaymentOutcome.estimatedNumberOfPackets())
+            .build()
+        )
+        .minAllowedExchangeRate(minExchangeRate)
+        // Translate the upper and lower bound rates into a rate scaled for sender and receiver account scales.
+        .estimatedExchangeRate(ExchangeRateProbeOutcome.builder().from(rateProbeOutcome)
+          .lowerBoundRate(lowerBoundRate)
+          .upperBoundRate(upperBoundRate)
+          .build())
+        .build();
+
+      return this.pay(quote);
+    }
+
+    @Override
     public CompletableFuture<PaymentReceipt> pay(final Quote quote) {
       Objects.requireNonNull(quote);
 
@@ -267,7 +391,7 @@ public interface StreamPayer {
         // First so all other controllers log the sequence number
         new SequenceFilter(quote.paymentSharedStateTracker()),
         // Fail-fast on terminal rejects or timeouts
-        new FailureFilter(),
+        new FailureFilter(quote.paymentSharedStateTracker().getStatisticsTracker()),
         // Fail-fast on destination asset detail conflict
         new AssetDetailsFilter(quote.paymentSharedStateTracker()),
         // Fail-fast if max packet amount is 0
@@ -560,7 +684,12 @@ public interface StreamPayer {
     }
 
     /**
-     * Validate that the target amount is non-zero and compatible with the precision of the accounts
+     * Validate that the target amount is non-zero and compatible with the precision of both the sender and receiver
+     * accounts.
+     *
+     * @param paymentOptions A {@link PaymentOptions} with information about the payment to send.
+     *
+     * @return A {@link BigInteger} representing the number of units to send in sender units.
      */
     @VisibleForTesting
     protected BigInteger obtainValidatedAmountToSend(final PaymentOptions paymentOptions) {
@@ -577,6 +706,7 @@ public interface StreamPayer {
         () -> new StreamPayerException(
           "Source account denomination is required to make a payment.", SendState.UnknownSourceAsset)
       );
+
       try {
         // Shift the amountToSend by the source account's asset scale to turn it into a whole number.
         BigInteger scaledSendAmount = paymentOptions.amountToSend()
@@ -588,16 +718,18 @@ public interface StreamPayer {
     }
 
     @VisibleForTesting
-    protected StreamConnectionDetails fetchRecipientAccountDetails(final PaymentOptions paymentOptions) {
-      Objects.requireNonNull(paymentOptions);
+    protected StreamConnectionDetails fetchRecipientAccountDetails(final PaymentPointer paymentPointer) {
+      Objects.requireNonNull(paymentPointer);
 
       // Note: Some SPSP endpoints return the asset details as part of their response. This implementation ignores those
       // values, preferring to obtain this information at the STREAM layer instead.
       try {
-        return spspClient.getStreamConnectionDetails(paymentOptions.destinationPaymentPointer());
+        return spspClient.getStreamConnectionDetails(paymentPointer);
       } catch (Exception e) {
         throw new StreamPayerException(
-          "Unable to obtain STREAM connection details via SPSP.", e, SendState.QueryFailed
+          String.format("Unable to obtain STREAM connection details via SPSP for paymentPointer=%s", paymentPointer),
+          e,
+          SendState.QueryFailed
         );
       }
     }

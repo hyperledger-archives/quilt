@@ -8,6 +8,7 @@ import org.interledger.stream.frames.ConnectionMaxStreamIdFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -48,7 +49,11 @@ public class AssetDetailsFilter implements StreamPacketFilter {
           .errorMessage("Destination asset changed, but this is prohibited by the IL-RFC-29.")
           .build()
       );
-      return SendState.DestinationAssetConflict;
+      throw new StreamPayerException(
+        "Destination asset changed, but this is prohibited by the IL-RFC-29.",
+        SendState.DestinationAssetConflict,
+        ErrorCodes.ProtocolViolation
+      );
     }
 
     // This implementation doesn't receive packets, so only send a `ConnectionNewAddress` for backwards

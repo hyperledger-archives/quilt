@@ -189,7 +189,7 @@ public class MaxPacketAmountTracker {
         if (newPathCapacity.equals(maxPacketAmountValue)) {
           // Binary search from F08s without metadata is complete: discovered precise max
           if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Discovered precise max packet amount: {}", maxPacketAmountSnapshot);
+            LOGGER.debug("Discovered imprecise max packet amount: {}", maxPacketAmountSnapshot);
           }
           this.maxPacketAmountRef.set(MaxPacketAmount.builder()
             .maxPacketState(ImpreciseMax) // <-- Only F08 can set this to PreciseMax

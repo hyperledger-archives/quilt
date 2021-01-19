@@ -1,7 +1,8 @@
 package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.interledger.stream.frames.ErrorCodes.ProtocolViolation;
+import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasErrorCode;
+import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -9,11 +10,12 @@ import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.fx.Denominations;
-import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
+import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamFrameType;
 import org.interledger.stream.model.AccountDetails;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -51,7 +53,7 @@ public class AssetDetailsFilterTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     when(paymentSharedStateTrackerMock.getAssetDetailsTracker()).thenReturn(assetDetailsTrackerMock);
 
@@ -80,6 +82,11 @@ public class AssetDetailsFilterTest {
 
   @Test
   public void nextStateWhenRemoteAssetDetailsChanged() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.DestinationAssetConflict));
+    expectedException.expect(hasErrorCode(ErrorCodes.ProtocolViolation));
+    expectedException.expectMessage("Destination asset changed, but this is prohibited by the IL-RFC-29.");
+
     this.assetDetailsFilter = new AssetDetailsFilter(paymentSharedStateTrackerMock) {
       @Override
       boolean remoteAssetChanged() {
@@ -89,12 +96,13 @@ public class AssetDetailsFilterTest {
 
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
 
-    SendState response = assetDetailsFilter.nextState(request);
-    assertThat(response).isEqualTo(SendState.DestinationAssetConflict);
+    assetDetailsFilter.nextState(request);
 
-    StreamFrame frame = request.requestFrames().get(0);
-    assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
-    assertThat(((ConnectionCloseFrame) frame).errorCode()).isEqualTo(ProtocolViolation);
+    // TODO: Ensure that protocol violation makes it into the stream close frame.
+//    assertThat(response).isEqualTo(SendState.DestinationAssetConflict);
+//    StreamFrame frame = request.requestFrames().get(0);
+//    assertThat(frame.streamFrameType()).isEqualTo(StreamFrameType.ConnectionClose);
+//    assertThat(((ConnectionCloseFrame) frame).errorCode()).isEqualTo(ProtocolViolation);
   }
 
   @Test

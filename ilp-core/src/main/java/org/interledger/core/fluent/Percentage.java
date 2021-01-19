@@ -1,7 +1,8 @@
 package org.interledger.core.fluent;
 
-import java.math.BigDecimal;
 import org.immutables.value.Value.Immutable;
+
+import java.math.BigDecimal;
 
 /**
  * A wrapper for a percentage that is always positive. 100% is equal to the number 1.0000 and 1% is equal to the number
@@ -11,6 +12,7 @@ public interface Percentage extends Comparable<Percentage> {
 
   Percentage ZERO_PERCENT = of(BigDecimal.ZERO);
   Percentage ONE_PERCENT = of(new BigDecimal("0.01"));
+  Percentage FIVE_PERCENT = of(new BigDecimal("0.05"));
   Percentage FIFTY_PERCENT = of(new BigDecimal("0.5"));
   Percentage ONE_HUNDRED_PERCENT = of(BigDecimal.ONE);
 

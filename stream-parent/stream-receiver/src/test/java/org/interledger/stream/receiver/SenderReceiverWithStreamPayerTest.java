@@ -7,35 +7,39 @@ import static org.mockito.Mockito.when;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.core.fluent.Percentage;
 import org.interledger.fx.Denomination;
 import org.interledger.link.Link;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.spsp.StreamConnectionDetails;
 import org.interledger.spsp.client.InvalidReceiverClientException;
 import org.interledger.spsp.client.SpspClient;
-import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
-import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.model.AccountDetails;
 import org.interledger.stream.pay.StreamPayer;
+import org.interledger.stream.pay.model.PaymentOptions;
 import org.interledger.stream.pay.model.PaymentReceipt;
-import org.interledger.stream.pay.model.Quote;
+import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.receiver.testutils.SimulatedIlpv4Network;
 import org.interledger.stream.receiver.testutils.SimulatedPathConditions;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
 import okhttp3.HttpUrl;
 import org.immutables.value.Value.Derived;
 import org.javamoney.moneta.spi.DefaultNumberValue;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -51,17 +55,18 @@ import javax.money.convert.ExchangeRateProvider;
 
 /**
  * A unit tests that simulates network connectivity between a sender and a receiver in order isolate and control various
- * network conditions as part of a STREAM payment.
+ * network conditions as part of a STREAM payment. This test
  */
+@SuppressWarnings( {"OptionalGetWithoutIsPresent", "deprecation"})
 public class SenderReceiverWithStreamPayerTest {
 
   private static final String SHARED_SECRET_HEX = "9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D";
 
-  private static final InterledgerAddress LEFT_ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.left");
+  private static final InterledgerAddress LEFT_ILP_ADDRESS = InterledgerAddress.of("example.quilt-dev.left");
   private static final InterledgerAddress LEFT_SENDER_ADDRESS = LEFT_ILP_ADDRESS.with("left_stream_sender");
   private static final InterledgerAddress LEFT_RECEIVER_ADDRESS = LEFT_ILP_ADDRESS.with("left_stream_receiver");
 
-  private static final InterledgerAddress RIGHT_ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.right");
+  private static final InterledgerAddress RIGHT_ILP_ADDRESS = InterledgerAddress.of("example.quilt-dev.right");
   private static final InterledgerAddress RIGHT_SENDER_ADDRESS = RIGHT_ILP_ADDRESS.with("right_stream_sender");
   private static final InterledgerAddress RIGHT_RECEIVER_ADDRESS = RIGHT_ILP_ADDRESS.with("right_stream_receiver");
 
@@ -72,479 +77,671 @@ public class SenderReceiverWithStreamPayerTest {
 
   private SimulatedIlpv4Network simulatedIlpNetwork;
 
-  private static StreamPayerNode initNode(
-    Link<?> link,
-    InterledgerAddress senderAddress,
-    InterledgerAddress receiverAddress
-  ) {
-    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
-    final AesGcmStreamSharedSecretCrypto streamSharedSecretCrypto = new AesGcmStreamSharedSecretCrypto();
+  private Level previousLogValue;
 
-    return initNode(
-      link,
-      senderAddress,
-      receiverAddress,
-      new StatelessStreamReceiver(
-        () -> serverSecret,
-        new SpspStreamConnectionGenerator(),
-        streamSharedSecretCrypto,
-        StreamCodecContextFactory.oer()
-      )
-    );
-  }
-
-  private static StreamPayerNode initNode(
-    Link<?> ilpLink,
-    InterledgerAddress senderAddress,
-    InterledgerAddress receiverAddress,
-    StreamReceiver streamReceiver
-  ) {
-    final AesGcmStreamSharedSecretCrypto streamSharedSecretCrypto = new AesGcmStreamSharedSecretCrypto();
-    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
-
-    final StreamConnectionDetails connectionDetails = streamReceiver.setupStream(receiverAddress);
-    final SpspClient spspClientMock = new SpspClient() {
-      @Override
-      public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
-        throws InvalidReceiverClientException {
-        return connectionDetails;
-      }
-
-      @Override
-      public StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl) throws InvalidReceiverClientException {
-        return connectionDetails;
-      }
-    };
-
-    final StreamPayer streamPayer = new StreamPayer.Default(
-      new StreamPacketEncryptionService(
-        StreamCodecContextFactory.oer(),
-        streamSharedSecretCrypto
-      ),
-      ilpLink,
-      mockExchangeRateProvider(),
-      spspClientMock
-    );
-
-    return StreamPayerNode.builder()
-      .serverSecret(serverSecret)
-      .senderAddress(senderAddress)
-      .receiverAddress(receiverAddress)
-      .streamPayer(streamPayer)
-      .streamReceiver(streamReceiver)
-      .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
-      .link(ilpLink)
-      .build();
-  }
-
-  private static <T> List<T> awaitResults(List<CompletableFuture<T>> futures) {
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-    return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
-  }
-
+  /**
+   * Turn-down the logger because it's causing issues with CircleCI.
+   */
   @Before
-  public void setup() {
+  public void setUp() {
     final ch.qos.logback.classic.Logger logger
       = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    this.previousLogValue = logger.getLevel();
     logger.setLevel(Level.INFO);
     this.initIlpNetworkForStream();
   }
 
-  //  @Test
-//  public void testSendFromLeftToRight() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
-//
-//    final SendMoneyResult sendMoneyResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(1);
-//    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//  }
-//
-//  @Test
-//  public void testSendFromLeftToRightWithFixedReceiverAmountExactPathRate() {
-//    final UnsignedLong amountToDeliver = UnsignedLong.valueOf(10000);
-//
-//    BigDecimal expectedPathRate = new BigDecimal("1.5");
-//    BigDecimal actualPathRate = new BigDecimal("1.5");
-//    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
-//      SimulatedPathConditions.builder().currentExchangeRateSupplier(() -> actualPathRate).build(),
-//      SimulatedPathConditions.builder().build()
-//    ));
-//
-//    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
-//    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
-//
-//    SendMoneyResult sendMoneyResult = sender.sendMoney(
-//      SendMoneyRequest.builder()
-//        .sourceAddress(leftStreamNode.senderAddress())
-//        .amount(amountToDeliver)
-//        .denomination(leftStreamNode.denomination())
-//        .destinationAddress(connectionDetails.destinationAddress())
-//        .sharedSecret(connectionDetails.sharedSecret())
-//        .paymentTracker(
-//          new FixedReceiverAmountPaymentTracker(amountToDeliver,
-//            new FixedRateExchangeCalculator(expectedPathRate))
-//        )
-//        .timeout(Duration.ofMillis(1000L))
-//        .build())
-//      .join();
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(amountToDeliver);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(amountToDeliver);
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isGreaterThan(1);
-//    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
-//    assertThat(sendMoneyResult.successfulPayment()).isTrue();
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//  }
-//
-//  @Test
-//  public void testSendFromLeftToRightWithFixedReceiverAmountOverestimatedPathRate() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000);
-//
-//    // simulating get a better exchange rate than we expected in which case payments should get fulfilled because
-//    // the receiver gets more than they were supposed to
-//    BigDecimal expectedPathExchange = new BigDecimal("1.4");
-//    BigDecimal actualPathExchange = new BigDecimal("1.5");
-//    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
-//      SimulatedPathConditions.builder().currentExchangeRateSupplier(() -> actualPathExchange).build(),
-//      SimulatedPathConditions.builder().build()
-//    ));
-//
-//    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
-//    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
-//
-//    SendMoneyResult sendMoneyResult = sender.sendMoney(
-//      SendMoneyRequest.builder()
-//        .sharedSecret(connectionDetails.sharedSecret())
-//        .amount(paymentAmount)
-//        .denomination(leftStreamNode.denomination())
-//        .destinationAddress(connectionDetails.destinationAddress())
-//        .sourceAddress(leftStreamNode.senderAddress())
-//        .paymentTracker(
-//          new FixedReceiverAmountPaymentTracker(paymentAmount,
-//            new FixedRateExchangeCalculator(expectedPathExchange))
-//        )
-//        .timeout(Duration.ofMillis(1000L))
-//        .build()
-//    ).join();
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isGreaterThanOrEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.amountSent()).isLessThan(paymentAmount);
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isGreaterThan(1);
-//    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
-//    assertThat(sendMoneyResult.successfulPayment()).isTrue();
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//  }
-//
-//  @Test
-//  public void testSendFromLeftToRightWithFixedReceiverAmountUnderestimatedPathRate() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000);
-//
-//    // simulating get a worse exchange rate than we expected in which case payments should get rejected because
-//    // the receiver gets less than they were supposed to
-//    BigDecimal expectedPathExchange = new BigDecimal("1.5");
-//    BigDecimal actualPathExchange = new BigDecimal("1.4"); // lower rate than expected
-//    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
-//      SimulatedPathConditions.builder().currentExchangeRateSupplier(() -> actualPathExchange).build(),
-//      SimulatedPathConditions.builder().build()
-//    ));
-//
-//    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
-//    final StreamConnectionDetails connectionDetails = rightStreamNode.getNewStreamConnectionDetails();
-//
-//    SendMoneyResult sendMoneyResult = sender.sendMoney(
-//      SendMoneyRequest.builder()
-//        .sourceAddress(leftStreamNode.senderAddress())
-//        .amount(paymentAmount)
-//        .denomination(leftStreamNode.denomination())
-//        .destinationAddress(connectionDetails.destinationAddress())
-//        .sharedSecret(connectionDetails.sharedSecret())
-//        .paymentTracker(new FixedReceiverAmountPaymentTracker(paymentAmount,
-//          new FixedRateExchangeCalculator(expectedPathExchange)))
-//        .timeout(Duration.ofMillis(1000))
-//        .build())
-//      .join();
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(UnsignedLong.ZERO);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.amountSent()).isEqualTo(UnsignedLong.ZERO);
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(0);
-//    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThan(0);
-//    assertThat(sendMoneyResult.successfulPayment()).isFalse();
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//  }
-//
+  @After
+  public void tearDown() {
+    final ch.qos.logback.classic.Logger logger
+      = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    logger.setLevel(previousLogValue);
+  }
+
+  // TODO: Rename source to sender?
+  // TODO: Rename destination to receiver? Check RFC.
+
+  ////////////////
+  // Left to Right
+  ////////////////
+
   @Test
-  public void testSendFromRightToLeft() {
-    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
+  public void sendFromLeftToRight() {
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1000);
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
 
-    final StreamConnectionDetails connectionDetails = leftStreamPayerNode.getNewStreamConnectionDetails();
-
-    final AccountDetails sourceAccountDetails = AccountDetails.builder()
-      .interledgerAddress(rightStreamPayerNode.senderAddress())
-      .denomination(Denomination.builder()
-        .assetScale(rightStreamPayerNode.denomination().assetScale())
-        .assetCode(rightStreamPayerNode.denomination().assetCode())
-        .build())
-      .build();
-
-    final AccountDetails destinationAccountDetails = AccountDetails.builder()
-      .interledgerAddress(connectionDetails.destinationAddress())
-      .build();
-
-    final Quote quote = Quote.builder()
-      .sourceAccount(sourceAccountDetails)
-      .destinationAccount(destinationAccountDetails)
-      .streamConnection(new StreamConnection(
-        sourceAccountDetails,
-        connectionDetails.destinationAddress(),
-        StreamSharedSecret.of(connectionDetails.sharedSecret().key())
-      ))
-      .build();
-
-    final PaymentReceipt paymentReceipt = rightStreamPayerNode.streamPayer().pay(quote).join();
-
-//      SendMoneyRequest.builder()
-//        .sourceAddress(rightStreamNode.senderAddress())
-//        .amount(paymentAmount)
-//        .denomination(rightStreamNode.denomination())
-//        .destinationAddress(connectionDetails.destinationAddress())
-//        .sharedSecret(connectionDetails.sharedSecret())
-//        .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-//        .timeout(Duration.ofMillis(10000))
-//        .build()
-//    ).join();
-
-    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(paymentAmount);
-    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(paymentAmount);
-
-    //assertThat(paymentReceipt.originalQuote().paymentSharedStateTracker().getExchangeRateTracker().).isEqualTo(1);
-    //assertThat(paymentReceipt.numRejectPackets()).isEqualTo(0);
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(1);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isZero();
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isEqualTo(1);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isEqualTo(Percentage.ZERO_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.000000001"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
 
     logger.info("PaymentReceipt: {}", paymentReceipt);
   }
-//
-//  /**
-//   * Validates that the send operation does not complete if the preflight check fails.
-//   */
-//  @Test
-//  public void testSendCannotDetermineReceiverDenomination() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000);
-//
-//    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
-//    final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
-//    final StreamReceiver brokenStreamReceiver = new AlwaysEmptyStreamReceiver(
-//      () -> serverSecret,
-//      new SpspStreamConnectionGenerator(),
-//      streamEncryptionService,
-//      StreamCodecContextFactory.oer()
-//    );
-//    this.rightStreamNode = initNode(simulatedIlpNetwork.getRightToLeftLink(), RIGHT_SENDER_ADDRESS,
-//      RIGHT_RECEIVER_ADDRESS, brokenStreamReceiver);
-//    this.simulatedIlpNetwork.getRightToLeftLink().unregisterLinkHandler();
-//    this.simulatedIlpNetwork.getRightToLeftLink().registerLinkHandler(incomingPreparePacket ->
-//      brokenStreamReceiver.receiveMoney(incomingPreparePacket, RIGHT_RECEIVER_ADDRESS, rightStreamNode.denomination())
-//    );
-//
-//    final SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
-//    final StreamConnectionDetails connectionDetails = leftStreamNode.getNewStreamConnectionDetails();
-//
-//    final SendMoneyResult sendMoneyResult = sender.sendMoney(
-//      SendMoneyRequest.builder()
-//        .sourceAddress(leftStreamNode.senderAddress())
-//        .amount(paymentAmount)
-//        .denomination(leftStreamNode.denomination())
-//        .destinationAddress(connectionDetails.destinationAddress())
-//        .sharedSecret(connectionDetails.sharedSecret())
-//        .paymentTracker(new FixedReceiverAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-//        .timeout(Duration.ofMillis(10000))
-//        .build())
-//      .join();
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(UnsignedLong.ZERO);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(0);
-//    assertThat(sendMoneyResult.numRejectPackets()).isEqualTo(0);
-//    assertThat(sendMoneyResult.successfulPayment()).isFalse();
-//    assertThat(sendMoneyResult.amountLeftToSend()).isEqualTo(UnsignedLong.valueOf(1000L));
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//  }
-//
-//  /**
-//   * Simulate a left-to-right STREAM with 20% packet loss due to T03 errors.
-//   */
-//  @Test
-//  public void testSendFromLeftToRightWith20PercentLoss() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
-//    final float rejectionPercentage = 0.2f;
-//
-//    final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
-//
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(10, Offset.offset(1));
-//    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(0);
-//  }
-//
-//  /**
-//   * Simulate a left-to-right STREAM with 50% packet loss due to T03 errors.
-//   */
-//  @Test
-//  public void testSendFromLeftToRightWith50PercentLoss() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(1000000);
-//    final float rejectionPercentage = 0.5f;
-//
-//    final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
-//
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(10, Offset.offset(1));
-//    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
-//  }
-//
-//  /**
-//   * Simulate a left-to-right STREAM with 90% packet loss due to T03 errors.
-//   */
-//  @Test
-//  public void testSendFromLeftToRightWith90PercentLoss() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(2000);
-//    final float rejectionPercentage = 0.9f;
-//
-//    final SendMoneyResult sendMoneyResult = this.sendMoneyWithLossHelper(paymentAmount, rejectionPercentage);
-//
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isCloseTo(2, Offset.offset(1));
-//    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
-//  }
-//
-//  @Test
-//  public void testSendFromLeftToRightWithSmallMaxPacketValueInNetwork() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100);
-//
-//    final SimulatedIlpv4Network simulatedIlpNetwork = new SimulatedIlpv4Network(
-//      SimulatedPathConditions.builder()
-//        .maxPacketAmount(() -> UnsignedLong.ONE)
-//        .build(),
-//      SimulatedPathConditions.builder().build()
-//    );
-//    this.initIlpNetworkForStream(simulatedIlpNetwork);
-//
-//    final SendMoneyResult sendMoneyResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.numFulfilledPackets()).isEqualTo(100);
-//    assertThat(sendMoneyResult.numRejectPackets()).isGreaterThanOrEqualTo(1);
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//  }
-//
-//  @Test
-//  public void sendBothDirections() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000);
-//    SendMoneyResult leftToRightResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
-//    SendMoneyResult rightToLeftResult = sendMoney(rightStreamNode, leftStreamNode, paymentAmount);
-//
-//    Lists.newArrayList(leftToRightResult, rightToLeftResult).forEach(result -> {
-//      assertThat(result.successfulPayment()).isTrue();
-//      assertThat(result.amountDelivered()).isEqualTo(paymentAmount);
-//      assertThat(result.originalAmount()).isEqualTo(paymentAmount);
-//      assertThat(result.numFulfilledPackets()).isGreaterThan(1);
-//      assertThat(result.numRejectPackets()).isEqualTo(0);
-//    });
-//  }
-//
-//  @Test
-//  public void sendFromLeftToRightMultiThreadedSharedSender() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(10000);
-//    int parallelism = 40;
-//    int runCount = 100;
-//
-//    SimpleStreamSender sender = new SimpleStreamSender(leftStreamNode.link());
-//
-//    List<CompletableFuture<SendMoneyResult>> results =
-//      runInParallel(parallelism, runCount, () -> sendMoney(sender, leftStreamNode, rightStreamNode, paymentAmount));
-//
-//    awaitResults(results).forEach(result -> {
-//      assertThat(result.numFulfilledPackets()).isGreaterThan(1);
-//      assertThat(result.numRejectPackets()).isEqualTo(0);
-//      assertThat(result.successfulPayment()).isTrue();
-//      assertThat(result.amountDelivered()).isEqualTo(paymentAmount);
-//      assertThat(result.originalAmount()).isEqualTo(paymentAmount);
-//    });
-//  }
-//
-//  @Test
-//  public void sendBothDirectionsMultiThreaded() {
-//    final UnsignedLong paymentAmount = UnsignedLong.valueOf(100000);
-//    int parallelism = 50;
-//    int runs = 200;
-//
-//    // queue up left-to-right send
-//    SimpleStreamSender sendLeft = new SimpleStreamSender(leftStreamNode.link());
-//    List<CompletableFuture<SendMoneyResult>> results =
-//      runInParallel(parallelism, runs, () -> sendMoney(sendLeft, leftStreamNode, rightStreamNode, paymentAmount));
-//
-//    // queue up right-to-left send
-//    SimpleStreamSender sendRight = new SimpleStreamSender(leftStreamNode.link());
-//    results.addAll(
-//      runInParallel(parallelism, runs, () -> sendMoney(sendRight, rightStreamNode, leftStreamNode, paymentAmount)));
-//
-//    awaitResults(results).forEach(result -> {
-//      assertThat(result.successfulPayment()).isTrue();
-//      assertThat(result.amountDelivered()).isEqualTo(paymentAmount);
-//      assertThat(result.originalAmount()).isEqualTo(paymentAmount);
-//      assertThat(result.numFulfilledPackets()).isGreaterThan(1);
-//      assertThat(result.numRejectPackets()).isEqualTo(0);
-//    });
-//  }
+
+  @Test
+  public void sendFromLeftToRightWithSmallerMaxPacket() {
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(0.9); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(900000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(900000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(45);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ reject's
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(45);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.ONE_PERCENT, Percentage.FIVE_PERCENT
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  @Test
+  public void sendFromLeftToRightWithBetterRateThanAllowed() {
+    // Note that the actual FX rate is 1.0, so simulating a better exchange rate than we expected in which case
+    // payments should get fulfilled because the receiver gets more than they were supposed to.
+    BigDecimal actualPathExchange = new BigDecimal("1.5");
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .currentExchangeRateSupplier(() -> actualPathExchange)
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1500000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // <-- Expect some rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isLessThan(Percentage.FIVE_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.5"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.50005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  @Test
+  public void sendFromLeftToRightWithWorseRateThanAllowed() {
+    // Note that the actual FX rate is 1.0, so simulating a worse exchange rate than we expected in which case
+    // payments should get fulfilled because the receiver gets more than they were supposed to.
+    BigDecimal actualPathExchange = new BigDecimal("0.5");
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .currentExchangeRateSupplier(() -> actualPathExchange)
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isFalse();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000L));
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(0);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isGreaterThan(1); // <-- Expect >1 rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(0);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage())
+      .isEqualByComparingTo(Percentage.ONE_HUNDRED_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.50005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    assertThat(paymentReceipt.paymentError()).isPresent();
+    assertThat(paymentReceipt.paymentError().get().getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
+    assertThat(paymentReceipt.paymentError().get().getMessage())
+      .contains("Payment cannot complete because exchange rate dropped below minimum");
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  /**
+   * Simulate a left-to-right STREAM with 20% packet loss due to T03 errors.
+   */
+  @Test
+  public void sendFromLeftToRightWith20PercentLoss() {
+    final Percentage rejectionPercentage = Percentage.of(new BigDecimal("0.2"));
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .packetRejectionPercentage(rejectionPercentage.value().floatValue())
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ rejects.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
+    // Should be somewhere around 20%.
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.of(new BigDecimal("0.10")),
+      Percentage.of(new BigDecimal("0.30"))
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  /**
+   * Simulate a left-to-right STREAM with 50% packet loss due to T03 errors.
+   */
+  @Test
+  public void sendFromLeftToRightWith50PercentLoss() {
+    final Percentage rejectionPercentage = Percentage.of(new BigDecimal("0.5"));
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .packetRejectionPercentage(rejectionPercentage.value().floatValue())
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isGreaterThan(40); // <-- Expect >40 rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(90);
+    // Should be somewhere around 20%.
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.of(new BigDecimal("0.40")),
+      Percentage.of(new BigDecimal("0.60"))
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  /**
+   * Simulate a left-to-right STREAM with 90% packet loss due to T03 errors.
+   */
+  @Test
+  public void sendFromLeftToRightWith90PercentLoss() {
+    final Percentage rejectionPercentage = Percentage.of(new BigDecimal("0.9"));
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .packetRejectionPercentage(rejectionPercentage.value().floatValue())
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(0.1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(100000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(100000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(5);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ rejects.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(5);
+    // Should be somewhere around 20%.
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.of(new BigDecimal("0.80")),
+      Percentage.of(new BigDecimal("0.99"))
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  ////////////////
+  // Right to Left
+  ////////////////
+
+  @Test
+  public void sendFromRightToLeft() {
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1000);
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(1);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isZero();
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isEqualTo(1);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isEqualTo(Percentage.ZERO_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.000000001"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  @Test
+  public void sendFromRightToLeftWithSmallerMaxPacket() {
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().build(),
+      SimulatedPathConditions.builder()
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1);
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isEqualTo(1);
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isEqualTo(51);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.ONE_PERCENT, Percentage.FIVE_PERCENT
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  @Test
+  public void sendFromRightToLeftWithBetterRateThanAllowed() {
+    // Note that the actual FX rate is 1.0, so simulating a better exchange rate than we expected in which case
+    // payments should get fulfilled because the receiver gets more than they were supposed to.
+    BigDecimal actualPathExchange = new BigDecimal("1.5");
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().build(),
+      SimulatedPathConditions.builder()
+        .currentExchangeRateSupplier(() -> actualPathExchange)
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1500000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // <-- Expect some rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isLessThan(Percentage.FIVE_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.5"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.50005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  @Test
+  public void sendFromRightToLeftWithWorseRateThanAllowed() {
+    // Note that the actual FX rate is 1.0, so simulating a worse exchange rate than we expected in which case
+    // payments should get fulfilled because the receiver gets more than they were supposed to.
+    BigDecimal actualPathExchange = new BigDecimal("0.5");
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().build(),
+      SimulatedPathConditions.builder()
+        .currentExchangeRateSupplier(() -> actualPathExchange)
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isFalse();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000L));
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(0);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isGreaterThan(1); // <-- Expect >1 rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(1);
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage())
+      .isEqualByComparingTo(Percentage.ONE_HUNDRED_PERCENT);
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("0.50005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    assertThat(paymentReceipt.paymentError()).isPresent();
+    assertThat(paymentReceipt.paymentError().get().getSendState()).isEqualTo(SendState.InsufficientExchangeRate);
+    assertThat(paymentReceipt.paymentError().get().getMessage())
+      .contains("Payment cannot complete because exchange rate dropped below minimum");
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  /**
+   * Simulate a right-to-left STREAM with 20% packet loss due to T03 errors.
+   */
+  @Test
+  public void sendFromRightToLeftWith20PercentLoss() {
+    final Percentage rejectionPercentage = Percentage.of(new BigDecimal("0.2"));
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().build(),
+      SimulatedPathConditions.builder()
+        .packetRejectionPercentage(rejectionPercentage.value().floatValue())
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ rejects.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
+    // Should be somewhere around 20%.
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.of(new BigDecimal("0.10")),
+      Percentage.of(new BigDecimal("0.30"))
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  /**
+   * Simulate a right-to-left STREAM with 50% packet loss due to T03 errors.
+   */
+  @Test
+  public void sendFromRightToLeftWith50PercentLoss() {
+    final Percentage rejectionPercentage = Percentage.of(new BigDecimal("0.5"));
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().build(),
+      SimulatedPathConditions.builder()
+        .packetRejectionPercentage(rejectionPercentage.value().floatValue())
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isGreaterThan(40); // <-- Expect ~>40 rejections.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(90);
+    // Should be somewhere around 20%.
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.of(new BigDecimal("0.40")),
+      Percentage.of(new BigDecimal("0.60"))
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  /**
+   * Simulate a right-to-left STREAM with 90% packet loss due to T03 errors.
+   */
+  @Test
+  public void sendFromRightToLeftWith90PercentLoss() {
+    final Percentage rejectionPercentage = Percentage.of(new BigDecimal("0.9"));
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder().build(),
+      SimulatedPathConditions.builder()
+        .packetRejectionPercentage(rejectionPercentage.value().floatValue())
+        .maxPacketAmount(() -> UnsignedLong.valueOf(20000L))
+        .build()
+    ));
+
+    // PAY
+    final BigDecimal paymentAmount = BigDecimal.valueOf(0.1); // <-- Send 1 XRP
+    final PaymentReceipt paymentReceipt = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    assertThat(paymentReceipt.successfulPayment()).isTrue();
+    assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(100000));
+    assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(100000));
+    assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+    assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(5);
+    assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ rejects.
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(5);
+    // Should be somewhere around 20%.
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
+      Percentage.of(new BigDecimal("0.80")),
+      Percentage.of(new BigDecimal("0.99"))
+    );
+    assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1"));
+    assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+      .isEqualTo(new BigDecimal("1.00005"));
+    assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+
+    logger.info("PaymentReceipt: {}", paymentReceipt);
+  }
+
+  ////////////////
+  // Both Directions
+  ////////////////
+
+  /**
+   * While not multi-threaded, this test ensure that two subsequent "pay" operations do not share any state.
+   */
+  @Test
+  public void sendBothDirections() {
+    final BigDecimal paymentAmount = new BigDecimal(1); // <-- Send 1 XRP, or 1x10^6 units.
+    PaymentReceipt leftToRightResult = sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount);
+    PaymentReceipt rightToLeftResult = sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount);
+
+    Lists.newArrayList(leftToRightResult, rightToLeftResult).forEach(paymentReceipt -> {
+      assertThat(paymentReceipt.successfulPayment()).isTrue();
+      assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+      assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+      assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+      assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(1);
+      assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isZero();
+      assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isEqualTo(1);
+      assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isEqualTo(Percentage.ZERO_PERCENT);
+      assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+        .isEqualTo(new BigDecimal("1"));
+      assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
+        .isEqualTo(new BigDecimal("1.000001"));
+      assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+    });
+  }
+
+  /**
+   * Ensures that multiple left-to-right send operations (in parallel) don't conflict with each other.
+   */
+  @Test
+  public void sendFromLeftToRightMultiThreadedSharedSender() {
+    final int parallelism = 40;
+    final int runCount = 100;
+
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .maxPacketAmount(() -> UnsignedLong.valueOf(50000))
+        .build(),
+      SimulatedPathConditions.builder().build()
+    ));
+
+    final BigDecimal paymentAmount = new BigDecimal(1); // <-- Send 1 XRP, or 1x10^6 units.
+    List<CompletableFuture<PaymentReceipt>> results =
+      runInParallel(parallelism, runCount, () -> sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount));
+
+    awaitResults(results).forEach(paymentReceipt -> {
+      assertThat(paymentReceipt.successfulPayment()).isTrue();
+      assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+      assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+      assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+      assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(20);
+      assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive();
+      assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(20);
+      assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ZERO_PERCENT);
+      assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
+        .isEqualTo(new BigDecimal("1"));
+      assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal()).isBetween(
+        BigDecimal.ONE, BigDecimal.valueOf(1.1)
+      );
+      assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+    });
+  }
+
+  @Test
+  public void sendBothDirectionsMultiThreaded() {
+    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
+      SimulatedPathConditions.builder()
+        .maxPacketAmount(() -> UnsignedLong.valueOf(60000))
+        .build(),
+      SimulatedPathConditions.builder()
+        .maxPacketAmount(() -> UnsignedLong.valueOf(40000))
+        .build()
+    ));
+
+    final BigDecimal paymentAmount = new BigDecimal(1); // <-- Send 1 XRP, or 1x10^6 units.
+    final int parallelism = 50;
+    final int runs = 200;
+
+    // queue up left-to-right send
+    final List<CompletableFuture<PaymentReceipt>> results =
+      runInParallel(parallelism, runs, () -> sendMoney(leftStreamPayerNode, rightStreamPayerNode, paymentAmount));
+
+    // queue up right-to-left send
+    results.addAll(
+      runInParallel(parallelism, runs, () -> sendMoney(rightStreamPayerNode, leftStreamPayerNode, paymentAmount))
+    );
+
+    awaitResults(results).forEach(paymentReceipt -> {
+      assertThat(paymentReceipt.successfulPayment()).isTrue();
+      assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
+      assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
+      assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+      assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isBetween(15, 30);
+      assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isLessThan(5);
+      assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isPositive();
+      assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ZERO_PERCENT);
+      assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal()).isBetween(
+        BigDecimal.ONE, BigDecimal.valueOf(1.1)
+      );
+      assertThat(paymentReceipt.paymentStatistics().paymentDuration()).isGreaterThan(Duration.ZERO);
+    });
+  }
 
   /////////////////
   // Helper Methods
   /////////////////
 
-//  private SendMoneyResult sendMoney(StreamNode fromNode, StreamNode toNode, UnsignedLong paymentAmount) {
-//    return sendMoney(new SimpleStreamSender(fromNode.link()), fromNode, toNode, paymentAmount);
-//  }
-//
-//  private SendMoneyResult sendMoney(
-//    StreamSender sender, StreamNode fromNode, StreamNode toNode, UnsignedLong paymentAmount
-//  ) {
-//    final StreamConnectionDetails connectionDetails = toNode.getNewStreamConnectionDetails();
-//    return sender.sendMoney(
-//      SendMoneyRequest.builder()
-//        .sourceAddress(fromNode.senderAddress())
-//        .amount(paymentAmount)
-//        .denomination(fromNode.denomination())
-//        .destinationAddress(connectionDetails.destinationAddress())
-//        .sharedSecret(connectionDetails.sharedSecret())
-//        .paymentTracker(new FixedSenderAmountPaymentTracker(paymentAmount, new NoOpExchangeRateCalculator()))
-//        .timeout(Duration.ofMillis(10000))
-//        .build())
-//      .join();
-//  }
-//
-//  /**
-//   * Helper method to test lossy ILPv4 network percentages.
-//   */
-//  private SendMoneyResult sendMoneyWithLossHelper(final UnsignedLong paymentAmount, final float rejectionPercentage) {
-//    this.initIlpNetworkForStream(new SimulatedIlpv4Network(
-//      SimulatedPathConditions.builder().packetRejectionPercentage(rejectionPercentage).build(),
-//      SimulatedPathConditions.builder().build()
-//    ));
-//
-//    final SendMoneyResult sendMoneyResult = sendMoney(leftStreamNode, rightStreamNode, paymentAmount);
-//
-//    assertThat(sendMoneyResult.amountDelivered()).isEqualTo(paymentAmount);
-//    assertThat(sendMoneyResult.originalAmount()).isEqualTo(paymentAmount);
-//
-//    logger.info("Payment Sent: {}", sendMoneyResult);
-//    return sendMoneyResult;
-//  }
+  private PaymentReceipt sendMoney(
+    final StreamPayerNode fromNode, final StreamPayerNode toNode, final BigDecimal paymentAmount
+  ) {
+    Objects.requireNonNull(fromNode);
+    Objects.requireNonNull(toNode);
+    Objects.requireNonNull(paymentAmount);
+
+    final AccountDetails sourceAccountDetails = AccountDetails.builder()
+      .interledgerAddress(fromNode.senderAddress())
+      .denomination(Denomination.builder()
+        .assetScale(fromNode.denomination().assetScale())
+        .assetCode(fromNode.denomination().assetCode())
+        .build())
+      .build();
+
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(sourceAccountDetails)
+      .destinationPaymentPointer(
+        PaymentPointer.of("$example.com/" + toNode.link().getLinkId()) // <-- toNode is the receiver
+      )
+      .amountToSend(paymentAmount)
+      .expectedReceiverDenomination(toNode.denomination()) // <-- toNode is the receiver
+      //.slippage(Slippage.of(Percentage.FIFTY_PERCENT))
+      .build();
+
+    // PAY
+    return fromNode.streamPayer().pay(paymentOptions).join();
+  }
 
   /**
    * Initialize the STREAM network with default Simulated Path Conditions on each payment path.
@@ -578,11 +775,101 @@ public class SenderReceiverWithStreamPayerTest {
   }
 
   private StreamPayerNode initLeftNode() {
-    return initNode(simulatedIlpNetwork.getLeftToRightLink(), LEFT_SENDER_ADDRESS, LEFT_RECEIVER_ADDRESS);
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    final AesGcmStreamSharedSecretCrypto streamSharedSecretCrypto = new AesGcmStreamSharedSecretCrypto();
+
+    // Can represent the streamReceiver for either node (for purposes of setting up this left node).
+    final StreamReceiver streamReceiver = new StatelessStreamReceiver(
+      () -> serverSecret,
+      new SpspStreamConnectionGenerator(),
+      streamSharedSecretCrypto,
+      StreamCodecContextFactory.oer()
+    );
+
+    // The client is used by the left node, simulating a connection to the right node.
+    final StreamConnectionDetails connectionDetailsForRightNode = streamReceiver.setupStream(RIGHT_RECEIVER_ADDRESS);
+    final SpspClient mockSpspClient = new SpspClient() {
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+        throws InvalidReceiverClientException {
+        return connectionDetailsForRightNode;
+      }
+
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl) throws InvalidReceiverClientException {
+        return connectionDetailsForRightNode;
+      }
+    };
+
+    final Link<?> ilpLink = simulatedIlpNetwork.getLeftToRightLink();
+    final StreamPayer streamPayer = new StreamPayer.Default(
+      new StreamPacketEncryptionService(
+        StreamCodecContextFactory.oer(),
+        streamSharedSecretCrypto
+      ),
+      ilpLink,
+      mockExchangeRateProvider(),
+      mockSpspClient
+    );
+
+    return StreamPayerNode.builder()
+      .serverSecret(serverSecret)
+      .senderAddress(LEFT_SENDER_ADDRESS)
+      .receiverAddress(LEFT_RECEIVER_ADDRESS)
+      .streamPayer(streamPayer)
+      .streamReceiver(streamReceiver)
+      .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
+      .link(ilpLink)
+      .build();
   }
 
   private StreamPayerNode initRightNode() {
-    return initNode(simulatedIlpNetwork.getRightToLeftLink(), RIGHT_SENDER_ADDRESS, RIGHT_RECEIVER_ADDRESS);
+    final byte[] serverSecret = BaseEncoding.base16().decode(SHARED_SECRET_HEX);
+    final AesGcmStreamSharedSecretCrypto streamSharedSecretCrypto = new AesGcmStreamSharedSecretCrypto();
+
+    // Can represent the streamReceiver for either node (for purposes of setting up this right node).
+    final StreamReceiver streamReceiver = new StatelessStreamReceiver(
+      () -> serverSecret,
+      new SpspStreamConnectionGenerator(),
+      streamSharedSecretCrypto,
+      StreamCodecContextFactory.oer()
+    );
+
+    // The client is used by the right node, simulating a connection to the left node.
+    final StreamConnectionDetails connectionDetailsForLeftNode = streamReceiver.setupStream(LEFT_RECEIVER_ADDRESS);
+    final SpspClient mockSpspClient = new SpspClient() {
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(PaymentPointer paymentPointer)
+        throws InvalidReceiverClientException {
+        return connectionDetailsForLeftNode;
+      }
+
+      @Override
+      public StreamConnectionDetails getStreamConnectionDetails(HttpUrl spspUrl) throws InvalidReceiverClientException {
+        return connectionDetailsForLeftNode;
+      }
+    };
+
+    final Link<?> ilpLink = simulatedIlpNetwork.getRightToLeftLink();
+    final StreamPayer streamPayer = new StreamPayer.Default(
+      new StreamPacketEncryptionService(
+        StreamCodecContextFactory.oer(),
+        streamSharedSecretCrypto
+      ),
+      ilpLink,
+      mockExchangeRateProvider(),
+      mockSpspClient
+    );
+
+    return StreamPayerNode.builder()
+      .serverSecret(serverSecret)
+      .senderAddress(RIGHT_SENDER_ADDRESS)
+      .receiverAddress(RIGHT_RECEIVER_ADDRESS)
+      .streamPayer(streamPayer)
+      .streamReceiver(streamReceiver)
+      .denomination(Denomination.builder().assetCode("XRP").assetScale((short) 6).build())
+      .link(ilpLink)
+      .build();
   }
 
   private <T> List<CompletableFuture<T>> runInParallel(int parallelism, int runCount, Callable<T> task) {
@@ -626,6 +913,11 @@ public class SenderReceiverWithStreamPayerTest {
     }
 
     return exchangeRateProvider;
+  }
+
+  private static <T> List<T> awaitResults(List<CompletableFuture<T>> futures) {
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
   }
 
   /**

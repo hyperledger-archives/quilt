@@ -15,6 +15,7 @@ public class PaymentSharedStateTracker {
   private final MaxPacketAmountTracker maxPacketAmountTracker;
   private final AmountTracker amountTracker;
   private final PacingTracker pacingTracker;
+  private final StatisticsTracker statisticsTracker;
 
   /**
    * Required-args constructor.
@@ -30,29 +31,34 @@ public class PaymentSharedStateTracker {
     );
     this.amountTracker = new AmountTracker(exchangeRateTracker);
     this.pacingTracker = new PacingTracker();
+    this.statisticsTracker = new StatisticsTracker();
   }
 
   public StreamConnection getStreamConnection() {
-    return streamConnection;
+    return this.streamConnection;
   }
 
   public ExchangeRateTracker getExchangeRateTracker() {
-    return exchangeRateTracker;
+    return this.exchangeRateTracker;
   }
 
   public AssetDetailsTracker getAssetDetailsTracker() {
-    return assetDetailsTracker;
+    return this.assetDetailsTracker;
   }
 
   public MaxPacketAmountTracker getMaxPacketAmountTracker() {
-    return maxPacketAmountTracker;
+    return this.maxPacketAmountTracker;
   }
 
   public AmountTracker getAmountTracker() {
-    return amountTracker;
+    return this.amountTracker;
   }
 
   public PacingTracker getPacingTracker() {
-    return pacingTracker;
+    return this.pacingTracker;
+  }
+
+  public StatisticsTracker getStatisticsTracker() {
+    return this.statisticsTracker;
   }
 }

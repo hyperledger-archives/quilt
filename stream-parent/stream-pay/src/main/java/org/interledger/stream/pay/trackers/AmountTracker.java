@@ -419,19 +419,23 @@ public class AmountTracker {
    *
    * <p>In other words, in order for the rates to be acceptable, one of the following must occur:</p>
    *
+   * <pre>
    * <ul>
    *   <li>Probed rate >= minimum rate and least one of the rates is an integer, OR</li>
    *   <li>Probed rate > minimum rate and there exists an integer value between the rates.</li>
    * </ul>
+   * </pre>
    *
    * <p>Some examples that should validate via this method:</p>
    *
+   * <pre>
    * <ul>
    *   <li>Probed rate is 2 and minimum is 1.9 => (valid)</li>
    *   <li>Probed rate is 2.1 and minimum is 2 => (valid)</li>
    *   <li>Probed rate is 2.1 and minimum is 1.9 => (valid)</li>
    *   <li>Probed rate is 1.5 and minimum is 1.1 => (rounding errors are possible, throw exception)</li>
    * </ul>
+   * </pre>
    *
    * <p>Note that this type of computation likely excludes certain payments where the probed and min FX rates are
    * equal, and where the sender has specified that 0% slippage. For example, consider the case where probed

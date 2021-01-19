@@ -1,6 +1,8 @@
 package org.interledger.stream.pay.filters;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
+import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasErrorCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -17,6 +19,7 @@ import org.interledger.stream.frames.StreamCloseFrame;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.frames.StreamMoneyFrame;
 import org.interledger.stream.frames.StreamMoneyMaxFrame;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -71,7 +74,7 @@ public class AmountFilterTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     // All Happy-path settings.
     this.initializeHappyPath();
@@ -95,15 +98,17 @@ public class AmountFilterTest {
 
   @Test
   public void nextStateWithProtocolViolation() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.ReceiverProtocolViolation));
+    expectedException.expect(hasErrorCode(ErrorCodes.ProtocolViolation));
+
     when(amountTrackerMock.encounteredProtocolViolation()).thenReturn(true);
 
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create().setSourceAmount(
       UL_TEN
     );
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.ReceiverProtocolViolation);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.ProtocolViolation);
-    assertThat(request.requestFrames().stream()).isEmpty();
+
+    amountFilter.nextState(request);
   }
 
   @Test
@@ -115,12 +120,18 @@ public class AmountFilterTest {
     );
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
   @Test
   public void nextStateWithIncompatibleReceiveMax() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.IncompatibleReceiveMax));
+    expectedException.expect(hasErrorCode(ErrorCodes.ApplicationError));
+    expectedException.expectMessage(
+      "Ending payment: minimum delivery amount is too much for recipient. minDeliveryAmount=1 remoteReceiveMax=Optional[18446744073709551615]"
+    );
+
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
       @Override
       protected boolean checkForIncompatibleReceiveMax(AmountTracker amountTracker, PaymentTargetConditions target) {
@@ -131,7 +142,6 @@ public class AmountFilterTest {
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.IncompatibleReceiveMax);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.ApplicationError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
@@ -147,7 +157,6 @@ public class AmountFilterTest {
     ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.End);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
@@ -169,7 +178,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.End);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
@@ -186,7 +194,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()
       .filter(frame -> frame instanceof StreamMoneyFrame)
       .findAny()).isPresent();
@@ -205,7 +212,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Wait);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
@@ -222,7 +228,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()
       .filter(frame -> frame instanceof StreamMoneyFrame)
       .findAny()).isPresent();
@@ -251,7 +256,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.End);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
@@ -285,12 +289,16 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.requestFrames().stream()).isEmpty();
   }
 
   @Test
   public void nextStateWithFixedDeliveryAndInvalidDeliveryLimit() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
+    expectedException.expect(hasErrorCode(ErrorCodes.NoError));
+    expectedException.expectMessage("Payment cannot complete: exchange rate dropped to 0");
+
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
       @Override
       protected boolean checkIfFixedDeliveryPaymentIsComplete(
@@ -322,10 +330,7 @@ public class AmountFilterTest {
     ));
 
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-    assertThat(request.requestFrames().stream()).isEmpty();
+    amountFilter.nextState(request);
   }
 
   @Test
@@ -369,7 +374,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.valueOf(1L));
     assertThat(request.requestFrames().stream()
       .filter(frame -> frame instanceof StreamMoneyFrame)
@@ -378,6 +382,11 @@ public class AmountFilterTest {
 
   @Test
   public void nextStateWithFixedDeliveryAndUpdatedSourceAmountWhenDeliveryLimitIsEqual() {
+    when(exchangeRateTrackerMock.estimateDestinationAmount(any())).thenReturn(DeliveredExchangeRateBound.builder()
+      .lowEndEstimate(UnsignedLong.valueOf(10L))
+      .highEndEstimate(UnsignedLong.valueOf(11L))
+      .build());
+
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
 
       @Override
@@ -419,7 +428,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.sourceAmount()).isEqualTo(UL_TEN);
     assertThat(request.requestFrames().stream()
       .filter(frame -> frame instanceof StreamMoneyFrame)
@@ -467,7 +475,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.valueOf(1L));
     assertThat(request.requestFrames().stream()
       .filter(frame -> frame instanceof StreamMoneyFrame)
@@ -476,6 +483,11 @@ public class AmountFilterTest {
 
   @Test
   public void nextStateWithDeliveryDeficitWillNotCompletePayment() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
+    expectedException.expect(hasErrorCode(ErrorCodes.NoError));
+    expectedException.expectMessage("Payment cannot complete because exchange rate dropped below minimum.");
+
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
 
       @Override
@@ -518,14 +530,16 @@ public class AmountFilterTest {
     };
 
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-    assertThat(request.requestFrames().stream()).isEmpty();
+    amountFilter.nextState(request);
   }
 
   @Test
   public void nextStateWithDeliveryDeficitShortfallLessThanDeficit() {
+    expectedException.expect(StreamPayerException.class);
+    expectedException.expect(hasSendState(SendState.InsufficientExchangeRate));
+    expectedException.expect(hasErrorCode(ErrorCodes.NoError));
+    expectedException.expectMessage("Payment cannot complete because exchange rate dropped below minimum.");
+
     when(amountTrackerMock.getAvailableDeliveryShortfall()).thenReturn(UnsignedLong.ZERO);
     this.amountFilter = new AmountFilter(paymentSharedStateTrackerMock) {
 
@@ -569,10 +583,7 @@ public class AmountFilterTest {
     };
 
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
-    SendState result = amountFilter.nextState(request);
-    assertThat(result).isEqualTo(SendState.InsufficientExchangeRate);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
-    assertThat(request.requestFrames().stream()).isEmpty();
+    amountFilter.nextState(request);
   }
 
   @Test
@@ -627,7 +638,6 @@ public class AmountFilterTest {
     final ModifiableStreamPacketRequest request = ModifiableStreamPacketRequest.create();
     SendState result = amountFilter.nextState(request);
     assertThat(result).isEqualTo(SendState.Ready);
-    assertThat(request.streamErrorCodeForConnectionClose()).isEqualTo(ErrorCodes.NoError);
     assertThat(request.sourceAmountIsSet()).isTrue();
     assertThat(request.sourceAmount()).isEqualTo(UnsignedLong.ONE);
     assertThat(request.minDestinationAmount()).isEqualTo(UnsignedLong.MAX_VALUE);

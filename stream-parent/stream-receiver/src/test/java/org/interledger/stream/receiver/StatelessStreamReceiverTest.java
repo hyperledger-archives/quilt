@@ -49,11 +49,10 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-;
-
 /**
  * Unit tests for {@link StatelessStreamReceiver}.
  */
+@SuppressWarnings("deprecation")
 public class StatelessStreamReceiverTest {
 
   private static final InterledgerAddress CLIENT_ADDRESS = InterledgerAddress.of("example.destination");
@@ -78,7 +77,7 @@ public class StatelessStreamReceiverTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     this.streamConnectionGenerator = new SpspStreamConnectionGenerator();
     this.streamEncryptionService = new JavaxStreamEncryptionService();
@@ -116,6 +115,7 @@ public class StatelessStreamReceiverTest {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test(expected = NullPointerException.class)
   public void generateConnectionDetailsWithNullStreamEncryptionService() {
     StreamEncryptionService nullStreamEncryptionService = null;
@@ -129,6 +129,7 @@ public class StatelessStreamReceiverTest {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test(expected = NullPointerException.class)
   public void generateConnectionDetailsWithNullStreamSharedSecretCrypto() {
     StreamSharedSecretCrypto nullStreamSharedSecretCrypto = null;
@@ -258,6 +259,7 @@ public class StatelessStreamReceiverTest {
     );
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test
   public void receiveMoneyRejectsOnDecryption() throws Exception {
     this.streamReceiver = new StatelessStreamReceiver(
@@ -353,7 +355,7 @@ public class StatelessStreamReceiverTest {
       rejectPacket -> assertThat(rejectPacket).extracting("code", "message", "triggeredBy")
         .containsExactly(
           InterledgerErrorCode.F99_APPLICATION_ERROR,
-          "STREAM packet not fulfillable (prepare amount < stream packet amount)",
+          "Packet not fulfillable",
           Optional.of(CLIENT_ADDRESS)
         ));
   }
@@ -370,7 +372,6 @@ public class StatelessStreamReceiverTest {
       .destination(connectionDetails.destinationAddress())
       .amount(UnsignedLong.valueOf(100L))
       .expiresAt(Instant.EPOCH)
-      .data(new byte[0])
       .executionCondition(InterledgerCondition.of(new byte[32]))
       .build();
 

@@ -115,8 +115,6 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     }
   }
 
-  // TODO: Unit test.
-
   /**
    * Map this packet to another class using one of the two supplied functions, depending on the actual type of this
    * response packet. If this packet is a fulfill packet, then {@code fulfillMapper} will be called. If this packet is a

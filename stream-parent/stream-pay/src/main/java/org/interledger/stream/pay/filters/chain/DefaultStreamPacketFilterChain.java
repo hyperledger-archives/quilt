@@ -87,7 +87,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
 
-  protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStreamPacketFilterChain.class);
 
   private final List<StreamPacketFilter> streamPacketFilters;
 
@@ -135,21 +135,36 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
     Objects.requireNonNull(streamPacketRequest);
     try {
       for (StreamPacketFilter streamPacketFilter : streamPacketFilters) {
-        final SendState nextState = streamPacketFilter.nextState(streamPacketRequest);
+        try {
+          final SendState nextState = streamPacketFilter.nextState(streamPacketRequest);
 
-        // Immediately end the payment and wait for all requests to complete
-        if (nextState != SendState.Ready) { // <-- Wait should abort the nextState checks.
-          return nextState;
+          // Immediately end the payment and wait for all requests to complete
+          if (nextState != SendState.Ready) { // <-- Wait should abort the nextState checks.
+            return nextState;
+          }
+
+          // <-- Just check the next state via the for-loop.
+        } catch (StreamPayerException e) {
+          // If a StreamPayerException is thrown, it's acceptable to throw it up because we want the caller to know
+          // about both the SendState, in addition to the error information. This behavior is equivalent to merely
+          // returning the sendstate itself and swallowing the exception because StreamPayerException's may not be
+          // constructed with non-payment errors, so the two behaviors are equivalent in terms of something like the
+          // run-loop.
+          //LOGGER.error(e.getMessage(), e);
+          //return e.getSendState();
+          throw e;
         }
-
-        // <-- Just check the next state via the for-loop.
       }
 
       return SendState.Ready;
     } catch (StreamPayerException e) {
+      // See note above for why this is thrown instead of swallowed.
       throw e;
     } catch (Exception e) {
-      throw new StreamPayerException(e, SendState.End);
+      // We don't expect any errors to make it to here, but if they do, we merely log the exception, and then instruct
+      // the RunLoop (or any process calling this filter-chain) to stop processing gracefully.
+      LOGGER.error(e.getMessage(), e);
+      return SendState.End;
     }
   }
 
@@ -188,7 +203,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
           if (timeoutDuration.isNegative() || timeoutDuration.isZero()) {
             // `timeoutDuration` can be negative, so need to perform this check here to make sure we don't send a
             // negative or 0 timeout into the completable future.
-            logger.error("Invalid timeout. timeoutDuration={}", timeoutDuration);
+            LOGGER.error("Invalid timeout. timeoutDuration={}", timeoutDuration);
             return StreamPacketReply.builder()
               .interledgerPreparePacket(preparePacket)
               .build();
@@ -223,7 +238,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
                         new ByteArrayInputStream(interledgerRejectPacket.getData()))
                     );
                   } catch (IOException e) {
-                    logger.warn("Unable to decode AmountTooLargeErrorData", e);
+                    LOGGER.warn("Unable to decode AmountTooLargeErrorData", e);
                   }
                   return StreamPacketReply.builder()
                     .interledgerPreparePacket(preparePacket)
@@ -243,7 +258,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
               }
             );
           } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            logger.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
             return StreamPacketReply.builder()
               .exception(e)
               .interledgerPreparePacket(preparePacket)
@@ -253,8 +268,10 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
       }
     } catch (Exception e) {
       // Handler of last resort.
-      logger.error(e.getMessage(), e);
-      return StreamPacketReply.builder().exception(e).build();
+      LOGGER.error(e.getMessage(), e);
+      return StreamPacketReply.builder()
+        .exception(e)
+        .build();
     }
   }
 
@@ -339,7 +356,7 @@ public class DefaultStreamPacketFilterChain implements StreamPacketFilterChain {
   //          )
   //      );
   //    } catch (Exception e) {
-  //      logger.warn("Could not publish event", e);
+  //      LOGGER.warn("Could not publish event", e);
   //    }
   //  }
 

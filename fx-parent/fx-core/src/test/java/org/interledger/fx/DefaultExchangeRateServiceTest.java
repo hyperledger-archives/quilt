@@ -17,7 +17,7 @@ public class DefaultExchangeRateServiceTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     exchangeRateService = new DefaultExchangeRateService(exchangeRateProvider);
   }
 

@@ -47,7 +47,7 @@ public class CryptoCompareRateProviderTest {
 
   @Before
   public void setUp() throws IOException {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
 
     // Most tests use a real cache unless a test decides to explicitly mock the cache for a specific purposes to
     // isolate the loading function out of the test.

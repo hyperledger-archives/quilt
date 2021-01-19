@@ -2,6 +2,8 @@ package org.interledger.stream.receiver.testutils;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
+import org.interledger.codecs.stream.StreamCodecContextFactory;
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
@@ -16,6 +18,8 @@ import org.interledger.link.LinkType;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -68,7 +72,7 @@ public class SimulatedIlpv4Network {
    * @param rightToLeftLink A {@link SimulatedPathConditions} that governs the simulated path from right to left.
    */
   public SimulatedIlpv4Network(
-      final Link<?> leftToRightLink, final Link<?> rightToLeftLink
+    final Link<?> leftToRightLink, final Link<?> rightToLeftLink
   ) {
     this.leftToRightNetworkConditions = SimulatedPathConditions.builder().build();
     this.rightToLeftNetworkConditions = SimulatedPathConditions.builder().build();
@@ -88,15 +92,15 @@ public class SimulatedIlpv4Network {
    *                                     left.
    */
   public SimulatedIlpv4Network(
-      final SimulatedPathConditions leftToRightNetworkConditions,
-      final SimulatedPathConditions rightToLeftNetworkConditions
+    final SimulatedPathConditions leftToRightNetworkConditions,
+    final SimulatedPathConditions rightToLeftNetworkConditions
   ) {
     this.leftToRightNetworkConditions = Objects.requireNonNull(leftToRightNetworkConditions);
     this.rightToLeftNetworkConditions = Objects.requireNonNull(rightToLeftNetworkConditions);
 
     this.leftToRightLink = new AbstractLink<LinkSettings>(
-        () -> Link.SELF, LinkSettings.builder().linkType(
-        LinkType.of("leftLink")).build()
+      () -> Link.SELF, LinkSettings.builder().linkType(
+      LinkType.of("leftLink")).build()
     ) {
       @Override
       public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
@@ -106,8 +110,8 @@ public class SimulatedIlpv4Network {
     leftToRightLink.setLinkId(LinkId.of("left"));
 
     this.rightToLeftLink = new AbstractLink<LinkSettings>(
-        () -> Link.SELF,
-        LinkSettings.builder().linkType(LinkType.of("rightLink")).build()
+      () -> Link.SELF,
+      LinkSettings.builder().linkType(LinkType.of("rightLink")).build()
     ) {
       @Override
       public InterledgerResponsePacket sendPacket(final InterledgerPreparePacket preparePacket) {
@@ -123,27 +127,39 @@ public class SimulatedIlpv4Network {
     // Depending on simulated network conditions, reject packets...
     if (rejectPacket(leftToRightNetworkConditions.packetRejectionPercentage())) {
       return InterledgerRejectPacket.builder()
-          .message("Intermediate Connector timed out")
-          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.left-to-right"))
-          .code(InterledgerErrorCode.T03_CONNECTOR_BUSY)
-          .build();
+        .message("Intermediate Connector timed out")
+        .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.left-to-right"))
+        .code(InterledgerErrorCode.T03_CONNECTOR_BUSY)
+        .build();
     } else if (maxPacketAmountExceeded(leftToRightNetworkConditions, preparePacket)) {
+      final AmountTooLargeErrorData amountTooLargeErrorData = AmountTooLargeErrorData.builder()
+        .maximumAmount(leftToRightNetworkConditions.maxPacketAmount().get())
+        .receivedAmount(preparePacket.getAmount())
+        .build();
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        StreamCodecContextFactory.oer().write(amountTooLargeErrorData, baos);
+      } catch (IOException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+
       return InterledgerRejectPacket.builder()
-          .message("Intermediate Connector does not allow packets greater than "
-              + leftToRightNetworkConditions.maxPacketAmount().get()
-          )
-          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.left-to-right"))
-          .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
-          .build();
+        .message("Intermediate Connector does not allow packets greater than "
+          + leftToRightNetworkConditions.maxPacketAmount().get()
+        )
+        .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.left-to-right"))
+        .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
+        .data(baos.toByteArray())
+        .build();
     } else {
       final InterledgerPreparePacket adjustedPreparePacket = this.applyExchangeRate(
-          preparePacket,
-          this.leftToRightNetworkConditions.currentExchangeRateSupplier().get()
+        preparePacket,
+        this.leftToRightNetworkConditions.currentExchangeRateSupplier().get()
       );
 
       return this.rightToLeftLink.getLinkHandler()
-          .map(linkHandler -> linkHandler.handleIncomingPacket(adjustedPreparePacket))
-          .orElseThrow(() -> new RuntimeException("No LinkHandler registered for leftToRightLink"));
+        .map(linkHandler -> linkHandler.handleIncomingPacket(adjustedPreparePacket))
+        .orElseThrow(() -> new RuntimeException("No LinkHandler registered for leftToRightLink"));
     }
   }
 
@@ -153,38 +169,51 @@ public class SimulatedIlpv4Network {
     // Depending on simulated network conditions, reject packets...
     if (rejectPacket(rightToLeftNetworkConditions.packetRejectionPercentage())) {
       return InterledgerRejectPacket.builder()
-          .message("Intermediate Connector timed out")
-          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.right-to-left"))
-          .code(InterledgerErrorCode.T03_CONNECTOR_BUSY)
-          .build();
+        .message("Intermediate Connector timed out")
+        .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.right-to-left"))
+        .code(InterledgerErrorCode.T03_CONNECTOR_BUSY)
+        .build();
     } else if (maxPacketAmountExceeded(rightToLeftNetworkConditions, preparePacket)) {
+
+      final AmountTooLargeErrorData amountTooLargeErrorData = AmountTooLargeErrorData.builder()
+        .maximumAmount(rightToLeftNetworkConditions.maxPacketAmount().get())
+        .receivedAmount(preparePacket.getAmount())
+        .build();
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try {
+        StreamCodecContextFactory.oer().write(amountTooLargeErrorData, baos);
+      } catch (IOException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+
       return InterledgerRejectPacket.builder()
-          .message("Intermediate Connector does not allow packets greater than "
-              + rightToLeftNetworkConditions.maxPacketAmount().get()
-          )
-          .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.ight-to-left"))
-          .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
-          .build();
+        .message("Intermediate Connector does not allow packets greater than "
+          + rightToLeftNetworkConditions.maxPacketAmount().get()
+        )
+        .triggeredBy(InterledgerAddress.of("example.simulated.ilpv4.network.ight-to-left"))
+        .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
+        .data(baos.toByteArray())
+        .build();
     } else {
       final InterledgerPreparePacket adjustedPreparePacket = this.applyExchangeRate(
-          preparePacket,
-          this.rightToLeftNetworkConditions.currentExchangeRateSupplier().get()
+        preparePacket,
+        this.rightToLeftNetworkConditions.currentExchangeRateSupplier().get()
       );
 
       return this.leftToRightLink.getLinkHandler()
-          .map(linkHandler -> linkHandler.handleIncomingPacket(adjustedPreparePacket))
-          .orElseThrow(() -> new RuntimeException("No LinkHandler registered for leftToRightLink"));
+        .map(linkHandler -> linkHandler.handleIncomingPacket(adjustedPreparePacket))
+        .orElseThrow(() -> new RuntimeException("No LinkHandler registered for leftToRightLink"));
     }
   }
 
   private InterledgerPreparePacket applyExchangeRate(
-      final InterledgerPreparePacket preparePacket, final BigDecimal multiplier
+    final InterledgerPreparePacket preparePacket, final BigDecimal multiplier
   ) {
     Objects.requireNonNull(preparePacket);
     Objects.requireNonNull(multiplier);
 
     BigInteger newAmount = multiplier.multiply(new BigDecimal(preparePacket.getAmount().bigIntegerValue()))
-        .toBigInteger();
+      .toBigInteger();
     return InterledgerPreparePacket.builder().from(preparePacket).amount(UnsignedLong.valueOf(newAmount)).build();
   }
 
@@ -228,7 +257,7 @@ public class SimulatedIlpv4Network {
    * @return
    */
   private boolean maxPacketAmountExceeded(
-      final SimulatedPathConditions simulatedPathConditions, final InterledgerPreparePacket preparePacket
+    final SimulatedPathConditions simulatedPathConditions, final InterledgerPreparePacket preparePacket
   ) {
     Objects.requireNonNull(simulatedPathConditions);
     Objects.requireNonNull(preparePacket);

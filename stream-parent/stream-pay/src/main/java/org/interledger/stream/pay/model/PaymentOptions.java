@@ -1,5 +1,6 @@
 package org.interledger.stream.pay.model;
 
+import org.interledger.fx.Denomination;
 import org.interledger.fx.Slippage;
 import org.interledger.spsp.PaymentPointer;
 import org.interledger.stream.model.AccountDetails;
@@ -9,6 +10,7 @@ import org.immutables.value.Value.Immutable;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.Optional;
 
 @Immutable
 public interface PaymentOptions {
@@ -38,6 +40,13 @@ public interface PaymentOptions {
   BigDecimal amountToSend();
 
   PaymentPointer destinationPaymentPointer();
+
+  /**
+   * The {@link Denomination} that we expect the receiver to have and use as part of this payment.
+   *
+   * @return An optionally-present {@link Denomination}.
+   */
+  Optional<Denomination> expectedReceiverDenomination();
 
   @Default
   default Slippage slippage() {

@@ -2,7 +2,7 @@ package org.interledger.stream;
 
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
-import org.interledger.core.SharedSecret;;
+import org.interledger.core.SharedSecret;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;

@@ -1,14 +1,11 @@
 package org.interledger.stream.pay.model;
 
 import org.interledger.core.InterledgerPreparePacket;
-import org.interledger.stream.frames.ErrorCode;
-import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.frames.StreamFrame;
 import org.interledger.stream.pay.model.ImmutableStreamPacketRequest.Builder;
 
 import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value.Default;
-import org.immutables.value.Value.Derived;
 import org.immutables.value.Value.Immutable;
 import org.immutables.value.Value.Modifiable;
 
@@ -80,23 +77,13 @@ public interface StreamPacketRequest {
     return SendState.Ready;
   }
 
-  /**
-   * Indicates whether or not the Stream Connection should be closed.
-   *
-   * @return
-   */
-  @Derived
-  default boolean shouldConnectionCloseBeSent() {
-    return streamErrorCodeForConnectionClose() != ErrorCodes.NoError;
-  }
-
-  /**
-   * The {@link ErrorCode} to send when closing the Stream.
-   *
-   * @return A {@link ErrorCode}.
-   */
-  @Default
-  default ErrorCode streamErrorCodeForConnectionClose() {
-    return ErrorCodes.NoError;
-  }
+//  /**
+//   * Indicates whether or not the Stream Connection should be closed.
+//   *
+//   * @return
+//   */
+//  @Derived
+//  default boolean shouldConnectionCloseBeSent() {
+//    return streamErrorCodeForConnectionClose() != ErrorCodes.NoError;
+//  }
 }

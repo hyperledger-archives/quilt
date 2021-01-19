@@ -29,6 +29,7 @@ import com.google.common.io.BaseEncoding;
 import com.google.common.primitives.UnsignedLong;
 import org.assertj.core.data.Offset;
 import org.immutables.value.Value.Derived;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -55,11 +56,11 @@ public class SenderReceiverWithSimpleStreamSenderTest {
 
   private static final String SHARED_SECRET_HEX = "9DCE76B1A20EC8D3DB05AD579F3293402743767692F935A0BF06B30D2728439D";
 
-  private static final InterledgerAddress LEFT_ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.left");
+  private static final InterledgerAddress LEFT_ILP_ADDRESS = InterledgerAddress.of("test.quilt-dev.left");
   private static final InterledgerAddress LEFT_SENDER_ADDRESS = LEFT_ILP_ADDRESS.with("left_stream_sender");
   private static final InterledgerAddress LEFT_RECEIVER_ADDRESS = LEFT_ILP_ADDRESS.with("left_stream_receiver");
 
-  private static final InterledgerAddress RIGHT_ILP_ADDRESS = InterledgerAddress.of("test.xpring-dev.right");
+  private static final InterledgerAddress RIGHT_ILP_ADDRESS = InterledgerAddress.of("test.quilt-dev.right");
   private static final InterledgerAddress RIGHT_SENDER_ADDRESS = RIGHT_ILP_ADDRESS.with("right_stream_sender");
   private static final InterledgerAddress RIGHT_RECEIVER_ADDRESS = RIGHT_ILP_ADDRESS.with("right_stream_receiver");
 
@@ -69,6 +70,8 @@ public class SenderReceiverWithSimpleStreamSenderTest {
   private StreamNode rightStreamNode;
 
   private SimulatedIlpv4Network simulatedIlpNetwork;
+
+  private Level previousLogValue;
 
   private static StreamNode initNode(
     Link<?> link,
@@ -113,12 +116,23 @@ public class SenderReceiverWithSimpleStreamSenderTest {
     return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
   }
 
+  /**
+   * Turn-down the logger because it's causing issues with CircleCI.
+   */
   @Before
-  public void setup() {
+  public void setUp() {
     final ch.qos.logback.classic.Logger logger
       = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    this.previousLogValue = logger.getLevel();
     logger.setLevel(Level.INFO);
     this.initIlpNetworkForStream();
+  }
+
+  @After
+  public void tearDown() {
+    final ch.qos.logback.classic.Logger logger
+      = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    logger.setLevel(previousLogValue);
   }
 
   @Test

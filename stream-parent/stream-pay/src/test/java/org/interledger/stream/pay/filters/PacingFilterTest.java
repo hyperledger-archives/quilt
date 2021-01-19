@@ -46,7 +46,7 @@ public class PacingFilterTest {
 
   @Before
   public void setUp() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
     this.pacingFilter = new PacingFilter(pacingTrackerMock);
   }
 

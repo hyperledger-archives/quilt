@@ -1,6 +1,8 @@
 package org.interledger.stream.pay.filters;
 
 import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.stream.frames.ErrorCodes;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
@@ -10,8 +12,6 @@ import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.primitives.UnsignedInteger;
 import com.google.common.primitives.UnsignedLong;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -20,7 +20,8 @@ import java.util.Objects;
  */
 public class SequenceFilter implements StreamPacketFilter {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(SequenceFilter.class);
+  // Static because this filter will be constructed a lot.
+  // private static final Logger LOGGER = LoggerFactory.getLogger(SequenceFilter.class);
 
   private static final UnsignedLong PACKET_LIMIT = UnsignedLong.valueOf(
     UnsignedInteger.MAX_VALUE.longValue() // <-- 2^32
@@ -49,11 +50,11 @@ public class SequenceFilter implements StreamPacketFilter {
     // https://github.com/interledger/rfcs/blob/master/0029-stream/0029-stream.md
     // #513-maximum-number-of-packets-per-connection
     if (FluentCompareTo.is(nextSequence).greaterThanEqualTo(PACKET_LIMIT)) {
-      LOGGER.error(
-        "Ending payment (cannot exceed max safe sequence number). streamConnection={}",
+      final String errorMessage = String.format(
+        "Ending payment (cannot exceed max safe sequence number). streamConnection=%s",
         paymentSharedStateTracker.getStreamConnection()
       );
-      return SendState.ExceededMaxSequence;
+      throw new StreamPayerException(errorMessage, SendState.ExceededMaxSequence, ErrorCodes.ProtocolViolation);
     }
 
     return SendState.Ready;
