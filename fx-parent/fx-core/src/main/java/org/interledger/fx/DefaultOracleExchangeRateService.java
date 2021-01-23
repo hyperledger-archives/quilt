@@ -3,7 +3,6 @@ package org.interledger.fx;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Objects;
-
 import javax.money.convert.ExchangeRate;
 import javax.money.convert.ExchangeRateProvider;
 

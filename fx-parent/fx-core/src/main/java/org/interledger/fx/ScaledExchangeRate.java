@@ -12,12 +12,9 @@ import org.immutables.value.Value.Immutable;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-import javax.money.convert.ExchangeRate;
-
 /**
- * A wrapper for a scaled exchange rate that accounts for slippage.
- * <p>
- * For more information about the meaning of `scale`, see {@link Denomination#assetScale}.
+ * A wrapper for a scaled exchange rate that accounts for slippage. For more information about the meaning of `scale`,
+ * see {@link Denomination#assetScale}.
  */
 @Immutable
 public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
@@ -27,9 +24,9 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
   }
 
   /**
-   * The value of this exchange rate (corresponds to {@link ExchangeRate#getFactor()}).
+   * The value of this exchange rate.
    *
-   * @return
+   * @return A {@link Ratio} representing the value of this scaled exchange rate.
    */
   Ratio value();
 
@@ -37,7 +34,7 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
    * The scale used to compute this scaled exchange rate. For example, if a scaled exchange rate has a value of 100.0,
    * and a scale of 2, then the actual rate is 1.0.
    *
-   * @return
+   * @return A short.
    */
   short originalInputScale();
 
@@ -55,7 +52,7 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
   /**
    * The smallest value of this scaled rate when allowing for slippage.
    *
-   * @return
+   * @return A {@link Ratio} representing the lower-bound of this scaled FX rate.
    */
   default Ratio lowerBound() {
     // value * (100% - slippage%) --> 50 * (1.0 - .01)
@@ -65,7 +62,7 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
   /**
    * The largest value of this scaled rate when allowing for slippage.
    *
-   * @return
+   * @return A {@link Ratio} representing the upper-bound of this scaled FX rate.
    */
   default Ratio upperBound() {
     // value * (100% + slippage%) --> 50 * (1.0 + .01)
@@ -78,6 +75,9 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
     return this.value().compareTo(othere.value());
   }
 
+  /**
+   * Preconditions check for immutables.
+   */
   @Value.Check
   default void check() {
     Preconditions.checkState(

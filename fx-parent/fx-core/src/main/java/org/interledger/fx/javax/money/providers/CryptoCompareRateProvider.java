@@ -2,6 +2,8 @@ package org.interledger.fx.javax.money.providers;
 
 import static org.javamoney.moneta.spi.AbstractCurrencyConversion.KEY_SCALE;
 
+import org.interledger.fx.ExchangeRateException;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -9,6 +11,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.net.HttpHeaders;
 import com.google.common.net.MediaType;
+import okhttp3.HttpUrl.Builder;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.javamoney.moneta.convert.ExchangeRateBuilder;
+import org.javamoney.moneta.spi.AbstractRateProvider;
+import org.javamoney.moneta.spi.DefaultNumberValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Objects;
@@ -23,16 +35,6 @@ import javax.money.convert.ExchangeRateProvider;
 import javax.money.convert.ProviderContext;
 import javax.money.convert.ProviderContextBuilder;
 import javax.money.convert.RateType;
-import okhttp3.HttpUrl.Builder;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.interledger.fx.ExchangeRateException;
-import org.javamoney.moneta.convert.ExchangeRateBuilder;
-import org.javamoney.moneta.spi.AbstractRateProvider;
-import org.javamoney.moneta.spi.DefaultNumberValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ExchangeRateProvider} that loads FX data from CryptoCompare. This provider loads all available rates,
@@ -40,15 +42,14 @@ import org.slf4j.LoggerFactory;
  *
  * @see "https://min-api.cryptocompare.com/documentation"
  * @see "https://github.com/JavaMoney/javamoney-lib/blob/master/exchange/exchange-rate-frb/src/main/java/org/javamoney/
- * moneta/convert/frb/USFederalReserveRateProvider.java"
+ *   moneta/convert/frb/USFederalReserveRateProvider.java"
  */
 public class CryptoCompareRateProvider extends AbstractRateProvider {
 
   private static final Logger logger = LoggerFactory.getLogger(CryptoCompareRateProvider.class.getName());
 
   private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE
-    = new TypeReference<Map<String, String>>() {
-  };
+    = new TypeReference<Map<String, String>>() {};
 
   /**
    * The HTTP {@code Authorization} header field name.
@@ -66,6 +67,14 @@ public class CryptoCompareRateProvider extends AbstractRateProvider {
   private final OkHttpClient okHttpClient;
   private final Cache<ConversionQuery, ExchangeRate> exchangeRateCache;
 
+  /**
+   * Required-args Constructor.
+   *
+   * @param apiKeySupplier    A {@link Supplier} of type {@link String} for providing an API Key for CryptoCompare.
+   * @param objectMapper      An {@link ObjectMapper}.
+   * @param okHttpClient      An {@link OkHttpClient}/
+   * @param exchangeRateCache An {@link Cache} for exchange rates.
+   */
   public CryptoCompareRateProvider(
     final Supplier<String> apiKeySupplier,
     final ObjectMapper objectMapper,

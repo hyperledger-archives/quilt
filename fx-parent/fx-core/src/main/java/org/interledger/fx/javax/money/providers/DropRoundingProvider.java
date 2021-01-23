@@ -1,6 +1,7 @@
 package org.interledger.fx.javax.money.providers;
 
 import com.google.common.collect.ImmutableSet;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Set;
@@ -27,6 +28,13 @@ public class DropRoundingProvider implements RoundingProviderSpi {
     this.roundingNames = ImmutableSet.of(XrpCurrencyProvider.DROP);
   }
 
+  /**
+   * Get the {@link MonetaryRounding} for this provider.
+   *
+   * @param query A {@link RoundingQuery}.
+   *
+   * @return A {@link MonetaryRounding}.
+   */
   public MonetaryRounding getRounding(RoundingQuery query) {
     final CurrencyUnit currency = query.getCurrency();
     if (currency != null && (XrpCurrencyProvider.XRP.equals(currency.getCurrencyCode()))) {

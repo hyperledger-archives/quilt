@@ -1,7 +1,8 @@
 package org.interledger.fx;
 
-import org.immutables.value.Value.Immutable;
 import org.interledger.fx.ImmutableDenomination.Builder;
+
+import org.immutables.value.Value.Immutable;
 
 /**
  * Defines an asset denomination by providing an asset code and scale.

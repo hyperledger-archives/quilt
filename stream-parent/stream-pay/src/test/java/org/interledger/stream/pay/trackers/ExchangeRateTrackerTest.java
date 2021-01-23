@@ -34,7 +34,7 @@ public class ExchangeRateTrackerTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
-  
+
   @Mock
   private OracleExchangeRateService oracleExchangeRateServiceMock;
 

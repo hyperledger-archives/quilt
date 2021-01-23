@@ -5,7 +5,6 @@ import org.javamoney.moneta.CurrencyUnitBuilder;
 
 import java.util.Collections;
 import java.util.Set;
-
 import javax.money.CurrencyQuery;
 import javax.money.CurrencyUnit;
 import javax.money.spi.CurrencyProviderSpi;
@@ -18,13 +17,17 @@ public class XrpCurrencyProvider implements CurrencyProviderSpi {
   public static final String DROP = "DROP";
   public static final String XRP = "XRP";
 
-  private Set<CurrencyUnit> currencyUnits;
+  private final Set<CurrencyUnit> currencyUnits;
 
+  /**
+   * No-args Constructor.
+   */
   public XrpCurrencyProvider() {
     this.currencyUnits = ImmutableSet.<CurrencyUnit>builder()
       .add(
         CurrencyUnitBuilder.of(XRP, "XrpCurrencyProvider")
-          .setDefaultFractionDigits(3) // XRP is generally modelled in the thousandths (but rounding is to the millionth)
+          // XRP is generally modelled in the thousandths (but rounding is to the millionth)
+          .setDefaultFractionDigits(3)
           .build()
       )
       .build();

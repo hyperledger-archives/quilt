@@ -6,7 +6,6 @@ import org.javamoney.moneta.Money;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
 import javax.money.CurrencyUnit;
 import javax.money.MonetaryAmount;
 

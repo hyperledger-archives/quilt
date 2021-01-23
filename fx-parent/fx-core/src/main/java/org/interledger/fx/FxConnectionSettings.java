@@ -4,7 +4,7 @@ import org.immutables.value.Value;
 
 /**
  * Connection settings used to configure an {@link okhttp3.OkHttpClient} for use in FX operations, including
- * configuration properties for a {@link okhttp3.ConnectionPool}
+ * configuration properties for a {@link okhttp3.ConnectionPool}.
  */
 @Value.Immutable(intern = true)
 public interface FxConnectionSettings {
@@ -14,9 +14,9 @@ public interface FxConnectionSettings {
   }
 
   /**
-   * Defines the maximum number of idle connections in a {@link okhttp3.ConnectionPool}
+   * Defines the maximum number of idle connections in a {@link okhttp3.ConnectionPool}.
    *
-   * @return number of idle connections
+   * @return number of idle connections.
    */
   @Value.Default
   default int maxIdleConnections() {
@@ -24,9 +24,9 @@ public interface FxConnectionSettings {
   }
 
   /**
-   * Defines the time to keep the connection alive in a {@link okhttp3.ConnectionPool} before closing it
+   * Defines the time to keep the connection alive in a {@link okhttp3.ConnectionPool} before closing it.
    *
-   * @return keep alive time in milliseconds
+   * @return keep alive time in milliseconds.
    */
   @Value.Default
   default long keepAliveMinutes() {
@@ -37,7 +37,7 @@ public interface FxConnectionSettings {
    * Applied when connecting a TCP socket to the target host. A value of 0 means no timeout, otherwise values must be
    * between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds. If unspecified, defaults to 10000.
    *
-   * @return connect timeout duration in milliseconds
+   * @return connect timeout duration in milliseconds.
    */
   @Value.Default
   default long connectTimeoutMillis() {
@@ -49,7 +49,7 @@ public interface FxConnectionSettings {
    * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds. If unspecified, defaults to
    * 30000.
    *
-   * @return connect timeout duration in milliseconds
+   * @return connect timeout duration in milliseconds.
    */
   @Value.Default
   default long readTimeoutMillis() {
@@ -60,7 +60,7 @@ public interface FxConnectionSettings {
    * Applied to individual write IO operations. A value of 0 means no timeout, otherwise values must be between 1 and
    * {@link Integer#MAX_VALUE} when converted to milliseconds. If unspecified, defaults to 30000.
    *
-   * @return connect timeout duration in milliseconds
+   * @return connect timeout duration in milliseconds.
    */
   @Value.Default
   default long writeTimeoutMillis() {

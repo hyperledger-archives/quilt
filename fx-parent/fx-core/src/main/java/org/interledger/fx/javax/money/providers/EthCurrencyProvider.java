@@ -18,6 +18,9 @@ public class EthCurrencyProvider implements CurrencyProviderSpi {
 
   private Set<CurrencyUnit> currencyUnits;
 
+  /**
+   * No-args Constructor.
+   */
   public EthCurrencyProvider() {
     this.currencyUnits = ImmutableSet.<CurrencyUnit>builder()
       .add(

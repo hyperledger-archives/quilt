@@ -1,23 +1,20 @@
 package org.interledger.fx;
 
+import org.interledger.core.fluent.FluentCompareTo;
+import org.interledger.core.fluent.Percentage;
+
 import com.google.common.base.Preconditions;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Default;
 import org.immutables.value.Value.Immutable;
-import org.interledger.core.fluent.FluentCompareTo;
-import org.interledger.core.fluent.Percentage;
 
 /**
  * <p>The amount of exchange rate fluctuation, in percentage terms, that a system or operation will tolerate. For
  * example, if the exchange rate for a percentage 0.25, but the accepted slippage is 1%, then the exchange rate `R` is
- * considered valid if it it conforms to the following equation:</p>
- *
- * </pre>0.2475 <= R < 0.2525</pre>.
+ * considered valid if it it conforms to the following equation: `0.2475 &lt;= R &lt; 0.2525`.</p>
  *
  * <p>Note that slippage values must be greater-than or equal-to zero, and less-than or equal-to 100, where slippage
- * `S` conforms to this equation:</p>
- *
- * <pre>0 <= S <= 100</pre>
+ * `S` conforms to this equation: `0 &lt;= S &lt;= 100`.</p>
  */
 @Immutable
 public interface Slippage extends Comparable<Slippage> {
@@ -29,6 +26,7 @@ public interface Slippage extends Comparable<Slippage> {
    * Default builder.
    *
    * @param value A {@link Percentage} to build from.
+   *
    * @return A {@link Slippage}.
    */
   static Slippage of(final Percentage value) {
@@ -48,10 +46,13 @@ public interface Slippage extends Comparable<Slippage> {
   }
 
   @Override
-  default int compareTo(Slippage o) {
-    return this.value().compareTo(o.value());
+  default int compareTo(final Slippage other) {
+    return this.value().compareTo(other.value());
   }
 
+  /**
+   * Preconditions check for immutables support.
+   */
   @Value.Check
   default void check() {
     Preconditions.checkState(

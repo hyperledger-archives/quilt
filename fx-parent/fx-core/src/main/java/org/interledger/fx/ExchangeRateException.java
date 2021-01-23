@@ -21,7 +21,9 @@ public class ExchangeRateException extends RuntimeException {
     super(cause);
   }
 
-  protected ExchangeRateException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+  protected ExchangeRateException(
+    String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace
+  ) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 }

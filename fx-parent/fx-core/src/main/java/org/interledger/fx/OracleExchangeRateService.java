@@ -7,7 +7,6 @@ import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 import javax.money.convert.ExchangeRate;
 
 /**
