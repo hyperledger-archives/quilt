@@ -53,6 +53,20 @@ public interface PaymentOptions {
    */
   Optional<Denomination> expectedDestinationDenomination();
 
+  /**
+   * Indicates if the initial foreign exchange rate probe should be skipped in order to save time. Setting this to
+   * {@code true} can be useful in scenarios where rate-probing isn't useful, such as when the source and destination
+   * denominations are the same or otherwise. Note that settting this to true does not skip the rate probe entirely if
+   * the destination denomination is not set via {@link #expectedDestinationDenomination()} (in this scenario, a single
+   * zero-value probe packet will be sent in order to trigger the CAD response from the Stream receiver).
+   *
+   * @return {@code true} if the initial rate probe should be skipped; {@code false} otherwise.
+   */
+  @Default
+  default boolean probePathUsingExternalRates() {
+    return false;
+  }
+
   @Default
   default Slippage slippage() {
     return Slippage.ONE_PERCENT;

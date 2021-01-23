@@ -1,9 +1,13 @@
 package org.interledger.stream.pay.probing;
 
+import org.interledger.core.fluent.Ratio;
+import org.interledger.fx.Denomination;
+import org.interledger.fx.OracleExchangeRateService;
 import org.interledger.link.Link;
 import org.interledger.stream.connection.StreamConnection;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.pay.AbstractPayWrapper;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.AmountFilter;
 import org.interledger.stream.pay.filters.AssetDetailsFilter;
 import org.interledger.stream.pay.filters.ExchangeRateFilter;
@@ -16,6 +20,8 @@ import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
+import org.interledger.stream.pay.trackers.AssetDetailsTracker;
+import org.interledger.stream.pay.trackers.ExchangeRateTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.collect.Lists;
@@ -56,17 +62,27 @@ public interface ExchangeRateProber {
   Optional<PaymentSharedStateTracker> getPaymentSharedStateTracker(StreamConnection streamConnection);
 
   /**
-   * Probe the payment path for the supplied {@code streamConnection} by sending a variety of unfulfillable ILPv4
-   * packets with embedded stream packet of varying value. While each packet will be rejected by the receiver (and thus
-   * no value will be transferred), the stream response embedded into each ILPv4 packet will contain an amount that the
-   * receiver would have received. This can be used to compute FX rates for the path during the probe. While any rates
-   * obtained during probing are not fixed for any duration of time, these rates can be used to inform a user of
-   * approximate or estimated rates, allowing the sender or a sender's device/application to make an informed decision
-   * about a payment that is desired to be made.
+   * Probe the payment path that corresponds to the supplied {@code streamConnection} by sending a variety of
+   * unfulfillable ILPv4 packets with embedded stream packet of varying value. While each packet will be rejected by the
+   * receiver (and thus no value will be transferred), the stream response embedded into each ILPv4 packet will contain
+   * an amount that the receiver would have received. This can be used to compute FX rates for the path during the
+   * probe. While any rates obtained during probing are not fixed for any duration of time, these rates can be used to
+   * inform a user of approximate or estimated rates, allowing the sender or a sender's device/application to make an
+   * informed decision about a payment that is desired to be made.
    *
-   * @return A {@link ExchangeRateProbeOutcome} with details about the payment path probing operation.
+   * @return A {@link ExchangeRateProbeOutcome} with estimated FX details for the payment path.
    */
   ExchangeRateProbeOutcome probePath(StreamConnection streamConnection);
+
+  /**
+   * Probe the payment path that corresponds to the supplied {@code streamConnection} by sending a single zero-value
+   * packet (in order to obtain the destination accounts denomination). Note that this method will complete much faster
+   * than {@link #probePath(StreamConnection)} because only a single packet will be sent as part of the probe using this
+   * method.
+   *
+   * @return A {@link ExchangeRateProbeOutcome} with estimated FX details for the payment path.
+   */
+  ExchangeRateProbeOutcome probePathUsingExternalRates(StreamConnection streamConnection);
 
   /**
    * The default implementation of {@link ExchangeRateProber}.
@@ -76,10 +92,12 @@ public interface ExchangeRateProber {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Link<?> link;
-    private final ExecutorService executorService;
+    private final OracleExchangeRateService oracleExchangeRateService;
     private final Map<StreamConnection, PaymentSharedStateTracker> paymentSharedStateTrackersMap;
+    private final ExecutorService executorService;
 
-    private final List<Long> initialTestPacketAmounts;
+    private final List<Long> probedPathPacketAmounts;
+    private final List<Long> skipPathProbePacketAmounts;
     private final Duration timeoutDuration;
 
     /**
@@ -87,18 +105,22 @@ public interface ExchangeRateProber {
      *
      * @param streamPacketEncryptionService An instance of {@link StreamPacketEncryptionService}.
      * @param link                          A {@link Link} to send the ILPv4 packet on.
+     * @param oracleExchangeRateService           An {@link OracleExchangeRateService}.
      */
     public DefaultExchangeRateProber(
-      final StreamPacketEncryptionService streamPacketEncryptionService, final Link<?> link
+      final StreamPacketEncryptionService streamPacketEncryptionService,
+      final Link<?> link,
+      final OracleExchangeRateService oracleExchangeRateService
     ) {
       super(streamPacketEncryptionService);
       this.link = Objects.requireNonNull(link);
+      this.oracleExchangeRateService = Objects.requireNonNull(oracleExchangeRateService);
 
       this.paymentSharedStateTrackersMap = Maps.newConcurrentMap();
       // TODO [New Feature] Consider making this configurable.
       this.executorService = Executors.newFixedThreadPool(3);
       this.timeoutDuration = Duration.of(30, ChronoUnit.SECONDS);
-      this.initialTestPacketAmounts = Lists.newArrayList(
+      this.probedPathPacketAmounts = Lists.newArrayList(
         1_000_000_000_000L,
         100_000_000_000L,
         10_000_000_000L,
@@ -114,6 +136,57 @@ public interface ExchangeRateProber {
         1L,
         0L
       );
+      this.skipPathProbePacketAmounts = Lists.newArrayList(0L);
+    }
+
+    @Override
+    public ExchangeRateProbeOutcome probePathUsingExternalRates(final StreamConnection streamConnection) {
+      // Because this operation is skipping the _typical_ rate probe, and instead sending only a single stream packet
+      // in order to discover the destination account's denomination. Thus, the "probed rates" are returned from here
+      // with a 1:1 value, which is the likely outcome because generally path-probing is skipped only when the source
+      // and destination currencies are the same. However, if the source and destination denominations are different
+      // for some reason, then we need to return an FX rate that is _not_ 1:1. Thus, we simply return the Oracle FX
+      // rates for the currency pair (i.e., the real-world external rates). Note that in the general case, checking the
+      // real-world rates for an identical currency pair is unnecessary because the two currencies are the same and
+      // should have a 1:1 rate. However, it is possible that two currencies with the same rate may have some sort of
+      // fee derivation in their FX rate, so we _always_ consult the Oracle, even in a 1:1 FX scenario.
+      final ExchangeRateProbeOutcome exchangeRateProbeOutcome = this
+        .probePathHelper(streamConnection, this.skipPathProbePacketAmounts);
+
+      // If the source denomination isn't present, then default to a 1:1 outcome. If it _is_ present, then make sure
+      // a destination denomination is present.
+      return streamConnection.getSourceAccountDetails().denomination()
+        .map(sourceDenomination -> {
+          final ExchangeRateTracker exchangeRateTracker = this.getPaymentSharedStateTracker(streamConnection)
+            .map(PaymentSharedStateTracker::getExchangeRateTracker)
+            .orElseThrow(() -> new StreamPayerException(
+              String.format("No PaymentSharedStateTracker found for streamConnection=%s", streamConnection),
+              SendState.ConnectorError
+            ));
+
+          final Denomination destinationDenomination = this.getPaymentSharedStateTracker(streamConnection)
+            .map(PaymentSharedStateTracker::getAssetDetailsTracker)
+            .map(AssetDetailsTracker::getDestinationAccountDetails)
+            .orElseThrow(() -> new StreamPayerException(
+              String.format("No PaymentSharedStateTracker found for streamConnection=%s", streamConnection),
+              SendState.RateProbeFailed
+            ))
+            .denomination()
+            .orElseThrow(() -> new StreamPayerException(
+              "No destination asset details returned from receiver",
+              SendState.UnknownDestinationAsset)
+            );
+
+          exchangeRateTracker.initializeRates(sourceDenomination, destinationDenomination);
+
+          return ExchangeRateProbeOutcome.builder().from(exchangeRateProbeOutcome)
+            .lowerBoundRate(exchangeRateTracker.getLowerBoundRate())
+            .upperBoundRate(exchangeRateTracker.getUpperBoundRate())
+            .build();
+
+        })
+        .map($ -> (ExchangeRateProbeOutcome) $)
+        .orElse(exchangeRateProbeOutcome);
     }
 
     /**
@@ -134,12 +207,20 @@ public interface ExchangeRateProber {
      */
     @Override
     public ExchangeRateProbeOutcome probePath(final StreamConnection streamConnection) {
+      return this.probePathHelper(streamConnection, this.probedPathPacketAmounts);
+    }
+
+    // TODO: Javadoc
+    protected ExchangeRateProbeOutcome probePathHelper(
+      final StreamConnection streamConnection, final List<Long> packetAmountsList
+    ) {
       Objects.requireNonNull(streamConnection);
+      Objects.requireNonNull(packetAmountsList);
 
       // If this is the first usage of streamConnection, then construct a new PaymentTracker instances. Otherwise,
       // re-use existing trackers so the new payment can benefit from historical information.
       final PaymentSharedStateTracker paymentSharedStateTracker = paymentSharedStateTrackersMap.computeIfAbsent(
-        streamConnection, PaymentSharedStateTracker::new
+        streamConnection, ($) -> new PaymentSharedStateTracker($, oracleExchangeRateService)
       );
 
       final List<StreamPacketFilter> streamPacketFilters = Lists.newArrayList(
@@ -174,7 +255,7 @@ public interface ExchangeRateProber {
 
       // Handle the result
       CompletableFuture<Void> allFutures = CompletableFuture
-        .allOf(this.initialTestPacketAmounts.stream()
+        .allOf(packetAmountsList.stream()
           .map(UnsignedLong::valueOf)
           .map(prepareAmount -> {
             // Send a StreamPacket and get a response.
@@ -247,6 +328,17 @@ public interface ExchangeRateProber {
         logger.error(e.getMessage(), e);
       }
 
+      // TODO: Introduce a boolean to indicate if the path-probe is skipped.
+      final Ratio lowerBoundRate;
+      final Ratio upperBoundRate;
+      if (packetAmountsList.size() == 1) {
+        lowerBoundRate = Ratio.ONE;
+        upperBoundRate = Ratio.ONE;
+      } else {
+        lowerBoundRate = paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate();
+        upperBoundRate = paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate();
+      }
+
       return ExchangeRateProbeOutcome.builder()
         .sourceDenomination(streamConnection.getSourceAccountDetails().denomination())
         .destinationDenomination(
@@ -254,8 +346,8 @@ public interface ExchangeRateProber {
         )
         .maxPacketAmount(paymentSharedStateTracker.getMaxPacketAmountTracker().getMaxPacketAmount())
         .verifiedPathCapacity(paymentSharedStateTracker.getMaxPacketAmountTracker().verifiedPathCapacity())
-        .lowerBoundRate(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate())
-        .upperBoundRate(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate())
+        .lowerBoundRate(lowerBoundRate)
+        .upperBoundRate(upperBoundRate)
         .errorPackets(errorReplies)
         .build();
     }

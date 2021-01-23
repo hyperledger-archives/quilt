@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
+import org.interledger.fx.DefaultOracleExchangeRateService;
+import org.interledger.fx.OracleExchangeRateService;
 import org.interledger.fx.Denomination;
 import org.interledger.ildcp.IldcpFetcher;
 import org.interledger.ildcp.IldcpRequest;
@@ -88,6 +90,7 @@ public abstract class AbstractRustIT {
 
   protected StreamPacketEncryptionService streamPacketEncryptionService;
   protected SimpleSpspClient spspClient;
+  protected OracleExchangeRateService oracleOracleExchangeRateService;
 
   protected final Logger logger = LoggerFactory.getLogger(this.getClass());
   private final Logger connectorLogger = LoggerFactory.getLogger("RustConnector");
@@ -125,6 +128,7 @@ public abstract class AbstractRustIT {
       StreamCodecContextFactory.oer(), new AesGcmStreamSharedSecretCrypto()
     );
 
+    this.oracleOracleExchangeRateService = new DefaultOracleExchangeRateService(mockExchangeRateProvider());
     this.initalizedConnectorAccounts();
   }
 

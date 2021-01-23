@@ -1,5 +1,6 @@
 package org.interledger.stream.pay.trackers;
 
+import org.interledger.fx.OracleExchangeRateService;
 import org.interledger.stream.connection.StreamConnection;
 
 import java.util.Objects;
@@ -22,10 +23,14 @@ public class PaymentSharedStateTracker {
    *
    * @param streamConnection A {@link StreamConnection} to track data for.s
    */
-  public PaymentSharedStateTracker(final StreamConnection streamConnection) {
+  public PaymentSharedStateTracker(
+    final StreamConnection streamConnection, final OracleExchangeRateService oracleExchangeRateService
+  ) {
     this.streamConnection = Objects.requireNonNull(streamConnection);
+    Objects.requireNonNull(oracleExchangeRateService);
+
     this.maxPacketAmountTracker = new MaxPacketAmountTracker();
-    this.exchangeRateTracker = new ExchangeRateTracker();
+    this.exchangeRateTracker = new ExchangeRateTracker(oracleExchangeRateService);
     this.assetDetailsTracker = new AssetDetailsTracker(
       streamConnection.getSourceAccountDetails(), streamConnection.getDestinationAddress()
     );

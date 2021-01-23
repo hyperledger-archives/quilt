@@ -5,8 +5,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.interledger.core.InterledgerAddress;
-import org.interledger.stream.model.AccountDetails;
+import org.interledger.fx.OracleExchangeRateService;
 import org.interledger.stream.connection.StreamConnection;
+import org.interledger.stream.model.AccountDetails;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -26,6 +27,9 @@ public class PaymentSharedStateTrackerTest {
   @Mock
   private StreamConnection streamConnectionMock;
 
+  @Mock
+  private OracleExchangeRateService oracleExchangeRateServiceMock;
+
   @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
@@ -37,12 +41,20 @@ public class PaymentSharedStateTrackerTest {
   @Test
   public void testNullConstructorWithNullStreamConnection() {
     expectedException.expect(NullPointerException.class);
-    new PaymentSharedStateTracker(null);
+    new PaymentSharedStateTracker(null, oracleExchangeRateServiceMock);
+  }
+
+  @Test
+  public void testNullConstructorWithNullExchangeRateService() {
+    expectedException.expect(NullPointerException.class);
+    new PaymentSharedStateTracker(streamConnectionMock, null);
   }
 
   @Test
   public void testConstructor() {
-    final PaymentSharedStateTracker tracker = new PaymentSharedStateTracker(streamConnectionMock);
+    final PaymentSharedStateTracker tracker = new PaymentSharedStateTracker(
+      streamConnectionMock, oracleExchangeRateServiceMock
+    );
     assertThat(tracker.getStreamConnection()).isEqualTo(streamConnectionMock);
     assertThat(tracker.getExchangeRateTracker()).isNotNull();
     assertThat(tracker.getAssetDetailsTracker()).isNotNull();

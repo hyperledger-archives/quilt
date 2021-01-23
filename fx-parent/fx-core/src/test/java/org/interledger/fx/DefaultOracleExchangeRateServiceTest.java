@@ -16,9 +16,9 @@ import javax.money.convert.ExchangeRate;
 import javax.money.convert.ExchangeRateProvider;
 
 /**
- * Unit tests for {@link DefaultExchangeRateService}.
+ * Unit tests for {@link DefaultOracleExchangeRateService}.
  */
-public class DefaultExchangeRateServiceTest {
+public class DefaultOracleExchangeRateServiceTest {
 
   @Mock
   private ExchangeRate exchangeRateMock;
@@ -26,12 +26,12 @@ public class DefaultExchangeRateServiceTest {
   @Mock
   private ExchangeRateProvider exchangeRateProvider;
 
-  private ExchangeRateService exchangeRateService;
+  private OracleExchangeRateService oracleExchangeRateService;
 
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    exchangeRateService = new DefaultExchangeRateService(exchangeRateProvider);
+    oracleExchangeRateService = new DefaultOracleExchangeRateService(exchangeRateProvider);
   }
 
   @Test
@@ -39,10 +39,10 @@ public class DefaultExchangeRateServiceTest {
     when(exchangeRateMock.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("1.0")));
     when(exchangeRateProvider.getExchangeRate(anyString(), anyString())).thenReturn(exchangeRateMock);
 
-    BigDecimal actual = exchangeRateService.getScaledExchangeRate(
+    BigDecimal actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 0).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 0).build(),
-      BigDecimal.ZERO
+      Slippage.NONE
     );
     assertThat(actual).isEqualByComparingTo(new BigDecimal("1"));
   }
@@ -52,17 +52,17 @@ public class DefaultExchangeRateServiceTest {
     when(exchangeRateMock.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("2.0")));
     when(exchangeRateProvider.getExchangeRate(anyString(), anyString())).thenReturn(exchangeRateMock);
 
-    BigDecimal actual = exchangeRateService.getScaledExchangeRate(
+    BigDecimal actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 0).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 2).build(),
-      BigDecimal.ZERO
+      Slippage.NONE
     );
     assertThat(actual).isEqualByComparingTo(BigDecimal.valueOf(200));
 
-    actual = exchangeRateService.getScaledExchangeRate(
+    actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 0).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 2).build(),
-      new BigDecimal("0.01")
+      Slippage.ONE_PERCENT
     );
     assertThat(actual).isEqualByComparingTo(new BigDecimal(198));
 
@@ -73,17 +73,17 @@ public class DefaultExchangeRateServiceTest {
     when(exchangeRateMock.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("2.0")));
     when(exchangeRateProvider.getExchangeRate(anyString(), anyString())).thenReturn(exchangeRateMock);
 
-    BigDecimal actual = exchangeRateService.getScaledExchangeRate(
+    BigDecimal actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 2).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 0).build(),
-      BigDecimal.ZERO
+      Slippage.NONE
     );
     assertThat(actual).isEqualByComparingTo(new BigDecimal("0.020"));
 
-    actual = exchangeRateService.getScaledExchangeRate(
+    actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 2).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 0).build(),
-      new BigDecimal("0.01")
+      Slippage.ONE_PERCENT
     );
     assertThat(actual).isEqualByComparingTo(new BigDecimal("0.0198"));
   }
@@ -93,17 +93,17 @@ public class DefaultExchangeRateServiceTest {
     when(exchangeRateMock.getFactor()).thenReturn(DefaultNumberValue.of(new BigDecimal("2.0")));
     when(exchangeRateProvider.getExchangeRate(anyString(), anyString())).thenReturn(exchangeRateMock);
 
-    BigDecimal actual = exchangeRateService.getScaledExchangeRate(
+    BigDecimal actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 18).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 0).build(),
-      BigDecimal.ZERO
+      Slippage.NONE
     );
     assertThat(actual).isEqualByComparingTo(new BigDecimal("0.000000000000000002"));
 
-    actual = exchangeRateService.getScaledExchangeRate(
+    actual = oracleExchangeRateService.getScaledExchangeRate(
       Denomination.builder().assetCode("SRC").assetScale((short) 18).build(),
       Denomination.builder().assetCode("DST").assetScale((short) 0).build(),
-      new BigDecimal("0.01")
+      Slippage.ONE_PERCENT
     );
     assertThat(actual).isEqualByComparingTo(new BigDecimal("0.00000000000000000198"));
   }

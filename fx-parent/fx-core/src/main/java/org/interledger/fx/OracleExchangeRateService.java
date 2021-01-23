@@ -8,27 +8,39 @@ import com.google.common.primitives.UnsignedLong;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import javax.money.convert.ExchangeRate;
+
 /**
  * A service for providing Exchange Rates from an external oracle, for use in comparing actual payment path rates to a
  * known/trusted external source.
  */
-public interface ExchangeRateService {
+public interface OracleExchangeRateService {
 
   /**
    * Obtain a scaled exchange rate from a source account denomination to a destination account denomination. For
    * example, if a source account has an assetScale of 2, and a destination account has an asset scale of 0, then the
-   * scaled excahnge rate would be 200.
+   * scaled exchange rate would be 200.
    *
    * @param sourceDenomination      A {@link Denomination} for the source account sending a payment.
    * @param destinationDenomination The {@link Denomination} for the destination account receiving a payment.
-   * @param slippagePercent         A {@link BigDecimal} representing the maximum acceptable slippage percentage below a
-   *                                calculated minimum exchange rate to tolerate.
+   * @param slippage                A {@link Slippage} containing the maximum acceptable slippage percentage below which
+   *                                a calculated minimum exchange rate will be tolerated.
    *
    * @return A {@link BigDecimal} representing a scaled FX rate.
    */
   BigDecimal getScaledExchangeRate(
-    Denomination sourceDenomination, Denomination destinationDenomination, BigDecimal slippagePercent
+    Denomination sourceDenomination, Denomination destinationDenomination, Slippage slippage
   );
+
+  /**
+   * Obtain the foreign exchange-rate from a source denomination to a destination denomination.
+   *
+   * @param sourceDenomination      The {@link Denomination} for the source account.
+   * @param destinationDenomination The {@link Denomination} for the destination account.
+   *
+   * @return An {@link ExchangeRate}.
+   */
+  ExchangeRate getExchangeRate(Denomination sourceDenomination, Denomination destinationDenomination);
 
   /**
    * Convert the provided {@code sourceAmount} into a destination amount using the supplied {@code scaledExchangeRate}.
@@ -36,7 +48,7 @@ public interface ExchangeRateService {
    * @param sourceAmount       A {@link BigDecimal} representing the source amount (e.g., 1.0 USD).
    * @param scaledExchangeRate A {@link BigDecimal} representing the scaled exchange rate (e.g., 4,000,000.0)
    *
-   * @return A {@link BigDecimal} containing a new amount that reprsents the {@code sourceAmount} converted into a
+   * @return A {@link BigDecimal} containing a new amount that represents the {@code sourceAmount} converted into a
    *   destination amount using the supplied scaled rate.
    */
   default UnsignedLong convert(UnsignedLong sourceAmount, BigDecimal scaledExchangeRate) {

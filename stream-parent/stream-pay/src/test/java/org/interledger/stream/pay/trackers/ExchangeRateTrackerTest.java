@@ -2,8 +2,13 @@ package org.interledger.stream.pay.trackers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.stream.pay.StreamPayerExceptionMatcher.hasSendState;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import org.interledger.core.fluent.Ratio;
+import org.interledger.fx.Denominations;
+import org.interledger.fx.OracleExchangeRateService;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.model.DeliveredExchangeRateBound;
@@ -13,6 +18,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
@@ -27,13 +34,16 @@ public class ExchangeRateTrackerTest {
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+  
+  @Mock
+  private OracleExchangeRateService oracleExchangeRateServiceMock;
 
   private ExchangeRateTracker exchangeRateTracker;
 
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    this.exchangeRateTracker = new ExchangeRateTracker();
+    this.exchangeRateTracker = new ExchangeRateTracker(oracleExchangeRateServiceMock);
   }
 
   //////////////////////////
@@ -125,7 +135,7 @@ public class ExchangeRateTrackerTest {
 
   @Test
   public void updateRateWithReceivedAmounts() {
-    this.exchangeRateTracker = new ExchangeRateTracker() {
+    this.exchangeRateTracker = new ExchangeRateTracker(oracleExchangeRateServiceMock) {
       @Override
       boolean shouldResetExchangeRate(
         Ratio packetLowerBoundRate, Ratio packetUpperBoundRate,
@@ -148,7 +158,7 @@ public class ExchangeRateTrackerTest {
 
   @Test
   public void updateRateWhenReset() {
-    this.exchangeRateTracker = new ExchangeRateTracker() {
+    this.exchangeRateTracker = new ExchangeRateTracker(oracleExchangeRateServiceMock) {
       @Override
       boolean shouldResetExchangeRate(
         Ratio packetLowerBoundRate, Ratio packetUpperBoundRate,
@@ -246,5 +256,67 @@ public class ExchangeRateTrackerTest {
       // Lower is greater, Upper is Equal
       Ratio.from(BigDecimal.valueOf(3)), Ratio.from(BigDecimal.valueOf(2L)), UnsignedLong.ONE, UnsignedLong.MAX_VALUE
     )).isTrue();
+  }
+
+  //////////////////
+  // InitializeRates
+  //////////////////
+
+  @Test
+  public void initializeRatesWithNullSource() {
+    expectedException.expect(NullPointerException.class);
+    exchangeRateTracker.initializeRates(null, Denominations.USD);
+  }
+
+  @Test
+  public void initializeRatesWithNullDest() {
+    expectedException.expect(NullPointerException.class);
+    exchangeRateTracker.initializeRates(Denominations.USD, null);
+  }
+
+  @Test
+  public void initializeRatesWithSame() {
+    expectedException.expect(NullPointerException.class);
+
+    exchangeRateTracker.initializeRates(Denominations.USD, Denominations.USD);
+
+    assertThat(exchangeRateTracker.getLowerBoundRate()).isEqualTo(Ratio.ONE);
+    assertThat(exchangeRateTracker.getUpperBoundRate()).isEqualTo(Ratio.ONE);
+    assertThat(exchangeRateTracker.getSentAmounts().size()).isEqualTo(1L);
+    assertThat(exchangeRateTracker.getReceivedAmounts().size()).isEqualTo(1L);
+
+    verify(oracleExchangeRateServiceMock).getExchangeRate(Mockito.any(), Mockito.any());
+    verifyNoInteractions(oracleExchangeRateServiceMock);
+  }
+
+  @Test
+  public void initializeRatesWithDifferent() {
+    expectedException.expect(NullPointerException.class);
+
+    exchangeRateTracker.initializeRates(Denominations.USD, Denominations.XRP_DROPS);
+
+    assertThat(exchangeRateTracker.getLowerBoundRate()).isEqualTo(Ratio.ONE);
+    assertThat(exchangeRateTracker.getUpperBoundRate()).isEqualTo(Ratio.ONE);
+    assertThat(exchangeRateTracker.getSentAmounts().size()).isEqualTo(1L);
+    assertThat(exchangeRateTracker.getReceivedAmounts().size()).isEqualTo(1L);
+
+    verify(oracleExchangeRateServiceMock).getExchangeRate(Mockito.any(), Mockito.any());
+    verifyNoInteractions(oracleExchangeRateServiceMock);
+  }
+
+  @Test
+  public void initializeRatesWithDifferentTwice() {
+    expectedException.expect(NullPointerException.class);
+
+    exchangeRateTracker.initializeRates(Denominations.USD, Denominations.XRP_DROPS);
+    exchangeRateTracker.initializeRates(Denominations.USD, Denominations.XRP_DROPS);
+
+    assertThat(exchangeRateTracker.getLowerBoundRate()).isEqualTo(Ratio.ONE);
+    assertThat(exchangeRateTracker.getUpperBoundRate()).isEqualTo(Ratio.ONE);
+    assertThat(exchangeRateTracker.getSentAmounts().size()).isEqualTo(1L);
+    assertThat(exchangeRateTracker.getReceivedAmounts().size()).isEqualTo(1L);
+
+    verify(oracleExchangeRateServiceMock, times(2)).getExchangeRate(Mockito.any(), Mockito.any());
+    verifyNoInteractions(oracleExchangeRateServiceMock);
   }
 }

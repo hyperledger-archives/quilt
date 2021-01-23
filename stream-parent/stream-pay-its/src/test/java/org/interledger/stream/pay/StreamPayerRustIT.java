@@ -1,12 +1,10 @@
 package org.interledger.stream.pay;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.assertj.core.api.Fail.fail;
 
 import org.interledger.core.fluent.Percentage;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
-import org.interledger.fx.Denominations;
 import org.interledger.fx.Slippage;
 import org.interledger.link.Link;
 import org.interledger.spsp.PaymentPointer;
@@ -42,8 +40,12 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("1000");
 
@@ -103,8 +105,12 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
 
@@ -166,8 +172,12 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("123");
 
@@ -226,8 +236,12 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      this.streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      this.spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("0.01");
 
@@ -281,8 +295,12 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      this.streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      this.spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
@@ -295,8 +313,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         if (throwable != null) {
-          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
-          return null;
+          throw new RuntimeException("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
         } else if (quote != null) {
           logger.info("Quote={}", quote);
 
@@ -352,8 +369,9 @@ public class StreamPayerRustIT extends AbstractRustIT {
           );
           return quote;
         } else {
-          fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
-          return null;
+          throw new RuntimeException(
+            "Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)"
+          );
         }
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }
@@ -363,37 +381,174 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      this.streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      this.spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
       .senderAccountDetails(senderAccountDetails)
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD_50K))
-      .expectedDestinationDenomination(Denominations.USD_MILLI_DOLLARS)
-      .slippage(Slippage.of(Percentage.ONE_PERCENT)) // <-- Allow up to 1% slippage.
+      .slippage(Slippage.of(Percentage.of(new BigDecimal("0.01")))) // <-- Allow up to 1% slippage.
+      .skipInitialProbe(true)
       .build();
 
-    streamPayer.pay(paymentOptions)
-      .handle((paymentReceipt, throwable) -> {
+    streamPayer.getQuote(paymentOptions)
+      .handle((quote, throwable) -> {
         if (throwable != null) {
-          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
-          return null;
-        } else if (paymentReceipt != null) {
-          logger.info("paymentReceipt={}", paymentReceipt);
+          throw new RuntimeException("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
+        } else if (quote != null) {
+          logger.info("Quote={}", quote);
+
+          ///////////////////
+          // Quote Assertions
+          ///////////////////
+          // The current price of XRP is pegged at $0.2429546 USD on the test Rust Connector (see initAccounts).
+          assertThat(quote).isNotNull();
+          assertThat(quote.estimatedDuration()).isBetween(Duration.ofMillis(5), Duration.ofMillis(100));
+          assertThat(quote.sourceAccount()).isEqualTo(paymentOptions.senderAccountDetails());
+          assertThat(quote.destinationAccount().interledgerAddress().getValue()).startsWith(HOST_ADDRESS.getValue());
+          assertThat(quote.destinationAccount().denomination()).isPresent();
+          assertThat(quote.destinationAccount().denomination().get())
+            .isEqualTo(Denomination.builder().assetCode("USD").assetScale((short) 6).build());
+          // Estimated Payment Outcome.
+          assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits())
+            .isEqualTo(BigInteger.valueOf(4L));
+          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
+          assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
+            .isEqualTo(BigInteger.ONE);
+          // Min ExchangeRate, due to slippage
+          assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.240525054"));
+
+          ///////////////////
+          // EstimatedExchangeRate Assertions
+          ///////////////////
+          assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal())
+            .isEqualTo(new BigDecimal("0.2429546"));
+          assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal())
+            .isEqualTo(new BigDecimal("0.2429547"));
+
+          assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
+          assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
+          assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
+          assertThat(quote.estimatedExchangeRate().destinationDenomination()).isPresent();
+          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetCode()).isEqualTo("USD");
+          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetScale()).isEqualTo((short) 6);
+          assertThat(quote.estimatedExchangeRate().maxPacketAmount().maxPacketState())
+            .isEqualTo(MaxPacketState.UnknownMax);
+          assertThat(quote.estimatedExchangeRate().maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
+          assertThat(quote.estimatedExchangeRate().verifiedPathCapacity()).isEqualTo(UnsignedLong.ZERO);
+          assertThat(quote.paymentOptions()).isEqualTo(paymentOptions);
+
+          final PaymentReceipt paymentReceipt = streamPayer.pay(quote).join();
+          logger.info("Receipt={}", paymentReceipt);
           assertThat(paymentReceipt.paymentError()).isEmpty();
+          assertThat(paymentReceipt.originalQuote()).isEqualTo(quote);
           assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(
             amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
           );
           assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isLessThan(
             amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
           );
-          assertThat(paymentReceipt.successfulPayment()).isTrue();
-          return paymentReceipt;
+          return quote;
         } else {
-          fail("Neither paymentReceipt nor throwable was return from streamPayer.pay(paymentOptions)");
-          return null;
+          throw new RuntimeException(
+            "Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)"
+          );
+        }
+      }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
+  }
+
+  /**
+   * Same currency, and same scale.
+   */
+  @Test
+  public void testPay1XrpToXrpWithNoProbe() throws ExecutionException, InterruptedException, TimeoutException {
+    final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
+    final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
+
+    this.streamPayer = new StreamPayer.Default(
+      this.streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      this.spspClient
+    );
+
+    final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
+    final PaymentOptions paymentOptions = PaymentOptions.builder()
+      .senderAccountDetails(senderAccountDetails)
+      .amountToSend(amountToSendInXrp)
+      .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_XRP_50K))
+      .slippage(Slippage.of(Percentage.of(new BigDecimal("0.01")))) // <-- Allow up to 1% slippage.
+      .skipInitialProbe(true)
+      .build();
+
+    streamPayer.getQuote(paymentOptions)
+      .handle((quote, throwable) -> {
+        if (throwable != null) {
+          throw new RuntimeException("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
+        } else if (quote != null) {
+          logger.info("Quote={}", quote);
+
+          ///////////////////
+          // Quote Assertions
+          ///////////////////
+          // The current price of XRP is pegged at $0.2429546 USD on the test Rust Connector (see initAccounts).
+          assertThat(quote).isNotNull();
+          assertThat(quote.estimatedDuration()).isBetween(Duration.ofMillis(5), Duration.ofMillis(100));
+          assertThat(quote.sourceAccount()).isEqualTo(paymentOptions.senderAccountDetails());
+          assertThat(quote.destinationAccount().interledgerAddress().getValue()).startsWith(HOST_ADDRESS.getValue());
+          assertThat(quote.destinationAccount().denomination()).isPresent();
+          assertThat(quote.destinationAccount().denomination().get())
+            .isEqualTo(Denomination.builder().assetCode("XRP").assetScale((short) 9).build());
+          // Estimated Payment Outcome.
+          assertThat(quote.estimatedPaymentOutcome().maxSendAmountInWholeSourceUnits())
+            .isEqualTo(BigInteger.valueOf(4L));
+          assertThat(quote.estimatedPaymentOutcome().estimatedNumberOfPackets()).isEqualTo(BigInteger.ONE);
+          assertThat(quote.estimatedPaymentOutcome().minDeliveryAmountInWholeDestinationUnits())
+            .isEqualTo(BigInteger.valueOf(4L));
+          // Min ExchangeRate, due to slippage
+          assertThat(quote.minAllowedExchangeRate().toBigDecimal()).isEqualTo(new BigDecimal("0.99"));
+
+          ///////////////////
+          // EstimatedExchangeRate Assertions
+          ///////////////////
+          assertThat(quote.estimatedExchangeRate().lowerBoundRate().toBigDecimal())
+            .isEqualTo(BigDecimal.ONE);
+          assertThat(quote.estimatedExchangeRate().upperBoundRate().toBigDecimal())
+            .isEqualTo(new BigDecimal("1.1"));
+
+          assertThat(quote.estimatedExchangeRate().sourceDenomination()).isPresent();
+          assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetCode()).isEqualTo("XRP");
+          assertThat(quote.estimatedExchangeRate().sourceDenomination().get().assetScale()).isEqualTo((short) 9);
+          assertThat(quote.estimatedExchangeRate().destinationDenomination()).isPresent();
+          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetCode()).isEqualTo("XRP");
+          assertThat(quote.estimatedExchangeRate().destinationDenomination().get().assetScale()).isEqualTo((short) 9);
+          assertThat(quote.estimatedExchangeRate().maxPacketAmount().maxPacketState())
+            .isEqualTo(MaxPacketState.UnknownMax);
+          assertThat(quote.estimatedExchangeRate().maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
+          assertThat(quote.estimatedExchangeRate().verifiedPathCapacity()).isEqualTo(UnsignedLong.ZERO);
+          assertThat(quote.paymentOptions()).isEqualTo(paymentOptions);
+
+          final PaymentReceipt paymentReceipt = streamPayer.pay(quote).join();
+          logger.info("Receipt={}", paymentReceipt);
+          assertThat(paymentReceipt.paymentError()).isEmpty();
+          assertThat(paymentReceipt.originalQuote()).isEqualTo(quote);
+          assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(
+            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+          );
+          assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(
+            amountToSendInXrp.movePointRight(senderAccountDetails.denomination().get().assetScale()).toBigIntegerExact()
+          );
+          return quote;
+        } else {
+          throw new RuntimeException(
+            "Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)"
+          );
         }
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }
@@ -403,8 +558,12 @@ public class StreamPayerRustIT extends AbstractRustIT {
     final Link<?> ilpLink = this.constructIlpOverHttpLink(XRP_ACCOUNT); // <-- All ILP operations from XRP_ACCOUNT
     final AccountDetails senderAccountDetails = newSenderAccountDetailsViaILDCP(ilpLink);
 
-    this.streamPayer = new StreamPayer.Default(streamPacketEncryptionService, ilpLink, mockExchangeRateProvider(),
-      spspClient);
+    this.streamPayer = new StreamPayer.Default(
+      this.streamPacketEncryptionService,
+      ilpLink,
+      this.oracleOracleExchangeRateService,
+      this.spspClient
+    );
 
     final BigDecimal amountToSendInXrp = new BigDecimal("4"); // <-- Send 4 XRP
     final PaymentOptions paymentOptions = PaymentOptions.builder()
@@ -417,8 +576,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
     streamPayer.getQuote(paymentOptions)
       .handle((quote, throwable) -> {
         if (throwable != null) {
-          fail("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
-          return null;
+          throw new RuntimeException("No valid quote returned from receiver: " + throwable.getMessage(), throwable);
         } else if (quote != null) {
           logger.info("Quote={}", quote);
 
@@ -468,12 +626,13 @@ public class StreamPayerRustIT extends AbstractRustIT {
           assertThat(paymentReceipt.originalQuote()).isEqualTo(quote);
           assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(4000000000L));
           assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(4000000000L));
-          assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isEqualTo(Percentage.FIVE_PERCENT);
+          assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isEqualTo(Percentage.ZERO_PERCENT);
 
           return quote;
         } else {
-          fail("Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)");
-          return null;
+          throw new RuntimeException(
+            "Neither quote nor throwable was return from streamPayer.getQuote(paymentOptions)"
+          );
         }
       }).get(15, TimeUnit.SECONDS);  // <-- Don't wait too long for this to timeout.
   }

@@ -3,15 +3,9 @@ package org.interledger.fx;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import org.interledger.core.fluent.Percentage;
+
 import com.google.common.primitives.UnsignedLong;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.Collection;
-import javax.money.Monetary;
-import javax.money.convert.ConversionContext;
-import javax.money.convert.ExchangeRate;
-import javax.money.convert.ExchangeRateProvider;
 import org.javamoney.moneta.convert.ExchangeRateBuilder;
 import org.javamoney.moneta.spi.DefaultNumberValue;
 import org.junit.Before;
@@ -23,11 +17,21 @@ import org.junit.runners.Parameterized.Parameters;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
+import java.util.Collection;
+
+import javax.money.Monetary;
+import javax.money.convert.ConversionContext;
+import javax.money.convert.ExchangeRate;
+import javax.money.convert.ExchangeRateProvider;
+
 /**
- * Unit tests for {@link DefaultExchangeRateService}.
+ * Unit tests for {@link DefaultOracleExchangeRateService}.
  */
 @RunWith(Parameterized.class)
-public class DefaultExchangeRateServiceParameterizedTest {
+public class DefaultOracleExchangeRateServiceParameterizedTest {
 
   @Parameter
   public double senderPrice;
@@ -51,11 +55,11 @@ public class DefaultExchangeRateServiceParameterizedTest {
   @Mock
   private ExchangeRateProvider exchangeRateProvider;
 
-  private ExchangeRateService exchangeRateService;
+  private OracleExchangeRateService oracleExchangeRateService;
 
   @Parameters
   public static Collection rates() {
-    return Arrays.asList(new Object[][]{
+    return Arrays.asList(new Object[][] {
       // [0] Amount gets larger
       {6.0, 1.5, 100, "USD", 2, "XRP", 2, 0.0, 400},
       // [1] Amount gets smaller
@@ -90,14 +94,14 @@ public class DefaultExchangeRateServiceParameterizedTest {
       {4_000_000, 1, 1, "USD", 0, "XRP", 6, 0.0, 4_000_000_000_000L},
     });
   }
-  
+
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
 
     this.populateTestRates();
 
-    exchangeRateService = new DefaultExchangeRateService(exchangeRateProvider);
+    oracleExchangeRateService = new DefaultOracleExchangeRateService(exchangeRateProvider);
   }
 
   private void populateTestRates() {
@@ -129,7 +133,7 @@ public class DefaultExchangeRateServiceParameterizedTest {
       .setFactor(DefaultNumberValue.of(new BigDecimal("1.03555")))
       .build();
     when(exchangeRateProvider.getExchangeRate("MXN", "CAD")).thenReturn(USDToEthRate);
-    
+
     // 4_000_000 USD Drops to 1 USD
     ExchangeRate USDToUsdRate = new ExchangeRateBuilder(ConversionContext.HISTORIC_CONVERSION)
       .setBase(Monetary.getCurrency("USD"))
@@ -161,12 +165,14 @@ public class DefaultExchangeRateServiceParameterizedTest {
       .assetCode(receiverCode)
       .assetScale((short) receiverScale)
       .build();
-    final BigDecimal slippagePercent = BigDecimal.valueOf(slippage);
+    final Slippage slippage = Slippage.of(
+      Percentage.of(BigDecimal.valueOf(this.slippage))
+    );
 
-    final BigDecimal scaledExchangeRate = exchangeRateService
-      .getScaledExchangeRate(senderDenomination, receiverDenomination, slippagePercent);
+    final BigDecimal scaledExchangeRate = oracleExchangeRateService
+      .getScaledExchangeRate(senderDenomination, receiverDenomination, slippage);
 
-    UnsignedLong actual = exchangeRateService.convert(sourceAmount, scaledExchangeRate);
+    UnsignedLong actual = oracleExchangeRateService.convert(sourceAmount, scaledExchangeRate);
     assertThat(actual).isEqualTo(UnsignedLong.valueOf(expectedResult));
   }
 

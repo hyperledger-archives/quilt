@@ -5,6 +5,7 @@ import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
+import org.interledger.fx.OracleExchangeRateService;
 import org.interledger.fx.ScaledExchangeRate;
 import org.interledger.fx.Slippage;
 import org.interledger.link.Link;
@@ -31,19 +32,18 @@ import org.interledger.stream.pay.model.PaymentOptions;
 import org.interledger.stream.pay.model.PaymentReceipt;
 import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.model.StreamPacketReply;
 import org.interledger.stream.pay.probing.ExchangeRateProber;
 import org.interledger.stream.pay.probing.ExchangeRateProber.DefaultExchangeRateProber;
 import org.interledger.stream.pay.probing.model.EstimatedPaymentOutcome;
 import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.probing.model.PaymentTargetConditions.PaymentType;
 import org.interledger.stream.pay.trackers.AssetDetailsTracker;
-import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketAmount;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,16 +95,6 @@ public interface StreamPayer {
   CompletableFuture<PaymentReceipt> pay(Quote quote);
 
   /**
-   * Make a payment without first probing the payment path.
-   *
-   * @param paymentOptions A {@link PaymentOptions} with information about what to send in a payment.
-   *
-   * @return A {@link CompletableFuture} that completes with a payment {@link PaymentReceipt} (which has an
-   *   optionally-present {@link StreamPayerException} if anything went wrong with the payment).
-   */
-  CompletableFuture<PaymentReceipt> pay(PaymentOptions paymentOptions);
-
-  /**
    * The default implementation of {@link StreamPayer}.
    */
   class Default implements StreamPayer {
@@ -114,21 +104,21 @@ public interface StreamPayer {
     private final Link<? extends LinkSettings> link;
     private final SpspClient spspClient;
     private final StreamPacketEncryptionService streamPacketEncryptionService;
-    private final ExchangeRateProvider oracleExchangeRateProvider;
+    private final OracleExchangeRateService oracleOracleExchangeRateService;
 
     /**
      * Required-args Constructor.
      *
      * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
      * @param link                          A {@link Link}.
-     * @param oracleExchangeRateProvider    An {@link ExchangeRateProvider}.
+     * @param oracleOracleExchangeRateService     An {@link ExchangeRateProvider}.
      */
     public Default(
       final StreamPacketEncryptionService streamPacketEncryptionService,
       final Link<? extends LinkSettings> link,
-      final ExchangeRateProvider oracleExchangeRateProvider
+      final OracleExchangeRateService oracleOracleExchangeRateService
     ) {
-      this(streamPacketEncryptionService, link, oracleExchangeRateProvider, new SimpleSpspClient());
+      this(streamPacketEncryptionService, link, oracleOracleExchangeRateService, new SimpleSpspClient());
     }
 
     /**
@@ -136,19 +126,19 @@ public interface StreamPayer {
      *
      * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
      * @param link                          A {@link Link}.
-     * @param oracleExchangeRateProvider    An {@link ExchangeRateProvider}.
+     * @param oracleExchangeRateService           An {@link OracleExchangeRateService}.
      * @param spspClient                    A {@link SpspClient}.
      */
     @VisibleForTesting
     public Default(
       final StreamPacketEncryptionService streamPacketEncryptionService,
       final Link<? extends LinkSettings> link,
-      final ExchangeRateProvider oracleExchangeRateProvider,
+      final OracleExchangeRateService oracleExchangeRateService,
       final SpspClient spspClient
     ) {
       this.link = Objects.requireNonNull(link);
       this.spspClient = Objects.requireNonNull(spspClient);
-      this.oracleExchangeRateProvider = Objects.requireNonNull(oracleExchangeRateProvider);
+      this.oracleOracleExchangeRateService = Objects.requireNonNull(oracleExchangeRateService);
       this.streamPacketEncryptionService = Objects.requireNonNull(streamPacketEncryptionService);
     }
 
@@ -168,11 +158,23 @@ public interface StreamPayer {
         //////////////////
         // Probe the path.
         //////////////////
-        final ExchangeRateProbeOutcome rateProbeOutcome = exchangeRateProber.probePath(streamConnection);
+        final ExchangeRateProbeOutcome rateProbeOutcome;
+        if (paymentOptions.probePathUsingExternalRates()) {
+          // Because we are skipping the _actual_ rate probe, we expect the FX returned from the rate-prober to be simply
+          // 1:1. However, if the source and destination denominations are different, then we need to return an FX rate
+          // that is _not_ 1:1. Thus, we simply return the Oracle FX rates for the currency pair (i.e., the real-world
+          // external rates). Note that in the general case, checking the real-world rates for an identical currency pair
+          // is unnecessary because the two currencies are the same and should have a 1:1 rate. However, it is possible
+          // that two currencies with the same rate may have some sort of fee derivation in their FX rate, so we _always_
+          // consult the Oracle, even in a 1:1 FX scenario.
+          rateProbeOutcome = exchangeRateProber.probePathUsingExternalRates(streamConnection);
+        } else {
+          rateProbeOutcome = exchangeRateProber.probePath(streamConnection);
+        }
 
         // If there's an error, then throw immediately.
         rateProbeOutcome.errorPackets().stream().findFirst()
-          .map(streamPacketReply -> streamPacketReply.exception())
+          .map(StreamPacketReply::exception)
           .filter(Optional::isPresent)
           .map(Optional::get)
           .filter($ -> StreamPayerException.class.isAssignableFrom($.getClass()))
@@ -188,7 +190,7 @@ public interface StreamPayer {
           ));
 
         // Get the current FX rate.
-        final ExchangeRate currentExternalExchangeRate = getExchangeRate(paymentOptions, rateProbeOutcome);
+        final ExchangeRate currentExternalExchangeRate = this.getExternalExchangeRate(paymentOptions, rateProbeOutcome);
 
         final AccountDetails destinationAccountDetails = this.getDestinationAccountDetails(
           streamConnection, exchangeRateProber
@@ -221,9 +223,9 @@ public interface StreamPayer {
         final Function<Ratio, Ratio> shiftRate = (rate) -> this
           .shiftRateForNormalization(rate, sourceDenomination.assetScale(), destinationDenomination.assetScale());
 
-        final Ratio lowerBoundRate = shiftRate
+        final Ratio scaledLowerBoundRate = shiftRate
           .apply(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate());
-        final Ratio upperBoundRate = shiftRate
+        final Ratio scaledUpperBoundRate = shiftRate
           .apply(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate());
         final Ratio minExchangeRate = shiftRate.apply(minScaledExchangeRate);
         final BigInteger maxSourceAmount = new BigDecimal(estimatedPaymentOutcome.maxSendAmountInWholeSourceUnits())
@@ -260,8 +262,8 @@ public interface StreamPayer {
           .minAllowedExchangeRate(minExchangeRate)
           // Translate the upper and lower bound rates into a rate scaled for sender and receiver account scales.
           .estimatedExchangeRate(ExchangeRateProbeOutcome.builder().from(rateProbeOutcome)
-            .lowerBoundRate(lowerBoundRate)
-            .upperBoundRate(upperBoundRate)
+            .lowerBoundRate(scaledLowerBoundRate)
+            .upperBoundRate(scaledUpperBoundRate)
             .build())
           .build();
 
@@ -271,116 +273,6 @@ public interface StreamPayer {
         return quote;
       });
 
-    }
-
-    @Override
-    public CompletableFuture<PaymentReceipt> pay(final PaymentOptions paymentOptions) {
-      Objects.requireNonNull(paymentOptions);
-
-      final Denomination sourceDenomination = paymentOptions.senderAccountDetails().denomination()
-        .orElseThrow(() -> new IllegalArgumentException("Sender denomination is required."));
-
-      final Denomination receiverDenomination = paymentOptions.expectedDestinationDenomination()
-        .orElseThrow(() -> new IllegalArgumentException("Receiver denomination is required."));
-
-      final BigInteger totalAmountToSendInSourceUnits = this.obtainValidatedAmountToSend(paymentOptions);
-      final StreamConnectionDetails streamConnectionDetails = this
-        .fetchRecipientAccountDetails(paymentOptions.destinationPaymentPointer());
-      this.validateAllocationSchemes(paymentOptions.senderAccountDetails(), streamConnectionDetails);
-
-      final StreamConnection streamConnection = this.newStreamConnection(paymentOptions, streamConnectionDetails);
-      final AccountDetails receiverAccountsDetails = AccountDetails.builder()
-        .interledgerAddress(streamConnection.getDestinationAddress())
-        .denomination(receiverDenomination)
-        .build();
-
-      final PaymentSharedStateTracker paymentSharedStateTracker = new PaymentSharedStateTracker(streamConnection);
-      // Assume a 1:1 FX rate since we're not probing.
-      paymentSharedStateTracker.getExchangeRateTracker().updateRate(UnsignedLong.ONE, UnsignedLong.ONE);
-
-      // TODO: This should be optional...?
-      final ExchangeRateProbeOutcome rateProbeOutcome = ExchangeRateProbeOutcome.builder()
-        .maxPacketAmount(MaxPacketAmount.unknownMax())
-        .sourceDenomination(paymentOptions.senderAccountDetails().denomination())
-        .destinationDenomination(receiverDenomination)
-        .upperBoundRate(Ratio.ONE) // TODO: Is this correct?
-        .lowerBoundRate(Ratio.ONE) // TODO: Is this correct?
-        .build();
-
-      // Get the current FX rate.
-      // TODO: Change this to only require the source and dest denominations.
-      final ExchangeRate currentExternalExchangeRate = getExchangeRate(paymentOptions, rateProbeOutcome);
-
-      final ScaledExchangeRate scaledExternalRate = this.determineScaledExternalRate(
-        paymentOptions.senderAccountDetails(),
-        receiverAccountsDetails,
-        currentExternalExchangeRate,
-        paymentOptions.slippage()
-      );
-
-      final Ratio minScaledExchangeRate = scaledExternalRate.lowerBound();
-      logger.debug("Calculated min exchange rate of {}", minScaledExchangeRate);
-
-      final EstimatedPaymentOutcome estimatedPaymentOutcome = paymentSharedStateTracker
-        .getAmountTracker().setPaymentTarget(
-          PaymentType.FIXED_SEND,  // TODO: Invoices are fixed delivery, but not yet supported.
-          minScaledExchangeRate,
-          rateProbeOutcome.maxPacketAmount().value(),
-          totalAmountToSendInSourceUnits
-        );
-
-      logger.debug("Quote complete. Assembling normalized version");
-
-      // Normalize all values to the
-      final Function<Ratio, Ratio> shiftRate = (rate) -> this.shiftRateForNormalization(
-        rate, sourceDenomination.assetScale(), receiverDenomination.assetScale()
-      );
-
-      final Ratio lowerBoundRate = shiftRate
-        .apply(paymentSharedStateTracker.getExchangeRateTracker().getLowerBoundRate());
-      final Ratio upperBoundRate = shiftRate
-        .apply(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate());
-      final Ratio minExchangeRate = shiftRate.apply(minScaledExchangeRate);
-      final BigInteger maxSourceAmount = new BigDecimal(estimatedPaymentOutcome.maxSendAmountInWholeSourceUnits())
-        .movePointLeft(sourceDenomination.assetScale())
-        .setScale(0, RoundingMode.HALF_EVEN)
-        .toBigIntegerExact();
-      final BigInteger minDeliveryAmount = new BigDecimal(
-        estimatedPaymentOutcome.minDeliveryAmountInWholeDestinationUnits())
-        .movePointLeft(receiverDenomination.assetScale())
-        .setScale(0, RoundingMode.HALF_EVEN)
-        .toBigIntegerExact();
-
-      // Estimate how long the payment may take based on max packet amount, RTT, and rate of packet sending
-      final int packetFrequency = paymentSharedStateTracker.getPacingTracker().getPacketFrequency();
-      final Duration estimatedDuration = Duration.of(
-        estimatedPaymentOutcome.estimatedNumberOfPackets().multiply(BigInteger.valueOf(packetFrequency)).longValue(),
-        ChronoUnit.MILLIS
-      );
-
-      final Quote quote = Quote.builder()
-        .paymentOptions(paymentOptions)
-        .streamConnection(streamConnection)
-        .paymentSharedStateTracker(paymentSharedStateTracker)
-        .sourceAccount(paymentOptions.senderAccountDetails())
-        .destinationAccount(receiverAccountsDetails)
-        .estimatedDuration(estimatedDuration)
-        .estimatedPaymentOutcome(
-          EstimatedPaymentOutcome.builder()
-            .maxSendAmountInWholeSourceUnits(maxSourceAmount)
-            .minDeliveryAmountInWholeDestinationUnits(minDeliveryAmount)
-            .estimatedNumberOfPackets(estimatedPaymentOutcome.estimatedNumberOfPackets())
-            .build()
-        )
-        .minAllowedExchangeRate(minExchangeRate)
-        // Translate the upper and lower bound rates into a rate scaled for sender and receiver account scales.
-        .estimatedExchangeRate(ExchangeRateProbeOutcome.builder().from(rateProbeOutcome)
-          .lowerBoundRate(lowerBoundRate)
-          .upperBoundRate(upperBoundRate)
-          .build())
-        .build();
-
-      return this.pay(quote);
     }
 
     @Override
@@ -414,11 +306,11 @@ public interface StreamPayer {
      * Merely constructs a new instance of {@link ExchangeRateProber} whenever getQuote is called. Exists for mocking
      * during tests in order to simulate various exchange-rate scenarios.
      *
-     * @return
+     * @return A newly constructed {@link ExchangeRateProber}.
      */
     @VisibleForTesting
     protected ExchangeRateProber newExchangeRateProber() {
-      return new DefaultExchangeRateProber(streamPacketEncryptionService, link);
+      return new DefaultExchangeRateProber(streamPacketEncryptionService, link, oracleOracleExchangeRateService);
     }
 
     /**
@@ -428,7 +320,7 @@ public interface StreamPayer {
      * @param paymentOptions          A {@link PaymentOptions}.
      * @param streamConnectionDetails A {@link StreamConnectionDetails}.
      *
-     * @return
+     * @return A newly constructed {@link StreamConnection}.
      */
     @VisibleForTesting
     protected StreamConnection newStreamConnection(
@@ -449,25 +341,42 @@ public interface StreamPayer {
     // Private Helpers
     //////////////////
 
+    /**
+     * Helper method to get the external exchange rate using the supplied inputs.
+     *
+     * @param paymentOptions   A {@link PaymentOptions}.
+     * @param rateProbeOutcome A {@link ExchangeRateProbeOutcome} as obtained by probing the payment path.
+     *
+     * @return An {@link ExchangeRate}.
+     */
     @VisibleForTesting
-    protected ExchangeRate getExchangeRate(PaymentOptions paymentOptions, ExchangeRateProbeOutcome rateProbeOutcome) {
+    protected ExchangeRate getExternalExchangeRate(
+      final PaymentOptions paymentOptions, final ExchangeRateProbeOutcome rateProbeOutcome
+    ) {
+      Objects.requireNonNull(paymentOptions);
+      Objects.requireNonNull(rateProbeOutcome);
 
       try {
-        ExchangeRate exchangeRate = this.oracleExchangeRateProvider.getExchangeRate(
+        final ExchangeRate exchangeRate = this.oracleOracleExchangeRateService.getExchangeRate(
           paymentOptions.senderAccountDetails().denomination()
             .orElseThrow(() -> new StreamPayerException(
-              String.format("SourceAccount denomination is required for FX. sourceDenomination=%s",
-                rateProbeOutcome.destinationDenomination()), SendState.UnknownSourceAsset)).assetCode(),
+              String.format(
+                "SourceAccount denomination is required for FX. sourceAccountDetails=%s",
+                rateProbeOutcome.destinationDenomination()
+              ),
+              SendState.UnknownSourceAsset)),
           rateProbeOutcome.destinationDenomination()
-            .orElseThrow(() -> new StreamPayerException(String.format(
-              "Receiver denomination is required for FX (Receiver never shared asset details). "
-                + "destinationDenomination=%s",
-              rateProbeOutcome.destinationDenomination()), SendState.UnknownDestinationAsset)).assetCode()
-        );
+            .orElseThrow(() -> new StreamPayerException(
+              String.format(
+                "Receiver denomination is required for FX (Receiver never shared asset details). "
+                  + "rateProbeOutcome=%s",
+                rateProbeOutcome
+              ),
+              SendState.UnknownDestinationAsset)));
 
         if (exchangeRate.getFactor().numberValue(BigDecimal.class).compareTo(BigDecimal.ZERO) <= 0) {
           throw new StreamPayerException(String.format(
-            "External exchange rate was 0. paymentOptions=%s rateProbeOutcoime=%s",
+            "External exchange rate was 0. paymentOptions=%s rateProbeOutcome=%s",
             paymentOptions, rateProbeOutcome), SendState.ExternalRateUnavailable
           );
         }
@@ -499,11 +408,13 @@ public interface StreamPayer {
      * <p>For example, if an asset is denominated in U.S. Dollars, then the standard unit will be a "dollar." To
      * represent a fractional unit such as "cents", a scale of 2 must be used, where 100 cents equals 1.00 dollars.</p>
      *
-     * @param rate
-     * @param sourceAssetScale
-     * @param destinationAssetScale
+     * @param rate                  A {@link Ratio} representing the exchange rate from the source to destination
+     *                              asset.
+     * @param sourceAssetScale      A short representing the asset scale of the source account.
+     * @param destinationAssetScale A short representing the asset scale of the destination account.
      *
-     * @return
+     * @return A scaled {@link Ratio} that can be used directly to compute source to destination packet values with the
+     *   correct scale.
      */
     @VisibleForTesting
     protected Ratio shiftRateForNormalization(
@@ -589,7 +500,7 @@ public interface StreamPayer {
     /**
      * Ensure that the receiver has return a {@link Denomination} so that we can properly compute fx-rates.
      *
-     * @param accountDetails
+     * @param accountDetails A {@link AccountDetails} to inspect for a denomination.
      */
     @VisibleForTesting
     protected Denomination checkForSourceDenomination(final AccountDetails accountDetails) {
@@ -607,8 +518,11 @@ public interface StreamPayer {
     /**
      * Ensure that the receiver has return a {@link Denomination} so that we can properly compute fx-rates.
      *
-     * @param streamConnection
-     * @param exchangeRateProber
+     * @param streamConnection   A {@link StreamConnection}.
+     * @param exchangeRateProber An {@link ExchangeRateProber}.
+     *
+     * @return The receiver's {@link Denomination} as discovered via probing (or set directly before a {@link Quote} is
+     *   obtained).
      */
     @VisibleForTesting
     protected Denomination checkForReceiverDenomination(
@@ -631,8 +545,10 @@ public interface StreamPayer {
     /**
      * Ensure that the receiver has return a {@link Denomination} so that we can properly compute fx-rates.
      *
-     * @param streamConnection
-     * @param exchangeRateProber
+     * @param streamConnection   A {@link StreamConnection}.
+     * @param exchangeRateProber An {@link ExchangeRateProber}.
+     *
+     * @return An {@link AccountDetails} for the payment destination.
      */
     @VisibleForTesting
     protected AccountDetails getDestinationAccountDetails(
@@ -709,9 +625,7 @@ public interface StreamPayer {
 
       try {
         // Shift the amountToSend by the source account's asset scale to turn it into a whole number.
-        BigInteger scaledSendAmount = paymentOptions.amountToSend()
-          .movePointRight(sourceDenomination.assetScale()).toBigIntegerExact();
-        return scaledSendAmount;
+        return paymentOptions.amountToSend().movePointRight(sourceDenomination.assetScale()).toBigIntegerExact();
       } catch (Exception e) {
         throw new StreamPayerException("Invalid source scale", e, SendState.InvalidSourceAmount);
       }

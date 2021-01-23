@@ -44,4 +44,14 @@ public class DenominationsTest {
       .extracting("assetCode", "assetScale")
       .containsExactly("EUR", (short) 0);
   }
+
+  @Test
+  public void equalsHashCode() {
+    assertThat(Denominations.EUR).isEqualTo(Denominations.EUR);
+    assertThat(Denominations.EUR).isNotEqualTo(Denominations.EUR_CENTS);
+    assertThat(Denominations.EUR).isNotEqualTo(Denominations.USD);
+    assertThat(Denominations.EUR.hashCode()).isEqualTo(Denominations.EUR.hashCode());
+    assertThat(Denominations.EUR.hashCode()).isNotEqualTo(Denominations.EUR_CENTS.hashCode());
+    assertThat(Denominations.EUR.hashCode()).isNotEqualTo(Denominations.USD.hashCode());
+  }
 }

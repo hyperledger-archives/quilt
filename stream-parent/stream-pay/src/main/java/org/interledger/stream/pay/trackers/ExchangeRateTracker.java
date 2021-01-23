@@ -1,8 +1,12 @@
 package org.interledger.stream.pay.trackers;
 
+import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.core.fluent.FluentUnsignedLong;
 import org.interledger.core.fluent.Ratio;
+import org.interledger.fx.Denomination;
+import org.interledger.fx.OracleExchangeRateService;
+import org.interledger.fx.Slippage;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
 import org.interledger.stream.pay.probing.model.DeliveredExchangeRateBound;
@@ -13,6 +17,8 @@ import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,10 +41,16 @@ public class ExchangeRateTracker {
    */
   private final AtomicReference<Ratio> upperBoundRate;
 
+  private final OracleExchangeRateService oracleExchangeRateService;
+
   /**
    * No-args Constructor.
+   *
+   * @param oracleExchangeRateService An {@link OracleExchangeRateService}.
    */
-  public ExchangeRateTracker() {
+  public ExchangeRateTracker(final OracleExchangeRateService oracleExchangeRateService) {
+    this.oracleExchangeRateService = Objects.requireNonNull(oracleExchangeRateService);
+
     // These start off as null so that the greater/less-than code doesn't skip the first values.
     this.lowerBoundRate = new AtomicReference<>();
     this.upperBoundRate = new AtomicReference<>();
@@ -57,8 +69,45 @@ public class ExchangeRateTracker {
   private final Map<UnsignedLong, UnsignedLong> receivedAmounts = Maps.newConcurrentMap();
 
   /**
+   * Initialize this tracker to indicate an exchange rate as supplied from an external FX oracle.
+   *
+   * @param sourceDenomination      A {@link Denomination} for the source account.
+   * @param destinationDenomination A {@link Denomination} for the destination account.
+   */
+  public synchronized void initializeRates(
+    final Denomination sourceDenomination, final Denomination destinationDenomination
+
+  ) {
+    Objects.requireNonNull(sourceDenomination);
+    Objects.requireNonNull(destinationDenomination);
+
+    final BigDecimal scaledExternalExchangeRate = this.oracleExchangeRateService.getScaledExchangeRate(
+      sourceDenomination, destinationDenomination, Slippage.NONE
+    );
+
+    this.sentAmounts.clear();
+    this.receivedAmounts.clear();
+
+    final Ratio lowerBoundRate = Ratio.from(scaledExternalExchangeRate);
+    final Ratio upperBoundRate = Ratio.builder()
+      .from(lowerBoundRate)
+      .numerator(lowerBoundRate.numerator().add(BigInteger.ONE))
+      .build();
+
+    logger.debug("Initializing exchange rate to [{}, {}]", lowerBoundRate, upperBoundRate);
+
+    this.upperBoundRate.set(upperBoundRate);
+    this.lowerBoundRate.set(lowerBoundRate);
+
+    final UnsignedLong sourceAmount = FluentBigInteger.of(lowerBoundRate.denominator()).orMaxUnsignedLong();
+    final UnsignedLong destinationAmount = FluentBigInteger.of(lowerBoundRate.numerator()).orMaxUnsignedLong();
+    this.sentAmounts.put(destinationAmount, sourceAmount);
+    this.receivedAmounts.put(sourceAmount, destinationAmount);
+  }
+
+  /**
    * Update the current rate for this payment based upon the supplied values. Because intermediaries floor packet
-   * amounts, the exchange rate cannot be precisely computed: it's only known with some margin. However, as we send
+   * amounts, the exchange rate cannot be precisely computed: it's only known within some margin. However, as we send
    * packets of varying sizes, the upper and lower bounds should converge closer and closer to the real exchange rate.
    *
    * @param sourceAmount   An {@link UnsignedLong} representing the source amount (i.e., the amount sent).
