@@ -8,6 +8,7 @@ import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.Immutable;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.fluent.Percentage;
+import org.interledger.fx.DefaultOracleExchangeRateService;
 import org.interledger.fx.Denomination;
 import org.interledger.link.Link;
 import org.interledger.spsp.PaymentPointer;
@@ -737,7 +738,14 @@ public class SenderReceiverWithStreamPayerTest {
       .build();
 
     // PAY
-    return fromNode.streamPayer().pay(paymentOptions).join();
+    return fromNode.streamPayer().getQuote(paymentOptions)
+      .handle((quote, throwable) -> {
+        if (throwable != null) {
+          logger.error(throwable.getMessage(), throwable);
+        }
+
+        return fromNode.streamPayer().pay(quote).join();
+      }).join();
   }
 
   /**
@@ -805,7 +813,7 @@ public class SenderReceiverWithStreamPayerTest {
         streamSharedSecretCrypto
       ),
       ilpLink,
-      mockExchangeRateProvider(),
+      new DefaultOracleExchangeRateService(mockExchangeRateProvider()),
       mockSpspClient
     );
 
@@ -854,7 +862,7 @@ public class SenderReceiverWithStreamPayerTest {
         streamSharedSecretCrypto
       ),
       ilpLink,
-      mockExchangeRateProvider(),
+      new DefaultOracleExchangeRateService(mockExchangeRateProvider()),
       mockSpspClient
     );
 

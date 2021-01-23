@@ -4,9 +4,9 @@ import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.fluent.Percentage;
+import org.interledger.fx.DefaultOracleExchangeRateService;
 import org.interledger.fx.Denominations;
 import org.interledger.fx.Slippage;
-import org.interledger.fx.javax.money.providers.CryptoCompareRateProvider;
 import org.interledger.link.Link;
 import org.interledger.link.LinkId;
 import org.interledger.link.http.IlpOverHttpLink;
@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class IlpDrip {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger("IlpDrip");
+  private static final Logger LOGGER = LoggerFactory.getLogger(IlpDrip.class);
 
   private static final InterledgerAddress OPERATOR_ADDRESS
     = InterledgerAddress.of("private.org.interledger.ilpDrip.application~send-only");
@@ -139,14 +139,22 @@ public class IlpDrip {
       streamPayer = new StreamPayer.Default(
         streamPacketEncryptionService,
         link,
-        new CryptoCompareRateProvider(
-          () -> cryptoCompareApiKey,
-          createObjectMapperForProblemsJson(),
-          newHttpClient(),
-          Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)
-            .build()
-        ));
+        new DefaultOracleExchangeRateService(
+//          new CryptoCompareRateProvider(
+//            () -> cryptoCompareApiKey,
+//            createObjectMapperForProblemsJson(),
+//            newHttpClient(),
+//            Caffeine.newBuilder()
+//              .expireAfterWrite(1, TimeUnit.HOURS)
+//              .build()
+//          )
+          new FauxRateProvider(
+            Caffeine.newBuilder()
+              .expireAfterWrite(1, TimeUnit.HOURS)
+              .build()
+          )
+        )
+      );
 
       // Program never ends until it's halted at the command-line.
       while (true) {

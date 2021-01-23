@@ -394,7 +394,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_USD_50K))
       .slippage(Slippage.of(Percentage.of(new BigDecimal("0.01")))) // <-- Allow up to 1% slippage.
-      .skipInitialProbe(true)
+      .probePathUsingExternalRates(true)
       .build();
 
     streamPayer.getQuote(paymentOptions)
@@ -484,7 +484,7 @@ public class StreamPayerRustIT extends AbstractRustIT {
       .amountToSend(amountToSendInXrp)
       .destinationPaymentPointer(PaymentPointer.of(PAYMENT_POINTER_XRP_50K))
       .slippage(Slippage.of(Percentage.of(new BigDecimal("0.01")))) // <-- Allow up to 1% slippage.
-      .skipInitialProbe(true)
+      .probePathUsingExternalRates(true)
       .build();
 
     streamPayer.getQuote(paymentOptions)
