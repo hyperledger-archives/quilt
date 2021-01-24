@@ -77,12 +77,10 @@ public class AmountFilter implements StreamPacketFilter {
 
         // Check PaidFixedSend
         if (this.checkIfFixedSendPaymentIsComplete(amountTracker, target)) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(
-              "Payment complete: paid fixed source amount. sent {}",
-              amountTracker.getAmountSentInSourceUnits()
-            );
-          }
+          LOGGER.info(
+            "Payment complete: paid fixed source amount. sent {}",
+            amountTracker.getAmountSentInSourceUnits()
+          );
           return SendState.End;
         }
 

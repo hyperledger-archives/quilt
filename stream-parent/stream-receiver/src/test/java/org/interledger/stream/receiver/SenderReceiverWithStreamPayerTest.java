@@ -550,7 +550,7 @@ public class SenderReceiverWithStreamPayerTest {
     ));
 
     final BigDecimal paymentAmount = new BigDecimal(1); // <-- Send 1 XRP, or 1x10^6 units.
-    final int parallelism = 25;
+    final int parallelism = 50; // Anything more doesn't help perf.
     final int runs = 100;
 
     // queue up left-to-right send
@@ -567,6 +567,7 @@ public class SenderReceiverWithStreamPayerTest {
       assertThat(paymentReceipt.amountSentInSendersUnits()).isEqualTo(BigInteger.valueOf(1000000));
       assertThat(paymentReceipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(1000000));
       assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
+      assertThat(paymentReceipt.successfulPayment()).isTrue();
       assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isBetween(15, 30);
       assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isLessThan(5);
       assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isPositive();
