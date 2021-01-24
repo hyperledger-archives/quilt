@@ -118,7 +118,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   @Override
   public boolean auth(final PrepareAmounts prepareAmounts) {
     Objects.requireNonNull(prepareAmounts);
-    reduceAmountLeftToDeliver(prepareAmounts.minimumAmountToAccept());
+    reduceAmountLeftToDeliver(prepareAmounts.getMinimumAmountToAccept());
     // since we guard against going below 0 in the method above but may need to overdeliver to satisfy, just return true
     return true;
   }
@@ -138,7 +138,7 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
   @Override
   public void rollback(final PrepareAmounts prepareAmounts, final boolean packetRejected) {
     Objects.requireNonNull(prepareAmounts);
-    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.minimumAmountToAccept()));
+    this.amountLeftToDeliver.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getMinimumAmountToAccept()));
   }
 
   @Override
@@ -146,12 +146,12 @@ public class FixedReceiverAmountPaymentTracker implements ReceiverAmountPaymentT
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(deliveredAmount);
 
-    if (is(prepareAmounts.minimumAmountToAccept()).lessThan(deliveredAmount)) {
-      UnsignedLong overrage = deliveredAmount.minus(prepareAmounts.minimumAmountToAccept());
+    if (is(prepareAmounts.getMinimumAmountToAccept()).lessThan(deliveredAmount)) {
+      UnsignedLong overrage = deliveredAmount.minus(prepareAmounts.getMinimumAmountToAccept());
       reduceAmountLeftToDeliver(overrage);
     }
     this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
-    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.amountToSend()));
+    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override

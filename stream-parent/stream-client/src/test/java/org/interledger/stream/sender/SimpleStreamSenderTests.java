@@ -1,12 +1,10 @@
 package org.interledger.stream.sender;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamEncryptionService;
 
-import com.google.common.primitives.UnsignedLong;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,6 +17,7 @@ import java.time.Duration;
 /**
  * Unit tests for {@link SimpleStreamSender}.
  */
+@SuppressWarnings("deprecation")
 public class SimpleStreamSenderTests {
 
   @Rule
@@ -45,7 +44,7 @@ public class SimpleStreamSenderTests {
   }
 
   @Test
-  public void constructWithNullDurationo() {
+  public void constructWithNullDuration() {
     expectedException.expect(NullPointerException.class);
     new SimpleStreamSender(linkMock, null);
   }
@@ -66,17 +65,7 @@ public class SimpleStreamSenderTests {
   public void constructThreeArgWithNullExecutor() {
     expectedException.expect(NullPointerException.class);
     new SimpleStreamSender(
-        linkMock, Duration.ofMillis(10L), streamEncryptionServiceMock, mock(StreamConnectionManager.class), null
+      linkMock, Duration.ofMillis(10L), streamEncryptionServiceMock, mock(StreamConnectionManager.class), null
     );
   }
-
-//  @Test
-//  public void connectionStats() {
-//    SimpleStreamSender.ConnectionStatistics stats = SimpleStreamSender.ConnectionStatistics.builder()
-//        .numFulfilledPackets(10)
-//        .numRejectPackets(5)
-//        .amountDelivered(UnsignedLong.ONE)
-//        .build();
-//    assertThat(stats.totalPackets()).isEqualTo(15);
-//  }
 }

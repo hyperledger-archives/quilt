@@ -99,11 +99,11 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   public boolean auth(final PrepareAmounts prepareAmounts) {
     Objects.requireNonNull(prepareAmounts);
 
-    if (is(sentAmount.get().plus(prepareAmounts.amountToSend())).greaterThan(amountToSend)
-        || is(amountLeftToSend.get()).lessThan(prepareAmounts.amountToSend())) {
+    if (is(sentAmount.get().plus(prepareAmounts.getAmountToSend())).greaterThan(amountToSend)
+        || is(amountLeftToSend.get()).lessThan(prepareAmounts.getAmountToSend())) {
       return false;
     } else {
-      this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.amountToSend()));
+      this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.minus(prepareAmounts.getAmountToSend()));
       return true;
     }
 
@@ -113,7 +113,7 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
   public void rollback(final PrepareAmounts prepareAmounts, final boolean packetRejected) {
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(packetRejected);
-    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.amountToSend()));
+    this.amountLeftToSend.getAndUpdate(sourceAmount -> sourceAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override
@@ -121,7 +121,7 @@ public class FixedSenderAmountPaymentTracker implements SenderAmountPaymentTrack
     Objects.requireNonNull(prepareAmounts);
     Objects.requireNonNull(deliveredAmount);
     this.deliveredAmount.getAndUpdate(currentAmount -> currentAmount.plus(deliveredAmount));
-    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.amountToSend()));
+    this.sentAmount.getAndUpdate(currentAmount -> currentAmount.plus(prepareAmounts.getAmountToSend()));
   }
 
   @Override

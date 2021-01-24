@@ -25,7 +25,7 @@ public class PrepareAmountsTest {
     when(streamPacketMock.prepareAmount()).thenReturn(minimumAmountToAccept);
 
     PrepareAmounts actual = PrepareAmounts.from(preparePacketMock, streamPacketMock);
-    assertThat(actual.amountToSend()).isEqualTo(amountToSend);
-    assertThat(actual.minimumAmountToAccept()).isEqualTo(minimumAmountToAccept);
+    assertThat(actual.getAmountToSend()).isEqualTo(amountToSend);
+    assertThat(actual.getMinimumAmountToAccept()).isEqualTo(minimumAmountToAccept);
   }
 }

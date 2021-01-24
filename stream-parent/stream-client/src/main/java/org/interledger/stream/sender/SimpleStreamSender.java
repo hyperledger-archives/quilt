@@ -28,7 +28,7 @@ import org.interledger.stream.StreamConnectionId;
 import org.interledger.stream.StreamPacket;
 import org.interledger.stream.crypto.JavaxStreamEncryptionService;
 import org.interledger.stream.crypto.StreamEncryptionService;
-import org.interledger.stream.errors.StreamConnectionClosedException;
+import org.interledger.stream.StreamConnectionClosedException;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
 import org.interledger.stream.frames.ErrorCodes;
@@ -523,8 +523,8 @@ public class SimpleStreamSender implements StreamSender {
             congestionController.getMaxAmount(), senderDenomination
           ));
 
-        UnsignedLong amountToSend = amounts.amountToSend();
-        UnsignedLong receiverMinimum = amounts.minimumAmountToAccept();
+        UnsignedLong amountToSend = amounts.getAmountToSend();
+        UnsignedLong receiverMinimum = amounts.getMinimumAmountToAccept();
 
         if (amountToSend.equals(UnsignedLong.ZERO) || timeoutReached.get() || unrecoverableErrorEncountered.get()) {
           try {

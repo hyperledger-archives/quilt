@@ -1,8 +1,4 @@
-package org.interledger.stream.errors;
-
-import org.interledger.stream.StreamConnection;
-import org.interledger.stream.StreamConnectionId;
-import org.interledger.stream.StreamException;
+package org.interledger.stream;
 
 /**
  * A checked exception thrown when a Connection's sequence is too large or too small. This exception is checked so that
