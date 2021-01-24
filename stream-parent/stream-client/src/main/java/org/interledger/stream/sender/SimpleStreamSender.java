@@ -669,7 +669,7 @@ public class SimpleStreamSender implements StreamSender {
             logger.info("timeout reached, not sending packet");
             congestionController.onReject(preparePacket.getAmount(), InterledgerRejectPacket.builder()
               .code(InterledgerErrorCode.R00_TRANSFER_TIMED_OUT)
-              .message(String.format("Timeout reached before packet could be sent", preparePacket))
+              .message(String.format("Timeout reached before packet could be sent. preparePacket=%s", preparePacket))
               .build());
           }
         });

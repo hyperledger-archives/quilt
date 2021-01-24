@@ -535,7 +535,7 @@
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <linkXRef>false</linkXRef>
-            <failOnViolation>false</failOnViolation>
+            <failOnViolation>true</failOnViolation>
             <excludes>**/generated-sources/**/*,**/generated-test-sources/**/*</excludes>
             <sourceDirectories>
               <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
