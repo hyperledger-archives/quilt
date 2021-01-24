@@ -1,5 +1,6 @@
 package org.interledger.stream.pay.model;
 
+import org.interledger.core.fluent.FluentCompareTo;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 
 import com.google.common.primitives.UnsignedLong;
@@ -67,7 +68,7 @@ public interface PaymentReceipt {
    */
   @Derived
   default boolean successfulPayment() {
-    return !paymentError().isPresent();
+    return FluentCompareTo.is(amountLeftToSendInSendersUnits()).lessThanOrEqualTo(BigInteger.ZERO);
   }
 
   /**

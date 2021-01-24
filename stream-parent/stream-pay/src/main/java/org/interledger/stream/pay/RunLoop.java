@@ -199,7 +199,8 @@ class RunLoop extends AbstractPayWrapper {
         .upperBoundExchangeRate(paymentSharedStateTracker.getExchangeRateTracker().getUpperBoundRate())
         .build())
       .paymentError(Optional.ofNullable(finalStreamPayerException))
-      .build());
+      .build()
+    );
   }
 
   /**

@@ -20,6 +20,7 @@ import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.crypto.StreamSharedSecret;
 import org.interledger.stream.frames.ErrorCodes;
 import org.interledger.stream.model.AccountDetails;
+import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.filters.StreamPacketFilter;
 import org.interledger.stream.pay.filters.chain.StreamPacketFilterChain;
 import org.interledger.stream.pay.model.ModifiableStreamPacketRequest;
@@ -66,6 +67,9 @@ public class RunLoopTest {
 
   @Mock
   private StreamPacketFilterChain streamPacketFilterChainMock;
+
+  @Mock
+  private AmountTracker amountTrackerMock;
 
   @Before
   public void setUp() {
@@ -384,6 +388,223 @@ public class RunLoopTest {
     verifyNoMoreInteractions(linkMock);
   }
 
+  /**
+   * If a StreamPayerException is thrown from a nextState call, this the payment should still return a PaymentReceipt.
+   * This test validates that.
+   */
+  @Test
+  public void testFullRunWithStreamPayerExceptionInNextState() {
+    StreamPacketFilter filter1 = new StreamPacketFilter() {
+      private final AtomicInteger numRuns = new AtomicInteger(5);
+
+      @Override
+      public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
+        throw new StreamPayerException("foo", SendState.End);
+      }
+
+      @Override
+      public StreamPacketReply doFilter(StreamPacketRequest streamPacketRequest, StreamPacketFilterChain filterChain) {
+        return mock(StreamPacketReply.class);
+      }
+    };
+
+    RunLoop runLoop = new RunLoop(
+      linkMock,
+      Collections.singletonList(filter1),
+      streamPacketEncryptionService,
+      paymentSharedStateTrackerMock,
+      20
+    );
+
+    Quote quoteMock = this.doMocks();
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO); // <-- Simulate 0 sent.
+
+    final PaymentReceipt receipt = runLoop.start(quoteMock).join(); // <-- Execute the test
+
+    // Assertions...
+    assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
+    assertThat(receipt.successfulPayment()).isFalse();
+    assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+
+    verify(paymentSharedStateTrackerMock, times(3)).getAmountTracker();
+    verify(paymentSharedStateTrackerMock, times(3)).getStatisticsTracker();
+    verify(paymentSharedStateTrackerMock, times(2)).getExchangeRateTracker();
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
+    verify(linkMock).sendPacket(any());
+
+    verifyNoMoreInteractions(streamPacketFilterChainMock);
+    verifyNoMoreInteractions(paymentSharedStateTrackerMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
+    verifyNoMoreInteractions(linkMock);
+  }
+
+  /**
+   * If a RuntimeException is thrown from a nextState call, this the payment should still return a PaymentReceipt. This
+   * test validates that.
+   */
+  @Test
+  public void testFullRunWithRuntimeExceptionInNextState() {
+    StreamPacketFilter filter1 = new StreamPacketFilter() {
+      private final AtomicInteger numRuns = new AtomicInteger(5);
+
+      @Override
+      public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
+        throw new RuntimeException("foo");
+      }
+
+      @Override
+      public StreamPacketReply doFilter(StreamPacketRequest streamPacketRequest, StreamPacketFilterChain filterChain) {
+        return mock(StreamPacketReply.class);
+      }
+    };
+
+    RunLoop runLoop = new RunLoop(
+      linkMock,
+      Collections.singletonList(filter1),
+      streamPacketEncryptionService,
+      paymentSharedStateTrackerMock,
+      20
+    );
+
+    Quote quoteMock = this.doMocks();
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO); // <-- Simulate 0 sent.
+
+    final PaymentReceipt receipt = runLoop.start(quoteMock).join(); // <-- Execute the test
+
+    // Assertions...
+    assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
+    assertThat(receipt.successfulPayment()).isFalse();
+    assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+
+    verify(paymentSharedStateTrackerMock, times(3)).getAmountTracker();
+    verify(paymentSharedStateTrackerMock, times(3)).getStatisticsTracker();
+    verify(paymentSharedStateTrackerMock, times(2)).getExchangeRateTracker();
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
+    verify(linkMock).sendPacket(any());
+
+    verifyNoMoreInteractions(streamPacketFilterChainMock);
+    verifyNoMoreInteractions(paymentSharedStateTrackerMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
+    verifyNoMoreInteractions(linkMock);
+  }
+
+  /**
+   * If a RuntimeException is thrown from a doFilter, this the payment should still return a PaymentReceipt. This test
+   * validates that.
+   */
+  @Test
+  public void testFullRunWithRuntimeExceptionInDoFilter() {
+    StreamPacketFilter filter1 = new StreamPacketFilter() {
+      private final AtomicInteger numRuns = new AtomicInteger(5);
+
+      @Override
+      public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
+        int value = numRuns.decrementAndGet();
+        if (value == 0) {
+          return SendState.End;
+        } else {
+          return SendState.Ready;
+        }
+      }
+
+      @Override
+      public StreamPacketReply doFilter(StreamPacketRequest streamPacketRequest, StreamPacketFilterChain filterChain) {
+        throw new RuntimeException("foo");
+      }
+    };
+
+    RunLoop runLoop = new RunLoop(
+      linkMock,
+      Collections.singletonList(filter1),
+      streamPacketEncryptionService,
+      paymentSharedStateTrackerMock,
+      20
+    );
+
+    Quote quoteMock = this.doMocks();
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO); // <-- Simulate 0 sent.
+
+    final PaymentReceipt receipt = runLoop.start(quoteMock).join(); // <-- Execute the test
+
+    // Assertions...
+    assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
+    assertThat(receipt.successfulPayment()).isFalse();
+    assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+
+    verify(paymentSharedStateTrackerMock, times(3)).getAmountTracker();
+    verify(paymentSharedStateTrackerMock, times(3)).getStatisticsTracker();
+    verify(paymentSharedStateTrackerMock, times(2)).getExchangeRateTracker();
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
+    verify(linkMock).sendPacket(any());
+
+    verifyNoMoreInteractions(streamPacketFilterChainMock);
+    verifyNoMoreInteractions(paymentSharedStateTrackerMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
+    verifyNoMoreInteractions(linkMock);
+  }
+
+  /**
+   * If a StreamPayerException is thrown from a doFilter, this the payment should still return a PaymentReceipt. This
+   * test validates that.
+   */
+  @Test
+  public void testFullRunWithStreamPayerExceptionInDoFilter() {
+    StreamPacketFilter filter1 = new StreamPacketFilter() {
+      private final AtomicInteger numRuns = new AtomicInteger(5);
+
+      @Override
+      public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
+        int value = numRuns.decrementAndGet();
+        if (value == 0) {
+          return SendState.End;
+        } else {
+          return SendState.Ready;
+        }
+      }
+
+      @Override
+      public StreamPacketReply doFilter(StreamPacketRequest streamPacketRequest, StreamPacketFilterChain filterChain) {
+        throw new StreamPayerException("foo", SendState.QueryFailed);
+      }
+    };
+
+    RunLoop runLoop = new RunLoop(
+      linkMock,
+      Collections.singletonList(filter1),
+      streamPacketEncryptionService,
+      paymentSharedStateTrackerMock,
+      20
+    );
+
+    Quote quoteMock = this.doMocks();
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO); // <-- Simulate 0 sent.
+
+    final PaymentReceipt receipt = runLoop.start(quoteMock).join(); // <-- Execute the test
+
+    // Assertions...
+    assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
+    assertThat(receipt.successfulPayment()).isFalse();
+    assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
+    assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
+
+    verify(paymentSharedStateTrackerMock, times(3)).getAmountTracker();
+    verify(paymentSharedStateTrackerMock, times(3)).getStatisticsTracker();
+    verify(paymentSharedStateTrackerMock, times(2)).getExchangeRateTracker();
+    verify(streamPacketEncryptionService).toEncrypted(Mockito.<StreamSharedSecret>any(), any());
+    verify(linkMock).sendPacket(any());
+
+    verifyNoMoreInteractions(streamPacketFilterChainMock);
+    verifyNoMoreInteractions(paymentSharedStateTrackerMock);
+    verifyNoMoreInteractions(streamPacketEncryptionService);
+    verifyNoMoreInteractions(linkMock);
+  }
+
+  /**
+   * If a sleep is interrupted, we keep processing the run-loop to completion. This test validates that.
+   */
   @Test
   public void testFullRunWithInterruptedExceptionAfterSleepWait() {
     StreamPacketFilter filter1 = new StreamPacketFilter() {
@@ -434,6 +655,7 @@ public class RunLoopTest {
 
     // Assertions...
     assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
+    assertThat(receipt.successfulPayment()).isTrue();
     assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ONE);
 
@@ -531,7 +753,6 @@ public class RunLoopTest {
     when(streamConnectionMock.getDestinationAddress()).thenReturn(InterledgerAddress.of("example.foo"));
     when(streamConnectionMock.getStreamSharedSecret()).thenReturn(mock(StreamSharedSecret.class));
 
-    AmountTracker amountTrackerMock = mock(AmountTracker.class);
     when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTrackerMock);
     when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.ONE);
     when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE);
