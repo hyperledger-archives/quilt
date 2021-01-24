@@ -62,9 +62,10 @@ public interface PaymentReceipt {
   PaymentStatistics paymentStatistics();
 
   /**
-   * Indicates if the payment was completed successfully.
+   * Indicates if the payment was completed successfully. A payment is considered to be successful if it has delivered
+   * all of the payment (i.e., the "amount left to send" is 0).
    *
-   * @return true if payment was successful
+   * @return {@code true} if payment was successful; {@code false} otherwise.
    */
   @Derived
   default boolean successfulPayment() {
