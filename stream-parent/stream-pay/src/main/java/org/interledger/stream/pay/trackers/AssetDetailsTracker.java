@@ -99,7 +99,7 @@ public class AssetDetailsTracker {
             );
           } else {
             // The Denominations haven't changed, but this is a duplicate frame, so warn.
-            LOGGER.warn(
+            LOGGER.debug(
               "Stream receiver sent a duplicate Connection Asset Details, but this will be ignored. " +
                 "connectionAssetDetailsFrame={}", connectionAssetDetailsFrame
             );
