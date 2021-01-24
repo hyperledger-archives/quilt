@@ -240,13 +240,11 @@ public class AmountFilter implements StreamPacketFilter {
               this.isDestinationAmountValid(destinationAmountClaimed,
                 streamPacketRequest.minDestinationAmount()) == NOT_VALID
             ) {
-              if (LOGGER.isWarnEnabled()) {
-                LOGGER.warn(
-                  "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). " +
-                    "destinationAmountClaimed={}  minDestinationAmount={}",
-                  destinationAmountClaimed, streamPacketRequest.minDestinationAmount()
-                );
-              }
+              LOGGER.error(
+                "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). " +
+                  "destinationAmountClaimed={}  minDestinationAmount={}",
+                destinationAmountClaimed, streamPacketRequest.minDestinationAmount()
+              );
               amountTracker.setEncounteredProtocolViolation();
               return streamPacketRequest.minDestinationAmount();
             } else {
@@ -262,7 +260,7 @@ public class AmountFilter implements StreamPacketFilter {
           })
           .orElseGet(() -> {
             // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
-            LOGGER.warn("Ending payment: packet fulfilled with no authentic STREAM data");
+            LOGGER.error("Ending payment: packet fulfilled with no authentic STREAM data");
             amountTracker.setEncounteredProtocolViolation();
             return streamPacketRequest.minDestinationAmount();
           });
@@ -275,8 +273,8 @@ public class AmountFilter implements StreamPacketFilter {
           streamPacketReply.destinationAmountClaimed(), streamPacketRequest.minDestinationAmount()
         );
         if (destinationAmountValid == NOT_VALID) {
-          if (LOGGER.isWarnEnabled()) {
-            LOGGER.warn(
+          if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(
               "Packet rejected for insufficient rate: minDestinationAmount={} claimedDestinationAmount={}",
               streamPacketRequest.minDestinationAmount(), streamPacketReply.destinationAmountClaimed()
             );
