@@ -1,8 +1,11 @@
 package org.interledger.fx;
 
+import org.interledger.core.fluent.Ratio;
+
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Objects;
+
 import javax.money.convert.ExchangeRate;
 import javax.money.convert.ExchangeRateProvider;
 
@@ -23,7 +26,7 @@ public class DefaultOracleExchangeRateService implements OracleExchangeRateServi
   }
 
   @Override
-  public BigDecimal getScaledExchangeRate(
+  public ScaledExchangeRate getScaledExchangeRate(
     final Denomination sourceDenomination, final Denomination destinationDenomination, final Slippage slippage
   ) {
     Objects.requireNonNull(sourceDenomination);
@@ -44,7 +47,12 @@ public class DefaultOracleExchangeRateService implements OracleExchangeRateServi
     // Scale rate based on destination scale
     rateWithSlippage = rateWithSlippage.multiply(BigDecimal.TEN.pow(destinationDenomination.assetScale()));
 
-    return rateWithSlippage;
+    return ScaledExchangeRate.builder()
+      .originalSourceScale(sourceDenomination.assetScale())
+      .originalDestinationScale(destinationDenomination.assetScale())
+      .value(Ratio.from(rateWithSlippage))
+      .slippage(slippage)
+      .build();
   }
 
   @Override

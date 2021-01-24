@@ -1547,7 +1547,8 @@ public class StreamPayerDefaultTest {
       sourceAccountDetailsMock, destinationAccountDetailsMock, externalExchangeRateMock, slippageMock
     );
 
-    assertThat(actual.originalInputScale()).isEqualTo((short) 4);
+    assertThat(actual.originalSourceScale()).isEqualTo((short) 3);
+    assertThat(actual.originalDestinationScale()).isEqualTo((short) 4);
     assertThat(actual.slippage()).isEqualTo(Slippage.ONE_PERCENT);
     assertThat(actual.value().toBigDecimal()).isEqualTo(new BigDecimal("8.928571428571429"));
     assertThat(actual.lowerBound().toBigDecimal()).isEqualTo(new BigDecimal("8.83928571428571471"));

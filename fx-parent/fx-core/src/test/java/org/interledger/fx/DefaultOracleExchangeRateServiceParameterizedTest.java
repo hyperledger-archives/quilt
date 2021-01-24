@@ -169,7 +169,7 @@ public class DefaultOracleExchangeRateServiceParameterizedTest {
       Percentage.of(BigDecimal.valueOf(this.slippage))
     );
 
-    final BigDecimal scaledExchangeRate = oracleExchangeRateService
+    final ScaledExchangeRate scaledExchangeRate = oracleExchangeRateService
       .getScaledExchangeRate(senderDenomination, receiverDenomination, slippage);
 
     UnsignedLong actual = oracleExchangeRateService.convert(sourceAmount, scaledExchangeRate);

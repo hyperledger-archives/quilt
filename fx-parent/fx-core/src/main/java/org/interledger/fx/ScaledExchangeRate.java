@@ -31,12 +31,22 @@ public interface ScaledExchangeRate extends Comparable<ScaledExchangeRate> {
   Ratio value();
 
   /**
+   * The scale used to compute this scaled exchange rate. For example, if a scaled exchange rate has a `value` of 100,
+   * an original source scale of 2, and an original destination scale of `4`, then the original FX rate is 100.
+   * Conversely, if a scaled exchange rate has a `value` of 100, an original source scale of `2`, and an original
+   * destination scale of `0`, then the original FX rate is 0.01.
+   *
+   * @return A short representing the original source asset scale used to assemble this instance.
+   */
+  short originalSourceScale();
+
+  /**
    * The scale used to compute this scaled exchange rate. For example, if a scaled exchange rate has a value of 100.0,
    * and a scale of 2, then the actual rate is 1.0.
    *
-   * @return A short.
+   * @return A short representing the original destination asset scale used to assemble this instance.
    */
-  short originalInputScale();
+  short originalDestinationScale();
 
   /**
    * The amount of slippage that this scaled exchange rate will tolerate. Used to compute the upper and lower-bound

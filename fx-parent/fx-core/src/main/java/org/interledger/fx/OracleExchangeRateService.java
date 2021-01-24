@@ -2,11 +2,15 @@ package org.interledger.fx;
 
 import static org.interledger.core.fluent.FluentCompareTo.is;
 
+import org.interledger.core.fluent.FluentBigInteger;
+import org.interledger.core.fluent.Ratio;
+
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedLong;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.BigInteger;
+
 import javax.money.convert.ExchangeRate;
 
 /**
@@ -25,9 +29,9 @@ public interface OracleExchangeRateService {
    * @param slippage                A {@link Slippage} containing the maximum acceptable slippage percentage below which
    *                                a calculated minimum exchange rate will be tolerated.
    *
-   * @return A {@link BigDecimal} representing a scaled FX rate.
+   * @return A {@link ScaledExchangeRate} representing a scaled FX rate.
    */
-  BigDecimal getScaledExchangeRate(
+  ScaledExchangeRate getScaledExchangeRate(
     Denomination sourceDenomination, Denomination destinationDenomination, Slippage slippage
   );
 
@@ -45,24 +49,22 @@ public interface OracleExchangeRateService {
    * Convert the provided {@code sourceAmount} into a destination amount using the supplied {@code scaledExchangeRate}.
    *
    * @param sourceAmount       A {@link BigDecimal} representing the source amount (e.g., 1.0 USD).
-   * @param scaledExchangeRate A {@link BigDecimal} representing the scaled exchange rate (e.g., 4,000,000.0)
+   * @param scaledExchangeRate A {@link ScaledExchangeRate} representing the scaled exchange rate (e.g., 4,000,000 or
+   *                           0.00025)
    *
    * @return A {@link BigDecimal} containing a new amount that represents the {@code sourceAmount} converted into a
    *   destination amount using the supplied scaled rate.
    */
-  default UnsignedLong convert(UnsignedLong sourceAmount, BigDecimal scaledExchangeRate) {
+  default UnsignedLong convert(UnsignedLong sourceAmount, ScaledExchangeRate scaledExchangeRate) {
     Preconditions.checkArgument(
       is(sourceAmount).greaterThanEqualTo(UnsignedLong.ZERO), "sourceAmount must not be negative"
     );
     Preconditions.checkArgument(
-      is(scaledExchangeRate).greaterThanEqualTo(BigDecimal.ZERO), "scaledExchangeRate must not be negative"
+      is(scaledExchangeRate.value()).greaterThanEqualTo(Ratio.ZERO), "scaledExchangeRate must not be negative"
     );
 
     // Apply exchange rate
-    final BigDecimal destinationAmount = new BigDecimal(sourceAmount.bigIntegerValue()).multiply(scaledExchangeRate);
-
-    // Round up for safety
-    return UnsignedLong.valueOf(destinationAmount.setScale(0, RoundingMode.CEILING)
-      .toBigIntegerExact()); // Assumes sourceAmount is non-negative.
+    final BigInteger destinationAmount = scaledExchangeRate.value().multiplyCeil(sourceAmount.bigIntegerValue());
+    return FluentBigInteger.of(destinationAmount).orMaxUnsignedLong();
   }
 }

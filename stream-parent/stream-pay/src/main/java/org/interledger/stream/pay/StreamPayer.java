@@ -109,9 +109,9 @@ public interface StreamPayer {
     /**
      * Required-args Constructor.
      *
-     * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
-     * @param link                          A {@link Link}.
-     * @param oracleOracleExchangeRateService     An {@link ExchangeRateProvider}.
+     * @param streamPacketEncryptionService   A {@link StreamPacketEncryptionService}.
+     * @param link                            A {@link Link}.
+     * @param oracleOracleExchangeRateService An {@link ExchangeRateProvider}.
      */
     public Default(
       final StreamPacketEncryptionService streamPacketEncryptionService,
@@ -126,7 +126,7 @@ public interface StreamPayer {
      *
      * @param streamPacketEncryptionService A {@link StreamPacketEncryptionService}.
      * @param link                          A {@link Link}.
-     * @param oracleExchangeRateService           An {@link OracleExchangeRateService}.
+     * @param oracleExchangeRateService     An {@link OracleExchangeRateService}.
      * @param spspClient                    A {@link SpspClient}.
      */
     @VisibleForTesting
@@ -492,7 +492,8 @@ public interface StreamPayer {
 
       return ScaledExchangeRate.builder()
         .value(scaledExternalRate)
-        .originalInputScale(destinationAccountAssetScale)
+        .originalSourceScale(sourceAccountAssetScale)
+        .originalDestinationScale(destinationAccountAssetScale)
         .slippage(slippage)
         .build();
     }

@@ -6,6 +6,7 @@ import org.interledger.core.fluent.FluentUnsignedLong;
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denomination;
 import org.interledger.fx.OracleExchangeRateService;
+import org.interledger.fx.ScaledExchangeRate;
 import org.interledger.fx.Slippage;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
 import org.interledger.stream.pay.model.SendState;
@@ -17,7 +18,6 @@ import com.google.common.primitives.UnsignedLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Objects;
@@ -34,11 +34,13 @@ public class ExchangeRateTracker {
   /**
    * Realized exchange rate is greater than or equal to this ratio (inclusive) (i.e., destination / source).
    */
+  // TODO: These are scaled.
   private final AtomicReference<Ratio> lowerBoundRate;
 
   /**
    * The realized exchange-rate is less than this ratio (exclusive) (i.e., destination / source).
    */
+  // TODO: These are scaled.
   private final AtomicReference<Ratio> upperBoundRate;
 
   private final OracleExchangeRateService oracleExchangeRateService;
@@ -81,14 +83,14 @@ public class ExchangeRateTracker {
     Objects.requireNonNull(sourceDenomination);
     Objects.requireNonNull(destinationDenomination);
 
-    final BigDecimal scaledExternalExchangeRate = this.oracleExchangeRateService.getScaledExchangeRate(
+    final ScaledExchangeRate scaledExternalExchangeRate = this.oracleExchangeRateService.getScaledExchangeRate(
       sourceDenomination, destinationDenomination, Slippage.NONE
     );
 
     this.sentAmounts.clear();
     this.receivedAmounts.clear();
 
-    final Ratio lowerBoundRate = Ratio.from(scaledExternalExchangeRate);
+    final Ratio lowerBoundRate = scaledExternalExchangeRate.value();
     final Ratio upperBoundRate = Ratio.builder()
       .from(lowerBoundRate)
       .numerator(lowerBoundRate.numerator().add(BigInteger.ONE))
