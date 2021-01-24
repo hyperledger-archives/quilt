@@ -16,23 +16,23 @@
   <dependencies>
     <dependency>
       <groupId>org.interledger</groupId>
+      <artifactId>codecs-ilp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>codecs-stream</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>fx-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
       <artifactId>jackson-datatypes</artifactId>
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
       <artifactId>ilp-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.interledger</groupId>
-      <artifactId>stream-client</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.interledger</groupId>
-      <artifactId>stream-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.interledger</groupId>
-      <artifactId>codecs-ilp</artifactId>
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
@@ -44,11 +44,31 @@
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
+      <artifactId>stream-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>stream-crypto</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>stream-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
+      <artifactId>stream-pay</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.interledger</groupId>
       <artifactId>spsp-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
       <artifactId>spsp-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

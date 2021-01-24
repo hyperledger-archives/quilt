@@ -38,7 +38,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Example how to use Quilt to send a STREAM payment. See this module's README for more details.
+ * Example how to use Quilt to send a STREAM payment using {@link SimpleStreamSender}. See this module's README for more
+ * details.
  */
 public class SendMoneyExample {
 
@@ -53,8 +54,8 @@ public class SendMoneyExample {
     "https://rxprod.wc.wallet.ripplex.io/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
 
   private static final InterledgerAddress OPERATOR_ADDRESS =
-    InterledgerAddress.of("private.org.interledger.examples.sendmoneyexample").with(SENDER_ACCOUNT_USERNAME);
-
+    InterledgerAddress.of("private.org.interledger.examples.send-money-with-stream-sender-example")
+      .with(SENDER_ACCOUNT_USERNAME);
 
   /**
    * Main method.

@@ -6,6 +6,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.fluent.Percentage;
 import org.interledger.fx.DefaultOracleExchangeRateService;
 import org.interledger.fx.Denominations;
+import org.interledger.fx.FauxRateProvider;
 import org.interledger.fx.Slippage;
 import org.interledger.link.Link;
 import org.interledger.link.LinkId;
@@ -25,7 +26,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.CookieJar;
@@ -148,11 +148,7 @@ public class IlpDrip {
 //              .expireAfterWrite(1, TimeUnit.HOURS)
 //              .build()
 //          )
-          new FauxRateProvider(
-            Caffeine.newBuilder()
-              .expireAfterWrite(1, TimeUnit.HOURS)
-              .build()
-          )
+          new FauxRateProvider(new BigDecimal("0.25"))
         )
       );
 

@@ -76,22 +76,6 @@
       <artifactId>jackson-datatype-jdk8</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.money</groupId>
-      <artifactId>money-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.javamoney.moneta</groupId>
-      <artifactId>moneta-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.javamoney.moneta</groupId>
-      <artifactId>moneta-convert</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>

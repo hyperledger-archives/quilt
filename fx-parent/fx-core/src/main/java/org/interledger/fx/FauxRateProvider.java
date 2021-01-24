@@ -1,10 +1,11 @@
-package org.interledger.examples.drip;
+package org.interledger.fx;
 
 import static org.javamoney.moneta.spi.AbstractCurrencyConversion.KEY_SCALE;
 
-import org.interledger.fx.ExchangeRateException;
+import org.interledger.core.fluent.FluentCompareTo;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.javamoney.moneta.convert.ExchangeRateBuilder;
 import org.javamoney.moneta.spi.AbstractRateProvider;
 import org.javamoney.moneta.spi.DefaultNumberValue;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -25,26 +27,49 @@ import javax.money.convert.ProviderContextBuilder;
 import javax.money.convert.RateType;
 
 /**
- * A faux {@link ExchangeRateProvider} that loads FX data from memory.
+ * A faux {@link ExchangeRateProvider} that loads faux FX data from memory for all identity rates, and for USD to XRP
+ * rates.
  */
 public class FauxRateProvider extends AbstractRateProvider {
 
-  private static final Logger logger = LoggerFactory.getLogger(FauxRateProvider.class.getName());
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   private static final ProviderContext CONTEXT = ProviderContextBuilder.of("FAUX", RateType.ANY)
     .set("providerDescription", "Faux API Rate (USD, XRP only)")
     .build();
 
   private final Cache<ConversionQuery, ExchangeRate> exchangeRateCache;
+  private final BigDecimal fauxFxRate;
+  private final BigDecimal inverseFauxFxRate;
+
+  /**
+   * Required-args Constructor.
+   *
+   * @param fauxFxRate An {@link BigDecimal} that sets the FX rate for all calls.
+   */
+  public FauxRateProvider(final BigDecimal fauxFxRate) {
+    this(fauxFxRate, Caffeine.newBuilder().build());
+  }
 
   /**
    * Required-args Constructor.
    *
    * @param exchangeRateCache An {@link Cache} for exchange rates.
    */
-  public FauxRateProvider(final Cache<ConversionQuery, ExchangeRate> exchangeRateCache) {
+  public FauxRateProvider(
+    final BigDecimal fauxFxRate, final Cache<ConversionQuery, ExchangeRate> exchangeRateCache
+  ) {
     super(CONTEXT);
+
+    this.fauxFxRate = Objects.requireNonNull(fauxFxRate);
+    this.inverseFauxFxRate = FluentCompareTo.is(fauxFxRate).lessThanOrEqualTo(BigDecimal.ZERO) ?
+      BigDecimal.ONE :
+      BigDecimal.ONE.divide(fauxFxRate, MathContext.DECIMAL128);
+
     this.exchangeRateCache = Objects.requireNonNull(exchangeRateCache);
+
+    logger.info("USD to XRP Faux Rate: {}", this.fauxFxRate);
+    logger.info("XRP-to-USD Faux Rate: {}", this.inverseFauxFxRate);
   }
 
   // Access a {@link ExchangeRate} using the given currencies.
@@ -105,9 +130,9 @@ public class FauxRateProvider extends AbstractRateProvider {
         // map this relationship. We ask the API, convert `XRP` (fsym) into `USD` (tsym). We get a response
         // containing a map of values keyed by each `tsym`. So, we can map the `tsym` to the terminating currency.
         if (baseCurrencyCode.equalsIgnoreCase("XRP") && terminatingCurrencyCode.equalsIgnoreCase("USD")) {
-          builder.setFactor(new DefaultNumberValue(new BigDecimal("0.25")));
+          builder.setFactor(new DefaultNumberValue(fauxFxRate));
         } else if (baseCurrencyCode.equalsIgnoreCase("USD") && terminatingCurrencyCode.equalsIgnoreCase("XRP")) {
-          builder.setFactor(new DefaultNumberValue(new BigDecimal("4.0")));
+          builder.setFactor(new DefaultNumberValue(inverseFauxFxRate));
         } else {
           throw new ExchangeRateException("This provider only supports XRP:USD or Identity rates.");
         }
