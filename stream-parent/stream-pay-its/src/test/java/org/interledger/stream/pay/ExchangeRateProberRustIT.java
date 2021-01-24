@@ -1,5 +1,7 @@
 package org.interledger.stream.pay;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.interledger.core.fluent.Ratio;
 import org.interledger.fx.Denominations;
 import org.interledger.link.Link;
@@ -11,7 +13,6 @@ import org.interledger.stream.pay.probing.model.ExchangeRateProbeOutcome;
 import org.interledger.stream.pay.trackers.MaxPacketAmountTracker.MaxPacketState;
 
 import com.google.common.primitives.UnsignedLong;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -40,30 +41,27 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
 
     final ExchangeRateProbeOutcome exchangeRateProbeOutcome = exchangeRateProber.probePath(streamConnection);
 
-    Assertions.assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
-    Assertions.assertThat(exchangeRateProbeOutcome.destinationDenomination().get())
+    assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
+    assertThat(exchangeRateProbeOutcome.destinationDenomination().get())
       .isEqualTo(Denominations.USD_MILLI_DOLLARS);
-    Assertions.assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(
+    assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(
       Ratio.builder().numerator(BigInteger.valueOf(2)).denominator(BigInteger.valueOf(10000L)).build()
     );
-    Assertions.assertThat(exchangeRateProbeOutcome.upperBoundRate()).isEqualTo(
+    assertThat(exchangeRateProbeOutcome.upperBoundRate()).isEqualTo(
       Ratio.builder().numerator(BigInteger.valueOf(3)).denominator(BigInteger.valueOf(10000L)).build()
     );
 
-    // Even though none of the probe packets are exactly 50k, The MaxPacketAmount should be discovered imprecisely.
-    // This is especially true for the Java Connector, which has a bug that doesn't send meta-data.
-    // See https://github.com/interledger4j/ilpv4-connector/issues/660
-    // assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.ImpreciseMax);
-    // assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(99999L));
-    // assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
+     assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState()).isEqualTo(MaxPacketState.PreciseMax);
+     assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(50000L));
+     assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
 
     // Likewise, for the RustConnector, it doesn't send _any_ F08 rejections for the max-packet amount.
-    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState())
+    assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState())
       .isEqualTo(MaxPacketState.PreciseMax);
-    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(50000L));
+    assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.valueOf(50000L));
     // This value is 10000 because the probe amount of 100000 is rejected via F08, so we never actually validate
     // anything greater than 10,000.
-    Assertions.assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
+    assertThat(exchangeRateProbeOutcome.verifiedPathCapacity()).isEqualTo(UnsignedLong.valueOf(10000L));
   }
 
   /**
@@ -87,20 +85,20 @@ public class ExchangeRateProberRustIT extends AbstractRustIT {
 
     final ExchangeRateProbeOutcome exchangeRateProbeOutcome = exchangeRateProber.probePath(streamConnection);
 
-    Assertions.assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
-    Assertions.assertThat(exchangeRateProbeOutcome.destinationDenomination().get())
+    assertThat(exchangeRateProbeOutcome.sourceDenomination().get()).isEqualTo(Denominations.XRP_MILLI_DROPS);
+    assertThat(exchangeRateProbeOutcome.destinationDenomination().get())
       .isEqualTo(Denominations.XRP_MILLI_DROPS);
-    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState())
+    assertThat(exchangeRateProbeOutcome.maxPacketAmount().maxPacketState())
       .isEqualTo(MaxPacketState.UnknownMax);
-    Assertions.assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
-    Assertions.assertThat(exchangeRateProbeOutcome.verifiedPathCapacity())
+    assertThat(exchangeRateProbeOutcome.maxPacketAmount().value()).isEqualTo(UnsignedLong.MAX_VALUE);
+    assertThat(exchangeRateProbeOutcome.verifiedPathCapacity())
       .isEqualTo(UnsignedLong.valueOf(1000000000000L));
-    Assertions.assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(Ratio.builder()
+    assertThat(exchangeRateProbeOutcome.lowerBoundRate()).isEqualTo(Ratio.builder()
       .numerator(BigInteger.valueOf(1000000000000L))
       .denominator(BigInteger.valueOf(1000000000000L))
       .build()
     );
-    Assertions.assertThat(exchangeRateProbeOutcome.upperBoundRate()).isEqualTo(Ratio.builder()
+    assertThat(exchangeRateProbeOutcome.upperBoundRate()).isEqualTo(Ratio.builder()
       .numerator(BigInteger.valueOf(1000000000001L))
       .denominator(BigInteger.valueOf(1000000000000L))
       .build()
