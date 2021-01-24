@@ -82,18 +82,22 @@ public class FailureFilter implements StreamPacketFilter {
       throw new StreamPayerException("Remote connection was closed by the receiver.", SendState.ClosedByRecipient);
     }
 
-    // This implementation tolerates failures. If it only _ever_ gets failures, then the implementation will halt due
-    // to timeout.
-//    if (FluentCompareTo.is(computeFailurePercentage()).greaterThan(Percentage.FIFTY_PERCENT)) {
-//      final String errorMessage = String.format(
-//        "Too many overall rejections. Reject:Fulfill=%s:%s (%s failure)",
-//        statisticsTracker.getNumRejects(),
-//        statisticsTracker.getNumFulfills(),
-//        computeFailurePercentage()
-//      );
-//      //Too many rejects in proportion to the number of fulfills.
-//      throw new StreamPayerException(errorMessage, SendState.End);
-//    }
+    // The JS implementation tracks a failure-percentage. Because this feature is not yet configurable, it is difficult
+    // to use with the Lossy tests. In addition, there are certain terminal failure-types that trigger an end to the
+    // payment, so this %-based cancellation seems somewhat unnecessary, especially on lossy connections where the
+    // lossiness is not related to terinal errors. Therefore, we leave this code around just in case, but it is
+    // otherwise unused.
+
+    // if (FluentCompareTo.is(computeFailurePercentage()).greaterThan(Percentage.FIFTY_PERCENT)) {
+    //   final String errorMessage = String.format(
+    //     "Too many overall rejections. Reject:Fulfill=%s:%s (%s failure)",
+    //     statisticsTracker.getNumRejects(),
+    //     statisticsTracker.getNumFulfills(),
+    //     computeFailurePercentage()
+    //   );
+    //   //Too many rejects in proportion to the number of fulfills.
+    //   throw new StreamPayerException(errorMessage, SendState.End);
+    // }
 
     return getLastFulfillmentTime()
       .map(lastFulfillTime -> {
