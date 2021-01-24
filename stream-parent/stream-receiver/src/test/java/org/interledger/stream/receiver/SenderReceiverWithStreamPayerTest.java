@@ -460,7 +460,7 @@ public class SenderReceiverWithStreamPayerTest {
     assertThat(paymentReceipt.amountLeftToSendInSendersUnits()).isEqualTo(BigInteger.ZERO);
     assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
     assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // <-- Expect ~>40 rejections.
-    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(51);
+    assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
     assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
     assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
       .isEqualTo(new BigDecimal("1"));
