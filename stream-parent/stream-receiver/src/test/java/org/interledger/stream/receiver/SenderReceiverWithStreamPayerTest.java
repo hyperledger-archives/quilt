@@ -241,11 +241,7 @@ public class SenderReceiverWithStreamPayerTest {
     assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
     assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ rejects.
     assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
-    // Should be somewhere around 20%.
-    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
-      Percentage.of(new BigDecimal("0.10")),
-      Percentage.of(new BigDecimal("0.30"))
-    );
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
     assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
       .isEqualTo(new BigDecimal("1"));
     assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
@@ -280,11 +276,7 @@ public class SenderReceiverWithStreamPayerTest {
     assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
     assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // <-- Expect some rejections.
     assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
-    // Should be somewhere around 20%.
-    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
-      Percentage.of(new BigDecimal("0.40")),
-      Percentage.of(new BigDecimal("0.60"))
-    );
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
     assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
       .isEqualTo(new BigDecimal("1"));
     assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
@@ -434,11 +426,7 @@ public class SenderReceiverWithStreamPayerTest {
     assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
     assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // Should be _some_ rejects.
     assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(50);
-    // Should be somewhere around 20%.
-    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
-      Percentage.of(new BigDecimal("0.10")),
-      Percentage.of(new BigDecimal("0.30"))
-    );
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
     assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
       .isEqualTo(new BigDecimal("1"));
     assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
@@ -473,11 +461,7 @@ public class SenderReceiverWithStreamPayerTest {
     assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isEqualTo(50);
     assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isPositive(); // <-- Expect ~>40 rejections.
     assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isGreaterThan(51);
-    // Should be somewhere around 20%.
-    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isBetween(
-      Percentage.of(new BigDecimal("0.40")),
-      Percentage.of(new BigDecimal("0.60"))
-    );
+    assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ONE_PERCENT);
     assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal())
       .isEqualTo(new BigDecimal("1"));
     assertThat(paymentReceipt.paymentStatistics().upperBoundExchangeRate().toBigDecimal())
@@ -586,7 +570,6 @@ public class SenderReceiverWithStreamPayerTest {
       assertThat(paymentReceipt.paymentStatistics().numFulfilledPackets()).isBetween(15, 30);
       assertThat(paymentReceipt.paymentStatistics().numRejectPackets()).isLessThan(5);
       assertThat(paymentReceipt.paymentStatistics().numTotalPackets()).isPositive();
-      //assertThat(paymentReceipt.paymentStatistics().packetFailurePercentage()).isGreaterThan(Percentage.ZERO_PERCENT);
       assertThat(paymentReceipt.paymentStatistics().lowerBoundExchangeRate().toBigDecimal()).isBetween(
         BigDecimal.ONE, BigDecimal.valueOf(1.1)
       );
