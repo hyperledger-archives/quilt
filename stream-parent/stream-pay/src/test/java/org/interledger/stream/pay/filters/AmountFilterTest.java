@@ -34,6 +34,7 @@ import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.collect.Sets;
 import com.google.common.primitives.UnsignedLong;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,6 +78,15 @@ public class AmountFilterTest {
 
     // All Happy-path settings.
     this.initializeHappyPath();
+
+    when(amountTrackerMock.getAmountLeftToSend()).thenReturn(BigInteger.ZERO);
+
+    when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO);
+
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.ZERO);
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ZERO);
 
     when(paymentSharedStateTrackerMock.getAmountTracker()).thenReturn(amountTrackerMock);
     when(paymentSharedStateTrackerMock.getMaxPacketAmountTracker()).thenReturn(maxPacketAmountTrackerMock);
@@ -664,6 +674,7 @@ public class AmountFilterTest {
 
     verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(any());
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
@@ -706,6 +717,7 @@ public class AmountFilterTest {
 
     verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(any());
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
@@ -751,6 +763,7 @@ public class AmountFilterTest {
     verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
     verify(amountTrackerMock).addAmountDelivered(UnsignedLong.ZERO);
@@ -794,6 +807,7 @@ public class AmountFilterTest {
 
     verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(any());
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
@@ -838,6 +852,7 @@ public class AmountFilterTest {
     verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(any());
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock, times(2)).getPaymentTargetConditions();
     verifyNoMoreInteractions(amountTrackerMock);
@@ -879,6 +894,7 @@ public class AmountFilterTest {
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(UnsignedLong.ONE);
     verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
     verify(amountTrackerMock).addAmountDelivered(UL_TEN);
     verify(amountTrackerMock).increaseDeliveryShortfall(any());
@@ -936,6 +952,7 @@ public class AmountFilterTest {
 
     verify(amountTrackerMock).addToSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).addToDestinationAmountInFlight(UnsignedLong.ZERO);
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(UnsignedLong.ONE);
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(UnsignedLong.valueOf(2L));
     verify(amountTrackerMock).addAmountSent(UnsignedLong.ONE);
@@ -979,6 +996,7 @@ public class AmountFilterTest {
     verify(amountTrackerMock).addToDestinationAmountInFlight(any());
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(any());
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(any());
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(any());
     verify(amountTrackerMock).addAmountSent(any());
     verify(amountTrackerMock).addAmountDelivered(UL_TEN);
     verify(amountTrackerMock, times(3)).getPaymentTargetConditions();
@@ -1018,6 +1036,7 @@ public class AmountFilterTest {
 
     verify(amountTrackerMock).addToSourceAmountInFlight(any());
     verify(amountTrackerMock).addToDestinationAmountInFlight(any());
+    verify(amountTrackerMock).subtractFromSourceAmountScheduled(any());
     verify(amountTrackerMock).subtractFromSourceAmountInFlight(any());
     verify(amountTrackerMock).subtractFromDestinationAmountInFlight(any());
     verify(amountTrackerMock).addAmountSent(any());
@@ -1484,7 +1503,7 @@ public class AmountFilterTest {
 
     final BigInteger actual = amountFilter
       .computeRemainingAmountToBeDelivered(amountTrackerMock, paymentTargetConditions);
-    assertThat(actual).isEqualTo(BigInteger.valueOf(-1));
+    assertThat(actual).isEqualTo(BigInteger.ZERO);
   }
 
   ////////////
@@ -1612,6 +1631,7 @@ public class AmountFilterTest {
   public void testComputeAmountAvailableToSendWhenZero() {
     when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ONE); // <-- Not Equals
     when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE); // <-- Not positive
+    when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ZERO);
 
     final PaymentTargetConditions paymentTargetConditions = PaymentTargetConditions.builder()
       .paymentType(PaymentType.FIXED_SEND)
@@ -1639,7 +1659,7 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
     final BigInteger actual = amountFilter.computeAmountAvailableToSend(paymentTargetConditions);
-    assertThat(actual).isEqualTo(BigInteger.valueOf(-1));
+    assertThat(actual).isEqualTo(BigInteger.ZERO);
   }
 
   ////////////
@@ -1694,7 +1714,7 @@ public class AmountFilterTest {
 
     final BigInteger actual = amountFilter
       .computeAmountAvailableToDeliver(amountTrackerMock, mock(PaymentTargetConditions.class));
-    assertThat(actual).isEqualTo(BigInteger.valueOf(-1L));
+    assertThat(actual).isEqualTo(BigInteger.ZERO);
   }
 
   ////////////
@@ -1970,7 +1990,7 @@ public class AmountFilterTest {
       amountTrackerMock, paymentTargetConditions,
       BigInteger.ZERO, // <-- available to send
       UnsignedLong.ZERO, // <-- Original source amount
-      UnsignedLong.ZERO // <-- Estimated delivery amount.
+      UnsignedLong.ONE // <-- Estimated delivery amount.
     );
 
     assertThat(willPaymentComplete).isFalse();
@@ -1987,10 +2007,11 @@ public class AmountFilterTest {
     when(amountTrackerMock.getPaymentTargetConditions()).thenReturn(Optional.of(paymentTargetConditions));
 
     final boolean willPaymentComplete = amountFilter.willPaymentComplete(
-      amountTrackerMock, paymentTargetConditions,
+      amountTrackerMock,
+      paymentTargetConditions,
       BigInteger.ZERO, // <-- available to send
       UnsignedLong.ZERO, // <-- Original source amount
-      UnsignedLong.ZERO // <-- Estimated delivery amount.
+      UnsignedLong.ONE // <-- Estimated delivery amount.
     );
 
     assertThat(willPaymentComplete).isTrue();
@@ -2010,7 +2031,7 @@ public class AmountFilterTest {
       amountTrackerMock, paymentTargetConditions,
       BigInteger.ZERO, // <-- available to send
       UnsignedLong.ZERO, // <-- Original source amount
-      UnsignedLong.ZERO // <-- Estimated delivery amount.
+      UnsignedLong.ONE // <-- Estimated delivery amount.
     );
 
     assertThat(willPaymentComplete).isTrue();
@@ -2054,5 +2075,71 @@ public class AmountFilterTest {
     when(exchangeRateTrackerMock.estimateSourceAmount(any())).thenReturn(
       DeliveredExchangeRateBound.builder().lowEndEstimate(UnsignedLong.ONE).highEndEstimate(UnsignedLong.ONE).build()
     );
+  }
+
+  /////////////////
+  // Negative tests
+  /////////////////
+
+  @Test
+  public void computeAmountAvailableToSendNeverNegative() {
+    PaymentTargetConditions targetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(Ratio.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(1000))
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(1000))
+      .build();
+
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.valueOf(997));
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes.assertThat(amountFilter.computeAmountAvailableToSend(targetConditions))
+      .isEqualTo(BigInteger.ONE);
+
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.valueOf(998));
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes.assertThat(amountFilter.computeAmountAvailableToSend(targetConditions))
+      .isEqualTo(BigInteger.ZERO);
+
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.valueOf(999));
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes.assertThat(amountFilter.computeAmountAvailableToSend(targetConditions))
+      .isEqualTo(BigInteger.ZERO);
+
+    when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.valueOf(1000));
+    when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ONE);
+    when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes.assertThat(amountFilter.computeAmountAvailableToSend(targetConditions))
+      .isEqualTo(BigInteger.ZERO);
+  }
+
+  @Test
+  public void computeAmountAvailableToDeliverNeverNegative() {
+    PaymentTargetConditions targetConditions = PaymentTargetConditions.builder()
+      .paymentType(PaymentType.FIXED_SEND)
+      .minExchangeRate(Ratio.ONE)
+      .maxPaymentAmountInSenderUnits(BigInteger.valueOf(1000))
+      .minPaymentAmountInDestinationUnits(BigInteger.valueOf(1000))
+      .build();
+
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(998));
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes
+      .assertThat(amountFilter.computeAmountAvailableToDeliver(amountTrackerMock, targetConditions))
+      .isEqualTo(BigInteger.ONE);
+
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(999));
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes
+      .assertThat(amountFilter.computeAmountAvailableToDeliver(amountTrackerMock, targetConditions))
+      .isEqualTo(BigInteger.ZERO);
+
+    when(amountTrackerMock.getAmountDeliveredInDestinationUnits()).thenReturn(BigInteger.valueOf(1000));
+    when(amountTrackerMock.getDestinationAmountInFlight()).thenReturn(BigInteger.ONE);
+    AssertionsForClassTypes
+      .assertThat(amountFilter.computeAmountAvailableToDeliver(amountTrackerMock, targetConditions))
+      .isEqualTo(BigInteger.ZERO);
   }
 }

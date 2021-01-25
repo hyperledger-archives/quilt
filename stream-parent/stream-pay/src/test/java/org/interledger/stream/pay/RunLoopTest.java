@@ -74,6 +74,8 @@ public class RunLoopTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
+
+    when(amountTrackerMock.getAmountLeftToSend()).thenReturn(BigInteger.ONE);
   }
 
   /**
@@ -423,7 +425,6 @@ public class RunLoopTest {
 
     // Assertions...
     assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
-    assertThat(receipt.successfulPayment()).isFalse();
     assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
 
@@ -474,7 +475,6 @@ public class RunLoopTest {
 
     // Assertions...
     assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
-    assertThat(receipt.successfulPayment()).isFalse();
     assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
 
@@ -530,7 +530,6 @@ public class RunLoopTest {
 
     // Assertions...
     assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
-    assertThat(receipt.successfulPayment()).isFalse();
     assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
 
@@ -586,7 +585,6 @@ public class RunLoopTest {
 
     // Assertions...
     assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
-    assertThat(receipt.successfulPayment()).isFalse();
     assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ZERO);
 
@@ -655,7 +653,6 @@ public class RunLoopTest {
 
     // Assertions...
     assertThat(receipt.originalQuote()).isEqualTo(quoteMock);
-    assertThat(receipt.successfulPayment()).isTrue();
     assertThat(receipt.amountDeliveredInDestinationUnits()).isEqualTo(BigInteger.ONE);
     assertThat(receipt.amountSentInSendersUnits()).isEqualTo(BigInteger.ONE);
 

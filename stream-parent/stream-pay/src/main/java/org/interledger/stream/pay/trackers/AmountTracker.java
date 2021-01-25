@@ -41,6 +41,14 @@ public class AmountTracker {
   private final AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef;
 
   /**
+   * Amount that has been scheduled via nextState calls, but that has not yet been scheduled in a thread via `doFilter`.
+   * This value exists because the sendState function computes sourceAmount for a packet. However, this amount isn't
+   * actually reserved anywhere until the doFilter call (which happens in a separate thread). Thus, we need a mechanism
+   * that is distinct from "in-flight" in order to indicate that value has been scheduled.
+   */
+  private final AtomicReference<BigInteger> sourceAmountScheduledRef;
+
+  /**
    * Amount sent that is yet to be fulfilled or rejected, in scaled units of the sending account.
    */
   private final AtomicReference<BigInteger> sourceAmountInFlightRef;
@@ -82,6 +90,7 @@ public class AmountTracker {
       new AtomicReference<>(BigInteger.ZERO),
       new AtomicReference<>(BigInteger.ZERO),
       new AtomicReference<>(BigInteger.ZERO),
+      new AtomicReference<>(BigInteger.ZERO),
       new AtomicReference<>(UnsignedLong.ZERO),
       new AtomicReference<>(Optional.empty()),
       new AtomicBoolean()
@@ -97,6 +106,7 @@ public class AmountTracker {
     final AtomicReference<PaymentTargetConditions> paymentTargetConditionsAtomicReference,
     final AtomicReference<BigInteger> amountSentInSourceUnitsRef,
     final AtomicReference<BigInteger> amountDeliveredInDestinationUnitsRef,
+    final AtomicReference<BigInteger> sourceAmountScheduledRef,
     final AtomicReference<BigInteger> sourceAmountInFlightRef,
     final AtomicReference<BigInteger> destinationAmountInFlightRef,
     final AtomicReference<UnsignedLong> availableDeliveryShortfallRef,
@@ -108,6 +118,7 @@ public class AmountTracker {
     this.paymentTargetConditionsAtomicReference = Objects.requireNonNull(paymentTargetConditionsAtomicReference);
     this.amountSentInSourceUnitsRef = Objects.requireNonNull(amountSentInSourceUnitsRef);
     this.amountDeliveredInDestinationUnitsRef = Objects.requireNonNull(amountDeliveredInDestinationUnitsRef);
+    this.sourceAmountScheduledRef = Objects.requireNonNull(sourceAmountScheduledRef);
     this.sourceAmountInFlightRef = Objects.requireNonNull(sourceAmountInFlightRef);
     this.destinationAmountInFlightRef = Objects.requireNonNull(destinationAmountInFlightRef);
     this.availableDeliveryShortfallRef = Objects.requireNonNull(availableDeliveryShortfallRef);
@@ -226,7 +237,7 @@ public class AmountTracker {
   }
 
   /**
-   * As the attributes of a payment path are discovered, a {@link PaymentTargetConditions} will be assiged for future
+   * As the attributes of a payment path are discovered, a {@link PaymentTargetConditions} will be assigned for future
    * inspection.
    *
    * @return An optionally-present {@link PaymentTargetConditions}.
@@ -235,6 +246,11 @@ public class AmountTracker {
     return Optional.ofNullable(this.paymentTargetConditionsAtomicReference.get());
   }
 
+  /**
+   * Accessor for the "remote received max" value tracked by this tracker.
+   *
+   * @return An optionally-present {@link UnsignedLong}.
+   */
   public Optional<UnsignedLong> getRemoteReceivedMax() {
     return remoteReceivedMaxRef.get();
   }
@@ -255,6 +271,15 @@ public class AmountTracker {
    */
   public BigInteger getAmountDeliveredInDestinationUnits() {
     return amountDeliveredInDestinationUnitsRef.get();
+  }
+
+  /**
+   * The total source amount in-flight, in sender's units.
+   *
+   * @return A {@link BigInteger}.
+   */
+  public BigInteger getSourceAmountScheduled() {
+    return sourceAmountScheduledRef.get();
   }
 
   /**
@@ -286,6 +311,16 @@ public class AmountTracker {
   }
 
   /**
+   * Add {@code amountToAdd} to the overall number of source units that are currently scheduled to be sent.
+   *
+   * @param amountToAdd An {@link UnsignedLong}.
+   */
+  public void addToSourceAmountScheduled(final UnsignedLong amountToAdd) {
+    Objects.requireNonNull(amountToAdd);
+    this.sourceAmountScheduledRef.getAndAccumulate(amountToAdd.bigIntegerValue(), BigInteger::add);
+  }
+
+  /**
    * Add {@code amountToAdd} to the overall number of source units that are currently in-flight.
    *
    * @param amountToAdd An {@link UnsignedLong}.
@@ -306,14 +341,31 @@ public class AmountTracker {
   }
 
   /**
+   * Subtract {@code amountToSubtract} from the overall number of source units that have been scheduled to be sent.
+   *
+   * @param amountToSubtract An {@link UnsignedLong}.
+   */
+  public void subtractFromSourceAmountScheduled(final UnsignedLong amountToSubtract) {
+    Objects.requireNonNull(amountToSubtract);
+    this.sourceAmountScheduledRef.getAndAccumulate(amountToSubtract.bigIntegerValue(),
+      (previousAmount, $) ->
+        FluentBigInteger.of(previousAmount).minusOrZero($).getValue()
+    );
+  }
+
+  /**
    * Subtract {@code amountToSubtract} from the overall number of source units that are currently in-flight.
    *
    * @param amountToSubtract An {@link UnsignedLong}.
    */
   public void subtractFromSourceAmountInFlight(final UnsignedLong amountToSubtract) {
     Objects.requireNonNull(amountToSubtract);
-    this.sourceAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(), BigInteger::subtract);
+    this.sourceAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(),
+      (previousAmount, $) ->
+        FluentBigInteger.of(previousAmount).minusOrZero($).getValue()
+    );
   }
+
 
   /**
    * Subtract {@code amountToSubtract} from the overall number of destination units that are currently in-flight.
@@ -323,14 +375,11 @@ public class AmountTracker {
    */
   public void subtractFromDestinationAmountInFlight(final UnsignedLong amountToSubtract) {
     Objects.requireNonNull(amountToSubtract);
+
     this.destinationAmountInFlightRef.getAndAccumulate(amountToSubtract.bigIntegerValue(),
-      (previous, valToSubtract) -> {
-        if (FluentCompareTo.is(previous).lessThan(valToSubtract)) {
-          return BigInteger.ZERO;
-        } else {
-          return previous.subtract(valToSubtract);
-        }
-      });
+      (previousAmount, $) ->
+        FluentBigInteger.of(previousAmount).minusOrZero($).getValue()
+    );
   }
 
   /**
@@ -413,7 +462,7 @@ public class AmountTracker {
    * 'floor(probedRate)' is greater-than-or-equal-to the `ceil(minimumRate)`. If this equation returns {@code true},
    * then the exchange rates are valid. Otherwise, there may be an insufficient exchange rate for the payment to
    * complete properly, at least within the slippage bounds specified by the sender, so further computation is required
-   * in order to consider if there is a positive difference between the minium and probed FX rates, and also to ensure
+   * in order to consider if there is a positive difference between the minimum and probed FX rates, and also to ensure
    * that the max-packet size allowed in the payment path will allow _any_ value (if no value can be transmitted via the
    * path, then this function will throw an exception preemptively).</p>
    *

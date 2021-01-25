@@ -49,7 +49,7 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   @Override
-  public SendState nextState(final ModifiableStreamPacketRequest streamPacketRequest) {
+  public synchronized SendState nextState(final ModifiableStreamPacketRequest streamPacketRequest) {
     Objects.requireNonNull(streamPacketRequest);
 
     final AmountTracker amountTracker = paymentSharedStateTracker.getAmountTracker();
@@ -186,6 +186,10 @@ public class AmountFilter implements StreamPacketFilter {
             .build())
         );
 
+        // Reserve the packet here. It's OK to do this at the end of this computation because only a single thread
+        // operates in `nextState` at a time, so reserving here is fine.
+        amountTracker.addToSourceAmountScheduled(streamPacketRequest.sourceAmount());
+
         return SendState.Ready; // <-- Send the packet.
       })
       // No fixed source or delivery amount set
@@ -206,113 +210,116 @@ public class AmountFilter implements StreamPacketFilter {
     // Update in-flight amounts
     amountTracker.addToSourceAmountInFlight(streamPacketRequest.sourceAmount());
     amountTracker.addToDestinationAmountInFlight(highEndDestinationAmount);
+    try {
+      if (amountTracker.getPaymentTargetConditions().isPresent()) {
+        PaymentTargetConditions target = amountTracker.getPaymentTargetConditions().get();
 
-    if (amountTracker.getPaymentTargetConditions().isPresent()) {
-      PaymentTargetConditions target = amountTracker.getPaymentTargetConditions().get();
+        // Estimate the most that this packet will deliver
+        highEndDestinationAmount = FluentUnsignedLong.of(streamPacketRequest.minDestinationAmount())
+          .orGreater(
+            paymentSharedStateTracker.getExchangeRateTracker()
+              .estimateDestinationAmount(streamPacketRequest.sourceAmount()).highEndEstimate()
+          ).getValue();
 
-      // Estimate the most that this packet will deliver
-      highEndDestinationAmount = FluentUnsignedLong.of(streamPacketRequest.minDestinationAmount())
-        .orGreater(
-          paymentSharedStateTracker.getExchangeRateTracker()
-            .estimateDestinationAmount(streamPacketRequest.sourceAmount()).highEndEstimate()
-        ).getValue();
-
-      // Update the delivery shortfall, if applicable
-      packetDeliveryDeficit = this.computePacketDeliveryDeficitForDoFilter(
-        streamPacketRequest.sourceAmount(), target.minExchangeRate(), streamPacketRequest.minDestinationAmount()
-      );
-      if (FluentUnsignedLong.of(packetDeliveryDeficit).isPositive()) {
-        amountTracker.reduceDeliveryShortfall(packetDeliveryDeficit);
+        // Update the delivery shortfall, if applicable
+        packetDeliveryDeficit = this.computePacketDeliveryDeficitForDoFilter(
+          streamPacketRequest.sourceAmount(), target.minExchangeRate(), streamPacketRequest.minDestinationAmount()
+        );
+        if (FluentUnsignedLong.of(packetDeliveryDeficit).isPositive()) {
+          amountTracker.reduceDeliveryShortfall(packetDeliveryDeficit);
+        }
       }
-    }
 
-    final StreamPacketReply streamPacketReply = filterChain.doFilter(streamPacketRequest);
+      final StreamPacketReply streamPacketReply = filterChain.doFilter(streamPacketRequest);
 
-    streamPacketReply.handle(
-      fulfilledStreamPacketReply -> {
-        final UnsignedLong destinationAmount = streamPacketReply.destinationAmountClaimed()
-          // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
-          // No matter what, since they fulfilled it, we must assume they got at least the minimum
-          .map(destinationAmountClaimed -> {
-            if (
-              this.isDestinationAmountValid(destinationAmountClaimed,
-                streamPacketRequest.minDestinationAmount()) == NOT_VALID
-            ) {
-              LOGGER.error(
-                "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). " +
-                  "destinationAmountClaimed={}  minDestinationAmount={}",
-                destinationAmountClaimed, streamPacketRequest.minDestinationAmount()
-              );
+      streamPacketReply.handle(
+        fulfilledStreamPacketReply -> {
+          final UnsignedLong destinationAmount = streamPacketReply.destinationAmountClaimed()
+            // Delivered amount must be *at least* the minimum acceptable amount we told the receiver
+            // No matter what, since they fulfilled it, we must assume they got at least the minimum
+            .map(destinationAmountClaimed -> {
+              if (
+                this.isDestinationAmountValid(destinationAmountClaimed,
+                  streamPacketRequest.minDestinationAmount()) == NOT_VALID
+              ) {
+                LOGGER.error(
+                  "Ending payment: Receiver violated protocol (packet below minimum exchange rate was fulfilled). " +
+                    "destinationAmountClaimed={}  minDestinationAmount={}",
+                  destinationAmountClaimed, streamPacketRequest.minDestinationAmount()
+                );
+                amountTracker.setEncounteredProtocolViolation();
+                return streamPacketRequest.minDestinationAmount();
+              } else {
+                if (LOGGER.isTraceEnabled()) {
+                  LOGGER.trace(
+                    "Packet Sent and Fulfilled: sourceAmount={} destinationAmountClaimed={} minDestinationAmount={}",
+                    streamPacketRequest.sourceAmount(), destinationAmountClaimed,
+                    streamPacketRequest.minDestinationAmount()
+                  );
+                }
+                return destinationAmountClaimed;
+              }
+            })
+            .orElseGet(() -> {
+              // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
+              LOGGER.error("Ending payment: packet fulfilled with no authentic STREAM data");
               amountTracker.setEncounteredProtocolViolation();
               return streamPacketRequest.minDestinationAmount();
-            } else {
-              if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(
-                  "Packet Sent and Fulfilled: sourceAmount={} destinationAmountClaimed={} minDestinationAmount={}",
-                  streamPacketRequest.sourceAmount(), destinationAmountClaimed,
-                  streamPacketRequest.minDestinationAmount()
-                );
-              }
-              return destinationAmountClaimed;
-            }
-          })
-          .orElseGet(() -> {
-            // Technically, an intermediary could strip the data so we can't ascertain whose fault this is
-            LOGGER.error("Ending payment: packet fulfilled with no authentic STREAM data");
-            amountTracker.setEncounteredProtocolViolation();
-            return streamPacketRequest.minDestinationAmount();
-          });
+            });
 
-        amountTracker.addAmountSent(streamPacketRequest.sourceAmount());
-        amountTracker.addAmountDelivered(destinationAmount);
-      },
-      rejectedStreamPacketReply -> {
-        final boolean destinationAmountValid = isDestinationAmountValid(
-          streamPacketReply.destinationAmountClaimed(), streamPacketRequest.minDestinationAmount()
-        );
-        if (destinationAmountValid == NOT_VALID) {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(
-              "Packet rejected for insufficient rate: minDestinationAmount={} claimedDestinationAmount={}",
-              streamPacketRequest.minDestinationAmount(), streamPacketReply.destinationAmountClaimed()
+          amountTracker.addAmountSent(streamPacketRequest.sourceAmount());
+          amountTracker.addAmountDelivered(destinationAmount);
+        },
+        rejectedStreamPacketReply -> {
+          final boolean destinationAmountValid = isDestinationAmountValid(
+            streamPacketReply.destinationAmountClaimed(), streamPacketRequest.minDestinationAmount()
+          );
+          if (destinationAmountValid == NOT_VALID) {
+            if (LOGGER.isDebugEnabled()) {
+              LOGGER.debug(
+                "Packet rejected for insufficient rate: minDestinationAmount={} claimedDestinationAmount={}",
+                streamPacketRequest.minDestinationAmount(), streamPacketReply.destinationAmountClaimed()
+              );
+            }
+          }
+        });
+
+      // If this packet failed, "refund" the delivery deficit so it may be retried.
+      if (this.isFailedPacket(packetDeliveryDeficit, streamPacketReply)) {
+        amountTracker.increaseDeliveryShortfall(packetDeliveryDeficit);
+      }
+
+      amountTracker.getPaymentTargetConditions().ifPresent(target -> {
+        if (target.paymentType() == PaymentType.FIXED_SEND) {
+          if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(
+              "Fixed Send Payment has sent {} of {}, {} in-flight",
+              amountTracker.getAmountSentInSourceUnits(),
+              target.maxPaymentAmountInSenderUnits(),
+              amountTracker.getSourceAmountInFlight()
+            );
+          }
+        } else if (target.paymentType() == PaymentType.FIXED_DELIVERY) {
+          if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(
+              "Fixed Delivery Payment has sent {} of {}, {} in-flight",
+              amountTracker.getAmountDeliveredInDestinationUnits(),
+              target.minPaymentAmountInDestinationUnits(),
+              amountTracker.getDestinationAmountInFlight()
             );
           }
         }
       });
 
-    amountTracker.subtractFromSourceAmountInFlight(streamPacketRequest.sourceAmount());
-    amountTracker.subtractFromDestinationAmountInFlight(highEndDestinationAmount);
+      this.updateReceiveMax(streamPacketReply);
 
-    // If this packet failed, "refund" the delivery deficit so it may be retried.
-    if (this.isFailedPacket(packetDeliveryDeficit, streamPacketReply)) {
-      amountTracker.increaseDeliveryShortfall(packetDeliveryDeficit);
+      return streamPacketReply;
+    } finally {
+      // Do this even if there's an exception.
+      amountTracker.subtractFromSourceAmountScheduled(streamPacketRequest.sourceAmount());
+      amountTracker.subtractFromSourceAmountInFlight(streamPacketRequest.sourceAmount());
+      amountTracker.subtractFromDestinationAmountInFlight(highEndDestinationAmount);
     }
-
-    amountTracker.getPaymentTargetConditions().ifPresent(target -> {
-      if (target.paymentType() == PaymentType.FIXED_SEND) {
-        if (LOGGER.isTraceEnabled()) {
-          LOGGER.trace(
-            "Fixed Send Payment has sent {} of {}, {} in-flight",
-            amountTracker.getAmountSentInSourceUnits(),
-            target.maxPaymentAmountInSenderUnits(),
-            amountTracker.getSourceAmountInFlight()
-          );
-        }
-      } else if (target.paymentType() == PaymentType.FIXED_DELIVERY) {
-        if (LOGGER.isTraceEnabled()) {
-          LOGGER.trace(
-            "Fixed Delivery Payment has sent {} of {}, {} in-flight",
-            amountTracker.getAmountDeliveredInDestinationUnits(),
-            target.minPaymentAmountInDestinationUnits(),
-            amountTracker.getDestinationAmountInFlight()
-          );
-        }
-      }
-    });
-
-    this.updateReceiveMax(streamPacketReply);
-
-    return streamPacketReply;
   }
 
   /**
@@ -498,7 +505,9 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(amountTracker);
     Objects.requireNonNull(target);
 
-    return target.minPaymentAmountInDestinationUnits().subtract(amountTracker.getAmountDeliveredInDestinationUnits());
+    return FluentBigInteger
+      .of(target.minPaymentAmountInDestinationUnits().subtract(amountTracker.getAmountDeliveredInDestinationUnits()))
+      .minusOrZero(BigInteger.ZERO).getValue();
   }
 
   /**
@@ -532,9 +541,12 @@ public class AmountFilter implements StreamPacketFilter {
   protected BigInteger computeAmountAvailableToSend(final PaymentTargetConditions target) {
     Objects.requireNonNull(target);
 
-    return target.maxPaymentAmountInSenderUnits()
-      .subtract(paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits())
-      .subtract(paymentSharedStateTracker.getAmountTracker().getSourceAmountInFlight());
+    return FluentBigInteger.of(
+      target.maxPaymentAmountInSenderUnits()
+        .subtract(paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits())
+        .subtract(paymentSharedStateTracker.getAmountTracker().getSourceAmountScheduled())
+        .subtract(paymentSharedStateTracker.getAmountTracker().getSourceAmountInFlight())
+    ).minusOrZero(BigInteger.ZERO).getValue();
   }
 
   /**
@@ -552,8 +564,10 @@ public class AmountFilter implements StreamPacketFilter {
     Objects.requireNonNull(amountTracker);
     Objects.requireNonNull(target);
 
-    return this.computeRemainingAmountToBeDelivered(amountTracker, target)
-      .subtract(amountTracker.getDestinationAmountInFlight());
+    return FluentBigInteger.of(
+      this.computeRemainingAmountToBeDelivered(amountTracker, target)
+        .subtract(amountTracker.getDestinationAmountInFlight())
+    ).minusOrZero(BigInteger.ZERO).getValue();
   }
 
   /**
@@ -690,8 +704,8 @@ public class AmountFilter implements StreamPacketFilter {
   }
 
   /**
-   * Determines if the payment will complete by summing the amount delivered amount in flight to see if there's more to
-   * deliver.
+   * Determines if the payment will complete by summing the amount delivered and amount in flight to see if there's more
+   * to deliver.
    *
    * @param amountTracker                    A {@link AmountTracker}.
    * @param target                           A {@link PaymentTargetConditions}.

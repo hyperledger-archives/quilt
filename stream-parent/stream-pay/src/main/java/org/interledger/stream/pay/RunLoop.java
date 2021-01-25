@@ -1,5 +1,6 @@
 package org.interledger.stream.pay;
 
+import org.interledger.core.fluent.FluentBigInteger;
 import org.interledger.link.Link;
 import org.interledger.stream.crypto.StreamPacketEncryptionService;
 import org.interledger.stream.pay.exceptions.StreamPayerException;
@@ -11,13 +12,15 @@ import org.interledger.stream.pay.model.PaymentReceipt;
 import org.interledger.stream.pay.model.PaymentStatistics;
 import org.interledger.stream.pay.model.Quote;
 import org.interledger.stream.pay.model.SendState;
+import org.interledger.stream.pay.probing.model.PaymentTargetConditions;
+import org.interledger.stream.pay.trackers.AmountTracker;
 import org.interledger.stream.pay.trackers.PaymentSharedStateTracker;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.RoundingMode;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -184,11 +187,7 @@ class RunLoop extends AbstractPayWrapper {
         paymentSharedStateTracker.getAmountTracker().getAmountDeliveredInDestinationUnits()
       )
       .amountSentInSendersUnits(paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits())
-      .amountLeftToSendInSendersUnits(
-        quote.paymentOptions().amountToSend().movePointRight(quote.sourceAccount().denomination().get().assetScale())
-          .setScale(0, RoundingMode.HALF_EVEN)
-          .toBigIntegerExact().subtract(paymentSharedStateTracker.getAmountTracker().getAmountSentInSourceUnits())
-      )
+      .amountLeftToSendInSendersUnits(this.getAmountLeftToSend())
       .paymentStatistics(PaymentStatistics.builder()
         .numFulfilledPackets(paymentSharedStateTracker.getStatisticsTracker().getNumFulfills())
         .numRejectPackets(paymentSharedStateTracker.getStatisticsTracker().getNumRejects())
@@ -201,6 +200,23 @@ class RunLoop extends AbstractPayWrapper {
       .paymentError(Optional.ofNullable(finalStreamPayerException))
       .build()
     );
+  }
+
+  /**
+   * Helper method to compute the amount left to send (NOTE: this amount never goes negative).
+   *
+   * @return A {@link BigInteger}.
+   */
+  @VisibleForTesting
+  BigInteger getAmountLeftToSend() {
+    final AmountTracker amountTracker = this.paymentSharedStateTracker.getAmountTracker();
+    final BigInteger originalAmountToSendInSendersUnits = amountTracker.getPaymentTargetConditions()
+      .map(PaymentTargetConditions::maxPaymentAmountInSenderUnits)
+      .orElse(BigInteger.ZERO);
+
+    return FluentBigInteger.of(
+      originalAmountToSendInSendersUnits.subtract(amountTracker.getAmountSentInSourceUnits())
+    ).minusOrZero(BigInteger.ZERO).getValue(); // <-- Don't allow negative.
   }
 
   /**

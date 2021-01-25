@@ -61,6 +61,7 @@ public class AmountTrackerTest {
 
     PaymentTargetConditions paymentTargetConditionsMock = mock(PaymentTargetConditions.class);
     AtomicReference paymentTargetConditionsAtomicReference = new AtomicReference(paymentTargetConditionsMock);
+    AtomicReference amountScheduledInSourceUnitsRef = new AtomicReference(BigInteger.valueOf(8L));
     AtomicReference amountSentInSourceUnitsRef = new AtomicReference(BigInteger.valueOf(2L));
     AtomicReference amountDeliveredInDestinationUnitsRef = new AtomicReference(BigInteger.valueOf(3L));
     AtomicReference sourceAmountInFlightRef = new AtomicReference(BigInteger.valueOf(4L));
@@ -71,11 +72,12 @@ public class AmountTrackerTest {
 
     this.amountTracker = new AmountTracker(
       exchangeRateTracker, paymentTargetConditionsAtomicReference, amountSentInSourceUnitsRef,
-      amountDeliveredInDestinationUnitsRef, sourceAmountInFlightRef, destinationAmountInFlightRef,
-      availableDeliveryShortfallRef, remoteReceivedMaxRef, encounteredProtocolViolation
+      amountDeliveredInDestinationUnitsRef, amountScheduledInSourceUnitsRef, sourceAmountInFlightRef,
+      destinationAmountInFlightRef, availableDeliveryShortfallRef, remoteReceivedMaxRef, encounteredProtocolViolation
     );
 
     assertThat(amountTracker.getPaymentTargetConditions().get()).isEqualTo(paymentTargetConditionsMock);
+    assertThat(amountTracker.getSourceAmountScheduled()).isEqualTo(BigInteger.valueOf(8L));
     assertThat(amountTracker.getAmountSentInSourceUnits()).isEqualTo(BigInteger.valueOf(2L));
     assertThat(amountTracker.getAmountDeliveredInDestinationUnits()).isEqualTo(BigInteger.valueOf(3L));
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.valueOf(4L));
@@ -96,6 +98,10 @@ public class AmountTrackerTest {
     Runnable sourceInFlight = () -> {
       amountTracker.addToSourceAmountInFlight(UnsignedLong.ONE);
       amountTracker.subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    };
+    Runnable sourceScheduled = () -> {
+      amountTracker.addToSourceAmountScheduled(UnsignedLong.ONE);
+      amountTracker.subtractFromSourceAmountScheduled(UnsignedLong.ONE);
     };
     Runnable destInFlight = () -> {
       amountTracker.addToDestinationAmountInFlight(UnsignedLong.ONE);
@@ -120,6 +126,7 @@ public class AmountTrackerTest {
 
     // Assert that Runnables are correct.
     executor.submit(sourceInFlight).get();
+    executor.submit(sourceScheduled).get();
     executor.submit(destInFlight).get();
     executor.submit(deliveryShortfall).get();
     executor.submit(amountSent).get();
@@ -127,6 +134,7 @@ public class AmountTrackerTest {
     executor.submit(remoteMax).get();
     executor.submit(protocolViolation).get();
     assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
+    assertThat(amountTracker.getSourceAmountScheduled()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
     assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ZERO);
     assertThat(amountTracker.getAmountSentInSourceUnits()).isEqualTo(BigInteger.ONE);
@@ -1236,5 +1244,30 @@ public class AmountTrackerTest {
       Ratio.from(new BigDecimal("1.9")),
       UnsignedLong.ONE
     );
+  }
+
+  /////////////////
+  // Negative tests
+  /////////////////
+
+  @Test
+  public void sourceAmountInFlightNeverNegative() {
+    assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
+    amountTracker.subtractFromSourceAmountInFlight(UnsignedLong.ONE);
+    assertThat(amountTracker.getSourceAmountInFlight()).isEqualTo(BigInteger.ZERO);
+  }
+
+  @Test
+  public void destinationAountInFlightNeverNegative() {
+    assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
+    amountTracker.subtractFromDestinationAmountInFlight(UnsignedLong.ONE);
+    assertThat(amountTracker.getDestinationAmountInFlight()).isEqualTo(BigInteger.ZERO);
+  }
+
+  @Test
+  public void reduceDeliverShortfallNeverNegative() {
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ZERO);
+    amountTracker.reduceDeliveryShortfall(UnsignedLong.ONE);
+    assertThat(amountTracker.getAvailableDeliveryShortfall()).isEqualTo(UnsignedLong.ZERO);
   }
 }
