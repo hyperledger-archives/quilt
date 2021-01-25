@@ -74,8 +74,6 @@ public class RunLoopTest {
   @Before
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-
-    when(amountTrackerMock.getAmountLeftToSend()).thenReturn(BigInteger.ONE);
   }
 
   /**
@@ -397,8 +395,6 @@ public class RunLoopTest {
   @Test
   public void testFullRunWithStreamPayerExceptionInNextState() {
     StreamPacketFilter filter1 = new StreamPacketFilter() {
-      private final AtomicInteger numRuns = new AtomicInteger(5);
-
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
         throw new StreamPayerException("foo", SendState.End);
@@ -447,8 +443,6 @@ public class RunLoopTest {
   @Test
   public void testFullRunWithRuntimeExceptionInNextState() {
     StreamPacketFilter filter1 = new StreamPacketFilter() {
-      private final AtomicInteger numRuns = new AtomicInteger(5);
-
       @Override
       public SendState nextState(ModifiableStreamPacketRequest streamPacketRequest) {
         throw new RuntimeException("foo");

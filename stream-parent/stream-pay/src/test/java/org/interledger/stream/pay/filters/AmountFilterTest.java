@@ -79,8 +79,6 @@ public class AmountFilterTest {
     // All Happy-path settings.
     this.initializeHappyPath();
 
-    when(amountTrackerMock.getAmountLeftToSend()).thenReturn(BigInteger.ZERO);
-
     when(amountTrackerMock.getSourceAmountScheduled()).thenReturn(BigInteger.ZERO);
     when(amountTrackerMock.getSourceAmountInFlight()).thenReturn(BigInteger.ZERO);
     when(amountTrackerMock.getAmountSentInSourceUnits()).thenReturn(BigInteger.ZERO);
