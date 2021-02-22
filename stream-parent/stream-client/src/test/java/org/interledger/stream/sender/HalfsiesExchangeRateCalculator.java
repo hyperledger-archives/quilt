@@ -1,12 +1,10 @@
 package org.interledger.stream.sender;
 
+import com.google.common.primitives.UnsignedLong;
+import java.util.Objects;
 import org.interledger.stream.Denomination;
 import org.interledger.stream.calculators.ExchangeRateCalculator;
 import org.interledger.stream.calculators.NoExchangeRateException;
-
-import com.google.common.primitives.UnsignedLong;
-
-import java.util.Objects;
 
 /**
  * An implementation of {@link ExchangeRateCalculator} that always assumes an exchange rate from sender:receiver
@@ -16,9 +14,9 @@ public class HalfsiesExchangeRateCalculator implements ExchangeRateCalculator {
 
   @Override
   public UnsignedLong calculateAmountToSend(
-      final UnsignedLong amountToSend,
-      final Denomination amountToSendDenomination,
-      final Denomination receiverDenomination
+    final UnsignedLong amountToSend,
+    final Denomination amountToSendDenomination,
+    final Denomination receiverDenomination
   ) throws NoExchangeRateException {
     Objects.requireNonNull(amountToSend);
     Objects.requireNonNull(amountToSendDenomination);
@@ -28,7 +26,7 @@ public class HalfsiesExchangeRateCalculator implements ExchangeRateCalculator {
 
   @Override
   public UnsignedLong calculateMinAmountToAccept(
-      final UnsignedLong sendAmount, final Denomination sendAmountDenomination
+    final UnsignedLong sendAmount, final Denomination sendAmountDenomination
   ) {
     Objects.requireNonNull(sendAmount);
     Objects.requireNonNull(sendAmountDenomination);

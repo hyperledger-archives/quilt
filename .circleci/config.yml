@@ -4,6 +4,7 @@
 #
 version: 2
 executorType: machine
+machine: true
 
 _run:
   jceinstall: &jceinstall
@@ -46,12 +47,15 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
+        environment:
+          # Customize the JVM maximum heap limit
+          MAVEN_OPTS: -Xmx4096m
 
     working_directory: ~/repo
 
     environment:
       # Customize the JVM maximum heap limit
-      MAVEN_OPTS: -Xmx3200m
+      MAVEN_OPTS: -Xmx4096m
       JAVA_HOME: /usr/lib/jvm/jdk1.8.0/
 
     steps:
@@ -99,6 +103,9 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/openjdk:8-jdk
+        environment:
+          # Customize the JVM maximum heap limit
+          MAVEN_OPTS: -Xmx4096m
 
     working_directory: ~/repo
 

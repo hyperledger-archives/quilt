@@ -10,7 +10,10 @@ import java.util.Optional;
 
 /**
  * The result of a request to send money using the STREAM protocol.
+ *
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
  */
+@Deprecated
 @Immutable
 public interface SendMoneyResult {
 

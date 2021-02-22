@@ -1,6 +1,6 @@
 package org.interledger.stream;
 
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
@@ -22,12 +22,15 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * <p>Any given Connection in a JVM manages a unique sequence id that can be incremented for each Stream Packet sent
  * over the connection.</p>
+ *
+ * @deprecated Prefer {@link org.interledger.stream.connection.StreamConnection} instead.
  */
+@Deprecated
 public class StreamConnection implements Closeable {
 
   // NOTE: Integer.MAX_VALUE is 1 less than what we want for our Max per IL-RFC-29.
   public static final UnsignedLong MAX_FRAMES_PER_CONNECTION =
-      UnsignedLong.valueOf((long) Integer.MAX_VALUE + 1L);
+    UnsignedLong.valueOf((long) Integer.MAX_VALUE + 1L);
 
   /**
    * The unique identifier of this Connection. A Connection is unique to a destination {@link InterledgerAddress} and a
@@ -91,7 +94,7 @@ public class StreamConnection implements Closeable {
    * because both endpoints encrypt packets with the same key).
    *
    * @return {@code true} if the current sequence can safely be used with a single shared-secret; {@code false}
-   *     otherwise.
+   *   otherwise.
    */
   @VisibleForTesting
   boolean sequenceIsSafeForSingleSharedSecret(final UnsignedLong sequence) {
@@ -178,11 +181,11 @@ public class StreamConnection implements Closeable {
   @Override
   public String toString() {
     return new StringJoiner(", ", StreamConnection.class.getSimpleName() + "[", "]")
-        .add("creationDateTime=" + creationDateTime)
-        .add("streamConnectionId=" + streamConnectionId)
-        .add("sequence=" + sequence)
-        .add("connectionState=" + connectionState)
-        .toString();
+      .add("creationDateTime=" + creationDateTime)
+      .add("streamConnectionId=" + streamConnectionId)
+      .add("sequence=" + sequence)
+      .add("connectionState=" + connectionState)
+      .toString();
   }
 
   @Override

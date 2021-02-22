@@ -29,8 +29,7 @@ public class SimpleSpspClient implements SpspClient {
   }
 
   public SimpleSpspClient(
-      final OkHttpClient httpClient, final PaymentPointerResolver paymentPointerResolver,
-      final ObjectMapper objectMapper
+    final OkHttpClient httpClient, final PaymentPointerResolver paymentPointerResolver, final ObjectMapper objectMapper
   ) {
     this.httpClient = Objects.requireNonNull(httpClient);
     this.paymentPointerResolver = Objects.requireNonNull(paymentPointerResolver);
@@ -39,21 +38,21 @@ public class SimpleSpspClient implements SpspClient {
 
   @Override
   public StreamConnectionDetails getStreamConnectionDetails(final PaymentPointer paymentPointer)
-      throws InvalidReceiverClientException {
+    throws InvalidReceiverClientException {
     Objects.requireNonNull(paymentPointer);
     return getStreamConnectionDetails(paymentPointerResolver.resolveHttpUrl(paymentPointer));
   }
 
   @Override
   public StreamConnectionDetails getStreamConnectionDetails(final HttpUrl spspUrl)
-      throws InvalidReceiverClientException {
+    throws InvalidReceiverClientException {
     Objects.requireNonNull(spspUrl);
 
     return execute(new Request.Builder()
-        .url(spspUrl)
-        .header("Accept", APPLICATION_SPSP4_JSON_VALUE)
-        .get()
-        .build(), StreamConnectionDetails.class);
+      .url(spspUrl)
+      .header("Accept", APPLICATION_SPSP4_JSON_VALUE)
+      .get()
+      .build(), StreamConnectionDetails.class);
   }
 
   private <T> T execute(Request request, Class<T> clazz) throws SpspClientException {
@@ -63,7 +62,7 @@ public class SimpleSpspClient implements SpspClient {
           throw new InvalidReceiverClientException(request.url().toString());
         }
         throw new SpspClientException("Received non-successful HTTP response code " + response.code()
-            + " calling " + request.url());
+          + " calling " + request.url());
       }
       return objectMapper.readValue(response.body().string(), clazz);
     } catch (IOException e) {

@@ -204,7 +204,8 @@ public class StreamPacketFixturesTest {
     String data = lines.collect(Collectors.joining("\n"));
     lines.close();
 
-    List<StreamTestFixture> vectors = objectMapper.readValue(data, new TypeReference<List<StreamTestFixture>>() {});
+    List<StreamTestFixture> vectors = objectMapper.readValue(data, new TypeReference<List<StreamTestFixture>>() {
+    });
 
     return vectors;
   }
@@ -219,15 +220,15 @@ public class StreamPacketFixturesTest {
     StreamTestFixture fixture = this.streamTestFixture;
 
     StreamPacket wantPacket = StreamPacket.builder()
-        .sequence(UnsignedLong.valueOf(fixture.packet().sequence()))
-        .interledgerPacketType(InterledgerPacketType.fromCode(fixture.packet().packetType()))
-        .prepareAmount(UnsignedLong.valueOf(fixture.packet().amount()))
-        .frames(
-            fixture.packet().frames().stream()
-                .map(this::fromJson)
-                .collect(Collectors.toList())
-        )
-        .build();
+      .sequence(UnsignedLong.valueOf(fixture.packet().sequence()))
+      .interledgerPacketType(InterledgerPacketType.fromCode(fixture.packet().packetType()))
+      .prepareAmount(UnsignedLong.valueOf(fixture.packet().amount()))
+      .frames(
+        fixture.packet().frames().stream()
+          .map(this::fromJson)
+          .collect(Collectors.toList())
+      )
+      .build();
 
     // Deserialize...
     ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(Base64.getDecoder().decode(fixture.buffer()));
@@ -272,7 +273,7 @@ public class StreamPacketFixturesTest {
     {
       // Validate the "valid bytes" above.
       byte[] packetWithInvalidFrameBytes = BaseEncoding.base16()
-          .decode("010C0101010201 02 100401030100 110401040105".replace(" ", ""));
+        .decode("010C0101010201 02 100401030100 110401040105".replace(" ", ""));
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
       StreamPacket validStreampacket = StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
       assertThat(validStreampacket.frames().size()).isEqualTo(2);
@@ -294,7 +295,7 @@ public class StreamPacketFixturesTest {
 
       // Validate the "valid bytes" above.
       byte[] packetWithInvalidFrameBytes = BaseEncoding.base16()
-          .decode("010C0101010201 02 100401030100 1103010401".replace(" ", ""));
+        .decode("010C0101010201 02 100401030100 1103010401".replace(" ", ""));
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
       StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
       fail("Should have thrown an exception but did not");
@@ -310,7 +311,7 @@ public class StreamPacketFixturesTest {
 
       // Validate the "valid bytes" above.
       byte[] packetWithInvalidFrameBytes = BaseEncoding.base16()
-          .decode("010C0101010201 02 100401030100".replace(" ", ""));
+        .decode("010C0101010201 02 100401030100".replace(" ", ""));
       ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(packetWithInvalidFrameBytes);
       StreamCodecContextFactory.oer().read(StreamPacket.class, byteArrayInputStream);
       fail("Should have thrown an exception but did not");
@@ -327,88 +328,88 @@ public class StreamPacketFixturesTest {
     switch (streamFrameType) {
       case ConnectionClose: {
         return ConnectionCloseFrame.builder()
-            .errorCode(ErrorCodes.of(fixture.errorCode().get()))
-            .errorMessage(fixture.errorMessage())
-            .build();
+          .errorCode(ErrorCodes.of(fixture.errorCode().get()))
+          .errorMessage(fixture.errorMessage())
+          .build();
       }
       case ConnectionNewAddress: {
         return ConnectionNewAddressFrame.builder()
-            .sourceAddress(InterledgerAddress.of(fixture.sourceAccount().get()))
-            .build();
+          .sourceAddress(InterledgerAddress.of(fixture.sourceAccount().get()))
+          .build();
       }
       case ConnectionDataMax: {
         return ConnectionDataMaxFrame.builder()
-            .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
-            .build();
+          .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
+          .build();
       }
       case ConnectionDataBlocked: {
         return ConnectionDataBlockedFrame.builder()
-            .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
-            .build();
+          .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
+          .build();
       }
       case ConnectionMaxStreamId: {
         return ConnectionMaxStreamIdFrame.builder()
-            .maxStreamId(UnsignedLong.valueOf(fixture.maxStreamId().get()))
-            .build();
+          .maxStreamId(UnsignedLong.valueOf(fixture.maxStreamId().get()))
+          .build();
       }
       case ConnectionStreamIdBlocked: {
         return ConnectionStreamIdBlockedFrame.builder()
-            .maxStreamId(UnsignedLong.valueOf(fixture.maxStreamId().get()))
-            .build();
+          .maxStreamId(UnsignedLong.valueOf(fixture.maxStreamId().get()))
+          .build();
       }
       case StreamClose: {
         return StreamCloseFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .errorCode(ErrorCodes.of(fixture.errorCode().get()))
-            .errorMessage(fixture.errorMessage().get())
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .errorCode(ErrorCodes.of(fixture.errorCode().get()))
+          .errorMessage(fixture.errorMessage().get())
+          .build();
       }
       case StreamMoney: {
         return StreamMoneyFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .shares(UnsignedLong.valueOf(fixture.shares().get()))
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .shares(UnsignedLong.valueOf(fixture.shares().get()))
+          .build();
       }
       case StreamMoneyMax: {
         return StreamMoneyMaxFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .totalReceived(UnsignedLong.valueOf(fixture.totalReceived().get()))
-            .receiveMax(UnsignedLong.valueOf(fixture.receiveMax().get()))
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .totalReceived(UnsignedLong.valueOf(fixture.totalReceived().get()))
+          .receiveMax(UnsignedLong.valueOf(fixture.receiveMax().get()))
+          .build();
       }
       case StreamMoneyBlocked: {
         return StreamMoneyBlockedFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .sendMax(UnsignedLong.valueOf(fixture.sendMax().get()))
-            .totalSent(UnsignedLong.valueOf(fixture.totalSent().get()))
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .sendMax(UnsignedLong.valueOf(fixture.sendMax().get()))
+          .totalSent(UnsignedLong.valueOf(fixture.totalSent().get()))
+          .build();
       }
       case StreamData: {
         return StreamDataFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .offset(UnsignedLong.valueOf(fixture.offset().get()))
-            .data(Base64.getDecoder().decode(fixture.data().get()))
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .offset(UnsignedLong.valueOf(fixture.offset().get()))
+          .data(Base64.getDecoder().decode(fixture.data().get()))
+          .build();
       }
       case StreamDataMax: {
         return StreamDataMaxFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
+          .build();
       }
       case StreamDataBlocked: {
         return StreamDataBlockedFrame.builder()
-            .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
-            .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
-            .build();
+          .streamId(UnsignedLong.valueOf(fixture.streamId().get()))
+          .maxOffset(UnsignedLong.valueOf(fixture.maxOffset().get()))
+          .build();
       }
       case ConnectionAssetDetails: {
         return ConnectionAssetDetailsFrame.builder().sourceDenomination(
-            Denomination.builder()
-                .assetCode(fixture.sourceAssetCode().get())
-                .assetScale(Short.valueOf(fixture.sourceAssetScale().get()))
-                .build())
-            .build();
+          Denomination.builder()
+            .assetCode(fixture.sourceAssetCode().get())
+            .assetScale(Short.valueOf(fixture.sourceAssetScale().get()))
+            .build())
+          .build();
       }
       default: {
         throw new RuntimeException("Unsupported Frame:" + streamFrameType);

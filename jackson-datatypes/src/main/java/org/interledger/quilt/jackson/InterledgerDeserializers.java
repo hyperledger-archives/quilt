@@ -35,7 +35,8 @@ import org.interledger.quilt.jackson.conditions.FulfillmentDeserializer;
 import org.interledger.quilt.jackson.link.LinkIdDeserializer;
 import org.interledger.quilt.jackson.link.LinkTypeDeserializer;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretDeserializer;
-import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
+import org.interledger.quilt.jackson.stream.StreamSharedSecretDeserializer;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
@@ -58,7 +59,7 @@ public class InterledgerDeserializers extends Deserializers.Base {
 
   @Override
   public JsonDeserializer<?> findBeanDeserializer(
-      JavaType type, DeserializationConfig config, BeanDescription beanDesc
+    JavaType type, DeserializationConfig config, BeanDescription beanDesc
   ) {
     if (type.hasRawClass(InterledgerAddress.class)) {
       return new InterledgerAddressDeserializer();
@@ -78,6 +79,10 @@ public class InterledgerDeserializers extends Deserializers.Base {
 
     if (type.hasRawClass(SharedSecret.class)) {
       return new SharedSecretDeserializer();
+    }
+
+    if (type.hasRawClass(StreamSharedSecret.class)) {
+      return new StreamSharedSecretDeserializer();
     }
 
     if (type.hasRawClass(LinkId.class)) {

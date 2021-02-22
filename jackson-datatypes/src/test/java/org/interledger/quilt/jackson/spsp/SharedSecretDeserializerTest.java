@@ -15,7 +15,10 @@ import java.io.IOException;
 
 /**
  * Unit tests for {@link SharedSecretDeserializer}.
+ *
+ * @deprecated Prefer {@link org.interledger.quilt.jackson.stream.StreamSharedSecretSerializer} instead.
  */
+@Deprecated
 public class SharedSecretDeserializerTest {
 
   private static final SharedSecret SHARED_SECRET = SharedSecret.of(new byte[32]);
@@ -25,13 +28,13 @@ public class SharedSecretDeserializerTest {
   @Before
   public void setup() {
     this.objectMapper = new ObjectMapper()
-        .registerModule(new SharedSecretModule());
+      .registerModule(new SharedSecretModule());
   }
 
   @Test
   public void shouldDeserialize() throws IOException {
     final SharedSecret actual = objectMapper
-        .readValue("\"" + SHARED_SECRET.value() + "\"", SharedSecret.class);
+      .readValue("\"" + SHARED_SECRET.value() + "\"", SharedSecret.class);
 
     assertThat(actual).isEqualTo(SHARED_SECRET);
   }
@@ -39,12 +42,12 @@ public class SharedSecretDeserializerTest {
   @Test
   public void shouldDeserializeInContainer() throws IOException {
     final SharedSecretContainer expectedContainer = ImmutableSharedSecretContainer.builder()
-        .sharedSecret(SHARED_SECRET)
-        .build();
+      .sharedSecret(SHARED_SECRET)
+      .build();
 
     final SharedSecretContainer actualContainer = objectMapper.readValue(
-        "{\"shared_secret\":\"" + SHARED_SECRET.value() + "\"}",
-        SharedSecretContainer.class
+      "{\"shared_secret\":\"" + SHARED_SECRET.value() + "\"}",
+      SharedSecretContainer.class
     );
 
     assertThat(actualContainer).isEqualTo(expectedContainer);

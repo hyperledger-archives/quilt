@@ -1,7 +1,6 @@
 package org.interledger.examples.packets;
 
 import static org.interledger.core.InterledgerConstants.ALL_ZEROS_FULFILLMENT;
-import static org.interledger.stream.StreamUtils.generatedFulfillableFulfillment;
 
 import org.interledger.codecs.ilp.InterledgerCodecContextFactory;
 import org.interledger.codecs.stream.StreamCodecContextFactory;
@@ -15,12 +14,12 @@ import org.interledger.core.InterledgerPacketType;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerPreparePacketBuilder;
 import org.interledger.core.InterledgerRejectPacket;
-import org.interledger.core.SharedSecret;
 import org.interledger.link.PingLoopbackLink;
-import org.interledger.stream.Denomination;
 import org.interledger.stream.StreamPacket;
-import org.interledger.stream.crypto.JavaxStreamEncryptionService;
-import org.interledger.stream.crypto.StreamEncryptionService;
+import org.interledger.stream.StreamPacketUtils;
+import org.interledger.stream.crypto.AesGcmStreamSharedSecretCrypto;
+import org.interledger.stream.crypto.StreamSharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecretCrypto;
 import org.interledger.stream.frames.ConnectionAssetDetailsFrame;
 import org.interledger.stream.frames.ConnectionCloseFrame;
 import org.interledger.stream.frames.ConnectionNewAddressFrame;
@@ -54,14 +53,19 @@ public class IlpPacketEmitter {
   private static final InterledgerAddress PING_DESTINATION_ADDRESS = InterledgerAddress.of("test.connie");
 
   private static final InterledgerAddress DESTINATION_ADDRESS = InterledgerAddress
-      .of("test.connie.bob.QeJvQtFp7eRiNhnoAg9PkusR");
+    .of("test.connie.bob.QeJvQtFp7eRiNhnoAg9PkusR");
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.connie");
 
-  private static final SharedSecret SHARED_SECRET = SharedSecret
-      .of(Base64.getDecoder().decode("nHYRcu5KM5pyw8XehssZtvhEgCgkKP4Do5kJUpk84G4"));
+  private static final StreamSharedSecret SHARED_SECRET = StreamSharedSecret
+    .of(Base64.getDecoder().decode("nHYRcu5KM5pyw8XehssZtvhEgCgkKP4Do5kJUpk84G4"));
 
-  private static final StreamEncryptionService streamEncryptionService = new JavaxStreamEncryptionService();
+  private static final StreamSharedSecretCrypto SHARED_SECRET_CRYPTO = new AesGcmStreamSharedSecretCrypto();
 
+  /**
+   * Main entry point.
+   *
+   * @param args
+   */
   public static void main(String[] args) throws IOException {
     emitPacketsWithNoData();
     emitPacketsWithStreamPayloads();
@@ -73,26 +77,26 @@ public class IlpPacketEmitter {
     emitPacketToFile("/tmp/testPreparePacket.bin", preparePacket);
 
     final InterledgerRejectPacket rejectPacket = InterledgerRejectPacket.builder()
-        .code(InterledgerErrorCode.F02_UNREACHABLE)
-        .triggeredBy(OPERATOR_ADDRESS)
-        .message("")
-        .build();
+      .code(InterledgerErrorCode.F02_UNREACHABLE)
+      .triggeredBy(OPERATOR_ADDRESS)
+      .message("")
+      .build();
     emitPacketToFile("/tmp/testRejectPacket.bin", rejectPacket);
 
     final InterledgerFulfillPacket fulfillPacket = InterledgerFulfillPacket.builder()
-        .fulfillment(InterledgerFulfillment.of(new byte[32]))
-        .build();
+      .fulfillment(InterledgerFulfillment.of(new byte[32]))
+      .build();
     emitPacketToFile("/tmp/testFulfillPacket.bin", fulfillPacket);
   }
 
   private static void emitUnidrectionalPingPacket() {
 
     final InterledgerPreparePacket preparePacket = InterledgerPreparePacket.builder()
-        .destination(PING_DESTINATION_ADDRESS)
-        .expiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
-        .executionCondition(PingLoopbackLink.PING_PROTOCOL_CONDITION)
-        .amount(UnsignedLong.ONE)
-        .build();
+      .destination(PING_DESTINATION_ADDRESS)
+      .expiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
+      .executionCondition(PingLoopbackLink.PING_PROTOCOL_CONDITION)
+      .amount(UnsignedLong.ONE)
+      .build();
 
     emitPacketToFile("/tmp/testUnidirectionalPingPacket.bin", preparePacket);
   }
@@ -110,92 +114,93 @@ public class IlpPacketEmitter {
 
   private static InterledgerFulfillPacket fulfillPacketWithStreamFrames() throws IOException {
     final StreamPacket streamPacket = StreamPacket.builder()
-        .interledgerPacketType(InterledgerPacketType.PREPARE)
-        .prepareAmount(UnsignedLong.ZERO)
-        .sequence(UnsignedLong.ONE)
-        .frames(Lists.newArrayList(
-            StreamMoneyFrame.builder()
-                // This aggregator supports only a simple stream-id, which is one.
-                .streamId(UnsignedLong.ONE)
-                .shares(UnsignedLong.ONE)
-                .build(),
-            StreamDataFrame.builder()
-                .offset(UnsignedLong.ZERO)
-                .streamId(UnsignedLong.ONE)
-                .data(new byte[8])
-                .build()
-        ))
-        .build();
+      .interledgerPacketType(InterledgerPacketType.PREPARE)
+      .prepareAmount(UnsignedLong.ZERO)
+      .sequence(UnsignedLong.ONE)
+      .frames(Lists.newArrayList(
+        StreamMoneyFrame.builder()
+          // This aggregator supports only a simple stream-id, which is one.
+          .streamId(UnsignedLong.ONE)
+          .shares(UnsignedLong.ONE)
+          .build(),
+        StreamDataFrame.builder()
+          .offset(UnsignedLong.ZERO)
+          .streamId(UnsignedLong.ONE)
+          .data(new byte[8])
+          .build()
+      ))
+      .build();
 
     // Create the ILP Prepare packet
     final byte[] streamPacketData = toEncrypted(streamPacket);
     return InterledgerFulfillPacket.builder()
-        .fulfillment(InterledgerFulfillment.of(new byte[32]))
-        .data(streamPacketData)
-        .typedData(streamPacket)
-        .build();
+      .fulfillment(InterledgerFulfillment.of(new byte[32]))
+      .data(streamPacketData)
+      .typedData(streamPacket)
+      .build();
   }
 
   private static InterledgerPreparePacketBuilder preparePacketBuilder() {
     return InterledgerPreparePacket.builder()
-        .expiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
-        .destination(DESTINATION_ADDRESS)
-        .amount(UnsignedLong.ONE)
-        .executionCondition(ALL_ZEROS_FULFILLMENT.getCondition());
+      .expiresAt(Instant.now().plus(365, ChronoUnit.DAYS))
+      .destination(DESTINATION_ADDRESS)
+      .amount(UnsignedLong.ONE)
+      .executionCondition(ALL_ZEROS_FULFILLMENT.getCondition());
   }
 
   private static InterledgerPreparePacketBuilder preparePacketWithStreamFrames() throws IOException {
     final StreamPacket streamPacket = StreamPacket.builder()
-        .interledgerPacketType(InterledgerPacketType.PREPARE)
-        .prepareAmount(UnsignedLong.ZERO)
-        .sequence(UnsignedLong.ONE)
-        .frames(Lists.newArrayList(
-            StreamMoneyFrame.builder()
-                // This aggregator supports only a simple stream-id, which is one.
-                .streamId(UnsignedLong.ONE)
-                .shares(UnsignedLong.ONE)
-                .build(),
-            ConnectionNewAddressFrame.builder()
-                .sourceAddress(InterledgerAddress.of("example.connie.bob"))
-                .build(),
-            ConnectionAssetDetailsFrame.builder()
-                .sourceDenomination(Denomination.builder()
-                    .assetCode("USD")
-                    .assetScale((short) 2)
-                    .build())
-                .build()
-        ))
-        .build();
+      .interledgerPacketType(InterledgerPacketType.PREPARE)
+      .prepareAmount(UnsignedLong.ZERO)
+      .sequence(UnsignedLong.ONE)
+      .frames(Lists.newArrayList(
+        StreamMoneyFrame.builder()
+          // This aggregator supports only a simple stream-id, which is one.
+          .streamId(UnsignedLong.ONE)
+          .shares(UnsignedLong.ONE)
+          .build(),
+        ConnectionNewAddressFrame.builder()
+          .sourceAddress(InterledgerAddress.of("example.connie.bob"))
+          .build(),
+        ConnectionAssetDetailsFrame.builder()
+          .sourceDenomination(org.interledger.stream.Denomination.builder()
+            .assetCode("USD")
+            .assetScale((short) 2)
+            .build())
+          .build()
+      ))
+      .build();
 
     // Create the ILP Prepare packet
     final byte[] streamPacketData = toEncrypted(streamPacket);
-    final InterledgerCondition executionCondition = generatedFulfillableFulfillment(SHARED_SECRET, streamPacketData)
-        .getCondition();
+    final InterledgerCondition executionCondition = StreamPacketUtils
+      .generateFulfillableFulfillment(SHARED_SECRET, streamPacketData)
+      .getCondition();
     return preparePacketBuilder()
-        .executionCondition(executionCondition)
-        .data(streamPacketData)
-        .typedData(streamPacket);
+      .executionCondition(executionCondition)
+      .data(streamPacketData)
+      .typedData(streamPacket);
   }
 
   private static InterledgerRejectPacket rejectPacketWithStreamFrames() throws IOException {
     final StreamPacket streamPacket = StreamPacket.builder()
-        .interledgerPacketType(InterledgerPacketType.PREPARE)
-        .prepareAmount(UnsignedLong.ZERO)
-        .sequence(UnsignedLong.ONE)
-        .frames(Lists.newArrayList(
-            ConnectionCloseFrame.builder().errorCode(ErrorCodes.NoError).build()
-        ))
-        .build();
+      .interledgerPacketType(InterledgerPacketType.PREPARE)
+      .prepareAmount(UnsignedLong.ZERO)
+      .sequence(UnsignedLong.ONE)
+      .frames(Lists.newArrayList(
+        ConnectionCloseFrame.builder().errorCode(ErrorCodes.NoError).build()
+      ))
+      .build();
 
     // Create the ILP Prepare packet
     final byte[] streamPacketData = toEncrypted(streamPacket);
 
     return InterledgerRejectPacket.builder()
-        .code(InterledgerErrorCode.F02_UNREACHABLE)
-        .triggeredBy(OPERATOR_ADDRESS)
-        .message("test packet rejection")
-        .data(streamPacketData)
-        .build();
+      .code(InterledgerErrorCode.F02_UNREACHABLE)
+      .triggeredBy(OPERATOR_ADDRESS)
+      .message("test packet rejection")
+      .data(streamPacketData)
+      .build();
   }
 
   private static void emitPacketToFile(final String fileName, final InterledgerPacket interledgerPacket) {
@@ -212,13 +217,13 @@ public class IlpPacketEmitter {
   }
 
   private static byte[] toEncrypted(final StreamPacket streamPacket)
-      throws IOException {
+    throws IOException {
 
     Objects.requireNonNull(streamPacket);
 
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     StreamCodecContextFactory.oer().write(streamPacket, baos);
     final byte[] streamPacketBytes = baos.toByteArray();
-    return streamEncryptionService.encrypt(SHARED_SECRET, streamPacketBytes);
+    return SHARED_SECRET_CRYPTO.encrypt(SHARED_SECRET, streamPacketBytes);
   }
 }

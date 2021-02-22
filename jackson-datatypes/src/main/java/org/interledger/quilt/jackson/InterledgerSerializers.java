@@ -35,6 +35,8 @@ import org.interledger.quilt.jackson.conditions.FulfillmentSerializer;
 import org.interledger.quilt.jackson.link.LinkIdSerializer;
 import org.interledger.quilt.jackson.link.LinkTypeSerializer;
 import org.interledger.quilt.jackson.sharedsecret.SharedSecretSerializer;
+import org.interledger.quilt.jackson.stream.StreamSharedSecretSerializer;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.JavaType;
@@ -57,7 +59,7 @@ public class InterledgerSerializers extends Serializers.Base {
 
   @Override
   public JsonSerializer<?> findSerializer(
-      SerializationConfig config, JavaType type, BeanDescription beanDesc
+    SerializationConfig config, JavaType type, BeanDescription beanDesc
   ) {
     final Class<?> raw = type.getRawClass();
     if (InterledgerAddress.class.isAssignableFrom(raw)) {
@@ -74,6 +76,9 @@ public class InterledgerSerializers extends Serializers.Base {
     }
     if (SharedSecret.class.isAssignableFrom(raw)) {
       return new SharedSecretSerializer();
+    }
+    if (StreamSharedSecret.class.isAssignableFrom(raw)) {
+      return new StreamSharedSecretSerializer();
     }
     if (LinkId.class.isAssignableFrom(raw)) {
       return new LinkIdSerializer();

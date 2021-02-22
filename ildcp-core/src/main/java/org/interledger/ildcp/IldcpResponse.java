@@ -40,14 +40,38 @@ public interface IldcpResponse {
    *
    * @return An {@link InterledgerAddress}.
    */
-  InterledgerAddress getClientAddress();
+  InterledgerAddress clientAddress();
+
+  /**
+   * The Interledger address of the requesting client node as assigned by the configuration provider.
+   *
+   * @return An {@link InterledgerAddress}.
+   *
+   * @deprecated Prefer {@link #clientAddress()} instead.
+   */
+  @Deprecated
+  default InterledgerAddress getClientAddress() {
+    return clientAddress();
+  }
 
   /**
    * An asset code of the asset that two nodes participating in IL-DCP will use to settle.
    *
    * @return A {@link String}.
    */
-  String getAssetCode();
+  String assetCode();
+
+  /**
+   * An asset code of the asset that two nodes participating in IL-DCP will use to settle.
+   *
+   * @return A {@link String}.
+   *
+   * @deprecated Prefer {@link #clientAddress()} instead.
+   */
+  @Deprecated
+  default String getAssetCode() {
+    return assetCode();
+  }
 
   /**
    * <p>An asset scale for amounts that will be used in ILP packets exchanged between two nodes
@@ -64,7 +88,29 @@ public interface IldcpResponse {
    *
    * @return An {@link Integer} representing the asset scale.
    */
-  short getAssetScale();
+  short assetScale();
+
+  /**
+   * <p>An asset scale for amounts that will be used in ILP packets exchanged between two nodes
+   * participating in IL-DCP.</p>
+   *
+   * <p>This value is the order of magnitude used to express one full currency unit in this
+   * account's base units. More formally, an integer (..., -2, -1, 0, 1, 2, ...), such that one of the account's base
+   * units equals 10^-{@code currencyScale} {@code currencyCode}</p>
+   *
+   * <p>For example, if the integer values represented on the system are to be interpreted
+   * as dollar-cents (for the purpose of settling a user's account balance, for instance), then the account's
+   * currencyScale is 2. The amount 10000 would be translated visually into a decimal format via the following equation:
+   * 10000 * (10^(-2)), or "100.00".</p>
+   *
+   * @return An {@link Integer} representing the asset scale.
+   *
+   * @deprecated Prefer {@link #assetScale()} instead.
+   */
+  @Deprecated
+  default short getAssetScale() {
+    return assetScale();
+  }
 
   @Immutable
   abstract class AbstractIldcpResponse implements IldcpResponse {

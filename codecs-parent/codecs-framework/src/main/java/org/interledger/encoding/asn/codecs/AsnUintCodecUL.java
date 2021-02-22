@@ -70,11 +70,14 @@ public class AsnUintCodecUL extends AsnOctetStringBasedObjectCodec<UnsignedLong>
     } catch (Exception e) {
       if (defaultValue.isPresent()) {
         logger.warn(
-            "Variable Unsigned Integer was too big for VarUInt: {}. Returning UnsignedLong.Max",
-            Base64.getEncoder().encodeToString(getBytes())
+          "Variable Unsigned Integer was too big for VarUInt: {}. Returning default value: {}",
+          Base64.getEncoder().encodeToString(getBytes()), defaultValue.get()
         );
         return defaultValue.get();
       } else {
+        logger.warn(
+          "AsnUintCodecUL had no default specified. "
+            + "This may be incorrect for protocols like STREAM (e.g., StreamMaxMoney frames).");
         throw e;
       }
     }

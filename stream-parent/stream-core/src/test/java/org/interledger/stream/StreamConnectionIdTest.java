@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.SharedSecret;
+import org.interledger.stream.crypto.StreamSharedSecret;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +22,18 @@ public class StreamConnectionIdTest {
   public void testConstructorWithNullSharedSecret() {
     expectedException.expect(NullPointerException.class);
     expectedException.expectMessage("sharedSecret must not be null");
-    StreamConnectionId.from(mock(InterledgerAddress.class), null);
+
+    SharedSecret nullSharedSecret = null;
+    StreamConnectionId.from(mock(InterledgerAddress.class), nullSharedSecret);
+  }
+
+  @Test
+  public void testConstructorWithNullStraemSharedSecret() {
+    expectedException.expect(NullPointerException.class);
+    expectedException.expectMessage("streamSharedSecret must not be null");
+
+    StreamSharedSecret nullStreamSharedSecret = null;
+    StreamConnectionId.from(mock(InterledgerAddress.class), nullStreamSharedSecret);
   }
 
   @Test

@@ -11,12 +11,13 @@ import org.junit.Test;
 /**
  * Unit tests for {@link FixedSenderAmountPaymentTracker}.
  */
+@SuppressWarnings("deprecation")
 public class FixedSenderAmountPaymentTrackerTest {
 
   @Test
   public void checkAllInteractions() {
     FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12L),
-        new HalfsiesExchangeRateCalculator());
+      new HalfsiesExchangeRateCalculator());
 
     assertThat(tracker.getDeliveredAmountInSenderUnits()).isEqualTo(UnsignedLong.ZERO);
     assertThat(tracker.getDeliveredAmountInReceiverUnits()).isEqualTo(UnsignedLong.ZERO);
@@ -79,7 +80,7 @@ public class FixedSenderAmountPaymentTrackerTest {
   @Test
   public void authFailsWhenAmountLeftToSendLessThanPrepare() {
     FixedSenderAmountPaymentTracker tracker = new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(12L),
-        new HalfsiesExchangeRateCalculator());
+      new HalfsiesExchangeRateCalculator());
 
     PrepareAmounts amounts = tracker.getSendPacketAmounts(UnsignedLong.valueOf(12), Denominations.XRP_DROPS);
     tracker.auth(amounts);

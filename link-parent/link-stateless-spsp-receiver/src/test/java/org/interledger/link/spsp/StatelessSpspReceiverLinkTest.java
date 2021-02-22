@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.interledger.core.InterledgerConstants.ALL_ZEROS_FULFILLMENT;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.core.DateUtils;
 import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerConstants;
@@ -27,6 +29,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Unit tests for {@link StatelessSpspReceiverLink}.
  */
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class StatelessSpspReceiverLinkTest {
 
   private static final InterledgerAddress OPERATOR_ADDRESS = InterledgerAddress.of("test.foo");
@@ -41,14 +44,15 @@ public class StatelessSpspReceiverLinkTest {
 
   private StatelessSpspReceiverLink link;
 
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
 
     this.link = new StatelessSpspReceiverLink(
-        () -> OPERATOR_ADDRESS,
-        StatelessSpspReceiverLinkSettings.builder().assetCode("XRP").assetScale((short) 9).build(),
-        streamReceiverMock
+      () -> OPERATOR_ADDRESS,
+      StatelessSpspReceiverLinkSettings.builder().assetCode("XRP").assetScale((short) 9).build(),
+      streamReceiverMock
     );
     link.setLinkId(LinkId.of("foo"));
   }
@@ -59,7 +63,7 @@ public class StatelessSpspReceiverLinkTest {
       link.registerLinkHandler(incomingPreparePacket -> null);
     } catch (Exception e) {
       assertThat(e.getMessage())
-          .isEqualTo("StatelessSpspReceiver links never emit data, and thus should not have a registered DataHandler.");
+        .isEqualTo("StatelessSpspReceiver links never emit data, and thus should not have a registered DataHandler.");
       throw e;
     }
   }
@@ -77,29 +81,59 @@ public class StatelessSpspReceiverLinkTest {
   @Test
   public void sendPacket() {
     final InterledgerFulfillPacket actualFulfillPacket = InterledgerFulfillPacket.builder()
-        .fulfillment(ALL_ZEROS_FULFILLMENT)
-        .build();
+      .fulfillment(ALL_ZEROS_FULFILLMENT)
+      .build();
     when(streamReceiverMock.receiveMoney(any(), any(), any())).thenReturn(actualFulfillPacket);
 
     final InterledgerPreparePacket preparePacket = preparePacket();
     link.sendPacket(preparePacket).handle(
-        fulfillPacket -> {
-          assertThat(fulfillPacket).isEqualTo(actualFulfillPacket);
-        },
-        rejectPacket -> {
-          logger.error("rejectPacket={}", rejectPacket);
-          fail("Expected a Fulfill");
-        }
+      fulfillPacket -> assertThat(fulfillPacket).isEqualTo(actualFulfillPacket),
+      rejectPacket -> {
+        logger.error("rejectPacket={}", rejectPacket);
+        fail("Expected a Fulfill");
+      }
     );
+  }
+
+  /**
+   * Send a packet that's too big, when maxPacketAmount is specified.
+   */
+  @Test
+  public void sendPacketTooBig() {
+    this.link = new StatelessSpspReceiverLink(
+      () -> OPERATOR_ADDRESS,
+      StatelessSpspReceiverLinkSettings.builder()
+        .assetCode("XRP")
+        .assetScale((short) 9)
+        .maxPacketAmount(UnsignedLong.ONE) // <-- max packet is 1
+        .build(),
+      streamReceiverMock
+    );
+    link.setLinkId(LinkId.of("foo"));
+
+    final InterledgerPreparePacket preparePacket = preparePacket();
+    link.sendPacket(preparePacket).handle(
+      fulfillPacket -> fail("Packet with amount 10 should not fulfill because it's too large"),
+      rejectPacket -> {
+        logger.error("rejectPacket={}", rejectPacket);
+        assertThat(rejectPacket.typedData()).isPresent();
+        assertThat(rejectPacket.typedData().get()).isInstanceOf(AmountTooLargeErrorData.class);
+        AmountTooLargeErrorData amountTooLargeErrorData = (AmountTooLargeErrorData) rejectPacket.typedData().get();
+        assertThat(amountTooLargeErrorData.maximumAmount()).isEqualTo(UnsignedLong.ONE);
+        assertThat(amountTooLargeErrorData.receivedAmount()).isEqualTo(UnsignedLong.valueOf(10L));
+      }
+    );
+
+    verifyZeroInteractions(streamReceiverMock);
   }
 
   private InterledgerPreparePacket preparePacket() {
     return InterledgerPreparePacket.builder()
-        .amount(UnsignedLong.valueOf(10L))
-        .executionCondition(InterledgerConstants.ALL_ZEROS_CONDITION)
-        .destination(OPERATOR_ADDRESS)
-        .expiresAt(DateUtils.now())
-        .data(new byte[32])
-        .build();
+      .amount(UnsignedLong.valueOf(10L))
+      .executionCondition(InterledgerConstants.ALL_ZEROS_CONDITION)
+      .destination(OPERATOR_ADDRESS)
+      .expiresAt(DateUtils.now())
+      .data(new byte[32])
+      .build();
   }
 }

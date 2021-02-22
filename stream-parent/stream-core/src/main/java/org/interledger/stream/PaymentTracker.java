@@ -5,7 +5,10 @@ import com.google.common.primitives.UnsignedLong;
 /**
  * Defines how to track a payment while considering the amount sent vs amount received, allowing room for
  * path-exchange-rate fluctuations and implementation-defined rules relating to whether or not to continue a payment.
+ *
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
  */
+@Deprecated
 public interface PaymentTracker<T extends SenderAmountMode> {
 
   /**
@@ -57,7 +60,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    *                           compute path-exchange-rates.
    *
    * @return A {@link PrepareAmounts} object that contains the correct information to use in the next ILPv4 and Stream
-   *     packets as part of a packetized payment flow in STREAM.
+   *   packets as part of a packetized payment flow in STREAM.
    */
   PrepareAmounts getSendPacketAmounts(UnsignedLong congestionLimit, Denomination senderDenomination);
 
@@ -72,10 +75,10 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    *                             compute path-exchange-rates.
    *
    * @return A {@link PrepareAmounts} object that contains the correct information to use in the next ILPv4 and Stream
-   *     packets as part of a packetized payment flow in STREAM.
+   *   packets as part of a packetized payment flow in STREAM.
    */
   PrepareAmounts getSendPacketAmounts(
-      UnsignedLong congestionLimit, Denomination senderDenomination, Denomination receiverDenomination
+    UnsignedLong congestionLimit, Denomination senderDenomination, Denomination receiverDenomination
   );
 
   /**
@@ -132,7 +135,7 @@ public interface PaymentTracker<T extends SenderAmountMode> {
    * <p>By default, this method returns {@code true} for {@link SenderAmountMode#RECEIVER_AMOUNT}.</p>
    *
    * @return {@code true} if {@link #getOriginalAmountMode()} equals {@link SenderAmountMode#RECEIVER_AMOUNT}; {@code
-   *     false} otherwise.
+   *   false} otherwise.
    */
   default boolean requiresReceiverDenomination() {
     return getOriginalAmountMode() == SenderAmountMode.RECEIVER_AMOUNT;

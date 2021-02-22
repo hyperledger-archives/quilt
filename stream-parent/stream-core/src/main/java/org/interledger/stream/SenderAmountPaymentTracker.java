@@ -1,10 +1,15 @@
 package org.interledger.stream;
 
+import org.interledger.stream.Denomination;
+
 import com.google.common.primitives.UnsignedLong;
 
 /**
  * An extension of {@link PaymentTracker} that defines the {@link #getOriginalAmount()} to be in the sender's units.
+ *
+ * @deprecated This class will be removed in a future version in-favor of ILP Pay functionality.
  */
+@Deprecated
 public interface SenderAmountPaymentTracker extends PaymentTracker<SenderAmountMode> {
 
   @Override
@@ -26,7 +31,7 @@ public interface SenderAmountPaymentTracker extends PaymentTracker<SenderAmountM
    */
   @Override
   default PrepareAmounts getSendPacketAmounts(
-      UnsignedLong congestionLimit, Denomination senderDenomination, Denomination receiverDenomination
+    UnsignedLong congestionLimit, Denomination senderDenomination, Denomination receiverDenomination
   ) {
     return getSendPacketAmounts(congestionLimit, senderDenomination);
   }

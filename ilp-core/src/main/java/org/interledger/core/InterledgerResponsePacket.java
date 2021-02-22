@@ -24,6 +24,7 @@ import org.immutables.value.Value.Default;
 
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -53,7 +54,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @param rejectHandler  A {@link Consumer} to call if this packet is an instance of {@link InterledgerRejectPacket}.
    */
   default void handle(
-      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+    final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
   ) {
     Objects.requireNonNull(fulfillHandler);
     Objects.requireNonNull(rejectHandler);
@@ -63,7 +64,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     } else if (InterledgerRejectPacket.class.isAssignableFrom(this.getClass())) {
       rejectHandler.accept((InterledgerRejectPacket) this);
     } else {
-      throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
+      throw new IllegalStateException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
     }
   }
 
@@ -82,7 +83,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @return This instance of {@link InterledgerResponsePacket}.
    */
   default InterledgerResponsePacket handleAndReturn(
-      final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
+    final Consumer<InterledgerFulfillPacket> fulfillHandler, final Consumer<InterledgerRejectPacket> rejectHandler
   ) {
     this.handle(fulfillHandler, rejectHandler);
     return this;
@@ -100,7 +101,7 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
    * @return An instance of {@code R}.
    */
   default <R> R map(
-      final Function<InterledgerFulfillPacket, R> fulfillMapper, final Function<InterledgerRejectPacket, R> rejectMapper
+    final Function<InterledgerFulfillPacket, R> fulfillMapper, final Function<InterledgerRejectPacket, R> rejectMapper
   ) {
     Objects.requireNonNull(fulfillMapper);
     Objects.requireNonNull(rejectMapper);
@@ -110,8 +111,42 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     } else if (InterledgerRejectPacket.class.isAssignableFrom(this.getClass())) {
       return rejectMapper.apply((InterledgerRejectPacket) this);
     } else {
-      throw new RuntimeException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
+      throw new IllegalStateException(String.format("Unsupported InterledgerResponsePacket Type: %s", this.getClass()));
     }
+  }
+
+  /**
+   * Map this packet to another class using one of the two supplied functions, depending on the actual type of this
+   * response packet. If this packet is a fulfill packet, then {@code fulfillMapper} will be called. If this packet is a
+   * reject packet, then  {@code rejectMapper} will be called instead.
+   *
+   * @param responseMapper A {@link Function} to call if this packet is an instance of {@link
+   *                       InterledgerResponsePacket}.
+   * @param <R>            The return type of this mapping function.
+   *
+   * @return An instance of {@code R}.
+   */
+  default <R> R mapResponse(final Function<InterledgerResponsePacket, R> responseMapper) {
+    Objects.requireNonNull(responseMapper);
+    return responseMapper.apply(this);
+  }
+
+  /**
+   * Return a copy of this packet with the supplied {@code typedData} included.
+   *
+   * @param optTypedData An arbitrary object for the data field.
+   *
+   * @return A {@link InterledgerResponsePacket}.
+   */
+  default InterledgerResponsePacket withTypedDataOrThis(final Optional<?> optTypedData) {
+    Objects.requireNonNull(optTypedData);
+    return optTypedData
+      .map(typedData -> this.map(
+        // Hydrate the packet with this typed data.
+        fulfillPacket -> InterledgerFulfillPacket.builder().from(fulfillPacket).typedData(typedData).build(),
+        rejectPacket -> InterledgerRejectPacket.builder().from(rejectPacket).typedData(typedData).build()
+      ))
+      .orElse(this); // <-- Return this packet without typedData if `typedData` is null
   }
 
   @Immutable
@@ -131,8 +166,9 @@ public interface InterledgerResponsePacket extends InterledgerPacket {
     @Override
     public String toString() {
       return "InterledgerResponsePacket{"
-          + ", data=" + Base64.getEncoder().encodeToString(getData())
-          + "}";
+        + ", data=" + Base64.getEncoder().encodeToString(getData())
+        + ", typedData=" + typedData().orElse("n/a")
+        + "}";
     }
   }
 

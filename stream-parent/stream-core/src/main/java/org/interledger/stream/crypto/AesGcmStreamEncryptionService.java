@@ -27,7 +27,10 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * An {@link StreamEncryptionService} that uses a JavaKeystore for underlying key storage.
+ *
+ * @deprecated Will be removed in a future version. Prefer {@link StreamSharedSecretCrypto} instead.
  */
+@Deprecated
 public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
   /**
@@ -78,7 +81,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
   @VisibleForTesting
   byte[] encryptWithIv(final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv)
-      throws EncryptionException {
+    throws EncryptionException {
     Objects.requireNonNull(sharedSecret);
     Objects.requireNonNull(plainText);
     Objects.requireNonNull(iv);
@@ -99,12 +102,12 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * @param iv           An initialization vector used AES/GCM.
    *
    * @return A byte-array containing encrypted cipherMessage, which consists of the iv plus ciphertext (note this is
-   *     inverted from the NIST specification).
+   *   inverted from the NIST specification).
    *
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    */
   private byte[] standardModeEncryptWithIv(
-      final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
+    final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
   ) throws EncryptionException {
     Objects.requireNonNull(plainText);
     Preconditions.checkArgument(iv.length == AES_GCM_NONCE_IV_LENGTH);
@@ -136,11 +139,11 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
       return cipherMessage;
     } catch (NoSuchAlgorithmException
-        | NoSuchPaddingException
-        | InvalidAlgorithmParameterException
-        | InvalidKeyException
-        | BadPaddingException
-        | IllegalBlockSizeException e
+      | NoSuchPaddingException
+      | InvalidAlgorithmParameterException
+      | InvalidKeyException
+      | BadPaddingException
+      | IllegalBlockSizeException e
     ) {
       throw new EncryptionException("Unable to Encrypt: ", e);
     }
@@ -160,15 +163,15 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * @param iv           An initialization vector used AES/GCM.
    *
    * @return A byte-array containing encrypted cipherMessage, which consists of the iv plus ciphertext (note this is
-   *     inverted from the NIST specification).
+   *   inverted from the NIST specification).
    *
    * @see "https://github.com/hyperledger/quilt/issues/237"
    * @deprecated This method will be removed in a future version. Prefer {@link #standardModeEncryptWithIv(SharedSecret,
-   *     byte[], byte[])} instead.
+   *   byte[], byte[])} instead.
    */
   @Deprecated
   private byte[] nonStandardModeEncryptWithIv(
-      final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
+    final SharedSecret sharedSecret, final byte[] plainText, final byte[] iv
   ) throws EncryptionException {
     Objects.requireNonNull(plainText);
     Preconditions.checkArgument(iv.length == AES_GCM_NONCE_IV_LENGTH);
@@ -189,11 +192,11 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       byte[] rearrangedCipherText = new byte[cipherText.length];
       // Rearrange the bytes so that the tag goes first (should have put it last in the JS implementation, but oh well)
       System.arraycopy(
-          cipherText, cipherText.length - AUTH_TAG_LENGTH_BYTES, rearrangedCipherText, 0, AUTH_TAG_LENGTH_BYTES
+        cipherText, cipherText.length - AUTH_TAG_LENGTH_BYTES, rearrangedCipherText, 0, AUTH_TAG_LENGTH_BYTES
       );
       // Put the cipherText last...
       System.arraycopy(
-          cipherText, 0, rearrangedCipherText, AUTH_TAG_LENGTH_BYTES, cipherText.length - AUTH_TAG_LENGTH_BYTES
+        cipherText, 0, rearrangedCipherText, AUTH_TAG_LENGTH_BYTES, cipherText.length - AUTH_TAG_LENGTH_BYTES
       );
 
       // Concatenate to a single message
@@ -210,11 +213,11 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
 
       return cipherMessage;
     } catch (NoSuchAlgorithmException
-        | NoSuchPaddingException
-        | InvalidAlgorithmParameterException
-        | InvalidKeyException
-        | BadPaddingException
-        | IllegalBlockSizeException e
+      | NoSuchPaddingException
+      | InvalidAlgorithmParameterException
+      | InvalidKeyException
+      | BadPaddingException
+      | IllegalBlockSizeException e
     ) {
       throw new EncryptionException("Unable to Encrypt: ", e);
     }
@@ -230,10 +233,8 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
         return this.nonStandardModeDecrypt(sharedSecret, cipherMessage);
       } catch (EncryptionException e) {
         logger.warn(
-            "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
-            EncryptionMode.ENCRYPT_NON_STANDARD,
-            EncryptionMode.ENCRYPT_STANDARD,
-            e
+          "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
+          EncryptionMode.ENCRYPT_NON_STANDARD, EncryptionMode.ENCRYPT_STANDARD
         );
         return this.standardModeDecrypt(sharedSecret, cipherMessage);
       }
@@ -242,10 +243,10 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
         return this.standardModeDecrypt(sharedSecret, cipherMessage);
       } catch (EncryptionException e) {
         logger.warn(
-            "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
-            EncryptionMode.ENCRYPT_STANDARD,
-            EncryptionMode.ENCRYPT_NON_STANDARD,
-            e
+          "Unable to decrypt payload in {} mode. Attempting {} mode as a fallback.",
+          EncryptionMode.ENCRYPT_STANDARD,
+          EncryptionMode.ENCRYPT_NON_STANDARD,
+          e
         );
         return this.nonStandardModeDecrypt(sharedSecret, cipherMessage);
       }
@@ -310,7 +311,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
    * @see "https://github.com/hyperledger/quilt/issues/237"
    * @see "https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf"
    * @deprecated This method will be removed in a future version. Prefer {@link #standardModeDecrypt(SharedSecret,
-   *     byte[])} instead.
+   *   byte[])} instead.
    */
   @Deprecated
   private byte[] nonStandardModeDecrypt(final SharedSecret sharedSecret, final byte[] cipherMessage) {
@@ -327,16 +328,16 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
       byte[] cipherText = new byte[byteBuffer.remaining()];
       byteBuffer.get(cipherText);
 
-      // TODO: See https://github.com/hyperledger/quilt/issues/237
+      // See https://github.com/hyperledger/quilt/issues/237
       // Rearrange the bytes so that the `tag` goes last, after tha Additionally Authenticated Data (AAD). Prior to this
       // reversal, the data is inverted because that's what the RFC specifies, and that's what JS and Rust do.
       byte[] rearrangedCipherText = new byte[cipherText.length];
       System.arraycopy(
-          cipherText, 0, rearrangedCipherText, cipherText.length - AUTH_TAG_LENGTH_BYTES, AUTH_TAG_LENGTH_BYTES
+        cipherText, 0, rearrangedCipherText, cipherText.length - AUTH_TAG_LENGTH_BYTES, AUTH_TAG_LENGTH_BYTES
       );
       // Put the cipherText last...
       System.arraycopy(
-          cipherText, AUTH_TAG_LENGTH_BYTES, rearrangedCipherText, 0, cipherText.length - AUTH_TAG_LENGTH_BYTES
+        cipherText, AUTH_TAG_LENGTH_BYTES, rearrangedCipherText, 0, cipherText.length - AUTH_TAG_LENGTH_BYTES
       );
 
       final Cipher cipher = Cipher.getInstance(CIPHER_ALGO);
@@ -379,7 +380,7 @@ public class AesGcmStreamEncryptionService implements StreamEncryptionService {
   @Override
   public String toString() {
     return new StringJoiner(", ", AesGcmStreamEncryptionService.class.getSimpleName() + "[", "]")
-        .add("encryptionMode=" + encryptionMode)
-        .toString();
+      .add("encryptionMode=" + encryptionMode)
+      .toString();
   }
 }

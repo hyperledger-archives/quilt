@@ -54,8 +54,8 @@ public class IldcpResponseTest {
         .assetCode(BTC)
         .build();
 
-    assertThat(response.getClientAddress()).isEqualTo(FOO_ADDRESS);
-    assertThat(response.getAssetScale()).isEqualTo((short) 9);
-    assertThat(response.getAssetCode()).isEqualTo(BTC);
+    assertThat(response.clientAddress()).isEqualTo(FOO_ADDRESS);
+    assertThat(response.assetScale()).isEqualTo((short) 9);
+    assertThat(response.assetCode()).isEqualTo(BTC);
   }
 }

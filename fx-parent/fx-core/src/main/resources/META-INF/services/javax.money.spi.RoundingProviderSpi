@@ -1,0 +1,4 @@
+# JavaMoney fq provider names
+# See https://jaxenter.de/go-for-the-money-einfuehrung-in-das-money-and-currency-api-38668
+# To display Bitcoin as Satoshis, for example.
+org.interledger.fx.javax.money.providers.DropRoundingProvider

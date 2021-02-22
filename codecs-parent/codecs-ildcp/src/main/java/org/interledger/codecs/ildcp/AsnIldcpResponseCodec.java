@@ -61,8 +61,8 @@ public class AsnIldcpResponseCodec extends AsnSequenceCodec<IldcpResponse> {
    */
   @Override
   public void encode(IldcpResponse value) {
-    setValueAt(0, value.getClientAddress());
-    setValueAt(1, value.getAssetScale());
-    setValueAt(2, value.getAssetCode());
+    setValueAt(0, value.clientAddress());
+    setValueAt(1, value.assetScale());
+    setValueAt(2, value.assetCode());
   }
 }
