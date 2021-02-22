@@ -3,11 +3,11 @@ package org.interledger.link.spsp;
 import org.interledger.link.LinkSettings;
 import org.interledger.link.LinkType;
 
+import com.google.common.primitives.UnsignedLong;
 import org.immutables.value.Value;
 import org.immutables.value.Value.Derived;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 /**
  * An extension of {@link LinkSettings} for Stateless SPSP receiver links.
@@ -36,6 +36,13 @@ public interface StatelessSpspReceiverLinkSettings extends LinkSettings {
    * @return an int representing this account's asset scale.
    */
   int assetScale();
+
+  /**
+   * An optionally-present limit on the packet size that this link will fulfill.
+   *
+   * @return An {@link Optional} instance of {@link UnsignedLong}.
+   */
+  Optional<UnsignedLong> maxPacketAmount();
 
   @Value.Immutable
   abstract class AbstractStatelessSpspReceiverLinkSettings implements StatelessSpspReceiverLinkSettings {

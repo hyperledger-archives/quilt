@@ -38,7 +38,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Example how to use Quilt to send a STREAM payment. See this module's README for more details.
+ * Example how to use Quilt to send a STREAM payment using {@link SimpleStreamSender}. See this module's README for more
+ * details.
  */
 public class SendMoneyExample {
 
@@ -50,17 +51,23 @@ public class SendMoneyExample {
   private static final String RECEIVER_PAYMENT_POINTER = "$ripplex.money/demo_receiver";
 
   private static final String TESTNET_URI =
-      "https://rxprod.wc.wallet.ripplex.io/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
+    "https://rxprod.wc.wallet.ripplex.io/accounts/" + SENDER_ACCOUNT_USERNAME + "/ilp";
 
   private static final InterledgerAddress OPERATOR_ADDRESS =
-      InterledgerAddress.of("private.org.interledger.examples.sendmoneyexample").with(SENDER_ACCOUNT_USERNAME);
+    InterledgerAddress.of("private.org.interledger.examples.send-money-with-stream-sender-example")
+      .with(SENDER_ACCOUNT_USERNAME);
 
+  /**
+   * Main method.
+   *
+   * @param args A String array.
+   */
   public static void main(String[] args) throws ExecutionException, InterruptedException {
     SpspClient spspClient = new SimpleSpspClient();
 
     // Fetch shared secret and destination address using SPSP client
     StreamConnectionDetails connectionDetails = spspClient
-        .getStreamConnectionDetails(PaymentPointer.of(RECEIVER_PAYMENT_POINTER));
+      .getStreamConnectionDetails(PaymentPointer.of(RECEIVER_PAYMENT_POINTER));
 
     // Use ILP over HTTP for our underlying link
     Link link = newIlpOverHttpLink();
@@ -73,17 +80,17 @@ public class SendMoneyExample {
 
     // Send payment using STREAM
     SendMoneyResult result = simpleStreamSender.sendMoney(
-        SendMoneyRequest.builder()
-            // The client is not routable, so while we could send an empty ConnectionNewAddress frame, this breaks older
-            // version of the Java receiver, so for now we specify an address here.
-            .sourceAddress(OPERATOR_ADDRESS)
-            .amount(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9))
-            .denomination(Denominations.XRP_MILLI_DROPS)
-            .destinationAddress(connectionDetails.destinationAddress())
-            .timeout(Duration.ofMillis(15000))
-            .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9)))
-            .sharedSecret(SharedSecret.of(connectionDetails.sharedSecret().value()))
-            .build()
+      SendMoneyRequest.builder()
+        // The client is not routable, so while we could send an empty ConnectionNewAddress frame, this breaks older
+        // version of the Java receiver, so for now we specify an address here.
+        .sourceAddress(OPERATOR_ADDRESS)
+        .amount(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9))
+        .denomination(Denominations.XRP_MILLI_DROPS)
+        .destinationAddress(connectionDetails.destinationAddress())
+        .timeout(Duration.ofMillis(15000))
+        .paymentTracker(new FixedSenderAmountPaymentTracker(UnsignedLong.valueOf(ONE_DROP_IN_SCALE_9)))
+        .sharedSecret(SharedSecret.of(connectionDetails.sharedSecret().value()))
+        .build()
     ).get();
 
     System.out.println("Send money result: " + result);
@@ -91,12 +98,12 @@ public class SendMoneyExample {
 
   private static Link newIlpOverHttpLink() {
     return new IlpOverHttpLink(
-        () -> OPERATOR_ADDRESS,
-        HttpUrl.parse(TESTNET_URI),
-        newHttpClient(),
-        createObjectMapperForProblemsJson(),
-        InterledgerCodecContextFactory.oer(),
-        new SimpleBearerTokenSupplier(SENDER_PASS_KEY)
+      () -> OPERATOR_ADDRESS,
+      HttpUrl.parse(TESTNET_URI),
+      newHttpClient(),
+      createObjectMapperForProblemsJson(),
+      InterledgerCodecContextFactory.oer(),
+      new SimpleBearerTokenSupplier(SENDER_PASS_KEY)
     );
   }
 
@@ -104,11 +111,11 @@ public class SendMoneyExample {
     ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
     ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).build();
     OkHttpClient.Builder builder = new OkHttpClient.Builder()
-        .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
-        .cookieJar(NO_COOKIES)
-        .connectTimeout(5000, TimeUnit.MILLISECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS);
+      .connectionSpecs(Arrays.asList(spec, ConnectionSpec.CLEARTEXT))
+      .cookieJar(NO_COOKIES)
+      .connectTimeout(5000, TimeUnit.MILLISECONDS)
+      .readTimeout(30, TimeUnit.SECONDS)
+      .writeTimeout(30, TimeUnit.SECONDS);
     return builder.connectionPool(connectionPool).build();
   }
 
@@ -123,11 +130,11 @@ public class SendMoneyExample {
    */
   private static ObjectMapper createObjectMapperForProblemsJson() {
     return new ObjectMapper()
-        .registerModule(new Jdk8Module())
-        .registerModule(new InterledgerModule(Encoding.BASE64))
-        .registerModule(new ProblemModule())
-        .registerModule(new ConstraintViolationProblemModule())
-        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-        .configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, false);
+      .registerModule(new Jdk8Module())
+      .registerModule(new InterledgerModule(Encoding.BASE64))
+      .registerModule(new ProblemModule())
+      .registerModule(new ConstraintViolationProblemModule())
+      .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+      .configure(JsonGenerator.Feature.WRITE_NUMBERS_AS_STRINGS, false);
   }
 }

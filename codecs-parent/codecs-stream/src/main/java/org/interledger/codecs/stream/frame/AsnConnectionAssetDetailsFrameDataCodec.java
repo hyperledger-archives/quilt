@@ -34,19 +34,19 @@ public class AsnConnectionAssetDetailsFrameDataCodec extends AsnSequenceCodec<Co
    */
   public AsnConnectionAssetDetailsFrameDataCodec() {
     super(
-        new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED),
-        new AsnUint8Codec()
+      new AsnUtf8StringCodec(AsnSizeConstraint.UNCONSTRAINED),
+      new AsnUint8Codec()
     );
   }
 
   @Override
   public ConnectionAssetDetailsFrame decode() {
     return ConnectionAssetDetailsFrame.builder()
-        .sourceDenomination(Denomination.builder()
-            .assetCode(getValueAt(0))
-            .assetScale(getValueAt(1))
-            .build())
-        .build();
+      .sourceDenomination(Denomination.builder()
+        .assetCode(getValueAt(0))
+        .assetScale(getValueAt(1))
+        .build())
+      .build();
   }
 
   @Override

@@ -1,14 +1,14 @@
 package org.interledger.stream.sender;
 
 import static org.interledger.core.InterledgerErrorCode.T04_INSUFFICIENT_LIQUIDITY_CODE;
-import static org.interledger.stream.FluentCompareTo.is;
+import static org.interledger.core.fluent.FluentCompareTo.is;
 
 import org.interledger.codecs.stream.StreamCodecContextFactory;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerPreparePacket;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContext;
-import org.interledger.stream.AmountTooLargeErrorData;
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.stream.StreamUtils;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -54,6 +54,7 @@ public class AimdCongestionController implements CongestionController {
    */
   private AtomicReference<UnsignedLong> maxInFlight;
 
+  @Deprecated
   public AimdCongestionController() {
     this(
         UnsignedLong.valueOf(1000L), UnsignedLong.valueOf(1000L), BigDecimal.valueOf(2.0),
@@ -74,7 +75,9 @@ public class AimdCongestionController implements CongestionController {
    * @param streamCodecContext A {@link CodecContext} for encoding and decoding STREAM packets and frames.
    */
   public AimdCongestionController(
-      final UnsignedLong startAmount, final UnsignedLong increaseAmount, final BigDecimal decreaseFactor,
+      final UnsignedLong startAmount,
+      final UnsignedLong increaseAmount,
+      final BigDecimal decreaseFactor,
       final CodecContext streamCodecContext
   ) {
     this.maxInFlight = new AtomicReference<>(Objects.requireNonNull(startAmount, "startAmount must not be null"));
@@ -88,28 +91,32 @@ public class AimdCongestionController implements CongestionController {
     this.maxPacketAmount = Optional.empty();
   }
 
-  /**
-   * <p>Compute the maximum packet amount that should be used if a new ILPv4 packet is going to be sent as part of this
-   * Stream. This value is used by the stream client to form the next prepare packet size, and fluctuates based upon
-   * prior stream activity.</p>
-   *
-   * <p>This computation depends on a sub-computation called `amountLeftInWindow`, which is the difference between the
-   * {@link #maxInFlight} and the current {@link #amountInFlight}. The {@code maxAmount} returned by this function is
-   * then computed by taking the min of `amountLeftInWindow` and {@link #maxPacketAmount}.</p>
-   *
-   * @return An {@link UnsignedLong} representing the current max packet amount for packets in this stream.
-   */
+  // TODO: Fix Javadoc!
+
   @Override
   public UnsignedLong getMaxAmount() {
     // A "window" is just an amount of time where some value is in-flight, and a StreamClient wants to put more
     // in-flight. Thus, the amount left in a window will trend towards zero as the amountInFlight increases.
-    final UnsignedLong amountLeftInWindow = maxInFlight.get().minus(amountInFlight.get());
+    final UnsignedLong amountLeftInWindow = this.getAmountLeftInWindow();
 
     // Synchronization is _probably not_ needed here since we're not assigning any values that could get corrupted, and
     // usage of this return value should be considered as a snapshot at a given moment of time anyway...
     return this.maxPacketAmount
         .map(maxPacketAmount -> StreamUtils.min(amountLeftInWindow, maxPacketAmount))
         .orElse(amountLeftInWindow);
+  }
+
+  /**
+   * <p>Returns the difference between {@link #maxInFlight} and the current {@link #amountInFlight}, which is known at
+   * the current "window."</p>
+   *
+   * @return An {@link UnsignedLong} representing the amoount of units available to be sent in the current window.
+   */
+  @Override
+  public UnsignedLong getAmountLeftInWindow() {
+    // A "window" is just an amount of time where some value is in-flight, and a StreamClient wants to put more
+    // in-flight. Thus, the amount left in a window will trend towards zero as the amountInFlight increases.
+    return maxInFlight.get().minus(amountInFlight.get());
   }
 
   @Override
@@ -119,7 +126,7 @@ public class AimdCongestionController implements CongestionController {
   }
 
   @Override
-  public void fulfill(final UnsignedLong prepareAmount) {
+  public void onFulfill(final UnsignedLong prepareAmount) {
     Objects.requireNonNull(prepareAmount);
 
     this.amountInFlight.getAndUpdate((currentAmountInFlight) -> currentAmountInFlight.minus(prepareAmount));
@@ -144,7 +151,7 @@ public class AimdCongestionController implements CongestionController {
   }
 
   @Override
-  public void reject(final UnsignedLong prepareAmount, final InterledgerRejectPacket rejectPacket) {
+  public void onReject(final UnsignedLong prepareAmount, final InterledgerRejectPacket rejectPacket) {
     Objects.requireNonNull(prepareAmount);
     Objects.requireNonNull(rejectPacket);
 
@@ -316,6 +323,11 @@ public class AimdCongestionController implements CongestionController {
   @Override
   public boolean hasInFlight() {
     return is(this.amountInFlight.get()).greaterThan(UnsignedLong.ZERO);
+  }
+
+  @Override
+  public UnsignedLong getMaxInFlight() {
+    return maxInFlight.get();
   }
 
   /**

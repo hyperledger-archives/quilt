@@ -58,6 +58,11 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
+        <artifactId>ilp-core-utils</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
         <artifactId>jackson-datatypes</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -94,6 +99,16 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>stream-client</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-crypto</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>stream-pay</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

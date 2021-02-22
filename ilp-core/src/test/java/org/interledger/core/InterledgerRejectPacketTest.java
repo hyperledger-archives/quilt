@@ -186,7 +186,7 @@ public class InterledgerRejectPacketTest {
     assertThat(interledgerProtocolError1.toString())
             .isEqualTo("InterledgerRejectPacket{, code=InterledgerErrorCode{code='T00', name='INTERNAL ERROR', "
                 + "errorFamily=T}, triggeredBy=Optional[InterledgerAddress{value=test1.foo.foo}], message=TEST, "
-                + "data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=}");
+                + "data=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=, typedData=n/a}");
   }
 
 }

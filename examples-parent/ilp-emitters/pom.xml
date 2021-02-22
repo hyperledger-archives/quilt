@@ -20,13 +20,14 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <!-- Normally dependencies are declared in the parent pom, but this is just an example project, and we don't
-          currently want to formally depend on Apache Commons in Quilt, so this version is declared here. -->
-      <version>1.1.7</version>
     </dependency>
     <dependency>
       <groupId>com.auth0</groupId>
       <artifactId>java-jwt</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -53,10 +54,6 @@
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
-      <artifactId>codecs-ildcp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.interledger</groupId>
       <artifactId>link-core</artifactId>
     </dependency>
     <dependency>
@@ -65,11 +62,12 @@
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
-      <artifactId>stream-receiver</artifactId>
+      <artifactId>stream-crypto</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
   </dependencies>
+
 </project>

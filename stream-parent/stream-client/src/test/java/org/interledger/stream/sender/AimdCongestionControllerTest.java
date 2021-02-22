@@ -8,7 +8,7 @@ import org.interledger.core.InterledgerAddress;
 import org.interledger.core.InterledgerErrorCode;
 import org.interledger.core.InterledgerRejectPacket;
 import org.interledger.encoding.asn.framework.CodecContextFactory;
-import org.interledger.stream.AmountTooLargeErrorData;
+import org.interledger.core.AmountTooLargeErrorData;
 import org.interledger.stream.sender.AimdCongestionController.CongestionState;
 
 import com.google.common.primitives.UnsignedLong;
@@ -78,17 +78,17 @@ public class AimdCongestionControllerTest {
   public void doublesMaxAmountOnFulfill() {
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(2000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(4000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(8000L));
   }
 
@@ -105,11 +105,11 @@ public class AimdCongestionControllerTest {
 
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
 
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
   }
 
@@ -120,7 +120,7 @@ public class AimdCongestionControllerTest {
     for (long i = 1; i <= 5; i++) {
       UnsignedLong amount = UnsignedLong.valueOf(i).times(ONE_K);
       controller.prepare(amount);
-      controller.fulfill(amount);
+      controller.onFulfill(amount);
       assertThat(controller.getMaxAmount()).isEqualTo((ONE_K.times(UnsignedLong.valueOf(i)).plus(ONE_K)));
     }
   }
@@ -131,57 +131,57 @@ public class AimdCongestionControllerTest {
 
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(500L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(250L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(125L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(62L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(31L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(15L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(7L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(3L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1L));
   }
 
@@ -191,22 +191,22 @@ public class AimdCongestionControllerTest {
 
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(2000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(3000L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.reject(amount, T04_INSUFFICIENT_LIQUIDITY);
+    controller.onReject(amount, T04_INSUFFICIENT_LIQUIDITY);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(1500L));
 
     amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(2500L));
   }
 
@@ -225,7 +225,7 @@ public class AimdCongestionControllerTest {
             .build(),
         byteArrayOutputStream
     );
-    controller.reject(ONE_K, InterledgerRejectPacket.builder()
+    controller.onReject(ONE_K, InterledgerRejectPacket.builder()
         .code(InterledgerErrorCode.F08_AMOUNT_TOO_LARGE)
         .data(byteArrayOutputStream.toByteArray())
         .build());
@@ -235,7 +235,7 @@ public class AimdCongestionControllerTest {
       UnsignedLong amount = controller.getMaxAmount();
       controller.prepare(amount);
       assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(100L));
-      controller.fulfill(amount);
+      controller.onFulfill(amount);
       assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.valueOf(100L));
     }
   }
@@ -259,11 +259,11 @@ public class AimdCongestionControllerTest {
 
     UnsignedLong amount = controller.getMaxAmount();
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
 
     controller.prepare(amount);
-    controller.fulfill(amount);
+    controller.onFulfill(amount);
     assertThat(controller.getMaxAmount()).isEqualTo(UnsignedLong.MAX_VALUE);
   }
 

@@ -30,7 +30,10 @@ import java.io.IOException;
 
 /**
  * Jackson Serializer for {@link SharedSecret}.
+ *
+ * @deprecated This class will go away once {@link SharedSecret} is removed from the project.
  */
+@Deprecated
 public class SharedSecretSerializer extends StdScalarSerializer<SharedSecret> {
 
   public static final SharedSecretSerializer INSTANCE = new SharedSecretSerializer();
@@ -43,8 +46,7 @@ public class SharedSecretSerializer extends StdScalarSerializer<SharedSecret> {
   }
 
   @Override
-  public void serialize(SharedSecret value, JsonGenerator gen, SerializerProvider provider)
-      throws IOException {
+  public void serialize(SharedSecret value, JsonGenerator gen, SerializerProvider provider) throws IOException {
     gen.writeString(value.value());
   }
 }

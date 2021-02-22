@@ -1,7 +1,5 @@
 package org.interledger.stream.sender;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -23,7 +21,7 @@ class SleepyExecutorService implements ExecutorService {
   /**
    * Wraps an ExecutorService and sleeps before delegating submit/execute calls to the underlying delegate.
    *
-   * @param delegate wrapped ExecutorService that is delegated to
+   * @param delegate    wrapped ExecutorService that is delegated to
    * @param sleepMillis how long to sleep before execution
    */
   SleepyExecutorService(ExecutorService delegate, long sleepMillis) {
@@ -36,7 +34,6 @@ class SleepyExecutorService implements ExecutorService {
     delegate.shutdown();
   }
 
-  @NotNull
   @Override
   public List<Runnable> shutdownNow() {
     return delegate.shutdownNow();
@@ -53,57 +50,57 @@ class SleepyExecutorService implements ExecutorService {
   }
 
   @Override
-  public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     return delegate.awaitTermination(timeout, unit);
   }
 
-  @NotNull
+
   @Override
-  public <T> Future<T> submit(@NotNull Callable<T> task) {
+  public <T> Future<T> submit(Callable<T> task) {
     return withSleep(() -> delegate.submit(task));
   }
 
-  @NotNull
+
   @Override
-  public <T> Future<T> submit(@NotNull Runnable task, T result) {
+  public <T> Future<T> submit(Runnable task, T result) {
     return withSleep(() -> delegate.submit(task, result));
   }
 
-  @NotNull
+
   @Override
-  public Future<?> submit(@NotNull Runnable task) {
+  public Future<?> submit(Runnable task) {
     return withSleep(() -> delegate.submit(task));
   }
 
-  @NotNull
+
   @Override
-  public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks) throws InterruptedException {
+  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
     return delegate.invokeAll(tasks);
   }
 
-  @NotNull
+
   @Override
-  public <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks,
-                                       long timeout,
-                                       @NotNull TimeUnit unit) throws InterruptedException {
+  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
+    long timeout,
+    TimeUnit unit) throws InterruptedException {
     return delegate.invokeAll(tasks, timeout, unit);
   }
 
-  @NotNull
+
   @Override
-  public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks)
-      throws InterruptedException, ExecutionException {
+  public <T> T invokeAny(Collection<? extends Callable<T>> tasks)
+    throws InterruptedException, ExecutionException {
     return delegate.invokeAny(tasks);
   }
 
   @Override
-  public <T> T invokeAny(@NotNull Collection<? extends Callable<T>> tasks, long timeout, @NotNull TimeUnit unit)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+    throws InterruptedException, ExecutionException, TimeoutException {
     return delegate.invokeAny(tasks, timeout, unit);
   }
 
   @Override
-  public void execute(@NotNull Runnable command) {
+  public void execute(Runnable command) {
     withSleep(() -> delegate.execute(command));
   }
 

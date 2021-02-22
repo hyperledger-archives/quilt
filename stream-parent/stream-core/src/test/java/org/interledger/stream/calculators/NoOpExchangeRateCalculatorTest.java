@@ -16,13 +16,13 @@ public class NoOpExchangeRateCalculatorTest {
   public void calculateMinAmountToAcceptInReceiverAmountMode() {
     ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
     assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD, Denominations.EUR))
-        .isEqualTo(UnsignedLong.ZERO);
+      .isEqualTo(UnsignedLong.ZERO);
   }
 
   @Test
   public void calculateMinAmountToAcceptInSenderAmountMode() {
     ExchangeRateCalculator calc = new NoOpExchangeRateCalculator();
     assertThat(calc.calculateMinAmountToAccept(UnsignedLong.ONE, Denominations.USD))
-        .isEqualTo(UnsignedLong.ZERO);
+      .isEqualTo(UnsignedLong.ZERO);
   }
 }

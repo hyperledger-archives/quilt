@@ -1,17 +1,46 @@
 package org.interledger.stream;
 
-import org.interledger.stream.ImmutableDenomination.Builder;
-
 import org.immutables.value.Value.Immutable;
 
 /**
  * Defines an asset denomination by providing an asset code and scale.
+ *
+ * @deprecated Prefer Denomination from the FX module.
  */
+@Deprecated
 @Immutable
 public interface Denomination {
 
-  static Builder builder() {
+  static ImmutableDenomination.Builder builder() {
     return ImmutableDenomination.builder();
+  }
+
+  /**
+   * Helper to ease the transition to {@link org.interledger.fx.Denomination}.
+   *
+   * @param denomination A {@link org.interledger.fx.Denomination} to convert to.
+   *
+   * @return An identical instance of {@link Denomination}.
+   */
+  static Denomination from(final org.interledger.fx.Denomination denomination) {
+    return Denomination.builder()
+      .assetCode(denomination.assetCode())
+      .assetScale(denomination.assetScale())
+      .build();
+  }
+
+  /**
+   * Helper to ease the transition to {@link org.interledger.fx.Denomination}.
+   *
+   * @param denomination A {@link Denomination} to convert to.
+   *
+   * @return An identical instance of {@link org.interledger.fx.Denomination}.
+   */
+  static org.interledger.fx.Denomination to(final Denomination denomination) {
+    return org.interledger.fx.Denomination.builder()
+      .assetCode(denomination.assetCode())
+      .assetScale(denomination.assetScale())
+      .build();
   }
 
   /**

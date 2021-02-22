@@ -102,11 +102,7 @@ public interface Link<L extends LinkSettings> extends LinkSender {
   void unregisterLinkHandler();
 
   /**
-   * <p>Check the connection's connectivity. to see  for ping by making an HTTP Head request with a ping packet, and
-   * asserting the values returned are one of the supported content-types required for BLAST.</p>
-   *
-   * <p>If the endpoint does not support producing BLAST responses, we expect a 406 NOT_ACCEPTABLE response. If the
-   * endpoint does not support BLAST requests, then we expect a 415 UNSUPPORTED_MEDIA_TYPE.</p>
+   * Check the connection's connectivity.
    */
   default void testConnection() {
   }

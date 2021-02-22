@@ -34,11 +34,28 @@ public class AsnUintCodecULTest {
   }
 
   @Test
-  public void decodeValueTooLarge() {
+  public void decodeValueTooLargeGoesToOne() {
     codec = new AsnUintCodecUL(UnsignedLong.ONE);
     byte[] bytes = new BigInteger("18446744073709551616").toByteArray();
     codec.setBytes(bytes);
     assertThat(codec.decode()).isEqualTo(UnsignedLong.ONE);
+  }
+
+  @Test
+  public void decodeValueTooLargeGoesToMax() {
+    codec = new AsnUintCodecUL(UnsignedLong.MAX_VALUE);
+    byte[] bytes = new BigInteger("18446744073709551616").toByteArray();
+    codec.setBytes(bytes);
+    assertThat(codec.decode()).isEqualTo(UnsignedLong.MAX_VALUE);
+  }
+
+  @Test
+  public void decodeValueTooLargeWithNoDefault() {
+    expectedException.expect(IllegalArgumentException.class);
+    codec = new AsnUintCodecUL();
+    byte[] bytes = new BigInteger("18446744073709551616").toByteArray();
+    codec.setBytes(bytes);
+    codec.decode();
   }
 
   @Test

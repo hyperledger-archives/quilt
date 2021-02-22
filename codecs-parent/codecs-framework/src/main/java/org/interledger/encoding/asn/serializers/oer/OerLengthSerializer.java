@@ -141,8 +141,7 @@ public class OerLengthSerializer {
     if (length <= 0) {
       outputStream.write(0);
     } else {
-      if (length >= 0 && length < 128) {
-
+      if (length < 128) {
         // Write a single byte that contains the length (it will start with a 0, and not exceed
         // 127 in Base10.
         outputStream.write(length);
