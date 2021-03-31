@@ -99,7 +99,7 @@
     <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
     <checkstyle.violationSeverity>error</checkstyle.violationSeverity>
 
-    <guava.version>28.1-jre</guava.version>
+    <guava.version>29.0-jre</guava.version>
     <jackson.version>2.10.0.pr3</jackson.version>
     <!-- TODO: Updgrade to 1.4.2 -->
     <moneta.version>1.3</moneta.version>
