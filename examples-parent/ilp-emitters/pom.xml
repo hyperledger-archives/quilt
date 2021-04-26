@@ -34,7 +34,7 @@
       <artifactId>commons-io</artifactId>
       <!-- Normally dependencies are declared in the parent pom, but this is just an example project, and we don't
            currently want to formally depend on Apache Commons in Quilt, so this version is declared here. -->
-      <version>2.6</version>
+      <version>2.7</version>
     </dependency>
     <dependency>
       <groupId>org.interledger</groupId>
