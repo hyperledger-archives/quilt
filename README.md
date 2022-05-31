@@ -1,4 +1,12 @@
-# Hyperledger Quilt [![Discuss][forum-image]][forum-url] [![twitter][twitter-image]][twitter-url]
+# Hyperledger Quilt
+
+:warning: :warning: :warning:
+
+**Hyperledger Quilt has been moved to End of Life status by the original project maintainers.  Although Hyperledger Quilt is not currently being developed or maintained, the code is still available under an open source license so you would be welcome to reactivate this project. If you are interested in continuing development of this code, please consider submitting a PR at https://github.com/hyperledger/hyperledger-hip and sending and email to tsc@lists.hyperledger.org. See more details about project proposals at: https://hyperledger.github.io/hyperledger-hip/**
+
+:warning: :warning: :warning:
+
+[![Discuss][forum-image]][forum-url] [![twitter][twitter-image]][twitter-url]
 [![circle-ci][circle-image]][circle-url] 
 [![codecov][codecov-image]][codecov-url] 
 [![lgtm-cq][lgtm-cq-image]][lgtm-cq-url] 
