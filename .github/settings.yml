@@ -1,0 +1,8 @@
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+repository:
+  name: quilt
+  description: Hyperledger Quilt - An implementation of the Interledger Protocol
+  archived: true
+  private: false
